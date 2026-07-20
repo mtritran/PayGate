@@ -39,8 +39,8 @@ Trước khi viết code BE hoặc FE, phải đọc **bắt buộc**:
 
 | Template | Đường dẫn | Nội dung |
 |---|---|---|
-| Backend template | `d:\Java\training-starter\backend_code_template.md` | Layered architecture chuẩn, naming convention, cách viết Entity/Service/Controller/Mapper/DTO/Exception |
-| Frontend template | `d:\Java\training-starter\frontend_code_template.md` | Angular standalone component, service pattern, interceptor, model type |
+| Backend template | `d:\Java\PayGate\docs\backend_code_template.md` | Layered architecture chuẩn, naming convention, cách viết Entity/Service/Controller/Mapper/DTO/Exception |
+| Frontend template | `d:\Java\PayGate\docs\frontend_code_template.md` | Angular standalone component, service pattern, interceptor, model type |
 
 > Mọi code sinh ra **phải tuân thủ** hai template này. Không tự sáng tạo pattern khác dù có vẻ "đúng hơn".
 

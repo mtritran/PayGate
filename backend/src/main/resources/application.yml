@@ -59,4 +59,4 @@ springdoc:
 logging:
   level:
     org.hibernate.SQL: DEBUG
-    com.training.starter: DEBUG
+    com.training.paygate: DEBUG

@@ -13,10 +13,10 @@
     </parent>
 
     <groupId>com.training</groupId>
-    <artifactId>starter</artifactId>
+    <artifactId>paygate</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>training-starter</name>
-    <description>Training starter codebase with auth, config, exception handling, and sample CRUD</description>
+    <name>paygate</name>
+    <description>PayGate backend application codebase built on training starter template</description>
 
     <properties>
         <java.version>17</java.version>
