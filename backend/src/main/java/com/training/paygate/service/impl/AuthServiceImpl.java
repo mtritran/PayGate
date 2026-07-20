@@ -10,6 +10,8 @@ import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.security.JwtTokenProvider;
+import com.training.paygate.enums.OwnerType;
+import com.training.paygate.service.AccountService;
 import com.training.paygate.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final AccountService accountService;
 
     @Override
     @Transactional
@@ -48,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         userRepository.save(user);
+        accountService.createAccount(user.getId(), OwnerType.USER);
 
         String accessToken = jwtTokenProvider.generateAccessToken(user.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
