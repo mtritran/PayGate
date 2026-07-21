@@ -20,6 +20,7 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.impl.AccountServiceImpl;
+import com.training.paygate.cache.BalanceCacheService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,6 +54,9 @@ class AccountServiceTest {
 
     @Mock
     private AccountMapper accountMapper;
+
+    @Mock
+    private BalanceCacheService balanceCacheService;
 
     @InjectMocks
     private AccountServiceImpl accountService;
@@ -173,6 +177,8 @@ class AccountServiceTest {
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(userAccount));
         when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+        when(accountRepository.findByIdForUpdate(12L)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(systemAccount));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
 
         // When

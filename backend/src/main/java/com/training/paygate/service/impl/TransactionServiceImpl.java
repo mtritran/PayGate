@@ -29,6 +29,8 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.UUID;
 
@@ -113,11 +115,7 @@ public class TransactionServiceImpl implements TransactionService {
         accountRepository.save(lockedSource);
         accountRepository.save(lockedDest);
 
-        // 8. Evict balances from cache
-        balanceCacheService.evictBalance(lockedSource.getId());
-        balanceCacheService.evictBalance(lockedDest.getId());
-
-        // 9. Save Transaction
+        // 8. Save Transaction
         Transaction transaction = Transaction.builder()
                 .transactionRef("TXN-PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .idempotencyKey(request.idempotencyKey())
@@ -132,7 +130,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        // 10. Save Ledger Entries
+        // 9. Save Ledger Entries
         LedgerEntry debitEntry = LedgerEntry.builder()
                 .transactionId(transaction.getId())
                 .accountId(lockedSource.getId())
@@ -152,8 +150,24 @@ public class TransactionServiceImpl implements TransactionService {
         ledgerEntryRepository.save(debitEntry);
         ledgerEntryRepository.save(creditEntry);
 
-        // 11. Write to Idempotency Cache
+        // 10. Write to Idempotency Cache
         idempotencyCacheService.set(request.idempotencyKey(), transaction.getTransactionRef());
+
+        // 11. Evict balances from cache AFTER successful transaction commit
+        final Long sourceIdToEvict = lockedSource.getId();
+        final Long destIdToEvict = lockedDest.getId();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    balanceCacheService.evictBalance(sourceIdToEvict);
+                    balanceCacheService.evictBalance(destIdToEvict);
+                }
+            });
+        } else {
+            balanceCacheService.evictBalance(sourceIdToEvict);
+            balanceCacheService.evictBalance(destIdToEvict);
+        }
 
         // 12. Publish Completed Event to RabbitMQ
         PaymentCompletedEvent event = new PaymentCompletedEvent(

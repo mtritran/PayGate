@@ -1,5 +1,6 @@
 package com.training.paygate.service.impl;
 
+import com.training.paygate.cache.BalanceCacheService;
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
@@ -25,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -37,6 +40,7 @@ public class AccountServiceImpl implements AccountService {
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final BalanceCacheService balanceCacheService;
     private final AccountMapper accountMapper;
 
     @Override
@@ -101,18 +105,30 @@ public class AccountServiceImpl implements AccountService {
                     return accountRepository.save(acc);
                 });
 
-        // Update balances
-        systemAccount.setBalance(systemAccount.getBalance().subtract(amount));
-        userAccount.setBalance(userAccount.getBalance().add(amount));
+        // Lock accounts in ascending ID order to prevent deadlock
+        Long firstId = Math.min(systemAccount.getId(), userAccount.getId());
+        Long secondId = Math.max(systemAccount.getId(), userAccount.getId());
 
-        accountRepository.save(systemAccount);
-        accountRepository.save(userAccount);
+        Account firstLocked = accountRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", firstId));
+        Account secondLocked = accountRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
+
+        Account lockedSystem = firstLocked.getId().equals(systemAccount.getId()) ? firstLocked : secondLocked;
+        Account lockedUser = firstLocked.getId().equals(userAccount.getId()) ? firstLocked : secondLocked;
+
+        // Update balances
+        lockedSystem.setBalance(lockedSystem.getBalance().subtract(amount));
+        lockedUser.setBalance(lockedUser.getBalance().add(amount));
+
+        accountRepository.save(lockedSystem);
+        accountRepository.save(lockedUser);
 
         // Save transaction
         Transaction transaction = Transaction.builder()
                 .transactionRef("TXN-TOPUP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .sourceAccountId(systemAccount.getId())
-                .destAccountId(userAccount.getId())
+                .sourceAccountId(lockedSystem.getId())
+                .destAccountId(lockedUser.getId())
                 .amount(amount)
                 .currency("VND")
                 .type(TransactionType.TOPUP)
@@ -124,22 +140,35 @@ public class AccountServiceImpl implements AccountService {
         // Save ledger entries
         LedgerEntry debitEntry = LedgerEntry.builder()
                 .transactionId(transaction.getId())
-                .accountId(systemAccount.getId())
+                .accountId(lockedSystem.getId())
                 .entryType(EntryType.DEBIT)
                 .amount(amount)
-                .balanceAfter(systemAccount.getBalance())
+                .balanceAfter(lockedSystem.getBalance())
                 .build();
 
         LedgerEntry creditEntry = LedgerEntry.builder()
                 .transactionId(transaction.getId())
-                .accountId(userAccount.getId())
+                .accountId(lockedUser.getId())
                 .entryType(EntryType.CREDIT)
                 .amount(amount)
-                .balanceAfter(userAccount.getBalance())
+                .balanceAfter(lockedUser.getBalance())
                 .build();
 
         ledgerEntryRepository.save(debitEntry);
         ledgerEntryRepository.save(creditEntry);
+
+        // Register post-commit cache eviction
+        final Long evictedAccountId = lockedUser.getId();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    balanceCacheService.evictBalance(evictedAccountId);
+                }
+            });
+        } else {
+            balanceCacheService.evictBalance(evictedAccountId);
+        }
 
         return new TransactionResponse(
                 transaction.getTransactionRef(),
