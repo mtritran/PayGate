@@ -97,7 +97,7 @@ public class AccountServiceImpl implements AccountService {
                     Account acc = Account.builder()
                             .ownerId(0L)
                             .ownerType(OwnerType.SYSTEM)
-                            .accountNumber("SYS00000000000000001")
+                            .accountNumber("SYS0000000000000001")
                             .balance(BigDecimal.valueOf(1_000_000_000_000.00)) // huge initial balance
                             .currency("VND")
                             .status(AccountStatus.ACTIVE)
