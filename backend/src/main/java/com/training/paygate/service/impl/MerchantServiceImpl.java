@@ -4,10 +4,12 @@ import com.training.paygate.dto.request.CreateMerchantRequest;
 import com.training.paygate.dto.request.UpdateMerchantRequest;
 import com.training.paygate.dto.response.MerchantResponse;
 import com.training.paygate.entity.Merchant;
+import com.training.paygate.enums.OwnerType;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.MerchantMapper;
 import com.training.paygate.repository.MerchantRepository;
+import com.training.paygate.service.AccountService;
 import com.training.paygate.service.MerchantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ public class MerchantServiceImpl implements MerchantService {
 
     private final MerchantRepository merchantRepository;
     private final MerchantMapper merchantMapper;
+    private final AccountService accountService;
 
     @Override
     @Transactional(readOnly = true)
@@ -62,8 +65,8 @@ public class MerchantServiceImpl implements MerchantService {
 
         Merchant savedMerchant = merchantRepository.save(merchant);
 
-        // TODO: Tự động tạo Account loại MERCHANT cho merchant này sau khi tích hợp AccountService từ nhánh của Vinh:
-        // accountService.createAccount(new CreateAccountRequest(savedMerchant.getId(), "MERCHANT", "VND"));
+        // Tự động tạo Account loại MERCHANT cho merchant này
+        accountService.createAccount(savedMerchant.getId(), OwnerType.MERCHANT);
 
         return merchantMapper.toResponse(savedMerchant);
     }
