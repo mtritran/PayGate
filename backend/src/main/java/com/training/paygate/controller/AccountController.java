@@ -73,4 +73,20 @@ public class AccountController {
 
         return ApiResponse.success("Balance topped up successfully", response);
     }
+
+    @GetMapping("/{id}/history")
+    @Operation(summary = "Get account history (ledger entries)")
+    public ApiResponse<com.training.paygate.common.PageResponse<com.training.paygate.dto.response.LedgerEntryResponse>> getHistory(
+            @PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "createdAt") String sortBy,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "DESC") String sortDir,
+            Principal principal
+    ) {
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sortDir), sortBy);
+        org.springframework.data.domain.Page<com.training.paygate.dto.response.LedgerEntryResponse> result =
+                accountService.getAccountHistory(id, principal.getName(), org.springframework.data.domain.PageRequest.of(page, size, sort));
+        return ApiResponse.success(com.training.paygate.common.PageResponse.from(result, r -> r));
+    }
 }
