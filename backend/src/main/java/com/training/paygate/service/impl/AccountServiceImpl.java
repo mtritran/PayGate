@@ -2,6 +2,7 @@ package com.training.paygate.service.impl;
 
 import com.training.paygate.cache.BalanceCacheService;
 import com.training.paygate.dto.response.AccountResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
@@ -23,6 +24,8 @@ import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -206,5 +209,30 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return accountMapper.toResponse(account);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<LedgerEntryResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's history");
+        }
+
+        return ledgerEntryRepository.findByAccountId(accountId, pageable)
+                .map(le -> new LedgerEntryResponse(
+                        le.getId(),
+                        le.getTransactionId(),
+                        le.getAccountId(),
+                        le.getEntryType().name(),
+                        le.getAmount(),
+                        le.getBalanceAfter(),
+                        le.getCreatedAt()
+                ));
     }
 }
