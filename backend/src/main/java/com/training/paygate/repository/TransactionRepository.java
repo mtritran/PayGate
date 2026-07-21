@@ -21,6 +21,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     boolean existsByIdempotencyKey(String idempotencyKey);
 
+    boolean existsByDescription(String description);
+
     @Query("SELECT t FROM Transaction t WHERE " +
            "(:ownerAccountId IS NULL OR t.sourceAccountId = :ownerAccountId OR t.destAccountId = :ownerAccountId) AND " +
            "(:type IS NULL OR t.type = :type) AND " +

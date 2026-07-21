@@ -213,7 +213,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LedgerEntryResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
+    public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
@@ -224,15 +224,16 @@ public class AccountServiceImpl implements AccountService {
             throw new AccessDeniedException("You do not have permission to access this account's history");
         }
 
-        return ledgerEntryRepository.findByAccountId(accountId, pageable)
-                .map(le -> new LedgerEntryResponse(
-                        le.getId(),
-                        le.getTransactionId(),
-                        le.getAccountId(),
-                        le.getEntryType().name(),
-                        le.getAmount(),
-                        le.getBalanceAfter(),
-                        le.getCreatedAt()
+        return transactionRepository.findAllWithFiltersAndOwner(accountId, null, null, null, null, null, pageable)
+                .map(t -> new TransactionResponse(
+                        t.getTransactionRef(),
+                        t.getStatus().name(),
+                        t.getAmount(),
+                        t.getSourceAccountId(),
+                        t.getDestAccountId(),
+                        t.getType().name(),
+                        t.getDescription(),
+                        t.getCreatedAt()
                 ));
     }
 }

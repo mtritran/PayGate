@@ -23,5 +23,5 @@ public interface AccountService {
 
     AccountResponse getBalanceChecked(Long accountId, String currentUsername);
 
-    Page<LedgerEntryResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable);
+    Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable);
 }

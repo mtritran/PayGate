@@ -75,8 +75,8 @@ public class AccountController {
     }
 
     @GetMapping("/{id}/history")
-    @Operation(summary = "Get account history (ledger entries)")
-    public ApiResponse<com.training.paygate.common.PageResponse<com.training.paygate.dto.response.LedgerEntryResponse>> getHistory(
+    @Operation(summary = "Get account history (transactions)")
+    public ApiResponse<com.training.paygate.common.PageResponse<com.training.paygate.dto.response.TransactionResponse>> getHistory(
             @PathVariable Long id,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
@@ -85,7 +85,7 @@ public class AccountController {
             Principal principal
     ) {
         org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.fromString(sortDir), sortBy);
-        org.springframework.data.domain.Page<com.training.paygate.dto.response.LedgerEntryResponse> result =
+        org.springframework.data.domain.Page<com.training.paygate.dto.response.TransactionResponse> result =
                 accountService.getAccountHistory(id, principal.getName(), org.springframework.data.domain.PageRequest.of(page, size, sort));
         return ApiResponse.success(com.training.paygate.common.PageResponse.from(result, r -> r));
     }

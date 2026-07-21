@@ -285,14 +285,14 @@ class AccountServiceTest {
         user.setId(5L);
         Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
-        org.springframework.data.domain.Page<LedgerEntry> page = new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList());
+        org.springframework.data.domain.Page<Transaction> page = new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList());
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
-        when(ledgerEntryRepository.findByAccountId(12L, pageable)).thenReturn(page);
+        when(transactionRepository.findAllWithFiltersAndOwner(12L, null, null, null, null, null, pageable)).thenReturn(page);
 
         // When
-        org.springframework.data.domain.Page<LedgerEntryResponse> result = accountService.getAccountHistory(12L, username, pageable);
+        org.springframework.data.domain.Page<TransactionResponse> result = accountService.getAccountHistory(12L, username, pageable);
 
         // Then
         assertThat(result).isNotNull();

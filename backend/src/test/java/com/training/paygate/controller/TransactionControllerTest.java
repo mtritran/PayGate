@@ -122,14 +122,14 @@ class TransactionControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "user1")
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void refund_success() throws Exception {
         // Given
         TransactionResponse response = new TransactionResponse(
                 "TXN-REFUND-123", "COMPLETED", BigDecimal.valueOf(100), 2L, 1L, "REFUND", "Refund for: TXN-PAY-123", LocalDateTime.now()
         );
 
-        when(transactionService.refund(eq("TXN-PAY-123"), eq("user1"))).thenReturn(response);
+        when(transactionService.refund(eq("TXN-PAY-123"), eq("admin"))).thenReturn(response);
 
         // When & Then
         mockMvc.perform(post("/api/v1/transactions/TXN-PAY-123/refund")

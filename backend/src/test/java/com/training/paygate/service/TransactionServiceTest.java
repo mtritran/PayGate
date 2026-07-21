@@ -15,6 +15,7 @@ import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.InsufficientBalanceException;
+import com.training.paygate.exception.InvalidTransactionStateException;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
@@ -349,5 +350,49 @@ class TransactionServiceTest {
         verify(ledgerEntryRepository, times(2)).save(any(LedgerEntry.class));
         verify(balanceCacheService).evictBalance(1L);
         verify(balanceCacheService).evictBalance(2L);
+    }
+
+    @Test
+    void refund_notAdmin_throwsAccessDenied() {
+        // Given
+        String originalRef = "TXN-PAY-123";
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+
+        Transaction originalTx = Transaction.builder()
+                .transactionRef(originalRef)
+                .type(TransactionType.PAYMENT)
+                .status(TransactionStatus.COMPLETED)
+                .build();
+
+        when(transactionRepository.findByTransactionRef(originalRef)).thenReturn(Optional.of(originalTx));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        // When & Then
+        assertThatThrownBy(() -> transactionService.refund(originalRef, username))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class)
+                .hasMessageContaining("Only an ADMIN can request a refund");
+    }
+
+    @Test
+    void refund_alreadyRefunded_throwsInvalidTransactionState() {
+        // Given
+        String originalRef = "TXN-PAY-123";
+        String username = "admin";
+        User user = User.builder().username(username).role(Role.ADMIN).build();
+
+        Transaction originalTx = Transaction.builder()
+                .transactionRef(originalRef)
+                .type(TransactionType.PAYMENT)
+                .status(TransactionStatus.COMPLETED)
+                .build();
+
+        when(transactionRepository.findByTransactionRef(originalRef)).thenReturn(Optional.of(originalTx));
+        when(transactionRepository.existsByDescription("Refund for: " + originalRef)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> transactionService.refund(originalRef, username))
+                .isInstanceOf(InvalidTransactionStateException.class)
+                .hasMessageContaining("has already been refunded");
     }
 }

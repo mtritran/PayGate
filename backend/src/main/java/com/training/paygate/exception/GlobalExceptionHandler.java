@@ -35,6 +35,12 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidTransactionStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void> handleInvalidTransactionState(InvalidTransactionStateException ex) {
+        return ApiResponse.error(ex.getMessage());
+    }
+
     @ExceptionHandler(InsufficientBalanceException.class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public ApiResponse<Void> handleInsufficientBalance(InsufficientBalanceException ex) {

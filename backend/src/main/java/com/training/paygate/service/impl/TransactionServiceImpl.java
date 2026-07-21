@@ -19,6 +19,7 @@ import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.InsufficientBalanceException;
 import com.training.paygate.exception.ResourceNotFoundException;
+import com.training.paygate.exception.InvalidTransactionStateException;
 import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
@@ -260,18 +261,18 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Original transaction not found with reference: " + originalRef));
 
         if (originalTx.getType() != TransactionType.PAYMENT || originalTx.getStatus() != TransactionStatus.COMPLETED) {
-            throw new BadRequestException("Only COMPLETED PAYMENT transactions can be refunded");
+            throw new InvalidTransactionStateException("Transaction " + originalRef + " is not in COMPLETED state");
+        }
+
+        if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
+            throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
 
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
         if (user.getRole() != Role.ADMIN) {
-            Account userAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                    .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
-            if (!originalTx.getSourceAccountId().equals(userAccount.getId())) {
-                throw new AccessDeniedException("Only the original buyer or an ADMIN can request a refund");
-            }
+            throw new AccessDeniedException("Only an ADMIN can request a refund");
         }
 
         // Lock accounts in ascending ID order to prevent deadlock
