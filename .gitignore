@@ -28,3 +28,7 @@
 *.njsproj
 *.sln
 *.sw?
+
+# Agent Customizations
+.agents/
+skills-lock.json
