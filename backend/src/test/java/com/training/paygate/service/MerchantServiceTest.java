@@ -6,6 +6,7 @@ import com.training.paygate.dto.response.MerchantResponse;
 import com.training.paygate.entity.Merchant;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
+import com.training.paygate.enums.OwnerType;
 import com.training.paygate.mapper.MerchantMapper;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.service.impl.MerchantServiceImpl;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +39,9 @@ class MerchantServiceTest {
 
     @Mock
     private MerchantMapper merchantMapper;
+
+    @Mock
+    private AccountService accountService;
 
     @InjectMocks
     private MerchantServiceImpl merchantService;
@@ -66,6 +71,7 @@ class MerchantServiceTest {
         assertThat(result.merchantName()).isEqualTo("Shop ABC");
         assertThat(result.merchantCode()).isEqualTo("SHOPABC");
         verify(merchantRepository).save(any(Merchant.class));
+        verify(accountService).createAccount(any(), eq(OwnerType.MERCHANT));
     }
 
     @Test
