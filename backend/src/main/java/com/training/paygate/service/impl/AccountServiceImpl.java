@@ -36,49 +36,50 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-    private final AccountRepository accountRepository;
-    private final UserRepository userRepository;
-    private final TransactionRepository transactionRepository;
-    private final LedgerEntryRepository ledgerEntryRepository;
-    private final BalanceCacheService balanceCacheService;
-    private final AccountMapper accountMapper;
+        private final AccountRepository accountRepository;
+        private final UserRepository userRepository;
+        private final TransactionRepository transactionRepository;
+        private final LedgerEntryRepository ledgerEntryRepository;
+        private final BalanceCacheService balanceCacheService;
+        private final AccountMapper accountMapper;
 
-    @Override
-    @Transactional
-    public AccountResponse createAccount(Long ownerId, OwnerType ownerType) {
-        if (accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType).isPresent()) {
-            throw new DuplicateResourceException("Account", "ownerId", ownerId);
+        @Override
+        @Transactional
+        public AccountResponse createAccount(Long ownerId, OwnerType ownerType) {
+                if (accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType).isPresent()) {
+                        throw new DuplicateResourceException("Account", "ownerId", ownerId);
+                }
+
+                Account account = Account.builder()
+                                .ownerId(ownerId)
+                                .ownerType(ownerType)
+                                .balance(BigDecimal.ZERO)
+                                .currency("VND")
+                                .status(AccountStatus.ACTIVE)
+                                .accountNumber("TMP-" + UUID.randomUUID().toString().substring(0, 10))
+                                .build();
+
+                Account saved = accountRepository.save(account);
+                saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                saved = accountRepository.save(saved);
+
+                return accountMapper.toResponse(saved);
         }
 
-        Account account = Account.builder()
-                .ownerId(ownerId)
-                .ownerType(ownerType)
-                .balance(BigDecimal.ZERO)
-                .currency("VND")
-                .status(AccountStatus.ACTIVE)
-                .accountNumber("TEMP-" + ownerId + "-" + System.nanoTime())
-                .build();
+        @Override
+        @Transactional(readOnly = true)
+        public AccountResponse getBalance(Long accountId) {
+                Account account = accountRepository.findById(accountId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+                return accountMapper.toResponse(account);
+        }
 
-        Account saved = accountRepository.save(account);
-        saved.setAccountNumber(String.format("AC%08d", saved.getId()));
-        saved = accountRepository.save(saved);
-
-        return accountMapper.toResponse(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getBalance(Long accountId) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
-        return accountMapper.toResponse(account);
-    }
-
-    @Override
+          @Override
     @Transactional(readOnly = true)
     public AccountResponse getByOwnerIdAndType(Long ownerId, OwnerType ownerType) {
         Account account = accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType)
-                .orElseThrow(() -> new ResourceNotFoundException("Account for owner ID: " + ownerId + ", type: " + ownerType + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account for owner ID: " + ownerId
+                        + ", type: " + ownerType + " not found"));
         return accountMapper.toResponse(account);
     }
 
@@ -91,7 +92,7 @@ public class AccountServiceImpl implements AccountService {
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        // Get or Create SYSTEM account
+        // Get or Create SYSTEM account (Đã rút ngắn còn 19 ký tự để tránh lỗi DB VARCHAR(20))
         Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseGet(() -> {
                     Account acc = Account.builder()
@@ -181,30 +182,33 @@ public class AccountServiceImpl implements AccountService {
                 transaction.getCreatedAt()
         );
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getAccountByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
-        Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Account for user " + username + " not found"));
-        return accountMapper.toResponse(account);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
-
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
-
-        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
-            throw new AccessDeniedException("You do not have permission to access this account's balance");
+        @Override
+        @Transactional(readOnly = true)
+        public AccountResponse getAccountByUsername(String username) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found with username: " + username));
+                Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Account for user " + username + " not found"));
+                return accountMapper.toResponse(account);
         }
 
-        return accountMapper.toResponse(account);
-    }
+        @Override
+        @Transactional(readOnly = true)
+        public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
+                User user = userRepository.findByUsername(currentUsername)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found with username: " + currentUsername));
+
+                Account account = accountRepository.findById(accountId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+                if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId())
+                                && account.getOwnerType() == OwnerType.USER)) {
+                        throw new AccessDeniedException("You do not have permission to access this account's balance");
+                }
+
+                return accountMapper.toResponse(account);
+        }
 }
