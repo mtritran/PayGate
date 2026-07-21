@@ -1,20 +1,31 @@
 package com.training.paygate.service;
 
 import com.training.paygate.dto.response.AccountResponse;
+import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
+import com.training.paygate.entity.LedgerEntry;
+import com.training.paygate.entity.Transaction;
+import com.training.paygate.entity.User;
 import com.training.paygate.enums.AccountStatus;
 import com.training.paygate.enums.OwnerType;
+import com.training.paygate.enums.Role;
+import com.training.paygate.enums.TransactionStatus;
+import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.AccountMapper;
 import com.training.paygate.repository.AccountRepository;
+import com.training.paygate.repository.LedgerEntryRepository;
+import com.training.paygate.repository.TransactionRepository;
+import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.impl.AccountServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,6 +41,15 @@ class AccountServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TransactionRepository transactionRepository;
+
+    @Mock
+    private LedgerEntryRepository ledgerEntryRepository;
 
     @Mock
     private AccountMapper accountMapper;
@@ -123,31 +143,130 @@ class AccountServiceTest {
         // Given
         Long accountId = 12L;
         BigDecimal amount = BigDecimal.valueOf(500);
-        Account account = Account.builder()
+        String desc = "Nạp tiền demo";
+
+        Account userAccount = Account.builder()
                 .id(accountId)
                 .balance(BigDecimal.valueOf(1000))
+                .currency("VND")
                 .build();
-        AccountResponse response = new AccountResponse(
-                12L, 1L, "USER", "AC00000012", BigDecimal.valueOf(1500), "VND", "ACTIVE", LocalDateTime.now(), LocalDateTime.now()
-        );
 
-        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
-        when(accountRepository.save(account)).thenReturn(account);
-        when(accountMapper.toResponse(account)).thenReturn(response);
+        Account systemAccount = Account.builder()
+                .id(99L)
+                .ownerId(0L)
+                .ownerType(OwnerType.SYSTEM)
+                .balance(BigDecimal.valueOf(10000000))
+                .currency("VND")
+                .build();
+
+        Transaction transaction = Transaction.builder()
+                .id(1L)
+                .transactionRef("TXN-TOPUP-12345")
+                .sourceAccountId(99L)
+                .destAccountId(12L)
+                .amount(amount)
+                .type(TransactionType.TOPUP)
+                .status(TransactionStatus.COMPLETED)
+                .description(desc)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
 
         // When
-        AccountResponse result = accountService.topUp(accountId, amount);
+        TransactionResponse result = accountService.topUp(accountId, amount, desc);
 
         // Then
-        assertThat(result.balance()).isEqualTo(BigDecimal.valueOf(1500));
-        verify(accountRepository).save(account);
+        assertThat(result.transactionRef()).isEqualTo("TXN-TOPUP-12345");
+        assertThat(result.amount()).isEqualTo(amount);
+        verify(accountRepository, times(2)).save(any(Account.class));
+        verify(transactionRepository).save(any(Transaction.class));
+        verify(ledgerEntryRepository, times(2)).save(any(LedgerEntry.class));
     }
 
     @Test
     void topUp_invalidAmount_throwsException() {
         // When & Then
-        assertThatThrownBy(() -> accountService.topUp(12L, BigDecimal.valueOf(-100)))
+        assertThatThrownBy(() -> accountService.topUp(12L, BigDecimal.valueOf(-100), "Fail"))
                 .isInstanceOf(BadRequestException.class);
         verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void getAccountByUsername_success() {
+        // Given
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(5L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+        AccountResponse response = new AccountResponse(12L, 5L, "USER", "AC00000012", BigDecimal.ZERO, "VND", "ACTIVE", null, null);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.USER)).thenReturn(Optional.of(account));
+        when(accountMapper.toResponse(account)).thenReturn(response);
+
+        // When
+        AccountResponse result = accountService.getAccountByUsername(username);
+
+        // Then
+        assertThat(result.ownerId()).isEqualTo(5L);
+    }
+
+    @Test
+    void getBalanceChecked_asOwner_success() {
+        // Given
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(5L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+        AccountResponse response = new AccountResponse(12L, 5L, "USER", "AC00000012", BigDecimal.valueOf(100), "VND", "ACTIVE", null, null);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
+        when(accountMapper.toResponse(account)).thenReturn(response);
+
+        // When
+        AccountResponse result = accountService.getBalanceChecked(12L, username);
+
+        // Then
+        assertThat(result.balance()).isEqualTo(BigDecimal.valueOf(100));
+    }
+
+    @Test
+    void getBalanceChecked_asStranger_throwsAccessDenied() {
+        // Given
+        String username = "stranger";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(9L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
+
+        // When & Then
+        assertThatThrownBy(() -> accountService.getBalanceChecked(12L, username))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void getBalanceChecked_asAdmin_success() {
+        // Given
+        String username = "admin";
+        User user = User.builder().username(username).role(Role.ADMIN).build();
+        user.setId(9L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+        AccountResponse response = new AccountResponse(12L, 5L, "USER", "AC00000012", BigDecimal.valueOf(100), "VND", "ACTIVE", null, null);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
+        when(accountMapper.toResponse(account)).thenReturn(response);
+
+        // When
+        AccountResponse result = accountService.getBalanceChecked(12L, username);
+
+        // Then
+        assertThat(result.balance()).isEqualTo(BigDecimal.valueOf(100));
     }
 }
