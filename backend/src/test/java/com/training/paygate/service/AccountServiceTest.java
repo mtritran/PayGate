@@ -2,6 +2,7 @@ package com.training.paygate.service;
 
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
 import com.training.paygate.entity.Transaction;
@@ -274,5 +275,27 @@ class AccountServiceTest {
 
         // Then
         assertThat(result.balance()).isEqualTo(BigDecimal.valueOf(100));
+    }
+
+    @Test
+    void getAccountHistory_success() {
+        // Given
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(5L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<LedgerEntry> page = new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList());
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
+        when(ledgerEntryRepository.findByAccountId(12L, pageable)).thenReturn(page);
+
+        // When
+        org.springframework.data.domain.Page<LedgerEntryResponse> result = accountService.getAccountHistory(12L, username, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
     }
 }

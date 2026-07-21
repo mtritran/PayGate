@@ -22,6 +22,8 @@ import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.impl.TransactionServiceImpl;
 import com.training.paygate.messaging.event.PaymentCompletedEvent;
+import com.training.paygate.enums.Role;
+import com.training.paygate.dto.response.TransactionDetailResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -254,5 +256,98 @@ class TransactionServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Merchant is inactive");
         verify(accountRepository, never()).findByIdForUpdate(anyLong());
+    }
+
+    @Test
+    void getTransactionByRef_success() {
+        // Given
+        String ref = "TXN-123";
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(5L);
+        Account userAccount = Account.builder().id(1L).ownerId(5L).ownerType(OwnerType.USER).build();
+
+        Transaction tx = Transaction.builder()
+                .id(10L)
+                .transactionRef(ref)
+                .sourceAccountId(1L)
+                .destAccountId(2L)
+                .amount(BigDecimal.valueOf(100))
+                .type(TransactionType.PAYMENT)
+                .status(TransactionStatus.COMPLETED)
+                .build();
+
+        when(transactionRepository.findByTransactionRef(ref)).thenReturn(Optional.of(tx));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
+        when(ledgerEntryRepository.findByTransactionId(10L)).thenReturn(java.util.Collections.emptyList());
+
+        // When
+        TransactionDetailResponse result = transactionService.getTransactionByRef(ref, username);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.transactionRef()).isEqualTo(ref);
+    }
+
+    @Test
+    void refund_success() {
+        // Given
+        String originalRef = "TXN-PAY-123";
+        String username = "admin";
+        User user = User.builder().username(username).role(Role.ADMIN).build();
+
+        Transaction originalTx = Transaction.builder()
+                .id(100L)
+                .transactionRef(originalRef)
+                .sourceAccountId(1L)
+                .destAccountId(2L)
+                .amount(BigDecimal.valueOf(100))
+                .type(TransactionType.PAYMENT)
+                .status(TransactionStatus.COMPLETED)
+                .currency("VND")
+                .merchantId(5L)
+                .build();
+
+        Account sourceAccount = Account.builder()
+                .id(1L)
+                .ownerId(12L)
+                .ownerType(OwnerType.USER)
+                .balance(BigDecimal.valueOf(500))
+                .build();
+
+        Account destAccount = Account.builder()
+                .id(2L)
+                .ownerId(5L)
+                .ownerType(OwnerType.MERCHANT)
+                .balance(BigDecimal.valueOf(1000))
+                .build();
+
+        Transaction refundTx = Transaction.builder()
+                .id(101L)
+                .transactionRef("TXN-REFUND-123")
+                .sourceAccountId(2L)
+                .destAccountId(1L)
+                .amount(BigDecimal.valueOf(100))
+                .type(TransactionType.REFUND)
+                .status(TransactionStatus.COMPLETED)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(transactionRepository.findByTransactionRef(originalRef)).thenReturn(Optional.of(originalTx));
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(destAccount));
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(refundTx);
+
+        // When
+        TransactionResponse result = transactionService.refund(originalRef, username);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.type()).isEqualTo("REFUND");
+        verify(ledgerEntryRepository, times(2)).save(any(LedgerEntry.class));
+        verify(balanceCacheService).evictBalance(1L);
+        verify(balanceCacheService).evictBalance(2L);
     }
 }
