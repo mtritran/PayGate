@@ -84,6 +84,8 @@ public class WebhookConsumer {
         String responseBody = null;
         WebhookStatus webhookStatus;
 
+        java.time.LocalDateTime nextRetryAt = null;
+
         try {
             log.info("Dispatching webhook POST request to {} for transaction {}", targetUrl, event.transactionRef());
             HttpHeaders headers = new HttpHeaders();
@@ -98,13 +100,15 @@ public class WebhookConsumer {
         } catch (HttpStatusCodeException ex) {
             responseStatus = ex.getStatusCode().value();
             responseBody = ex.getResponseBodyAsString();
-            webhookStatus = WebhookStatus.FAILED;
-            log.error("Webhook delivery failed with HTTP status {} to {} for transaction {}: {}", responseStatus, targetUrl, event.transactionRef(), ex.getMessage());
+            webhookStatus = WebhookStatus.RETRYING;
+            nextRetryAt = java.time.LocalDateTime.now().plusMinutes(1);
+            log.error("Webhook delivery failed with HTTP status {} to {} for transaction {}. Scheduled retry at: {}", responseStatus, targetUrl, event.transactionRef(), nextRetryAt);
         } catch (Exception ex) {
             responseStatus = 500;
             responseBody = ex.getMessage();
-            webhookStatus = WebhookStatus.FAILED;
-            log.error("Webhook delivery failed to {} for transaction {}: {}", targetUrl, event.transactionRef(), ex.getMessage());
+            webhookStatus = WebhookStatus.RETRYING;
+            nextRetryAt = java.time.LocalDateTime.now().plusMinutes(1);
+            log.error("Webhook delivery failed to {} for transaction {}. Scheduled retry at: {}", targetUrl, event.transactionRef(), nextRetryAt);
         }
 
         // 5. Log execution result
@@ -117,6 +121,7 @@ public class WebhookConsumer {
                 .responseBody(responseBody)
                 .attempt(1)
                 .status(webhookStatus)
+                .nextRetryAt(nextRetryAt)
                 .build();
 
         webhookLogRepository.save(webhookLog);
