@@ -92,6 +92,9 @@ public class AccountServiceImpl implements AccountService {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Topup amount must be positive");
         }
+        if (amount.compareTo(BigDecimal.valueOf(1_000_000_000)) > 0) {
+            throw new BadRequestException("Topup amount cannot exceed 1,000,000,000 VND per transaction");
+        }
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
@@ -102,7 +105,7 @@ public class AccountServiceImpl implements AccountService {
                             .ownerId(0L)
                             .ownerType(OwnerType.SYSTEM)
                             .accountNumber("SYS0000000000000001")
-                            .balance(BigDecimal.valueOf(1_000_000_000_000.00)) // huge initial balance
+                            .balance(BigDecimal.valueOf(99_000_000_000.00)) // initial balance within DECIMAL(15,2)
                             .currency("VND")
                             .status(AccountStatus.ACTIVE)
                             .build();
@@ -120,6 +123,10 @@ public class AccountServiceImpl implements AccountService {
 
         Account lockedSystem = firstLocked.getId().equals(systemAccount.getId()) ? firstLocked : secondLocked;
         Account lockedUser = firstLocked.getId().equals(userAccount.getId()) ? firstLocked : secondLocked;
+
+        if (lockedUser.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("User account is not active");
+        }
 
         // Update balances
         lockedSystem.setBalance(lockedSystem.getBalance().subtract(amount));

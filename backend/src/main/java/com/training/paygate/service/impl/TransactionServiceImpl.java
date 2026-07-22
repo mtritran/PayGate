@@ -89,7 +89,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Source and destination accounts must be different");
         }
 
-        // 4. Verify merchant active status if merchantId is provided
+        // 4. Verify merchant active status if merchantId is provided or destination is merchant
         String merchantWebhookUrl = null;
         if (request.merchantId() != null) {
             Merchant merchant = merchantRepository.findById(request.merchantId())
@@ -98,6 +98,14 @@ public class TransactionServiceImpl implements TransactionService {
                 throw new BadRequestException("Merchant is inactive");
             }
             merchantWebhookUrl = merchant.getWebhookUrl();
+        } else if (destAccount.getOwnerType() == OwnerType.MERCHANT) {
+            Merchant merchant = merchantRepository.findById(destAccount.getOwnerId()).orElse(null);
+            if (merchant != null && !merchant.isActive()) {
+                throw new BadRequestException("Merchant is inactive");
+            }
+            if (merchant != null) {
+                merchantWebhookUrl = merchant.getWebhookUrl();
+            }
         }
 
         // 5. Lock accounts in ascending ID order to prevent deadlock
@@ -111,6 +119,21 @@ public class TransactionServiceImpl implements TransactionService {
 
         Account lockedSource = firstLocked.getId().equals(sourceAccount.getId()) ? firstLocked : secondLocked;
         Account lockedDest = firstLocked.getId().equals(destAccount.getId()) ? firstLocked : secondLocked;
+
+        // 5.1 Re-check idempotency key AFTER acquiring locks to prevent concurrent duplicate payments
+        Transaction concurrentTx = transactionRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null);
+        if (concurrentTx != null) {
+            idempotencyCacheService.set(request.idempotencyKey(), concurrentTx.getTransactionRef());
+            return mapToResponse(concurrentTx);
+        }
+
+        // 5.2 Validate account active status
+        if (lockedSource.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
+            throw new BadRequestException("Source account is not active");
+        }
+        if (lockedDest.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
+            throw new BadRequestException("Destination account is not active");
+        }
 
         // 6. Validate balance
         if (lockedSource.getBalance().compareTo(request.amount()) < 0) {
@@ -264,6 +287,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " is not in COMPLETED state");
         }
 
+        // Fast-path check for already refunded transaction
         if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
@@ -284,6 +308,11 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Account", firstId));
         Account secondLocked = accountRepository.findByIdForUpdate(secondId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
+
+        // Concurrency guard: Re-check if already refunded AFTER acquiring locks to prevent race condition
+        if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
+            throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
+        }
 
         // Original source account gets money back (dest of refund)
         Account lockedUser = firstLocked.getId().equals(originalTx.getSourceAccountId()) ? firstLocked : secondLocked;
