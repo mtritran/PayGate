@@ -22,6 +22,22 @@ import { AuthService } from '../../core/services/auth.service';
             <mat-icon matListItemIcon>dashboard</mat-icon>
             <span matListItemTitle>Dashboard</span>
           </a>
+          <a mat-list-item routerLink="/accounts/dashboard" routerLinkActive="active">
+            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+            <span matListItemTitle>Ví & Số Dư</span>
+          </a>
+          <a mat-list-item routerLink="/accounts/topup" routerLinkActive="active">
+            <mat-icon matListItemIcon>add_card</mat-icon>
+            <span matListItemTitle>Nạp Tiền</span>
+          </a>
+          <a mat-list-item routerLink="/transactions/pay" routerLinkActive="active">
+            <mat-icon matListItemIcon>payment</mat-icon>
+            <span matListItemTitle>Thanh Toán</span>
+          </a>
+          <a mat-list-item routerLink="/transactions/history" routerLinkActive="active">
+            <mat-icon matListItemIcon>history</mat-icon>
+            <span matListItemTitle>Lịch Sử Giao Dịch</span>
+          </a>
           <a mat-list-item routerLink="/users" routerLinkActive="active">
             <mat-icon matListItemIcon>people</mat-icon>
             <span matListItemTitle>Users</span>

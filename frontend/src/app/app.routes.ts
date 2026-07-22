@@ -23,6 +23,22 @@ export const routes: Routes = [
       {
         path: 'users/:id/edit',
         loadComponent: () => import('./features/users/user-form/user-form.component').then(m => m.UserFormComponent)
+      },
+      {
+        path: 'accounts/dashboard',
+        loadComponent: () => import('./features/account/account-dashboard/account-dashboard.component').then(m => m.AccountDashboardComponent)
+      },
+      {
+        path: 'accounts/topup',
+        loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
+      },
+      {
+        path: 'transactions/pay',
+        loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
+      },
+      {
+        path: 'transactions/history',
+        loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
       }
     ]
   },
