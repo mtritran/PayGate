@@ -2,6 +2,7 @@ package com.training.paygate.service.impl;
 
 import com.training.paygate.cache.BalanceCacheService;
 import com.training.paygate.dto.response.AccountResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
@@ -23,6 +24,8 @@ import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -194,21 +197,45 @@ public class AccountServiceImpl implements AccountService {
                 return accountMapper.toResponse(account);
         }
 
-        @Override
-        @Transactional(readOnly = true)
-        public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
-                User user = userRepository.findByUsername(currentUsername)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found with username: " + currentUsername));
+    @Override
+    @Transactional(readOnly = true)
+    public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
-                Account account = accountRepository.findById(accountId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-                if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId())
-                                && account.getOwnerType() == OwnerType.USER)) {
-                        throw new AccessDeniedException("You do not have permission to access this account's balance");
-                }
-
-                return accountMapper.toResponse(account);
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's balance");
         }
+
+        return accountMapper.toResponse(account);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's history");
+        }
+
+        return transactionRepository.findAllWithFiltersAndOwner(accountId, null, null, null, null, null, pageable)
+                .map(t -> new TransactionResponse(
+                        t.getTransactionRef(),
+                        t.getStatus().name(),
+                        t.getAmount(),
+                        t.getSourceAccountId(),
+                        t.getDestAccountId(),
+                        t.getType().name(),
+                        t.getDescription(),
+                        t.getCreatedAt()
+                ));
+    }
 }
