@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "8d3e2300-349c-485a-8b89-f538e124ea88",
-		"name": "PayGate APIs",
-		"description": "Collection để kiểm thử các API của dự án PayGate (Authentication, Merchant Admin, v.v.)",
+		"name": "PayGate APIs - Full System Collection",
+		"description": "Bộ sưu tập Postman đầy đủ kiểm thử toàn bộ hệ thống Cổng thanh toán PayGate (Authentication, Accounts, Merchants, Payments, Double-Entry Ledger Audit, Webhooks)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -35,7 +35,7 @@
 								"register"
 							]
 						},
-						"description": "Đăng ký một tài khoản mới. Mặc định tài khoản được tạo sẽ có quyền USER. Để test các API Admin, bạn cần chạy câu lệnh SQL cập nhật role lên ADMIN."
+						"description": "Đăng ký một tài khoản mới."
 					},
 					"response": []
 				},
@@ -80,14 +80,90 @@
 								"login"
 							]
 						},
-						"description": "Đăng nhập với tài khoản vừa tạo để lấy JWT Token. Token sẽ tự động được trích xuất và lưu vào biến `jwtToken` để sử dụng ở các request sau."
+						"description": "Đăng nhập lấy JWT Token. Token được lưu tự động vào biến `jwtToken`."
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "2. Merchant Admin",
+			"name": "2. User Management",
+			"item": [
+				{
+					"name": "Get Current User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"me"
+							]
+						},
+						"description": "Lấy thông tin tài khoản người dùng đang đăng nhập dựa trên JWT Token."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Lấy danh sách người dùng phân trang dành cho Admin."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Merchant Admin",
 			"item": [
 				{
 					"name": "Create Merchant",
@@ -99,7 +175,8 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.data && jsonData.data.id) {",
 									"    pm.collectionVariables.set(\"merchantId\", jsonData.data.id);",
-									"    console.log(\"Saved merchantId to variables: \" + jsonData.data.id);",
+									"    pm.collectionVariables.set(\"merchantCode\", jsonData.data.merchantCode);",
+									"    console.log(\"Saved merchantId: \" + jsonData.data.id + \", merchantCode: \" + jsonData.data.merchantCode);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -126,7 +203,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": 1,\n    \"merchantName\": \"Shop TechMart\",\n    \"merchantCode\": \"TECHMART\",\n    \"webhookUrl\": \"https://techmart.com/webhook\"\n}"
+							"raw": "{\n    \"userId\": 1,\n    \"merchantName\": \"Shop TechMart\",\n    \"merchantCode\": \"TECHMART\",\n    \"webhookUrl\": \"https://webhook.site/test-endpoint\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/admin/merchants",
@@ -140,7 +217,7 @@
 								"merchants"
 							]
 						},
-						"description": "Đăng ký đối tác Merchant mới (Yêu cầu token của tài khoản ADMIN). Khi tạo thành công, hệ thống sẽ tự động tạo ví MERCHANT tương ứng thông qua AccountService."
+						"description": "Đăng ký đối tác Merchant mới (Yêu cầu ADMIN). Tự động khởi tạo Ví MERCHANT."
 					},
 					"response": []
 				},
@@ -189,7 +266,7 @@
 								}
 							]
 						},
-						"description": "Lấy danh sách các đối tác Merchant phân trang (Yêu cầu ADMIN)."
+						"description": "Lấy danh sách các Merchant phân trang."
 					},
 					"response": []
 				},
@@ -221,7 +298,7 @@
 								"{{merchantId}}"
 							]
 						},
-						"description": "Chi tiết thông tin của Merchant dựa trên merchantId đã lưu tự động."
+						"description": "Truy vấn chi tiết Merchant theo merchantId."
 					},
 					"response": []
 				},
@@ -247,7 +324,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"merchantName\": \"TechMart Super Store\",\n    \"webhookUrl\": \"https://new.techmart.com/webhook\",\n    \"active\": true\n}"
+							"raw": "{\n    \"merchantName\": \"TechMart Super Store\",\n    \"webhookUrl\": \"https://webhook.site/updated-endpoint\",\n    \"active\": true\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/admin/merchants/{{merchantId}}",
@@ -262,7 +339,417 @@
 								"{{merchantId}}"
 							]
 						},
-						"description": "Cập nhật thông tin chi tiết của đối tác Merchant."
+						"description": "Cập nhật thông tin Merchant."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Account & Wallet",
+			"item": [
+				{
+					"name": "Top Up Wallet Balance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 500000.00,\n    \"paymentMethod\": \"BANK_TRANSFER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/accounts/topup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"topup"
+							]
+						},
+						"description": "Nạp tiền vào tài khoản ví cá nhân."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User Account",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/accounts/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"me"
+							]
+						},
+						"description": "Xem chi tiết số dư và thông tin ví cá nhân của người dùng hiện tại."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account Dashboard Overview",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/accounts/dashboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"dashboard"
+							]
+						},
+						"description": "Xem tổng quan Dashboard ví tài khoản."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Transactions & Payment",
+			"item": [
+				{
+					"name": "Process Payment (Idempotency Key)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "IDEM-PAY-TEST-9999"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchantCode\": \"TECHMART\",\n    \"amount\": 100000.00,\n    \"description\": \"Thanh toan don hang test #1001\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/transactions/pay",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"transactions",
+								"pay"
+							]
+						},
+						"description": "Thực hiện thanh toán giao dịch với Idempotency Key chống trùng nạp."
+					},
+					"response": []
+				},
+				{
+					"name": "Process Payment Retry (Test Idempotency)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "IDEM-PAY-TEST-9999"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchantCode\": \"TECHMART\",\n    \"amount\": 100000.00,\n    \"description\": \"Thanh toan don hang test #1001\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/transactions/pay",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"transactions",
+								"pay"
+							]
+						},
+						"description": "Gửi lại trùng Idempotency-Key: Trả về kết quả giao dịch cũ ngay lập tức mà KHÔNG trừ tiền thêm lần 2."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction History",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/transactions/history?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"transactions",
+								"history"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Lấy danh sách lịch sử giao dịch thanh toán."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "6. Double-Entry Ledger Audit (Admin)",
+			"item": [
+				{
+					"name": "Verify Double-Entry Ledger Balance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/ledger/verify",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"ledger",
+								"verify"
+							]
+						},
+						"description": "Kiểm tra toàn vẹn tài chính hệ thống Sổ cái kép (Kiểm tra totalDebit == totalCredit)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account Ledger Entries",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/ledger/account/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"ledger",
+								"account",
+								"1"
+							]
+						},
+						"description": "Xem chi tiết nhật ký chép sổ Sổ cái (DEBIT / CREDIT) của một Tài khoản cụ thể."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "7. Webhook Audit (Admin)",
+			"item": [
+				{
+					"name": "Get All Webhook Logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/webhooks?page=0&size=10&sortBy=createdAt&sortDir=DESC",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"webhooks"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt"
+								},
+								{
+									"key": "sortDir",
+									"value": "DESC"
+								}
+							]
+						},
+						"description": "Truy vấn danh sách nhật ký thực thi gửi webhook phân trang dành cho Admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Webhook Logs (Filter SUCCESS Status)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/webhooks?page=0&size=10&status=SUCCESS",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"webhooks"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "SUCCESS"
+								}
+							]
+						},
+						"description": "Lọc nhật ký gửi webhook theo trạng thái SUCCESS."
 					},
 					"response": []
 				}
@@ -282,7 +769,12 @@
 		},
 		{
 			"key": "merchantId",
-			"value": "",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "merchantCode",
+			"value": "TECHMART",
 			"type": "string"
 		}
 	]
