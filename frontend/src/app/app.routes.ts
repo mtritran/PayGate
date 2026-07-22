@@ -54,6 +54,16 @@ export const routes: Routes = [
         path: 'admin/ledger',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/ledger/admin-ledger/admin-ledger.component').then(m => m.AdminLedgerComponent)
+      },
+      {
+        path: 'admin/dashboard',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/dashboard/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+      },
+      {
+        path: 'admin/webhooks',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/webhook/webhook-log/webhook-log.component').then(m => m.WebhookLogComponent)
       }
     ]
   },

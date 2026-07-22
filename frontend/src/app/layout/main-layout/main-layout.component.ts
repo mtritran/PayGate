@@ -68,7 +68,7 @@ import { AuthService } from '../../core/services/auth.service';
           <!-- Admin Section -->
           <div class="nav-section-label">Admin</div>
           <mat-nav-list class="custom-nav-list">
-            <a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+            <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="active">
               <mat-icon matListItemIcon class="nav-icon">insights</mat-icon>
               <span matListItemTitle class="nav-title">Overview</span>
             </a>
@@ -80,7 +80,7 @@ import { AuthService } from '../../core/services/auth.service';
               <mat-icon matListItemIcon class="nav-icon">account_balance</mat-icon>
               <span matListItemTitle class="nav-title">Ledger</span>
             </a>
-            <a mat-list-item routerLink="/users" routerLinkActive="active">
+            <a mat-list-item routerLink="/admin/webhooks" routerLinkActive="active">
               <mat-icon matListItemIcon class="nav-icon">rss_feed</mat-icon>
               <span matListItemTitle class="nav-title">Webhook Logs</span>
             </a>
