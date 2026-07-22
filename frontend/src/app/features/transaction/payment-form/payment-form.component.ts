@@ -29,102 +29,116 @@ import { AccountService } from '../../../core/services/account.service';
     MatSnackBarModule
   ],
   template: `
-    <div class="payment-container">
-      <mat-card class="form-card">
-        <mat-card-header>
-          <mat-icon mat-card-avatar color="accent">payment</mat-icon>
-          <mat-card-title>Thanh Toán / Chuyển Tiền</mat-card-title>
-          <mat-card-subtitle>Số dư ví hiện tại: {{ myBalance | currency:'VND':'symbol':'1.0-0' }}</mat-card-subtitle>
-        </mat-card-header>
+    <div class="paygate-form-page">
+      <div class="form-header-group">
+        <h2>Send Payment</h2>
+        <p class="subtitle">Execute secure payment with double-entry ledger & idempotency protection.</p>
+      </div>
 
-        <mat-card-content>
-          <form [formGroup]="paymentForm" (ngSubmit)="openConfirmation()" class="payment-form">
-            <!-- Destination Account ID -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>ID Tài Khoản Đích (destAccountId)</mat-label>
-              <input matInput type="number" formControlName="destAccountId" placeholder="Nhập ID tài khoản nhận tiền...">
-              <mat-error *ngIf="paymentForm.get('destAccountId')?.hasError('required')">
-                Vui lòng nhập ID tài khoản nhận tiền
-              </mat-error>
-            </mat-form-field>
+      <div class="content-card form-card">
+        <div class="balance-strip">
+          <span>Available Wallet Balance:</span>
+          <strong>{{ myBalance | currency:'VND':'symbol':'1.0-0' }}</strong>
+        </div>
 
-            <!-- Amount Field -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Số tiền (VND)</mat-label>
-              <input matInput type="number" formControlName="amount" placeholder="Nhập số tiền..." min="1000">
-              <mat-error *ngIf="paymentForm.get('amount')?.hasError('required')">
-                Vui lòng nhập số tiền thanh toán
-              </mat-error>
-              <mat-error *ngIf="paymentForm.get('amount')?.hasError('min')">
-                Số tiền tối thiểu là 1,000 VND
-              </mat-error>
-            </mat-form-field>
+        <form [formGroup]="paymentForm" (ngSubmit)="openConfirmation()" class="custom-form">
+          <!-- Destination Account ID -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Destination Account ID (destAccountId)</mat-label>
+            <input matInput type="number" formControlName="destAccountId" placeholder="e.g. 2">
+            <mat-error *ngIf="paymentForm.get('destAccountId')?.hasError('required')">
+              Destination account ID is required
+            </mat-error>
+          </mat-form-field>
 
-            <!-- Merchant ID (Optional) -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Mã Đơn Vị Chấp Nhận Thanh Toán (Merchant ID - Không bắt buộc)</mat-label>
-              <input matInput type="number" formControlName="merchantId" placeholder="Nhập Merchant ID nếu có...">
-            </mat-form-field>
+          <!-- Amount Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Amount (VND)</mat-label>
+            <input matInput type="number" formControlName="amount" placeholder="e.g. 100000" min="1000">
+            <mat-error *ngIf="paymentForm.get('amount')?.hasError('required')">
+              Amount is required
+            </mat-error>
+            <mat-error *ngIf="paymentForm.get('amount')?.hasError('min')">
+              Minimum amount is 1,000 VND
+            </mat-error>
+          </mat-form-field>
 
-            <!-- Description Field -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nội dung thanh toán</mat-label>
-              <input matInput formControlName="description" placeholder="Nhập nội dung thanh toán...">
-            </mat-form-field>
+          <!-- Merchant ID (Optional) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Merchant ID (Optional)</mat-label>
+            <input matInput type="number" formControlName="merchantId" placeholder="e.g. 1">
+          </mat-form-field>
 
-            <!-- Idempotency Key Field -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Khóa Idempotency Key (Chống trùng lặp)</mat-label>
-              <input matInput formControlName="idempotencyKey" readonly>
-              <button mat-icon-button matSuffix type="button" (click)="generateIdempotencyKey()" title="Tạo mới khóa">
-                <mat-icon>refresh</mat-icon>
-              </button>
-            </mat-form-field>
+          <!-- Description Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Payment Description</mat-label>
+            <input matInput formControlName="description" placeholder="Payment for PayGate service">
+          </mat-form-field>
 
-            <div class="actions">
-              <button mat-raised-button color="accent" type="submit" [disabled]="paymentForm.invalid || submitting">
-                Xác Nhận & Xem Lại
-              </button>
-              <a mat-button routerLink="/accounts/dashboard">Hủy bỏ</a>
+          <!-- Idempotency Key Field -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Idempotency Key (Auto-generated UUID)</mat-label>
+            <input matInput formControlName="idempotencyKey" readonly>
+            <button mat-icon-button matSuffix type="button" (click)="generateIdempotencyKey()" title="Regenerate Key">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button class="btn-emerald-primary" type="submit" [disabled]="paymentForm.invalid || submitting">
+              Review Payment ↗
+            </button>
+            <a mat-button class="btn-cancel" routerLink="/accounts/dashboard">Cancel</a>
+          </div>
+        </form>
+
+        <!-- Confirmation Overlay Dialog -->
+        <div *ngIf="showConfirmModal" class="confirm-modal-overlay">
+          <div class="confirm-modal-box">
+            <h3><mat-icon class="emerald-icon">help_outline</mat-icon> Confirm Payment Transaction</h3>
+            <p class="modal-desc">Please review transaction details before processing:</p>
+
+            <div class="confirm-details">
+              <div class="detail-row"><span>Destination Account:</span> <strong>#{{ paymentForm.value.destAccountId }}</strong></div>
+              <div class="detail-row"><span>Amount:</span> <strong>{{ paymentForm.value.amount | currency:'VND':'symbol':'1.0-0' }}</strong></div>
+              <div class="detail-row"><span>Description:</span> <strong>{{ paymentForm.value.description || 'PayGate Payment' }}</strong></div>
+              <div class="detail-row key"><span class="key-text">Idempotency Key: {{ paymentForm.value.idempotencyKey }}</span></div>
             </div>
-          </form>
 
-          <!-- Confirmation Overlay Dialog -->
-          <div *ngIf="showConfirmModal" class="confirm-modal-overlay">
-            <div class="confirm-modal-box">
-              <h3><mat-icon color="accent">help_outline</mat-icon> Xác Nhận Giao Dịch</h3>
-              <p>Bạn có chắc chắn muốn thực hiện giao dịch chuyển tiền này?</p>
-
-              <div class="confirm-details">
-                <p><strong>Tài khoản đích:</strong> #{{ paymentForm.value.destAccountId }}</p>
-                <p><strong>Số tiền:</strong> {{ paymentForm.value.amount | currency:'VND':'symbol':'1.0-0' }}</p>
-                <p><strong>Nội dung:</strong> {{ paymentForm.value.description || 'Thanh toán ví' }}</p>
-                <p class="key-text"><strong>Idempotency Key:</strong> {{ paymentForm.value.idempotencyKey }}</p>
-              </div>
-
-              <div class="modal-actions">
-                <button mat-raised-button color="accent" (click)="executePayment()" [disabled]="submitting">
-                  <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
-                  <span *ngIf="!submitting">Đồng Ý Thanh Toán</span>
-                </button>
-                <button mat-button (click)="closeConfirmation()" [disabled]="submitting">Quay Lại Sửa</button>
-              </div>
+            <div class="modal-actions">
+              <button mat-raised-button class="btn-emerald-primary" (click)="executePayment()" [disabled]="submitting">
+                <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
+                <span *ngIf="!submitting">Confirm & Pay</span>
+              </button>
+              <button mat-button class="btn-cancel" (click)="closeConfirmation()" [disabled]="submitting">Edit</button>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
-    .payment-container { display: flex; justify-content: center; padding: 24px; }
-    .form-card { width: 100%; max-width: 580px; position: relative; }
-    .payment-form { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 640px; margin: 0 auto; width: 100%; color: #0f172a; }
+    .form-header-group h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px 0; }
+    .subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
+    
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+    .balance-strip { background-color: #ecfdf5; color: #047857; padding: 12px 16px; border-radius: 8px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 1px solid #a7f3d0; }
+    
+    .custom-form { display: flex; flex-direction: column; gap: 12px; }
     .full-width { width: 100%; }
-    .actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-    .confirm-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .confirm-modal-box { background: white; padding: 24px; border-radius: 8px; max-width: 440px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-    .confirm-details { background: #f5f5f5; padding: 12px 16px; border-radius: 6px; margin: 16px 0; font-size: 0.95rem; }
-    .key-text { font-size: 0.8rem; word-break: break-all; color: #666; }
+    
+    .form-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .btn-emerald-primary { background-color: #059669 !important; color: #ffffff !important; border-radius: 8px; font-weight: 600; font-size: 0.875rem; height: 42px; padding: 0 20px; }
+    .btn-cancel { color: #64748b; font-weight: 600; font-size: 0.875rem; }
+
+    .confirm-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .confirm-modal-box { background: white; padding: 28px; border-radius: 12px; max-width: 460px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .emerald-icon { color: #059669; vertical-align: middle; }
+    .modal-desc { font-size: 0.875rem; color: #64748b; margin-top: 4px; }
+    .confirm-details { background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0; font-size: 0.9rem; display: flex; flex-direction: column; gap: 8px; }
+    .detail-row { display: flex; justify-content: space-between; }
+    .key-text { font-size: 0.78rem; font-family: monospace; color: #64748b; word-break: break-all; }
     .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
   `]
 })
@@ -189,7 +203,7 @@ export class PaymentFormComponent implements OnInit {
         this.submitting = false;
         this.showConfirmModal = false;
         if (res.success && res.data) {
-          this.snackBar.open(`Thanh toán thành công! Mã GD: ${res.data.transactionRef}`, 'Đóng', { duration: 4000 });
+          this.snackBar.open(`Thanh toán thành công! Mã Ref: ${res.data.transactionRef}`, 'Close', { duration: 4000 });
           this.router.navigate(['/transactions/history']);
         }
       },
@@ -197,7 +211,7 @@ export class PaymentFormComponent implements OnInit {
         this.submitting = false;
         this.showConfirmModal = false;
         const msg = err.error?.message || 'Thanh toán thất bại!';
-        this.snackBar.open(msg, 'Đóng', { duration: 4000 });
+        this.snackBar.open(msg, 'Close', { duration: 4000 });
       }
     });
   }
