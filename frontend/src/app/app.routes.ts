@@ -29,6 +29,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/account/account-dashboard/account-dashboard.component').then(m => m.AccountDashboardComponent)
       },
       {
+        path: 'accounts/me',
+        loadComponent: () => import('./features/account/my-account/my-account.component').then(m => m.MyAccountComponent)
+      },
+      {
         path: 'accounts/topup',
         loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
       },
