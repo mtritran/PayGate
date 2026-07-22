@@ -2,6 +2,7 @@ package com.training.paygate.service.impl;
 
 import com.training.paygate.cache.BalanceCacheService;
 import com.training.paygate.dto.response.AccountResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
@@ -23,6 +24,8 @@ import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +92,9 @@ public class AccountServiceImpl implements AccountService {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Topup amount must be positive");
         }
+        if (amount.compareTo(BigDecimal.valueOf(1_000_000_000)) > 0) {
+            throw new BadRequestException("Topup amount cannot exceed 1,000,000,000 VND per transaction");
+        }
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
@@ -99,7 +105,7 @@ public class AccountServiceImpl implements AccountService {
                             .ownerId(0L)
                             .ownerType(OwnerType.SYSTEM)
                             .accountNumber("SYS0000000000000001")
-                            .balance(BigDecimal.valueOf(1_000_000_000_000.00)) // huge initial balance
+                            .balance(BigDecimal.valueOf(99_000_000_000.00)) // initial balance within DECIMAL(15,2)
                             .currency("VND")
                             .status(AccountStatus.ACTIVE)
                             .build();
@@ -117,6 +123,10 @@ public class AccountServiceImpl implements AccountService {
 
         Account lockedSystem = firstLocked.getId().equals(systemAccount.getId()) ? firstLocked : secondLocked;
         Account lockedUser = firstLocked.getId().equals(userAccount.getId()) ? firstLocked : secondLocked;
+
+        if (lockedUser.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("User account is not active");
+        }
 
         // Update balances
         lockedSystem.setBalance(lockedSystem.getBalance().subtract(amount));
@@ -194,21 +204,45 @@ public class AccountServiceImpl implements AccountService {
                 return accountMapper.toResponse(account);
         }
 
-        @Override
-        @Transactional(readOnly = true)
-        public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
-                User user = userRepository.findByUsername(currentUsername)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found with username: " + currentUsername));
+    @Override
+    @Transactional(readOnly = true)
+    public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
-                Account account = accountRepository.findById(accountId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-                if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId())
-                                && account.getOwnerType() == OwnerType.USER)) {
-                        throw new AccessDeniedException("You do not have permission to access this account's balance");
-                }
-
-                return accountMapper.toResponse(account);
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's balance");
         }
+
+        return accountMapper.toResponse(account);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's history");
+        }
+
+        return transactionRepository.findAllWithFiltersAndOwner(accountId, null, null, null, null, null, pageable)
+                .map(t -> new TransactionResponse(
+                        t.getTransactionRef(),
+                        t.getStatus().name(),
+                        t.getAmount(),
+                        t.getSourceAccountId(),
+                        t.getDestAccountId(),
+                        t.getType().name(),
+                        t.getDescription(),
+                        t.getCreatedAt()
+                ));
+    }
 }
