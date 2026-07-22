@@ -59,11 +59,11 @@ import { AuthService } from '../../core/services/auth.service';
               <mat-icon matListItemIcon class="nav-icon">insights</mat-icon>
               <span matListItemTitle class="nav-title">Overview</span>
             </a>
-            <a mat-list-item routerLink="/users" routerLinkActive="active">
+            <a mat-list-item routerLink="/admin/merchants" routerLinkActive="active">
               <mat-icon matListItemIcon class="nav-icon">storefront</mat-icon>
               <span matListItemTitle class="nav-title">Merchants</span>
             </a>
-            <a mat-list-item routerLink="/users" routerLinkActive="active">
+            <a mat-list-item routerLink="/admin/ledger" routerLinkActive="active">
               <mat-icon matListItemIcon class="nav-icon">account_balance</mat-icon>
               <span matListItemTitle class="nav-title">Ledger</span>
             </a>

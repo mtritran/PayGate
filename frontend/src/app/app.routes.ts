@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -39,6 +40,16 @@ export const routes: Routes = [
       {
         path: 'transactions/history',
         loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
+      },
+      {
+        path: 'admin/merchants',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/merchant/merchant-list/merchant-list.component').then(m => m.MerchantListComponent)
+      },
+      {
+        path: 'admin/ledger',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/ledger/admin-ledger/admin-ledger.component').then(m => m.AdminLedgerComponent)
       }
     ]
   },
