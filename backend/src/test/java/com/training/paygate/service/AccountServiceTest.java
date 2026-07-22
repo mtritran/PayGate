@@ -202,6 +202,49 @@ class AccountServiceTest {
     }
 
     @Test
+    void topUp_exceedsLimit_throwsBadRequestException() {
+        // Given
+        BigDecimal hugeAmount = BigDecimal.valueOf(2_000_000_000); // 2 billion > 1 billion limit
+
+        // When & Then
+        assertThatThrownBy(() -> accountService.topUp(12L, hugeAmount, "Huge topup"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Topup amount cannot exceed");
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void topUp_userAccountNotActive_throwsBadRequestException() {
+        // Given
+        Long accountId = 12L;
+        BigDecimal amount = BigDecimal.valueOf(500);
+
+        Account userAccount = Account.builder()
+                .id(accountId)
+                .balance(BigDecimal.valueOf(1000))
+                .status(AccountStatus.FROZEN) // Inactive account
+                .build();
+
+        Account systemAccount = Account.builder()
+                .id(99L)
+                .ownerId(0L)
+                .ownerType(OwnerType.SYSTEM)
+                .balance(BigDecimal.valueOf(10000000))
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+        when(accountRepository.findByIdForUpdate(12L)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(systemAccount));
+
+        // When & Then
+        assertThatThrownBy(() -> accountService.topUp(accountId, amount, "Topup frozen account"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("User account is not active");
+    }
+
+    @Test
     void getAccountByUsername_success() {
         // Given
         String username = "user1";

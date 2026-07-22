@@ -395,4 +395,67 @@ class TransactionServiceTest {
                 .isInstanceOf(InvalidTransactionStateException.class)
                 .hasMessageContaining("has already been refunded");
     }
+
+    @Test
+    void processPayment_inactiveSourceAccount_throwsBadRequestException() {
+        // Given
+        String username = "user1";
+        String idKey = "idem-key-999";
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", null);
+
+        User user = User.builder().username(username).build();
+        user.setId(1L);
+
+        Account sourceAccount = Account.builder()
+                .id(1L)
+                .ownerId(1L)
+                .ownerType(OwnerType.USER)
+                .balance(BigDecimal.valueOf(1000))
+                .status(AccountStatus.FROZEN) // Frozen source account
+                .build();
+
+        Account destAccount = Account.builder()
+                .id(2L)
+                .ownerId(5L)
+                .ownerType(OwnerType.USER)
+                .balance(BigDecimal.valueOf(500))
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findById(2L)).thenReturn(Optional.of(destAccount));
+        when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(destAccount));
+
+        // When & Then
+        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Source account is not active");
+    }
+
+    @Test
+    void processPayment_inactiveMerchant_throwsBadRequestException() {
+        // Given
+        String username = "user1";
+        String idKey = "idem-key-888";
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", 99L);
+
+        User user = User.builder().username(username).build();
+        user.setId(1L);
+
+        Account sourceAccount = Account.builder().id(1L).ownerId(1L).ownerType(OwnerType.USER).build();
+        Account destAccount = Account.builder().id(2L).ownerId(5L).ownerType(OwnerType.MERCHANT).build();
+        Merchant inactiveMerchant = Merchant.builder().active(false).build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)).thenReturn(Optional.of(sourceAccount));
+        when(accountRepository.findById(2L)).thenReturn(Optional.of(destAccount));
+        when(merchantRepository.findById(99L)).thenReturn(Optional.of(inactiveMerchant));
+
+        // When & Then
+        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Merchant is inactive");
+    }
 }
