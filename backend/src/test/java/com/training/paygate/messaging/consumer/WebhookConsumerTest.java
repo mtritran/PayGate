@@ -106,7 +106,8 @@ class WebhookConsumerTest {
         verify(webhookLogRepository).save(logCaptor.capture());
 
         WebhookLog savedLog = logCaptor.getValue();
-        assertThat(savedLog.getStatus()).isEqualTo(WebhookStatus.FAILED);
+        assertThat(savedLog.getStatus()).isEqualTo(WebhookStatus.RETRYING);
+        assertThat(savedLog.getNextRetryAt()).isNotNull();
         assertThat(savedLog.getResponseStatus()).isEqualTo(400);
     }
 
