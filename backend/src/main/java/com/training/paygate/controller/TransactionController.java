@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,7 +92,8 @@ public class TransactionController {
 
     @PostMapping("/{ref}/refund")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Request a refund for a completed transaction")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Request a refund for a completed transaction (Requires ROLE_ADMIN)")
     public ApiResponse<TransactionResponse> refund(@PathVariable String ref, Principal principal) {
         TransactionResponse response = transactionService.refund(ref, principal.getName());
         return ApiResponse.success("Transaction refunded successfully", response);
