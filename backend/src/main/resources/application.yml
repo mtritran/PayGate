@@ -60,3 +60,10 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     com.training.paygate: DEBUG
+
+app:
+  admin:
+    username: ${PAYGATE_ADMIN_USERNAME:admin}
+    password: ${PAYGATE_ADMIN_PASSWORD:Admin@123456!}
+    email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
+
