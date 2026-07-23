@@ -34,9 +34,9 @@ export interface BankTheme {
     CurrencyPipe
   ],
   template: `
-    <div class="topup-page fade-in-up">
+    <div class="topup-page">
       <!-- Header Section -->
-      <div class="page-header mb-24">
+      <div class="page-header mb-24 fade-in-up">
         <div class="header-tag">PAYGATE WALLET TOP UP</div>
         <h2>Wallet Top Up & VietQR</h2>
         <p class="subtitle">Deposit funds into your PayGate wallet via linked bank accounts or instant VietQR scan.</p>
@@ -45,7 +45,7 @@ export interface BankTheme {
       <!-- Main Grid Container -->
       <div class="topup-grid">
         <!-- LEFT COLUMN: Wallet Card & Balance Overview -->
-        <div class="left-col">
+        <div class="left-col fade-in-up">
           <div class="content-card hover-lift shimmer-box mb-24">
             <div class="card-header-flex mb-20">
               <div>
@@ -109,7 +109,7 @@ export interface BankTheme {
         </div>
 
         <!-- RIGHT COLUMN: Spacious Top-Up Form -->
-        <div class="right-col">
+        <div class="right-col fade-in-up">
           <div class="content-card hover-lift">
             <form [formGroup]="topUpForm" (ngSubmit)="onSubmit()" class="custom-topup-form">
               <!-- Top-up Mode Selector Tabs (Linked Bank vs VietQR) -->
@@ -278,7 +278,7 @@ export interface BankTheme {
         </div>
       </div>
 
-      <!-- NON-OVERFLOWING PERFECT FIT VIETQR SCAN MODAL -->
+      <!-- FULL VIEWPORT 100VW x 100VH BACKDROP VIETQR MODAL -->
       <div class="modal-overlay" *ngIf="showVietQrModal">
         <div class="vietqr-modal-card fade-in-up">
           <!-- Fixed Top Header Banner -->
@@ -293,7 +293,7 @@ export interface BankTheme {
             <button type="button" class="btn-close-modal-light" (click)="closeVietQrModal()">✕</button>
           </div>
 
-          <!-- Scrollable Content Area (Fits perfectly inside modal without page overflow) -->
+          <!-- Scrollable Content Area -->
           <div class="vqr-content-wrapper">
             <div class="modal-body-vqr">
               <!-- Left Column: Compact High-Res QR Image -->
@@ -402,7 +402,7 @@ export interface BankTheme {
   `,
   styles: [`
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(18px); }
+      from { opacity: 0; transform: translateY(14px); }
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -411,9 +411,9 @@ export interface BankTheme {
       70% { box-shadow: 0 0 0 10px rgba(5, 150, 105, 0); }
       100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
     }
-    .fade-in-up { animation: fadeInUp 0.45s ease-out forwards; }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .topup-page { display: flex; flex-direction: column; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .topup-page { display: flex; flex-direction: column; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; position: static; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .font-mono { font-family: monospace; font-weight: 700; }
     .font-bold { font-weight: 800; }
@@ -519,8 +519,8 @@ export interface BankTheme {
     .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-    /* Modal Overlay & Non-Overflowing Card */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+    /* 100% FULL-VIEWPORT OVERLAY (Covers 100vw x 100vh Edge-to-Edge) */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px; box-sizing: border-box; }
     .modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
