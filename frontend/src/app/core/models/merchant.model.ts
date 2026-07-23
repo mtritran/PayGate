@@ -1,31 +1,32 @@
 export interface Merchant {
   id: number;
+  userId: number;
+  merchantName: string;
+  name?: string;
   merchantCode: string;
-  name: string;
-  contactEmail: string;
+  contactEmail?: string;
   contactPhone?: string;
-  businessRegistrationNumber?: string;
   webhookUrl: string;
-  secretKey?: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  apiKey?: string;
+  active?: boolean;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   accountNumber?: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export interface CreateMerchantRequest {
+  userId: number;
+  merchantName: string;
   merchantCode: string;
-  name: string;
-  contactEmail: string;
-  contactPhone?: string;
-  businessRegistrationNumber?: string;
-  webhookUrl: string;
+  webhookUrl?: string;
 }
 
 export interface UpdateMerchantRequest {
-  name: string;
-  contactEmail: string;
+  name?: string;
+  merchantName?: string;
+  contactEmail?: string;
   contactPhone?: string;
-  webhookUrl: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  webhookUrl?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }

@@ -70,9 +70,9 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
             <table class="paygate-table">
               <thead>
                 <tr>
-                  <th>MERCHANT</th>
+                  <th>MERCHANT NAME</th>
                   <th>CODE</th>
-                  <th>CONTACT EMAIL</th>
+                  <th>OWNER USER</th>
                   <th>WEBHOOK URL</th>
                   <th>STATUS</th>
                   <th class="text-right">ACTIONS</th>
@@ -82,35 +82,31 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                 <tr *ngFor="let m of filteredMerchants()" class="merchant-row">
                   <td>
                     <div class="merchant-cell">
-                      <div class="merchant-avatar">{{ m.name.substring(0, 2).toUpperCase() }}</div>
+                      <div class="merchant-avatar">{{ getInitials(m) }}</div>
                       <div>
-                        <div class="merchant-name">{{ m.name }}</div>
-                        <div class="account-num font-mono">Account: {{ m.accountNumber || 'Pending' }}</div>
+                        <div class="merchant-name">{{ m.merchantName || m.name }}</div>
+                        <div class="account-num font-mono">Wallet Account: {{ m.accountNumber || 'Pending' }}</div>
                       </div>
                     </div>
                   </td>
                   <td><span class="code-badge">{{ m.merchantCode }}</span></td>
                   <td>
-                    <div class="contact-email">
-                      <svg class="email-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                        <polyline points="22,6 12,13 2,6" />
-                      </svg>
-                      <span>{{ m.contactEmail || 'N/A' }}</span>
-                    </div>
+                    <span class="font-mono text-xs text-indigo">
+                      User #{{ m.userId }} {{ m.contactEmail ? '(' + m.contactEmail + ')' : '' }}
+                    </span>
                   </td>
                   <td class="max-w-url" [title]="m.webhookUrl">
                     <span class="webhook-url font-mono">{{ m.webhookUrl }}</span>
                   </td>
                   <td>
                     <span
-                      [class.active]="m.status === 'ACTIVE'"
-                      [class.inactive]="m.status === 'INACTIVE'"
+                      [class.active]="m.active !== false && m.status !== 'INACTIVE' && m.status !== 'SUSPENDED'"
+                      [class.inactive]="m.active === false || m.status === 'INACTIVE'"
                       [class.suspended]="m.status === 'SUSPENDED'"
                       class="status-pill"
                     >
                       <span class="pill-dot"></span>
-                      {{ m.status }}
+                      {{ m.active !== false ? (m.status || 'ACTIVE') : 'INACTIVE' }}
                     </span>
                   </td>
                   <td class="text-right">
@@ -250,6 +246,8 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .font-mono { font-family: monospace; }
+    .text-indigo { color: #4338ca; }
+    .font-bold { font-weight: 700; color: #0f172a; }
     .text-muted { color: #64748b; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
@@ -275,6 +273,11 @@ export class MerchantListComponent implements OnInit {
     this.loadMerchants();
   }
 
+  getInitials(m: Merchant): string {
+    const name = m.merchantName || m.name || 'MC';
+    return name.substring(0, 2).toUpperCase();
+  }
+
   loadMerchants(): void {
     this.loading = true;
     this.merchantService.getAll(this.currentPage, this.pageSize).subscribe({
@@ -297,14 +300,15 @@ export class MerchantListComponent implements OnInit {
 
     // Status Filter
     if (this.statusFilter && this.statusFilter !== 'ALL') {
-      list = list.filter(m => m.status === this.statusFilter);
+      list = list.filter(m => (m.status === this.statusFilter) || (this.statusFilter === 'ACTIVE' && m.active !== false));
     }
 
     // Search Query
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
       list = list.filter(m =>
-        m.name.toLowerCase().includes(q) ||
+        (m.merchantName && m.merchantName.toLowerCase().includes(q)) ||
+        (m.name && m.name.toLowerCase().includes(q)) ||
         m.merchantCode.toLowerCase().includes(q) ||
         (m.contactEmail && m.contactEmail.toLowerCase().includes(q))
       );

@@ -109,7 +109,7 @@ public class AccountServiceImpl implements AccountService {
                             .currency("VND")
                             .status(AccountStatus.ACTIVE)
                             .build();
-                    return accountRepository.save(acc);
+                    return accountRepository.saveAndFlush(acc);
                 });
 
         // Lock accounts in ascending ID order to prevent deadlock

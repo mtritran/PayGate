@@ -1,14 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Merchant } from '../../../core/models/merchant.model';
+import { User, UserService } from '../../users/user.service';
 
 @Component({
   selector: 'app-merchant-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <div class="modal-backdrop modal-fade-in">
       <div class="modal-card">
@@ -22,13 +23,34 @@ import { Merchant } from '../../../core/models/merchant.model';
           <div class="modal-header-text">
             <span class="modal-tag">ENTERPRISE PROVISIONING</span>
             <h3>{{ merchant ? 'Edit Merchant Partner' : 'Register New Merchant Partner' }}</h3>
-            <p class="modal-desc">Configure business profile, webhook endpoints, and API credentials.</p>
+            <p class="modal-desc">Configure business profile, owner user, and webhook endpoints.</p>
           </div>
           <button type="button" class="btn-close-icon" (click)="close.emit()">✕</button>
         </div>
 
         <!-- Form Body -->
         <form [formGroup]="merchantForm" (ngSubmit)="onSubmit()" class="modal-body">
+          <!-- Searchable User Selection (Create Mode Only) -->
+          <div *ngIf="!merchant" class="form-group">
+            <label class="form-label required">Merchant Owner User</label>
+            <div class="user-search-wrapper">
+              <input
+                type="text"
+                [(ngModel)]="searchUserTerm"
+                [ngModelOptions]="{standalone: true}"
+                placeholder="🔍 Search user by username or email..."
+                class="form-input search-input"
+              />
+              <select formControlName="userId" class="form-select font-mono mt-1">
+                <option value="" disabled>-- Select Owner User --</option>
+                <option *ngFor="let u of filteredUsers" [value]="u.id">
+                  [ID: #{{ u.id }}] {{ u.username }} ({{ u.email }})
+                </option>
+              </select>
+            </div>
+            <p *ngIf="isFieldInvalid('userId')" class="field-error">Owner User selection is required</p>
+          </div>
+
           <!-- Merchant Code -->
           <div class="form-group">
             <label class="form-label required">Merchant Code</label>
@@ -50,37 +72,19 @@ import { Merchant } from '../../../core/models/merchant.model';
 
           <!-- Merchant Name -->
           <div class="form-group">
-            <label class="form-label required">Business Name</label>
+            <label class="form-label required">Business Name (Merchant Name)</label>
             <div class="input-wrapper">
               <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
               </svg>
               <input
                 type="text"
-                formControlName="name"
-                placeholder="e.g. TechMart Super Store"
+                formControlName="merchantName"
+                placeholder="e.g. TechMart Electronics Store"
                 class="form-input"
               />
             </div>
-            <p *ngIf="isFieldInvalid('name')" class="field-error">Business Name is required</p>
-          </div>
-
-          <!-- Contact Email -->
-          <div class="form-group">
-            <label class="form-label required">Contact Email</label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <input
-                type="email"
-                formControlName="contactEmail"
-                placeholder="contact@techmart.com"
-                class="form-input"
-              />
-            </div>
-            <p *ngIf="isFieldInvalid('contactEmail')" class="field-error">Valid email address required</p>
+            <p *ngIf="isFieldInvalid('merchantName')" class="field-error">Business Name is required</p>
           </div>
 
           <!-- Webhook URL -->
@@ -129,24 +133,15 @@ import { Merchant } from '../../../core/models/merchant.model';
     }
     .modal-fade-in { animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    /* Full Viewport Backdrop Fix */
     .modal-backdrop {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw; height: 100vh;
       background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 99999;
-      padding: 20px;
-      box-sizing: border-box;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999; padding: 20px; box-sizing: border-box;
       font-family: 'Inter', system-ui, sans-serif;
     }
 
@@ -155,15 +150,11 @@ import { Merchant } from '../../../core/models/merchant.model';
       border-radius: 20px;
       border: 1px solid rgba(226, 232, 240, 0.9);
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
-      width: 100%;
-      max-width: 520px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+      width: 100%; max-width: 540px;
+      overflow: hidden; display: flex; flex-direction: column;
     }
     
     .modal-header { padding: 22px 26px; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; gap: 14px; align-items: flex-start; position: relative; }
-    
     .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
     .modal-icon-badge svg { width: 22px; height: 22px; }
 
@@ -181,63 +172,37 @@ import { Merchant } from '../../../core/models/merchant.model';
     .form-label.required::after { content: ' *'; color: #ef4444; }
 
     .input-wrapper { position: relative; display: flex; align-items: center; }
-    .input-icon { position: absolute; left: 12px; width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
+    .input-icon { position: absolute; left: 14px; width: 18px; height: 18px; color: #94a3b8; pointer-events: none; }
     
     .form-input {
-      width: 100%;
-      height: 42px;
-      padding: 0 14px 0 38px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #0f172a;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      outline: none;
-      transition: all 0.15s;
-      box-sizing: border-box;
+      width: 100%; height: 42px; padding: 0 14px 0 42px; border-radius: 10px;
+      border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 0.875rem; color: #0f172a; outline: none; transition: all 0.2s;
     }
-    .form-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
-    .form-input[readonly] { background: #f1f5f9; color: #64748b; }
-    
-    .form-select { height: 42px; padding: 0 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.875rem; font-weight: 600; color: #0f172a; outline: none; background: #ffffff; }
+    .form-input.search-input { padding: 0 14px; height: 36px; font-size: 0.825rem; margin-bottom: 6px; }
+    .form-input:focus { border-color: #10b981; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+    .form-input[readonly] { background-color: #f1f5f9; color: #64748b; }
 
-    .field-error { color: #ef4444; font-size: 0.75rem; margin: 2px 0 0 0; font-weight: 600; }
-    
-    /* Clean Seamless Action Bar */
-    .modal-actions-bar { padding-top: 12px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 12px; }
-    
-    .btn-cancel-outline {
-      height: 44px;
-      padding: 0 18px;
-      border: 1px solid #cbd5e1;
-      background: #ffffff;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
+    .form-select {
+      width: 100%; height: 42px; padding: 0 14px; border-radius: 10px;
+      border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 0.875rem; color: #0f172a; outline: none; transition: all 0.2s;
     }
-    .btn-cancel-outline:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
+    .form-select:focus { border-color: #10b981; background-color: #ffffff; }
 
-    .btn-emerald-modal {
-      height: 44px;
-      padding: 0 22px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 0.875rem;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
-      transition: all 0.2s;
-    }
-    .btn-emerald-modal:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
-    .btn-emerald-modal:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
-
+    .mt-1 { margin-top: 4px; }
     .font-mono { font-family: monospace; }
+    .field-error { font-size: 0.75rem; color: #ef4444; margin: 2px 0 0 0; font-weight: 600; }
+
+    .modal-actions-bar { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+    .btn-cancel-outline { padding: 0 18px; height: 42px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 700; font-size: 0.875rem; cursor: pointer; }
+    .btn-cancel-outline:hover { background-color: #f8fafc; color: #0f172a; }
+    
+    .btn-emerald-modal {
+      padding: 0 22px; height: 42px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff;
+      font-weight: 700; font-size: 0.875rem; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+    }
+    .btn-emerald-modal:hover:not(:disabled) { background: linear-gradient(135deg, #047857 0%, #064e3b 100%); }
+    .btn-emerald-modal:disabled { opacity: 0.6; cursor: not-allowed; }
   `]
 })
 export class MerchantFormComponent implements OnInit {
@@ -246,23 +211,54 @@ export class MerchantFormComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
 
   merchantForm!: FormGroup;
+  users: User[] = [];
+  searchUserTerm = '';
   loading = false;
 
   constructor(
     private fb: FormBuilder,
     private merchantService: MerchantService,
+    private userService: UserService,
     private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.merchantForm = this.fb.group({
+      userId: [this.merchant?.userId || '', this.merchant ? [] : [Validators.required]],
       merchantCode: [this.merchant?.merchantCode || '', [Validators.required, Validators.minLength(3)]],
-      name: [this.merchant?.name || '', [Validators.required]],
-      contactEmail: [this.merchant?.contactEmail || '', [Validators.required, Validators.email]],
-      contactPhone: [this.merchant?.contactPhone || ''],
+      merchantName: [this.merchant?.merchantName || this.merchant?.name || '', [Validators.required]],
       webhookUrl: [this.merchant?.webhookUrl || '', [Validators.required]],
       status: [this.merchant?.status || 'ACTIVE']
     });
+
+    if (!this.merchant) {
+      this.loadUsers();
+    }
+  }
+
+  loadUsers(): void {
+    this.userService.getAll(0, 100).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.users = res.data.content;
+          if (this.users.length > 0 && !this.merchantForm.get('userId')?.value) {
+            this.merchantForm.patchValue({ userId: this.users[0].id });
+          }
+        }
+      }
+    });
+  }
+
+  get filteredUsers(): User[] {
+    if (!this.searchUserTerm.trim()) {
+      return this.users;
+    }
+    const term = this.searchUserTerm.toLowerCase().trim();
+    return this.users.filter(u =>
+      u.username.toLowerCase().includes(term) ||
+      u.email.toLowerCase().includes(term) ||
+      String(u.id).includes(term)
+    );
   }
 
   isFieldInvalid(field: string): boolean {
@@ -278,9 +274,8 @@ export class MerchantFormComponent implements OnInit {
 
     if (this.merchant) {
       this.merchantService.update(this.merchant.id, {
-        name: formVal.name,
-        contactEmail: formVal.contactEmail,
-        contactPhone: formVal.contactPhone,
+        name: formVal.merchantName,
+        merchantName: formVal.merchantName,
         webhookUrl: formVal.webhookUrl,
         status: formVal.status
       }).subscribe({
@@ -300,10 +295,9 @@ export class MerchantFormComponent implements OnInit {
       });
     } else {
       this.merchantService.create({
+        userId: Number(formVal.userId),
+        merchantName: formVal.merchantName,
         merchantCode: formVal.merchantCode,
-        name: formVal.name,
-        contactEmail: formVal.contactEmail,
-        contactPhone: formVal.contactPhone,
         webhookUrl: formVal.webhookUrl
       }).subscribe({
         next: (res) => {

@@ -68,6 +68,7 @@ public class Transaction {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

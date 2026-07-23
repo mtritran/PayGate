@@ -40,6 +40,7 @@ public class WebhookLog {
     @Column(nullable = false, length = 500)
     private String url;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private String payload;
 
