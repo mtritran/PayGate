@@ -12,16 +12,6 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
 
-interface DailyVolume {
-  day: string;
-  fullDay: string;
-  amount: number;
-  barHeight: number;
-  yPos: number;
-  xPos: number;
-  isPeak?: boolean;
-}
-
 @Component({
   selector: 'app-account-dashboard',
   standalone: true,
@@ -66,7 +56,7 @@ interface DailyVolume {
       </div>
 
       <div *ngIf="!loading" class="dashboard-content">
-        <!-- 4 Top Metric Cards Grid (Generous Spacing) -->
+        <!-- 4 Top Metric Cards Grid -->
         <div class="metrics-grid">
           <!-- Metric 1: Wallet Balance -->
           <div class="metric-card hover-lift">
@@ -140,142 +130,91 @@ interface DailyVolume {
           </div>
         </div>
 
-        <!-- Middle Section: Payment Volume Centerpiece Hero Chart & Wallet Card -->
+        <!-- Middle Section: Payment Volume Line-Spline Chart & Digital Wallet Card -->
         <div class="middle-grid">
-          <!-- PREMIUM PAYMENT VOLUME CENTERPIECE HERO CARD -->
-          <div class="content-card chart-card-hero hover-lift">
-            <!-- Header -->
-            <div class="hero-chart-header flex-between">
-              <div>
-                <span class="hero-tag">ENTERPRISE ANALYTICS</span>
-                <h3 class="hero-title">7-Day Payment Volume Centerpiece</h3>
-              </div>
-              <div class="growth-chip">
-                <mat-icon class="chip-trend-icon">trending_up</mat-icon>
-                <span>+14.2% vs last week</span>
-              </div>
+          <!-- EXACT MATCH CHART CARD (Payment Volume — Last 7 days) -->
+          <div class="content-card chart-card-exact hover-lift">
+            <div class="chart-header-title">
+              Payment Volume — Last 7 days
             </div>
 
-            <!-- PAYMENT AMOUNT AS CENTRAL FOCUS -->
-            <div class="payment-centerpiece">
-              <div class="centerpiece-sub">TOTAL PROCESSED VOLUME (7D)</div>
-              <div class="centerpiece-amount-hero">
-                {{ totalVolume | currency:'VND':'symbol':'1.0-0' }}
-              </div>
-              
-              <!-- Inflow / Outflow Breakdown Badges -->
-              <div class="breakdown-badges">
-                <div class="breakdown-item inflow">
-                  <span class="breakdown-dot green"></span>
-                  <span class="breakdown-lbl">Inflow (Top Up):</span>
-                  <strong class="breakdown-val">+₫7,000,000</strong>
-                </div>
-                <div class="breakdown-divider"></div>
-                <div class="breakdown-item outflow">
-                  <span class="breakdown-dot red"></span>
-                  <span class="breakdown-lbl">Outflow (Payment):</span>
-                  <strong class="breakdown-val">-₫2,773,000</strong>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dynamic Selected Hover Tooltip Badge -->
-            <div class="chart-active-tooltip flex-between" *ngIf="activeDayData">
-              <div class="tooltip-left">
-                <span class="active-day-title">{{ activeDayData.fullDay }}:</span>
-                <strong class="active-day-amount">{{ activeDayData.amount | currency:'VND':'symbol':'1.0-0' }}</strong>
-              </div>
-              <span class="tooltip-peak-tag" *ngIf="activeDayData.isPeak">🔥 Peak Daily Volume</span>
-            </div>
-
-            <!-- STUNNING GRADIENT WAVE & DYNAMIC BAR CHART -->
-            <div class="hero-chart-container">
-              <svg viewBox="0 0 540 170" class="svg-chart">
+            <div class="exact-chart-container">
+              <svg viewBox="0 0 570 190" class="svg-chart-exact">
                 <defs>
-                  <!-- Ultra Premium Gradients -->
-                  <linearGradient id="waveGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#059669" stop-opacity="0.45"/>
-                    <stop offset="50%" stop-color="#10b981" stop-opacity="0.15"/>
-                    <stop offset="100%" stop-color="#34d399" stop-opacity="0.0"/>
+                  <!-- Exact Soft Mint Gradient Fill -->
+                  <linearGradient id="mintGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#059669" stop-opacity="0.18"/>
+                    <stop offset="60%" stop-color="#059669" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
                   </linearGradient>
-                  
-                  <linearGradient id="barGradientNormal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#059669" stop-opacity="0.85"/>
-                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.25"/>
-                  </linearGradient>
-
-                  <linearGradient id="barGradientPeak" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#047857" stop-opacity="1"/>
-                    <stop offset="100%" stop-color="#059669" stop-opacity="0.7"/>
-                  </linearGradient>
-
-                  <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="5" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
                 </defs>
 
-                <!-- Soft Horizontal Grid Lines -->
-                <line x1="30" y1="25" x2="510" y2="25" stroke="#f1f5f9" stroke-dasharray="4,4"/>
-                <line x1="30" y1="65" x2="510" y2="65" stroke="#f1f5f9" stroke-dasharray="4,4"/>
-                <line x1="30" y1="105" x2="510" y2="105" stroke="#f1f5f9" stroke-dasharray="4,4"/>
+                <!-- Grid Dashed Lines (Horizontal) -->
+                <line x1="50" y1="20" x2="540" y2="20" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="50" y1="50" x2="540" y2="50" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="50" y1="80" x2="540" y2="80" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="50" y1="110" x2="540" y2="110" stroke="#e5e7eb" stroke-dasharray="3,3"/>
 
-                <!-- Wave Area Fill -->
-                <path d="M 50 80 Q 123 55, 196 75 T 342 35 T 488 28 L 488 125 L 50 125 Z" fill="url(#waveGlow)"/>
+                <!-- Grid Dashed Lines (Vertical) -->
+                <line x1="131" y1="20" x2="131" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="213" y1="20" x2="213" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="294" y1="20" x2="294" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="376" y1="20" x2="376" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <line x1="457" y1="20" x2="457" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
 
-                <!-- Dynamic Bars -->
-                <g class="chart-bars">
-                  <rect
-                    *ngFor="let item of dailyVolumes"
-                    [attr.x]="item.xPos - 10"
-                    [attr.y]="item.yPos"
-                    width="20"
-                    [attr.height]="item.barHeight"
-                    rx="8"
-                    [attr.fill]="item.isPeak ? 'url(#barGradientPeak)' : 'url(#barGradientNormal)'"
-                    class="chart-bar"
-                    [class.active-bar]="activeDayData?.day === item.day"
-                    (mouseenter)="setActiveDay(item)"
-                  />
-                </g>
+                <!-- Solid Axis Lines -->
+                <!-- Y Axis Line -->
+                <line x1="50" y1="20" x2="50" y2="140" stroke="#6b7280" stroke-width="1.2"/>
+                <!-- X Axis Line -->
+                <line x1="50" y1="140" x2="540" y2="140" stroke="#6b7280" stroke-width="1.2"/>
 
-                <!-- Glowing Wave Curve Line -->
+                <!-- Y Axis Tick Marks -->
+                <line x1="45" y1="20" x2="50" y2="20" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="45" y1="50" x2="50" y2="50" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="45" y1="80" x2="50" y2="80" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="45" y1="110" x2="50" y2="110" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="45" y1="140" x2="50" y2="140" stroke="#6b7280" stroke-width="1.2"/>
+
+                <!-- X Axis Tick Marks -->
+                <line x1="50" y1="140" x2="50" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="131" y1="140" x2="131" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="213" y1="140" x2="213" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="294" y1="140" x2="294" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="376" y1="140" x2="376" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="457" y1="140" x2="457" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="540" y1="140" x2="540" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+
+                <!-- Y Axis Labels -->
+                <text x="40" y="24" font-size="12" fill="#4b5563" text-anchor="end">1600k</text>
+                <text x="40" y="54" font-size="12" fill="#4b5563" text-anchor="end">1200k</text>
+                <text x="40" y="84" font-size="12" fill="#4b5563" text-anchor="end">800k</text>
+                <text x="40" y="114" font-size="12" fill="#4b5563" text-anchor="end">400k</text>
+                <text x="40" y="144" font-size="12" fill="#4b5563" text-anchor="end">0k</text>
+
+                <!-- Soft Mint Gradient Area Path -->
                 <path
-                  d="M 50 80 L 123 60 L 196 75 L 269 48 L 342 35 L 415 22 L 488 28"
-                  fill="none"
-                  stroke="#059669"
-                  stroke-width="3.5"
-                  stroke-linecap="round"
-                  filter="url(#neonGlow)"
+                  d="M 50 116 C 90 100, 100 95, 131 95 C 160 95, 180 104, 213 104 C 250 104, 265 75, 294 71 C 325 65, 345 47, 376 47 C 410 47, 430 81.5, 457 81.5 C 490 81.5, 510 30, 540 23 L 540 140 L 50 140 Z"
+                  fill="url(#mintGradient)"
                 />
 
-                <!-- Interactive Data Node Rings -->
-                <g class="chart-nodes">
-                  <circle
-                    *ngFor="let item of dailyVolumes"
-                    [attr.cx]="item.xPos"
-                    [attr.cy]="item.yPos"
-                    [attr.r]="item.day === activeDayData?.day ? '6.5' : '4.5'"
-                    [attr.fill]="item.day === activeDayData?.day ? '#059669' : '#ffffff'"
-                    stroke="#059669"
-                    stroke-width="2.5"
-                    class="chart-point"
-                    (mouseenter)="setActiveDay(item)"
-                  />
-                </g>
+                <!-- Primary Smooth Emerald Curve Line -->
+                <path
+                  d="M 50 116 C 90 100, 100 95, 131 95 C 160 95, 180 104, 213 104 C 250 104, 265 75, 294 71 C 325 65, 345 47, 376 47 C 410 47, 430 81.5, 457 81.5 C 490 81.5, 510 30, 540 23"
+                  fill="none"
+                  stroke="#059669"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
 
-                <!-- Day Labels -->
-                <text
-                  *ngFor="let item of dailyVolumes"
-                  [attr.x]="item.xPos"
-                  y="148"
-                  font-size="11"
-                  [attr.font-weight]="item.day === activeDayData?.day ? '800' : '600'"
-                  [attr.fill]="item.day === activeDayData?.day ? '#059669' : '#64748b'"
-                  text-anchor="middle"
-                >
-                  {{ item.day }}
-                </text>
+                <!-- X Axis Labels -->
+                <text x="50" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Mon</text>
+                <text x="131" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Tue</text>
+                <text x="213" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Wed</text>
+                <text x="294" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Thu</text>
+                <text x="376" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Fri</text>
+                <text x="457" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Sat</text>
+                <text x="540" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="end">Sun</text>
               </svg>
             </div>
           </div>
@@ -333,7 +272,7 @@ interface DailyVolume {
           </div>
         </div>
 
-        <!-- Bottom Table Card: Recent Transactions (Spaced Out) -->
+        <!-- Bottom Table Card: Recent Transactions -->
         <div class="content-card table-card hover-lift">
           <div class="table-header-row">
             <div>
@@ -416,7 +355,6 @@ interface DailyVolume {
 
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     
-    /* Generous Spacing for Dashboard */
     .console-dashboard { display: flex; flex-direction: column; gap: 32px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     .loading-box { display: flex; justify-content: center; padding: 60px; }
 
@@ -444,7 +382,7 @@ interface DailyVolume {
 
     .dashboard-content { display: flex; flex-direction: column; gap: 32px; }
 
-    /* 4 Top Metric Cards Grid (Spaced out gap: 20px) */
+    /* 4 Top Metric Cards Grid */
     .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .metric-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px 24px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
     .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -477,58 +415,17 @@ interface DailyVolume {
     .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); }
     .card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
     .hero-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
-    .hero-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
     .card-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
     .card-subtitle { font-size: 0.825rem; color: #64748b; margin-top: 2px; }
     
     .mb-16 { margin-bottom: 16px; }
     .mt-20 { margin-top: 20px; }
 
-    /* HERO PAYMENT CENTERPIECE CARD */
-    .chart-card-hero { display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
-    .hero-chart-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    
-    .growth-chip { display: flex; align-items: center; gap: 6px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; color: #059669; }
-    .chip-trend-icon { font-size: 16px; width: 16px; height: 16px; color: #059669; }
-
-    /* Centered Payment Amount Focus */
-    .payment-centerpiece {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 22px;
-      text-align: center;
-      box-shadow: 0 4px 16px -4px rgba(5, 150, 105, 0.08);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .centerpiece-sub { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
-    .centerpiece-amount-hero { font-size: 2.6rem; font-weight: 900; color: #059669; letter-spacing: -0.03em; margin: 2px 0 12px 0; text-shadow: 0 2px 10px rgba(5, 150, 105, 0.15); }
-    
-    .breakdown-badges { display: flex; align-items: center; gap: 18px; background: #f8fafc; padding: 8px 18px; border-radius: 12px; border: 1px solid #e2e8f0; }
-    .breakdown-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
-    .breakdown-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .breakdown-dot.green { background-color: #10b981; }
-    .breakdown-dot.red { background-color: #ef4444; }
-    .breakdown-lbl { color: #64748b; font-weight: 500; }
-    .breakdown-val { color: #0f172a; font-weight: 700; }
-    .breakdown-divider { width: 1px; height: 16px; background-color: #cbd5e1; }
-
-    /* Active Tooltip Badge */
-    .chart-active-tooltip { background: #0f172a; color: #ffffff; padding: 8px 16px; border-radius: 10px; font-size: 0.825rem; margin-top: 4px; }
-    .active-day-title { font-weight: 600; color: #94a3b8; margin-right: 6px; }
-    .active-day-amount { color: #34d399; font-weight: 800; font-family: monospace; }
-    .tooltip-peak-tag { font-size: 0.72rem; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 6px; }
-
-    .hero-chart-container { width: 100%; height: 175px; }
-    .svg-chart { width: 100%; height: 100%; overflow: visible; }
-    
-    .chart-bar { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
-    .chart-bar:hover, .chart-bar.active-bar { fill: #047857 !important; filter: drop-shadow(0 4px 10px rgba(5, 150, 105, 0.5)); transform: scaleY(1.03); }
-    .chart-point { cursor: pointer; transition: all 0.2s; }
-    .chart-point:hover { r: 7.5; }
+    /* EXACT MATCH CHART STYLING */
+    .chart-card-exact { display: flex; flex-direction: column; gap: 16px; padding: 26px 28px; }
+    .chart-header-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
+    .exact-chart-container { width: 100%; height: 210px; }
+    .svg-chart-exact { width: 100%; height: 100%; overflow: visible; }
 
     /* Metallic Emerald Wallet Card */
     .wallet-box-card { display: flex; flex-direction: column; justify-content: space-between; }
@@ -620,18 +517,6 @@ export class AccountDashboardComponent implements OnInit {
   failedTransactionsCount = 0;
   loading = true;
 
-  dailyVolumes: DailyVolume[] = [
-    { day: 'Mon', fullDay: 'Thứ Hai', amount: 750000, barHeight: 45, yPos: 80, xPos: 50 },
-    { day: 'Tue', fullDay: 'Thứ Ba', amount: 1000000, barHeight: 65, yPos: 60, xPos: 123 },
-    { day: 'Wed', fullDay: 'Thứ Tư', amount: 850000, barHeight: 50, yPos: 75, xPos: 196 },
-    { day: 'Thu', fullDay: 'Thứ Năm', amount: 1150000, barHeight: 77, yPos: 48, xPos: 269 },
-    { day: 'Fri', fullDay: 'Thứ Sáu', amount: 1400000, barHeight: 90, yPos: 35, xPos: 342 },
-    { day: 'Sat', fullDay: 'Thứ Bảy', amount: 1550000, barHeight: 103, yPos: 22, xPos: 415, isPeak: true },
-    { day: 'Sun', fullDay: 'Chủ Nhật', amount: 1500000, barHeight: 97, yPos: 28, xPos: 488 }
-  ];
-
-  activeDayData: DailyVolume = this.dailyVolumes[5]; // Default Sat Peak
-
   constructor(
     private accountService: AccountService,
     private transactionService: TransactionService,
@@ -641,10 +526,6 @@ export class AccountDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
-  }
-
-  setActiveDay(item: DailyVolume): void {
-    this.activeDayData = item;
   }
 
   getDisplayName(): string {
