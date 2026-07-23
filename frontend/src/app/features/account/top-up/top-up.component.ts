@@ -382,10 +382,10 @@ export interface BankTheme {
     .page-header h2 { font-size: 2.1rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; }
     .subtitle { font-size: 0.975rem; color: #64748b; margin: 0; }
 
-    /* Spacious 2-Column Grid Layout (1200px Max-Width) */
-    .topup-grid { display: grid; grid-template-columns: 1.1fr 1.25fr; gap: 36px; width: 100%; max-width: 1200px; }
+    /* Spacious 2-Column Grid Layout (1280px Max-Width) */
+    .topup-grid { display: grid; grid-template-columns: 1.05fr 1.25fr; gap: 40px; width: 100%; max-width: 1280px; }
 
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 34px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 28px; padding: 38px 42px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
     .hover-lift { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
     .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.09); }
 
@@ -398,8 +398,8 @@ export interface BankTheme {
 
     .metallic-visa-card {
       color: #ffffff;
-      border-radius: 20px;
-      padding: 30px;
+      border-radius: 22px;
+      padding: 34px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2);
@@ -426,41 +426,41 @@ export interface BankTheme {
     .expiry-date { font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-top: 4px; font-family: monospace; }
 
     /* Large Wallet Balance Details Box Under Visa Card */
-    .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
     .field-label { font-size: 0.825rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
     .balance-display { font-size: 2.35rem; font-weight: 800; color: #0f172a; margin-top: 4px; letter-spacing: -0.02em; }
 
-    .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px 18px; border-radius: 14px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
+    .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 14px 20px; border-radius: 16px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 4px; }
     .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #047857; }
     .preview-val { font-size: 1.05rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 8px; }
 
     /* Form Sections */
-    .custom-topup-form { display: flex; flex-direction: column; gap: 26px; }
-    .section-label { font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: block; }
+    .custom-topup-form { display: flex; flex-direction: column; gap: 28px; }
+    .section-label { font-size: 0.925rem; font-weight: 700; color: #334155; margin-bottom: 14px; display: block; }
     
     .action-btn-group { display: flex; align-items: center; gap: 8px; }
-    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 4px 12px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
+    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 5px 14px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
     .btn-link-bank:hover { background-color: #059669; color: #ffffff; }
 
-    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 12px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
     .btn-reset-mock:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
     /* Large Preset Grid */
-    .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-    .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px 0; font-size: 0.95rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; }
+    .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 0; font-size: 0.95rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; }
     .preset-btn:hover { border-color: #cbd5e1; background-color: #ffffff; }
     .preset-btn.active { background-color: #ecfdf5; border-color: #059669; color: #059669; box-shadow: 0 0 0 2px #059669; }
 
     /* Large Custom Amount Input */
     .input-wrapper { position: relative; display: flex; align-items: center; }
-    .currency-prefix { position: absolute; left: 16px; font-weight: 800; color: #059669; font-size: 1.3rem; pointer-events: none; }
-    .custom-amount-input { width: 100%; height: 54px; border: 1px solid #cbd5e1; border-radius: 12px; padding: 0 16px 0 42px; font-size: 1.15rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; box-sizing: border-box; }
-    .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.15); }
+    .currency-prefix { position: absolute; left: 18px; font-weight: 800; color: #059669; font-size: 1.35rem; pointer-events: none; }
+    .custom-amount-input { width: 100%; height: 56px; border: 1px solid #cbd5e1; border-radius: 14px; padding: 0 18px 0 46px; font-size: 1.2rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; box-sizing: border-box; }
+    .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15); }
     .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
     /* Dynamic Linked Method Selector Grid (Supports Brand Colors!) */
-    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .method-card { border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .method-card { border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
     .method-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); }
     .method-card.active { box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.25); }
     .method-card.insufficient { border-color: #fca5a5 !important; background-color: #fef2f2 !important; }
