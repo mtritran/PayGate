@@ -375,9 +375,9 @@ export interface AvailableBankOption {
         </div>
       </div>
 
-      <!-- LINK NEW BANK MODAL WITH DROPDOWN (NAVDOWN) & USER-ENTERED CARD NUMBER -->
+      <!-- LINK NEW BANK MODAL - SPACIOUS & ELEGANT DESIGN -->
       <div class="modal-overlay" *ngIf="showLinkModal">
-        <div class="modal-card fade-in-up">
+        <div class="modal-card spacious-modal fade-in-up">
           <div class="modal-header">
             <div>
               <span class="hero-tag">BANK LINKING</span>
@@ -444,8 +444,8 @@ export interface AvailableBankOption {
               />
             </div>
 
-            <!-- Modal Actions -->
-            <div class="modal-actions mt-20">
+            <!-- Modal Actions Bar -->
+            <div class="modal-actions">
               <button type="button" class="btn-cancel" (click)="closeLinkModal()">Cancel</button>
               <button type="submit" class="btn-confirm-link" [disabled]="linkForm.invalid">Link Account Now ➔</button>
             </div>
@@ -456,7 +456,7 @@ export interface AvailableBankOption {
   `,
   styles: [`
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(14px); }
+      from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -465,7 +465,7 @@ export interface AvailableBankOption {
       70% { box-shadow: 0 0 0 10px rgba(5, 150, 105, 0); }
       100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
     }
-    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    .fade-in-up { animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
     .topup-page { display: flex; flex-direction: column; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; position: static; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
@@ -489,7 +489,7 @@ export interface AvailableBankOption {
     .topup-grid { display: grid; grid-template-columns: 1.05fr 1.25fr; gap: 40px; width: 100%; max-width: 1280px; }
     .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 28px; padding: 38px 42px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
 
-    .hero-tag { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .hero-tag { font-size: 0.75rem; font-weight: 800; color: #059669; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 2px; }
     .card-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
     .status-chip { font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; }
     .status-chip.active { background-color: #dcfce7; color: #15803d; border: 1px solid #a7f3d0; }
@@ -574,92 +574,244 @@ export interface AvailableBankOption {
     .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-    /* 100% FULL-VIEWPORT OVERLAY (Covers 100vw x 100vh Edge-to-Edge) */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px; box-sizing: border-box; }
-    .modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
-    .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-weight: 800; }
+    /* 100% FULL-VIEWPORT OVERLAY & SPACIOUS MODAL CARD DESIGN */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    
+    .spacious-modal {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 42px 48px;
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 30px 80px -15px rgba(15, 23, 42, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 26px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .modal-header h3 {
+      margin: 4px 0 0 0;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+    
+    .btn-close-modal {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 800;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-close-modal:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
 
-    /* Dropdown / Navdown Select Styling */
+    /* Spacious Form Layout */
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .input-label {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #334155;
+      line-height: 1.4;
+    }
+    
+    .input-label.required::after {
+      content: ' *';
+      color: #ef4444;
+    }
+    
+    .modal-input {
+      height: 50px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 0 18px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: #f8fafc;
+      transition: all 0.15s;
+    }
+    .modal-input:focus {
+      border-color: #059669;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+    }
+    
+    .form-error {
+      font-size: 0.8rem;
+      color: #ef4444;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Navdown Select Styling */
     .select-wrapper { position: relative; width: 100%; }
     .custom-select.modal-select {
       width: 100%;
-      height: 48px;
-      padding: 0 36px 0 14px;
+      height: 50px;
+      padding: 0 42px 0 18px;
       font-size: 0.95rem;
       font-weight: 700;
       color: #0f172a;
       background-color: #f8fafc;
       border: 1px solid #cbd5e1;
-      border-radius: 12px;
+      border-radius: 14px;
       outline: none;
       appearance: none;
       cursor: pointer;
       transition: all 0.15s;
     }
-    .custom-select.modal-select:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15); background-color: #ffffff; }
-    .select-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
+    .custom-select.modal-select:focus {
+      border-color: #059669;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+    }
+    .select-chevron {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+      pointer-events: none;
+    }
+
+    /* Modal Action Buttons Bar */
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 16px;
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .btn-cancel {
+      height: 50px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-cancel:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+    .btn-confirm-link {
+      height: 50px;
+      border: none;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.975rem;
+      color: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35);
+      transition: all 0.15s;
+    }
+    .btn-confirm-link:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45);
+    }
+    .btn-confirm-link:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
     /* NON-OVERFLOWING SLEEK VIETQR MODAL */
     .vietqr-modal-card { background: #ffffff; border-radius: 28px; width: 100%; max-width: 620px; max-height: 85vh; box-shadow: 0 30px 80px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
     
-    .vqr-banner-header { background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #1d4ed8 100%); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; color: #ffffff; flex-shrink: 0; }
+    .vqr-banner-header { background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #1d4ed8 100%); padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; color: #ffffff; flex-shrink: 0; }
     .vqr-badge-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 800; color: #a7f3d0; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); padding: 3px 12px; border-radius: 20px; letter-spacing: 0.05em; margin-bottom: 4px; }
     .dot-live { width: 7px; height: 7px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4); }
 
     .vqr-title-group h3 { margin: 0; font-size: 1.35rem; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
-    .btn-close-modal-light { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 50%; width: 32px; height: 32px; font-size: 14px; color: #ffffff; cursor: pointer; font-weight: 800; transition: all 0.15s; }
+    .btn-close-modal-light { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 50%; width: 34px; height: 34px; font-size: 14px; color: #ffffff; cursor: pointer; font-weight: 800; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
     .btn-close-modal-light:hover { background: rgba(255,255,255,0.3); }
 
-    .vqr-content-wrapper { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex: 1; min-height: 0; }
-    .modal-body-vqr { display: grid; grid-template-columns: 190px 1fr; gap: 20px; align-items: stretch; }
+    .vqr-content-wrapper { padding: 22px 28px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; flex: 1; min-height: 0; }
+    .modal-body-vqr { display: grid; grid-template-columns: 200px 1fr; gap: 22px; align-items: stretch; }
 
-    .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 10px; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 14px; }
-    .qr-image-wrapper { width: 155px; height: 155px; background: #ffffff; padding: 8px; border-radius: 16px; border: 2px solid #a7f3d0; box-shadow: 0 8px 20px rgba(4, 120, 87, 0.12); }
+    .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 12px; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 16px; }
+    .qr-image-wrapper { width: 160px; height: 160px; background: #ffffff; padding: 8px; border-radius: 16px; border: 2px solid #a7f3d0; box-shadow: 0 8px 20px rgba(4, 120, 87, 0.12); }
     .vqr-img { width: 100%; height: 100%; object-fit: contain; }
 
-    .qr-timer-pill { display: flex; align-items: center; gap: 6px; font-size: 0.775rem; color: #047857; background: #ecfdf5; padding: 5px 14px; border-radius: 16px; border: 1px solid #a7f3d0; font-weight: 700; }
+    .qr-timer-pill { display: flex; align-items: center; gap: 6px; font-size: 0.775rem; color: #047857; background: #ecfdf5; padding: 6px 16px; border-radius: 16px; border: 1px solid #a7f3d0; font-weight: 700; }
 
-    .vqr-details-box { display: flex; flex-direction: column; gap: 8px; }
-    .detail-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 9px 14px; display: flex; flex-direction: column; gap: 2px; }
+    .vqr-details-box { display: flex; flex-direction: column; gap: 10px; }
+    .detail-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 10px 16px; display: flex; flex-direction: column; gap: 3px; }
     .detail-card.highlight-note { background: #f0fdf4; border-color: #a7f3d0; }
     
-    .d-lbl { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-    .d-val { font-size: 0.875rem; color: #0f172a; }
-    .amount-val { font-size: 1.15rem; font-weight: 900; color: #059669; }
-    .acc-num { font-size: 1rem; font-weight: 800; color: #1e293b; letter-spacing: 0.04em; }
+    .d-lbl { font-size: 0.68rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .d-val { font-size: 0.9rem; color: #0f172a; }
+    .amount-val { font-size: 1.2rem; font-weight: 900; color: #059669; }
+    .acc-num { font-size: 1.05rem; font-weight: 800; color: #1e293b; letter-spacing: 0.04em; }
 
     .d-val-copy { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .text-note { color: #047857; font-weight: 900; font-size: 0.875rem; word-break: break-all; }
+    .text-note { color: #047857; font-weight: 900; font-size: 0.9rem; word-break: break-all; }
 
-    .btn-copy-chip { background: #ffffff; border: 1px solid #059669; border-radius: 6px; padding: 2px 10px; font-size: 0.72rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
+    .btn-copy-chip { background: #ffffff; border: 1px solid #059669; border-radius: 6px; padding: 3px 12px; font-size: 0.75rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
     .btn-copy-chip:hover { background: #059669; color: #ffffff; }
 
-    .vqr-deep-links-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 18px; border-radius: 18px; display: flex; flex-direction: column; gap: 8px; }
-    .deep-link-label { font-size: 0.775rem; font-weight: 800; color: #334155; }
+    .vqr-deep-links-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .deep-link-label { font-size: 0.8rem; font-weight: 800; color: #334155; }
     .apps-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .app-link-pill { padding: 6px 14px; border-radius: 10px; font-size: 0.775rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+    .app-link-pill { padding: 7px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
     .app-link-pill:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.18); }
 
-    .modal-footer-vqr { padding: 16px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 2.5fr; gap: 12px; flex-shrink: 0; }
-    .btn-cancel-modal { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; height: 46px; font-size: 0.875rem; font-weight: 800; color: #475569; cursor: pointer; transition: background 0.15s; }
+    .modal-footer-vqr { padding: 18px 28px; background: #ffffff; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 2.5fr; gap: 14px; flex-shrink: 0; }
+    .btn-cancel-modal { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 14px; height: 48px; font-size: 0.9rem; font-weight: 800; color: #475569; cursor: pointer; transition: background 0.15s; }
     .btn-cancel-modal:hover { background: #e2e8f0; }
-    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 12px; height: 46px; font-size: 0.9rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: transform 0.15s; }
+    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 14px; height: 48px; font-size: 0.95rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: transform 0.15s; }
     .btn-confirm-vqr:hover { transform: translateY(-2px); }
 
-    .modal-form { display: flex; flex-direction: column; gap: 14px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .input-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
-    .input-label.required::after { content: ' *'; color: #ef4444; }
-    .modal-input { height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.9rem; outline: none; }
-    .modal-input:focus { border-color: #059669; }
-    .form-error { font-size: 0.78rem; color: #ef4444; font-weight: 600; }
-    .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
-    .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; color: #475569; cursor: pointer; }
-    .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; }
-
     @media (max-width: 680px) {
+      .spacious-modal { padding: 28px 24px; }
       .modal-body-vqr { grid-template-columns: 1fr; }
       .modal-footer-vqr { grid-template-columns: 1fr; }
     }
@@ -866,7 +1018,6 @@ export class TopUpComponent implements OnInit, OnDestroy {
         iconType: 'BANK'
       });
     }
-    // Card/Account number MUST be entered manually by the user!
   }
 
   maskAccNum(num: string): string {

@@ -492,49 +492,49 @@ import { Merchant } from '../../../core/models/merchant.model';
 
     .confirm-modal-box {
       background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.9);
-      border-radius: 20px; max-width: 480px; width: 100%; padding: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      border-radius: 28px; max-width: 560px; width: 100%; padding: 38px 42px;
+      box-shadow: 0 30px 80px -15px rgba(15, 23, 42, 0.35);
       font-family: 'Inter', system-ui, sans-serif;
     }
     
-    .modal-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 22px; position: relative; }
-    .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
-    .modal-icon-badge svg { width: 24px; height: 24px; }
+    .modal-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #f1f5f9; position: relative; }
+    .modal-icon-badge { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
+    .modal-icon-badge svg { width: 26px; height: 26px; }
     
     .modal-header-text { flex: 1; }
-    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
-    .modal-header h3 { margin: 0 0 2px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
-    .modal-desc { margin: 0; font-size: 0.825rem; color: #64748b; }
+    .modal-tag { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+    .modal-header h3 { margin: 0 0 4px 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .modal-desc { margin: 0; font-size: 0.875rem; color: #64748b; }
     
-    .btn-close { background: transparent; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; }
-    .btn-close:hover { color: #0f172a; background-color: #f1f5f9; }
+    .btn-close { background: #f1f5f9; border: none; font-size: 1rem; color: #64748b; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+    .btn-close:hover { color: #0f172a; background-color: #e2e8f0; }
 
     /* Receipt Card */
-    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-    .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
-    .receipt-label { color: #64748b; font-weight: 500; }
+    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+    .receipt-label { color: #64748b; font-weight: 600; }
     .receipt-val { color: #0f172a; font-weight: 700; }
-    .font-large { font-size: 1rem; color: #059669; }
-    .text-emerald { color: #059669; font-weight: 800; font-size: 1.15rem; }
+    .font-large { font-size: 1.05rem; color: #059669; }
+    .text-emerald { color: #059669; font-weight: 800; font-size: 1.25rem; }
 
-    .receipt-divider { height: 1px; border-top: 1px dashed #cbd5e1; margin: 4px 0; }
+    .receipt-divider { height: 1px; border-top: 1px dashed #cbd5e1; margin: 6px 0; }
 
-    .key-box { display: flex; flex-direction: column; gap: 4px; }
-    .key-title { font-size: 0.72rem; color: #64748b; font-weight: 700; letter-spacing: 0.03em; }
-    .key-string { font-family: monospace; font-size: 0.78rem; font-weight: 700; color: #059669; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; word-break: break-all; }
+    .key-box { display: flex; flex-direction: column; gap: 6px; }
+    .key-title { font-size: 0.75rem; color: #64748b; font-weight: 700; letter-spacing: 0.04em; }
+    .key-string { font-family: monospace; font-size: 0.8rem; font-weight: 700; color: #059669; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid #e2e8f0; word-break: break-all; }
 
     /* Actions Bar */
-    .modal-actions-bar { display: flex; gap: 12px; align-items: center; }
+    .modal-actions-bar { display: grid; grid-template-columns: 1fr 1.6fr; gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
     
     .btn-edit-outline {
-      height: 44px; padding: 0 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.875rem; color: #475569; cursor: pointer; transition: all 0.15s;
+      height: 48px; padding: 0 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 12px; font-weight: 700; font-size: 0.9rem; color: #475569; cursor: pointer; transition: all 0.15s;
     }
     .btn-edit-outline:hover:not(:disabled) { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
 
     .btn-confirm-emerald {
-      flex: 1; height: 44px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); transition: all 0.2s;
+      height: 48px; border: none; border-radius: 12px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: all 0.2s;
     }
-    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45); }
     .btn-confirm-emerald:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     
     .spinner-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
