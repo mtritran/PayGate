@@ -445,18 +445,34 @@ export class TransactionListComponent implements OnInit, OnDestroy {
     this.transactionService.getMyTransactions(filters).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          let transactions = res.data.content;
+          let list = res.data.content;
 
-          if (this.searchQuery().trim()) {
-            const q = this.searchQuery().toLowerCase();
-            transactions = transactions.filter(t =>
+          // 1. Filter by Status Tab
+          const status = this.selectedTab();
+          if (status !== 'ALL') {
+            list = list.filter(t => t.status.toUpperCase() === status.toUpperCase());
+          }
+
+          // 2. Filter by Type
+          const type = this.typeFilter();
+          if (type) {
+            list = list.filter(t => t.type.toUpperCase() === type.toUpperCase());
+          }
+
+          // 3. Filter by Search Query (Reference, Note, Account ID, Amount)
+          const q = this.searchQuery().trim().toLowerCase();
+          if (q) {
+            list = list.filter(t =>
               t.transactionRef.toLowerCase().includes(q) ||
-              (t.description && t.description.toLowerCase().includes(q))
+              (t.description && t.description.toLowerCase().includes(q)) ||
+              t.sourceAccountId.toString().includes(q) ||
+              t.destAccountId.toString().includes(q) ||
+              t.amount.toString().includes(q)
             );
           }
 
-          this.transactions.set(transactions);
-          this.totalElements.set(res.data.totalElements);
+          this.transactions.set(list);
+          this.totalElements.set(list.length);
         }
         this.loading.set(false);
       },
