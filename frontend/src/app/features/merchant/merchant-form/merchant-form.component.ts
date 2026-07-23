@@ -10,13 +10,19 @@ import { Merchant } from '../../../core/models/merchant.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="modal-backdrop fade-in">
+    <div class="modal-backdrop modal-fade-in">
       <div class="modal-card">
         <!-- Header -->
         <div class="modal-header">
-          <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            </svg>
+          </div>
+          <div class="modal-header-text">
             <span class="modal-tag">ENTERPRISE PROVISIONING</span>
             <h3>{{ merchant ? 'Edit Merchant Partner' : 'Register New Merchant Partner' }}</h3>
+            <p class="modal-desc">Configure business profile, webhook endpoints, and API credentials.</p>
           </div>
           <button type="button" class="btn-close-icon" (click)="close.emit()">✕</button>
         </div>
@@ -105,9 +111,9 @@ import { Merchant } from '../../../core/models/merchant.model';
             </select>
           </div>
 
-          <!-- Footer Action Buttons -->
-          <div class="modal-footer">
-            <button type="button" class="btn-cancel" (click)="close.emit()">Cancel</button>
+          <!-- Footer Action Buttons Bar -->
+          <div class="modal-actions-bar">
+            <button type="button" class="btn-cancel-outline" (click)="close.emit()">Cancel</button>
             <button type="submit" class="btn-emerald-modal" [disabled]="merchantForm.invalid || loading">
               {{ loading ? 'Saving...' : (merchant ? 'Update Merchant' : 'Register Merchant ↗') }}
             </button>
@@ -117,22 +123,59 @@ import { Merchant } from '../../../core/models/merchant.model';
     </div>
   `,
   styles: [`
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
     }
-    .fade-in { animation: fadeInUp 0.25s ease-out forwards; }
+    .modal-fade-in { animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; font-family: 'Inter', system-ui, sans-serif; }
-    .modal-card { background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); width: 100%; max-width: 500px; overflow: hidden; display: flex; flex-direction: column; }
+    /* Full Viewport Backdrop Fix */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
     
-    .modal-header { padding: 20px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: flex-start; }
-    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
-    .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
-    .btn-close-icon { background: transparent; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer; padding: 4px; }
-    .btn-close-icon:hover { color: #0f172a; }
+    .modal-header { padding: 22px 26px; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; gap: 14px; align-items: flex-start; position: relative; }
+    
+    .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
+    .modal-icon-badge svg { width: 22px; height: 22px; }
 
-    .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .modal-header-text { flex: 1; }
+    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    .modal-header h3 { margin: 0 0 2px 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
+    .modal-desc { margin: 0; font-size: 0.8rem; color: #64748b; }
+
+    .btn-close-icon { background: transparent; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; }
+    .btn-close-icon:hover { color: #0f172a; background-color: #f1f5f9; }
+
+    .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; background-color: #ffffff; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
     .form-label.required::after { content: ' *'; color: #ef4444; }
@@ -161,10 +204,38 @@ import { Merchant } from '../../../core/models/merchant.model';
 
     .field-error { color: #ef4444; font-size: 0.75rem; margin: 2px 0 0 0; font-weight: 600; }
     
-    .modal-footer { padding-top: 16px; margin-top: 8px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; }
-    .btn-cancel { height: 42px; padding: 0 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.875rem; color: #475569; cursor: pointer; }
-    .btn-emerald-modal { height: 42px; padding: 0 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 700; font-size: 0.875rem; cursor: pointer; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25); }
-    .btn-emerald-modal:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* Clean Seamless Action Bar */
+    .modal-actions-bar { padding-top: 12px; margin-top: 6px; display: flex; justify-content: flex-end; gap: 12px; }
+    
+    .btn-cancel-outline {
+      height: 44px;
+      padding: 0 18px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-cancel-outline:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
+
+    .btn-emerald-modal {
+      height: 44px;
+      padding: 0 22px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-emerald-modal:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-emerald-modal:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
 
     .font-mono { font-family: monospace; }
   `]

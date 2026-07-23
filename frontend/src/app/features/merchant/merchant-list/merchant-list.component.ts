@@ -9,106 +9,109 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
   standalone: true,
   imports: [CommonModule, MerchantFormComponent],
   template: `
-    <div class="console-page fade-in-up">
-      <!-- Page Header -->
-      <div class="page-header flex-between">
-        <div>
-          <div class="header-tag">ENTERPRISE MERCHANT PROVISIONING</div>
-          <h2>Merchant Management</h2>
-          <p class="header-subtitle">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
-        </div>
-        <button class="btn-emerald-primary pulse-glow" (click)="openCreateModal()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>Register Merchant ↗</span>
-        </button>
-      </div>
-
-      <!-- Main Content Card / Table -->
-      <div class="table-card">
-        <div *ngIf="loading" class="loading-box">
-          <div class="spinner"></div>
+    <div class="merchant-list-wrapper">
+      <!-- Main Page Content -->
+      <div class="console-page fade-in-up">
+        <!-- Page Header -->
+        <div class="page-header flex-between">
+          <div>
+            <div class="header-tag">ENTERPRISE MERCHANT PROVISIONING</div>
+            <h2>Merchant Management</h2>
+            <p class="header-subtitle">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
+          </div>
+          <button class="btn-emerald-primary pulse-glow" (click)="openCreateModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Register Merchant ↗</span>
+          </button>
         </div>
 
-        <div *ngIf="!loading" class="custom-table-wrapper">
-          <table class="paygate-table">
-            <thead>
-              <tr>
-                <th>MERCHANT</th>
-                <th>CODE</th>
-                <th>CONTACT EMAIL</th>
-                <th>WEBHOOK URL</th>
-                <th>STATUS</th>
-                <th class="text-right">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let m of merchants" class="merchant-row">
-                <td>
-                  <div class="merchant-cell">
-                    <div class="merchant-avatar">{{ m.name.substring(0, 2).toUpperCase() }}</div>
-                    <div>
-                      <div class="merchant-name">{{ m.name }}</div>
-                      <div class="account-num font-mono">Account: {{ m.accountNumber || 'Pending' }}</div>
+        <!-- Main Content Card / Table -->
+        <div class="table-card">
+          <div *ngIf="loading" class="loading-box">
+            <div class="spinner"></div>
+          </div>
+
+          <div *ngIf="!loading" class="custom-table-wrapper">
+            <table class="paygate-table">
+              <thead>
+                <tr>
+                  <th>MERCHANT</th>
+                  <th>CODE</th>
+                  <th>CONTACT EMAIL</th>
+                  <th>WEBHOOK URL</th>
+                  <th>STATUS</th>
+                  <th class="text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let m of merchants" class="merchant-row">
+                  <td>
+                    <div class="merchant-cell">
+                      <div class="merchant-avatar">{{ m.name.substring(0, 2).toUpperCase() }}</div>
+                      <div>
+                        <div class="merchant-name">{{ m.name }}</div>
+                        <div class="account-num font-mono">Account: {{ m.accountNumber || 'Pending' }}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td><span class="code-badge">{{ m.merchantCode }}</span></td>
-                <td>
-                  <div class="contact-email">
-                    <svg class="email-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </svg>
-                    <span>{{ m.contactEmail || 'N/A' }}</span>
-                  </div>
-                </td>
-                <td class="max-w-url" [title]="m.webhookUrl">
-                  <span class="webhook-url font-mono">{{ m.webhookUrl }}</span>
-                </td>
-                <td>
-                  <span
-                    [class.active]="m.status === 'ACTIVE'"
-                    [class.inactive]="m.status === 'INACTIVE'"
-                    [class.suspended]="m.status === 'SUSPENDED'"
-                    class="status-pill"
-                  >
-                    <span class="pill-dot"></span>
-                    {{ m.status }}
-                  </span>
-                </td>
-                <td class="text-right">
-                  <button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
+                  </td>
+                  <td><span class="code-badge">{{ m.merchantCode }}</span></td>
+                  <td>
+                    <div class="contact-email">
+                      <svg class="email-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                      </svg>
+                      <span>{{ m.contactEmail || 'N/A' }}</span>
+                    </div>
+                  </td>
+                  <td class="max-w-url" [title]="m.webhookUrl">
+                    <span class="webhook-url font-mono">{{ m.webhookUrl }}</span>
+                  </td>
+                  <td>
+                    <span
+                      [class.active]="m.status === 'ACTIVE'"
+                      [class.inactive]="m.status === 'INACTIVE'"
+                      [class.suspended]="m.status === 'SUSPENDED'"
+                      class="status-pill"
+                    >
+                      <span class="pill-dot"></span>
+                      {{ m.status }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
 
-              <tr *ngIf="merchants.length === 0">
-                <td colspan="6" class="text-center py-8 text-muted">
-                  No merchants found. Click "Register Merchant" to onboard a business partner.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                <tr *ngIf="merchants.length === 0">
+                  <td colspan="6" class="text-center py-8 text-muted">
+                    No merchants found. Click "Register Merchant" to onboard a business partner.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- Custom Pagination Bar -->
-        <div class="pagination-bar">
-          <span class="page-info">Showing {{ merchants.length }} of {{ totalElements }} items</span>
-          <div class="page-buttons">
-            <button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
-            <button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
+          <!-- Custom Pagination Bar -->
+          <div class="pagination-bar">
+            <span class="page-info">Showing {{ merchants.length }} of {{ totalElements }} items</span>
+            <div class="page-buttons">
+              <button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
+              <button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Merchant Form Modal -->
+      <!-- Merchant Form Modal (Placed OUTSIDE animated container) -->
       <app-merchant-form
         *ngIf="showModal"
         [merchant]="selectedMerchant"
@@ -125,6 +128,9 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    
+    .merchant-list-wrapper { position: relative; width: 100%; }
+
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
     .console-page { display: flex; flex-direction: column; gap: 20px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
