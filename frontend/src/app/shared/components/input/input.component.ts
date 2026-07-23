@@ -37,8 +37,8 @@ export type InputSize = 'sm' | 'md' | 'lg';
           [attr.max]="max()"
           [attr.step]="step()"
           [attr.pattern]="pattern()"
-          [attr.minlength]="minlength()"
-          [attr.maxlength]="maxlength()"
+          [attr.minlength]="minlength() || null"
+          [attr.maxlength]="maxlength() || null"
           [value]="value()"
           (input)="onInput($event)"
           (blur)="onBlur()"
@@ -329,8 +329,8 @@ export class InputComponent implements ControlValueAccessor {
   max = input<string | number>('');
   step = input<string | number>('');
   pattern = input('');
-  minlength = input<number>(0);
-  maxlength = input<number>(0);
+  minlength = input<number | null>(null);
+  maxlength = input<number | null>(null);
   describedBy = input('');
 
   // Internal state
