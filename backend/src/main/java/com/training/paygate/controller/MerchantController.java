@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/merchants")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Merchant Management (Admin)", description = "APIs for managing merchants, webhooks, and automatic merchant wallet creation (ROLE_ADMIN required)")
+@Tag(name = "Merchant Management (Admin)", description = "APIs for managing merchants, webhooks, and approval workflows (ROLE_ADMIN required)")
 public class MerchantController {
 
     private final MerchantService merchantService;
@@ -85,5 +86,17 @@ public class MerchantController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateMerchantRequest request) {
         return ApiResponse.success("Merchant updated successfully", merchantService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/approve")
+    @Operation(summary = "Approve pending merchant", description = "Approves a pending merchant request and provisions a merchant wallet account.")
+    public ApiResponse<MerchantResponse> approve(@PathVariable Long id) {
+        return ApiResponse.success("Merchant approved successfully", merchantService.approveMerchant(id));
+    }
+
+    @PatchMapping("/{id}/reject")
+    @Operation(summary = "Reject pending merchant", description = "Rejects a pending merchant request.")
+    public ApiResponse<MerchantResponse> reject(@PathVariable Long id) {
+        return ApiResponse.success("Merchant request rejected", merchantService.rejectMerchant(id));
     }
 }

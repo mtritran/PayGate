@@ -9,7 +9,7 @@ export interface Merchant {
   webhookUrl: string;
   apiKey?: string;
   active?: boolean;
-  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  status?: 'PENDING' | 'ACTIVE' | 'REJECTED';
   accountNumber?: string;
   createdAt: string;
   updatedAt?: string;
@@ -22,11 +22,17 @@ export interface CreateMerchantRequest {
   webhookUrl?: string;
 }
 
+export interface UserMerchantRequest {
+  merchantName: string;
+  merchantCode: string;
+  webhookUrl?: string;
+}
+
 export interface UpdateMerchantRequest {
   name?: string;
   merchantName?: string;
   contactEmail?: string;
   contactPhone?: string;
   webhookUrl?: string;
-  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  status?: 'PENDING' | 'ACTIVE' | 'REJECTED';
 }

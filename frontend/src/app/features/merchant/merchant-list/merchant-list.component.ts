@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Merchant } from '../../../core/models/merchant.model';
 import { MerchantFormComponent } from '../merchant-form/merchant-form.component';
 
@@ -18,7 +19,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
           <div>
             <div class="header-tag">ENTERPRISE MERCHANT PROVISIONING</div>
             <h2>Merchant Management</h2>
-            <p class="header-subtitle">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
+            <p class="header-subtitle">Review merchant registration requests, approve partners, and configure webhook endpoints.</p>
           </div>
 
           <div class="header-actions">
@@ -41,9 +42,9 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
             <div class="select-wrapper">
               <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="custom-select">
                 <option value="ALL">ALL STATUSES</option>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-                <option value="SUSPENDED">SUSPENDED</option>
+                <option value="PENDING">⏳ PENDING APPROVAL</option>
+                <option value="ACTIVE">✅ ACTIVE</option>
+                <option value="REJECTED">❌ REJECTED</option>
               </select>
               <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9" />
@@ -85,7 +86,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                       <div class="merchant-avatar">{{ getInitials(m) }}</div>
                       <div>
                         <div class="merchant-name">{{ m.merchantName || m.name }}</div>
-                        <div class="account-num font-mono">Wallet Account: {{ m.accountNumber || 'Pending' }}</div>
+                        <div class="account-num font-mono">Wallet Account: {{ m.accountNumber || 'Pending Approval' }}</div>
                       </div>
                     </div>
                   </td>
@@ -100,22 +101,44 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                   </td>
                   <td>
                     <span
-                      [class.active]="m.active !== false && m.status !== 'INACTIVE' && m.status !== 'SUSPENDED'"
-                      [class.inactive]="m.active === false || m.status === 'INACTIVE'"
-                      [class.suspended]="m.status === 'SUSPENDED'"
+                      [class.active]="m.status === 'ACTIVE' || (m.active && m.status !== 'REJECTED' && m.status !== 'PENDING')"
+                      [class.pending]="m.status === 'PENDING' || (!m.active && m.status !== 'REJECTED')"
+                      [class.rejected]="m.status === 'REJECTED'"
                       class="status-pill"
                     >
                       <span class="pill-dot"></span>
-                      {{ m.active !== false ? (m.status || 'ACTIVE') : 'INACTIVE' }}
+                      {{ m.status || (m.active ? 'ACTIVE' : 'PENDING') }}
                     </span>
                   </td>
                   <td class="text-right">
-                    <button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
+                    <div class="actions-group">
+                      <!-- Approve Button if Pending -->
+                      <button
+                        *ngIf="m.status === 'PENDING' || (!m.active && m.status !== 'REJECTED')"
+                        class="btn-action-approve"
+                        (click)="approveMerchant(m)"
+                        title="Approve Merchant Application"
+                      >
+                        ✓ Approve
+                      </button>
+
+                      <!-- Reject Button if Pending -->
+                      <button
+                        *ngIf="m.status === 'PENDING' || (!m.active && m.status !== 'REJECTED')"
+                        class="btn-action-reject"
+                        (click)="rejectMerchant(m)"
+                        title="Reject Merchant Application"
+                      >
+                        ✕ Reject
+                      </button>
+
+                      <button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
 
@@ -176,7 +199,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     .search-input { border: none; outline: none; width: 100%; font-size: 0.825rem; color: #0f172a; background: transparent; }
 
     /* Select Wrapper */
-    .select-wrapper { position: relative; width: 140px; }
+    .select-wrapper { position: relative; width: 170px; }
     .custom-select { width: 100%; height: 42px; padding: 0 30px 0 12px; font-size: 0.8rem; font-weight: 700; color: #334155; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; appearance: none; cursor: pointer; }
     .select-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #94a3b8; pointer-events: none; }
 
@@ -217,8 +240,6 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     .account-num { font-size: 0.75rem; color: #059669; font-weight: 600; margin-top: 2px; }
 
     .code-badge { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #334155; font-weight: 700; }
-    .contact-email { display: flex; align-items: center; gap: 6px; color: #475569; font-weight: 500; font-size: 0.85rem; }
-    .email-icon { width: 14px; height: 14px; color: #94a3b8; flex-shrink: 0; }
     .webhook-url { color: #64748b; font-size: 0.8rem; }
     .max-w-url { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     
@@ -228,11 +249,39 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     .status-pill.active { background-color: #dcfce7; color: #15803d; }
     .status-pill.active .pill-dot { background-color: #16a34a; }
 
-    .status-pill.inactive { background-color: #fef3c7; color: #b45309; }
-    .status-pill.inactive .pill-dot { background-color: #d97706; }
+    .status-pill.pending { background-color: #fef3c7; color: #b45309; }
+    .status-pill.pending .pill-dot { background-color: #d97706; }
 
-    .status-pill.suspended { background-color: #fee2e2; color: #b91c1c; }
-    .status-pill.suspended .pill-dot { background-color: #dc2626; }
+    .status-pill.rejected { background-color: #fee2e2; color: #b91c1c; }
+    .status-pill.rejected .pill-dot { background-color: #dc2626; }
+
+    .actions-group { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+    
+    .btn-action-approve {
+      background: #059669;
+      color: #ffffff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-action-approve:hover { background: #047857; }
+
+    .btn-action-reject {
+      background: #ef4444;
+      color: #ffffff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-action-reject:hover { background: #dc2626; }
 
     .btn-icon-action { width: 34px; height: 34px; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 8px; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
     .btn-icon-action:hover { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
@@ -247,7 +296,6 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
 
     .font-mono { font-family: monospace; }
     .text-indigo { color: #4338ca; }
-    .font-bold { font-weight: 700; color: #0f172a; }
     .text-muted { color: #64748b; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
@@ -267,7 +315,10 @@ export class MerchantListComponent implements OnInit {
   totalPages = 0;
   totalElements = 0;
 
-  constructor(private merchantService: MerchantService) {}
+  constructor(
+    private merchantService: MerchantService,
+    private notification: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loadMerchants();
@@ -300,7 +351,12 @@ export class MerchantListComponent implements OnInit {
 
     // Status Filter
     if (this.statusFilter && this.statusFilter !== 'ALL') {
-      list = list.filter(m => (m.status === this.statusFilter) || (this.statusFilter === 'ACTIVE' && m.active !== false));
+      list = list.filter(m => {
+        if (this.statusFilter === 'ACTIVE') return m.status === 'ACTIVE' || (m.active && m.status !== 'REJECTED' && m.status !== 'PENDING');
+        if (this.statusFilter === 'PENDING') return m.status === 'PENDING' || (!m.active && m.status !== 'REJECTED');
+        if (this.statusFilter === 'REJECTED') return m.status === 'REJECTED';
+        return true;
+      });
     }
 
     // Search Query
@@ -319,6 +375,38 @@ export class MerchantListComponent implements OnInit {
 
   onFilterChange(): void {
     // triggers filteredMerchants calculation
+  }
+
+  approveMerchant(merchant: Merchant): void {
+    if (confirm(`Bạn có chắc chắn muốn CHẤP THUẬN Merchant "${merchant.merchantName}"?`)) {
+      this.merchantService.approve(merchant.id).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.notification.success(`Đã chấp thuận Merchant "${merchant.merchantName}" thành công! Ví Merchant đã được kích hoạt.`);
+            this.loadMerchants();
+          }
+        },
+        error: (err) => {
+          this.notification.error(err.error?.message || 'Phê duyệt thất bại!');
+        }
+      });
+    }
+  }
+
+  rejectMerchant(merchant: Merchant): void {
+    if (confirm(`Bạn có chắc chắn muốn TỪ CHỐI Merchant "${merchant.merchantName}"?`)) {
+      this.merchantService.reject(merchant.id).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.notification.success(`Đã từ chối Merchant "${merchant.merchantName}".`);
+            this.loadMerchants();
+          }
+        },
+        error: (err) => {
+          this.notification.error(err.error?.message || 'Từ chối thất bại!');
+        }
+      });
+    }
   }
 
   openCreateModal(): void {

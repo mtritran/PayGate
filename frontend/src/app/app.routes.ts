@@ -49,6 +49,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
       },
       {
+        path: 'merchant/register',
+        loadComponent: () => import('./features/merchant/merchant-register/merchant-register.component').then(m => m.MerchantRegisterComponent)
+      },
+      {
         path: 'admin/merchants',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/merchant/merchant-list/merchant-list.component').then(m => m.MerchantListComponent)

@@ -3,13 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
-import { Merchant, CreateMerchantRequest, UpdateMerchantRequest } from '../models/merchant.model';
+import { Merchant, CreateMerchantRequest, UpdateMerchantRequest, UserMerchantRequest } from '../models/merchant.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MerchantService {
   private readonly baseUrl = '/api/v1/admin/merchants';
+  private readonly userBaseUrl = '/api/v1/merchants';
 
   constructor(private http: HttpClient) {}
 
@@ -33,5 +34,26 @@ export class MerchantService {
 
   update(id: number, request: UpdateMerchantRequest): Observable<ApiResponse<Merchant>> {
     return this.http.put<ApiResponse<Merchant>>(`${this.baseUrl}/${id}`, request);
+  }
+
+  approve(id: number): Observable<ApiResponse<Merchant>> {
+    return this.http.patch<ApiResponse<Merchant>>(`${this.baseUrl}/${id}/approve`, {});
+  }
+
+  reject(id: number): Observable<ApiResponse<Merchant>> {
+    return this.http.patch<ApiResponse<Merchant>>(`${this.baseUrl}/${id}/reject`, {});
+  }
+
+  // User Self-Service APIs
+  requestMerchant(request: UserMerchantRequest): Observable<ApiResponse<Merchant>> {
+    return this.http.post<ApiResponse<Merchant>>(`${this.userBaseUrl}/request`, request);
+  }
+
+  getMyMerchant(): Observable<ApiResponse<Merchant>> {
+    return this.http.get<ApiResponse<Merchant>>(`${this.userBaseUrl}/me`);
+  }
+
+  getActiveMerchants(): Observable<ApiResponse<Merchant[]>> {
+    return this.http.get<ApiResponse<Merchant[]>>(`${this.userBaseUrl}/active`);
   }
 }
