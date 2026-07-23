@@ -17,6 +17,13 @@ export interface LinkedBankSource {
   createdAt: string;
 }
 
+export interface BankTheme {
+  bg: string;
+  border: string;
+  text: string;
+  gradient: string;
+}
+
 @Component({
   selector: 'app-top-up',
   standalone: true,
@@ -31,7 +38,7 @@ export interface LinkedBankSource {
       <div class="page-header text-center">
         <div class="header-tag">PAYGATE INSTANT TOP UP</div>
         <h2>Top Up Wallet</h2>
-        <p class="subtitle">Add funds to your PayGate balance via linked payment sources.</p>
+        <p class="subtitle">Add funds to your PayGate balance via linked payment sources with authentic bank themes.</p>
       </div>
 
       <!-- 2-Column Main Grid Layout (Spacious 1200px Grid) -->
@@ -47,15 +54,15 @@ export interface LinkedBankSource {
               <span class="status-chip active">ACTIVE</span>
             </div>
 
-            <!-- Large Metallic Shimmer Visa Card -->
-            <div class="metallic-visa-card shimmer-box">
+            <!-- Dynamic Metallic Visa Card (Adopts Selected Bank's Brand Gradient!) -->
+            <div class="metallic-visa-card shimmer-box" [style.background]="getCardGradient()">
               <div class="card-top-row">
                 <div class="visa-brand-logo">
                   <span class="paygate-brand">PayGate</span>
                   <span class="visa-tag">VISA</span>
                 </div>
                 <div class="card-contactless">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
                     <path d="M5 12.55a11 11 0 0 1 14.08 0" />
                     <path d="M1.42 9a16 16 0 0 1 21.16 0" />
                     <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
@@ -148,10 +155,10 @@ export interface LinkedBankSource {
                 </div>
               </div>
 
-              <!-- Dynamic Linked Payment Sources Section -->
+              <!-- Dynamic Linked Payment Sources Section (With Brand-Specific Colors!) -->
               <div class="form-section">
                 <div class="flex-between mb-12">
-                  <label class="section-label mb-0">Select Linked Payment Source</label>
+                  <label class="section-label mb-0">Select Linked Payment Source (Brand Themes)</label>
                   <div class="action-btn-group">
                     <button type="button" class="btn-link-bank" (click)="openLinkModal()">
                       + Liên kết ngân hàng mới
@@ -162,18 +169,22 @@ export interface LinkedBankSource {
                   </div>
                 </div>
 
-                <!-- Dynamic Grid of User's Linked Banks -->
+                <!-- Dynamic Grid of User's Linked Banks with Custom Brand Styles -->
                 <div class="method-grid" *ngIf="linkedBanks.length > 0">
                   <div
                     *ngFor="let bank of linkedBanks"
                     class="method-card"
                     [class.active]="selectedBankId === bank.id"
                     [class.insufficient]="isBankInsufficient(bank)"
+                    [style.backgroundColor]="getBankTheme(bank.bankName).bg"
+                    [style.borderColor]="selectedBankId === bank.id ? getBankTheme(bank.bankName).border : '#cbd5e1'"
                     (click)="selectBank(bank.id)">
                     <button type="button" class="btn-unlink" (click)="unlinkBank(bank.id, $event)" title="Hủy liên kết">
                       ✕
                     </button>
-                    <div class="method-icon-box">
+                    
+                    <!-- Bank Brand Icon Box -->
+                    <div class="method-icon-box" [style.background]="getBankTheme(bank.bankName).gradient" style="color: #ffffff;">
                       <svg *ngIf="bank.iconType === 'BANK'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <line x1="3" y1="21" x2="21" y2="21" />
                         <line x1="3" y1="10" x2="21" y2="10" />
@@ -192,10 +203,11 @@ export interface LinkedBankSource {
                         <line x1="12" y1="18" x2="12.01" y2="18" />
                       </svg>
                     </div>
+
                     <div class="method-info">
-                      <span class="method-title">{{ bank.bankName }}</span>
+                      <span class="method-title" [style.color]="getBankTheme(bank.bankName).text">{{ bank.bankName }}</span>
                       <span class="method-acc font-mono">{{ maskAccNum(bank.accountNumber) }}</span>
-                      <span class="method-balance" [class.text-danger]="isBankInsufficient(bank)">
+                      <span class="method-balance" [class.text-danger]="isBankInsufficient(bank)" [style.color]="isBankInsufficient(bank) ? '#dc2626' : getBankTheme(bank.bankName).text">
                         Hạn mức: {{ bank.balance | currency:'VND':'symbol':'1.0-0' }}
                       </span>
                     </div>
@@ -242,6 +254,7 @@ export interface LinkedBankSource {
                 <button
                   class="btn-emerald-submit pulse-glow"
                   type="submit"
+                  [style.background]="getSubmitGradient()"
                   [disabled]="topUpForm.invalid || submitting || !currentSelectedBank || isCurrentBankInsufficient()">
                   <span *ngIf="!submitting" class="btn-content">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -253,7 +266,7 @@ export interface LinkedBankSource {
                   </span>
                   <span *ngIf="submitting" class="btn-content">
                     <span class="btn-spinner"></span>
-                    Checking Bank Balance & Processing...
+                    Checking {{ currentSelectedBank?.bankName }} Balance & Processing...
                   </span>
                 </button>
               </div>
@@ -384,28 +397,28 @@ export interface LinkedBankSource {
     .status-chip.active { background-color: #dcfce7; color: #15803d; border: 1px solid #a7f3d0; }
 
     .metallic-visa-card {
-      background: linear-gradient(135deg, #047857 0%, #065f46 50%, #064e3b 100%);
       color: #ffffff;
       border-radius: 20px;
       padding: 30px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 14px 32px rgba(4, 120, 87, 0.3);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2);
+      transition: background 0.3s ease;
     }
-    .shimmer-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(60deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%); transform: rotate(30deg); transition: transform 0.6s; }
+    .shimmer-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(60deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%); transform: rotate(30deg); transition: transform 0.6s; }
     .metallic-visa-card:hover::after { animation: shimmer 1.5s infinite; }
 
     .card-top-row { display: flex; justify-content: space-between; align-items: center; }
     .visa-brand-logo { display: flex; align-items: center; gap: 10px; }
     .paygate-brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; }
-    .visa-tag { font-size: 0.85rem; font-weight: 900; font-style: italic; background: #ffffff; color: #047857; padding: 2px 9px; border-radius: 5px; letter-spacing: 0.06em; }
+    .visa-tag { font-size: 0.85rem; font-weight: 900; font-style: italic; background: #ffffff; color: #0f172a; padding: 2px 9px; border-radius: 5px; letter-spacing: 0.06em; }
 
     /* Large EMV Chip */
     .emv-chip { width: 50px; height: 36px; background: linear-gradient(135deg, #fef08a 0%, #eab308 100%); border-radius: 8px; border: 1px solid #ca8a04; position: relative; overflow: hidden; }
     .chip-line.horizontal { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.25); }
     .chip-line.vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.25); }
 
-    .wallet-field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; color: #a7f3d0; opacity: 0.95; text-transform: uppercase; }
+    .wallet-field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; color: #ffffff; opacity: 0.85; text-transform: uppercase; }
     .card-num { font-size: 1.5rem; font-weight: 800; color: #ffffff; letter-spacing: 0.08em; margin-top: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
 
     .card-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -445,29 +458,25 @@ export interface LinkedBankSource {
     .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.15); }
     .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
-    /* Dynamic Linked Method Selector Grid */
+    /* Dynamic Linked Method Selector Grid (Supports Brand Colors!) */
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .method-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; text-align: center; position: relative; }
-    .method-card:hover { border-color: #cbd5e1; background-color: #ffffff; transform: translateY(-2px); }
-    .method-card.active { background-color: #ecfdf5; border-color: #059669; box-shadow: 0 0 0 2px #059669; }
-    .method-card.insufficient { border-color: #fca5a5; background-color: #fef2f2; }
-    .method-card.insufficient.active { border-color: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+    .method-card { border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
+    .method-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); }
+    .method-card.active { box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.25); }
+    .method-card.insufficient { border-color: #fca5a5 !important; background-color: #fef2f2 !important; }
+    .method-card.insufficient.active { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important; }
 
-    .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.06); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
     .btn-unlink:hover { background: #fee2e2; color: #dc2626; }
 
-    .method-icon-box { width: 44px; height: 44px; border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
-    .method-card.active .method-icon-box { background: #059669; border-color: #059669; color: #ffffff; }
-    .method-card.insufficient.active .method-icon-box { background: #dc2626; border-color: #dc2626; color: #ffffff; }
+    .method-icon-box { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
     .method-icon-box svg { width: 24px; height: 24px; }
 
     .method-info { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; }
-    .method-title { font-size: 0.875rem; font-weight: 800; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .method-title { font-size: 0.875rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .method-acc { font-size: 0.72rem; color: #64748b; }
-    .method-card.active .method-title { color: #059669; }
-    .method-card.insufficient.active .method-title { color: #dc2626; }
-    .method-balance { font-size: 0.72rem; font-weight: 600; color: #64748b; }
-    .text-danger { color: #dc2626 !important; font-weight: 700 !important; }
+    .method-balance { font-size: 0.72rem; font-weight: 700; }
+    .text-danger { color: #dc2626 !important; font-weight: 800 !important; }
 
     .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .empty-linked-box:hover { border-color: #059669; background: #ecfdf5; }
@@ -490,16 +499,15 @@ export interface LinkedBankSource {
       height: 56px;
       border: none;
       border-radius: 14px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
       font-size: 1.05rem;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
-      transition: all 0.2s;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+      transition: all 0.25s ease;
     }
-    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(5, 150, 105, 0.45); }
-    .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; background: #94a3b8; }
+    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35); }
+    .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; background: #94a3b8 !important; }
     
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 10px; }
     .btn-spinner { width: 22px; height: 22px; border: 2.5px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.7s linear infinite; }
@@ -567,7 +575,6 @@ export class TopUpComponent implements OnInit {
   account: AccountResponse | null = null;
   selectedBankId: string = '';
 
-  // Dynamic user's linked banks list stored in DB & localStorage (Empty for new users)
   linkedBanks: LinkedBankSource[] = [];
 
   presets = [
@@ -607,6 +614,110 @@ export class TopUpComponent implements OnInit {
     return user.split('@')[0].toUpperCase();
   }
 
+  getBankTheme(bankName: string): BankTheme {
+    const name = (bankName || '').toLowerCase();
+    if (name.includes('mb bank') || name.includes('quân đội')) {
+      return {
+        bg: '#eff6ff',
+        border: '#1d4ed8',
+        text: '#1e40af',
+        gradient: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)'
+      };
+    }
+    if (name.includes('vietcombank') || name.includes('vcb')) {
+      return {
+        bg: '#ecfdf5',
+        border: '#047857',
+        text: '#065f46',
+        gradient: 'linear-gradient(135deg, #047857 0%, #065f46 100%)'
+      };
+    }
+    if (name.includes('techcombank') || name.includes('tcb')) {
+      return {
+        bg: '#fef2f2',
+        border: '#dc2626',
+        text: '#991b1b',
+        gradient: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)'
+      };
+    }
+    if (name.includes('vpbank')) {
+      return {
+        bg: '#f0fdf4',
+        border: '#16a34a',
+        text: '#15803d',
+        gradient: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
+      };
+    }
+    if (name.includes('bidv')) {
+      return {
+        bg: '#f0f9ff',
+        border: '#0284c7',
+        text: '#0369a1',
+        gradient: 'linear-gradient(135deg, #0369a1 0%, #075985 100%)'
+      };
+    }
+    if (name.includes('agribank')) {
+      return {
+        bg: '#fff1f2',
+        border: '#be123c',
+        text: '#881337',
+        gradient: 'linear-gradient(135deg, #9f1239 0%, #881337 100%)'
+      };
+    }
+    if (name.includes('acb')) {
+      return {
+        bg: '#eff6ff',
+        border: '#2563eb',
+        text: '#1d4ed8',
+        gradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+      };
+    }
+    if (name.includes('momo')) {
+      return {
+        bg: '#fdf2f8',
+        border: '#db2777',
+        text: '#9d174d',
+        gradient: 'linear-gradient(135deg, #be185d 0%, #9d174d 100%)'
+      };
+    }
+    if (name.includes('zalo')) {
+      return {
+        bg: '#f0f9ff',
+        border: '#0ea5e9',
+        text: '#0369a1',
+        gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
+      };
+    }
+    if (name.includes('napas') || name.includes('thẻ')) {
+      return {
+        bg: '#f8fafc',
+        border: '#475569',
+        text: '#1e293b',
+        gradient: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)'
+      };
+    }
+    return {
+      bg: '#ecfdf5',
+      border: '#059669',
+      text: '#047857',
+      gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+    };
+  }
+
+  getCardGradient(): string {
+    if (this.currentSelectedBank) {
+      return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
+    }
+    return 'linear-gradient(135deg, #047857 0%, #065f46 50%, #064e3b 100%)';
+  }
+
+  getSubmitGradient(): string {
+    if (this.currentSelectedBank) {
+      return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
+    }
+    return 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+  }
+
   private initForm(): void {
     this.topUpForm = this.fb.group({
       amount: [500000, [Validators.required, Validators.min(10000), Validators.max(1000000000)]],
@@ -644,7 +755,6 @@ export class TopUpComponent implements OnInit {
         }
       },
       error: () => {
-        // Fallback to local storage if offline
         const saved = localStorage.getItem('paygate_user_linked_banks');
         if (saved) {
           try {
@@ -717,7 +827,6 @@ export class TopUpComponent implements OnInit {
         }
       },
       error: () => {
-        // Fallback to local link if offline
         const newBank: LinkedBankSource = {
           id: 'bank-' + Date.now(),
           bankName: req.bankName,
@@ -803,7 +912,6 @@ export class TopUpComponent implements OnInit {
     const amount = this.currentAmount;
     const bank = this.currentSelectedBank;
 
-    // Check balance of selected linked bank
     if (amount > bank.balance) {
       const msg = `Số dư tài khoản ${bank.bankName} không đủ! Bạn muốn nạp ${amount.toLocaleString()} ₫ nhưng ${bank.bankName} chỉ còn ${bank.balance.toLocaleString()} ₫.`;
       this.notification.error(msg);
@@ -811,11 +919,15 @@ export class TopUpComponent implements OnInit {
     }
 
     this.submitting = true;
-    this.accountService.topUp(this.topUpForm.value).subscribe({
+    const payload = {
+      amount,
+      description: `Nạp tiền vào ví PayGate qua ${bank.bankName} (TK: ${this.maskAccNum(bank.accountNumber)})`
+    };
+
+    this.accountService.topUp(payload).subscribe({
       next: (res) => {
         this.submitting = false;
         if (res.success) {
-          // Deduct amount from selected linked bank balance
           bank.balance -= amount;
           this.saveLinkedBanks();
 

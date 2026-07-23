@@ -11,6 +11,13 @@ import { SkeletonComponent } from '../../../shared/components/skeleton/skeleton.
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
 
+export interface BankBadge {
+  name: string;
+  bg: string;
+  color: string;
+  border: string;
+}
+
 @Component({
   selector: 'app-transaction-list',
   standalone: true,
@@ -32,7 +39,7 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
         <div>
           <div class="header-tag">PAYGATE LEDGER & TRANSACTIONS</div>
           <h2>Transactions</h2>
-          <p class="subtitle">All payments, refunds, and top-ups processed on your PayGate wallet.</p>
+          <p class="subtitle">All payments, refunds, and top-ups processed on your PayGate wallet with explicit bank transparency.</p>
         </div>
         <a class="btn-new-payment pulse-glow" routerLink="/transactions/pay">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -85,13 +92,12 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
               <input
                 type="text"
                 class="search-input"
-                placeholder="Search by reference or note..."
+                placeholder="Search by reference, bank name, or note..."
                 [value]="searchQuery()"
                 (input)="onSearchChange($event)"
               >
             </div>
 
-            <!-- Custom Clean Select Dropdown (Replaces Ugly Material Field) -->
             <div class="select-wrapper">
               <select class="custom-select" [value]="typeFilter()" (change)="onTypeSelectChange($event)">
                 <option value="">All Types</option>
@@ -119,8 +125,8 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
               <tr>
                 <th>Reference</th>
                 <th>Type</th>
-                <th>From</th>
-                <th>To</th>
+                <th>Bank Source</th>
+                <th>Accounts</th>
                 <th>Amount</th>
                 <th>Status</th>
                 <th>Date</th>
@@ -142,8 +148,21 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
                 <td class="font-medium">
                   <span class="type-badge">{{ tx.type }}</span>
                 </td>
-                <td class="font-mono text-muted">PAY000000000{{ tx.sourceAccountId }}</td>
-                <td class="font-mono text-muted">PAY000000000{{ tx.destAccountId }}</td>
+
+                <!-- Transparent Bank Brand Badge Column -->
+                <td>
+                  <span
+                    class="bank-brand-badge"
+                    [style.backgroundColor]="getBankBadge(tx.description, tx.type).bg"
+                    [style.color]="getBankBadge(tx.description, tx.type).color"
+                    [style.borderColor]="getBankBadge(tx.description, tx.type).border">
+                    🏦 {{ getBankBadge(tx.description, tx.type).name }}
+                  </span>
+                </td>
+
+                <td class="font-mono text-muted">
+                  PAY000000000{{ tx.sourceAccountId }} ➔ PAY000000000{{ tx.destAccountId }}
+                </td>
                 <td class="font-bold" [ngClass]="tx.type === 'TOPUP' ? 'text-green' : 'text-dark'">
                   {{ tx.type === 'TOPUP' ? '+' : '-' }}{{ tx.amount | currency:'VND':'symbol':'1.0-0' }}
                 </td>
@@ -170,7 +189,7 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
           </table>
         </div>
 
-        <!-- Custom Beautiful Paginator (Replaces Ugly Native Paginator) -->
+        <!-- Custom Paginator -->
         <div class="paginator-bar">
           <div class="page-size-selector">
             <span class="paginator-label">Items per page:</span>
@@ -259,13 +278,13 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
     .filter-controls { display: flex; align-items: center; gap: 12px; }
 
     /* Search Box */
-    .search-box { display: flex; align-items: center; gap: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px; width: 260px; height: 38px; transition: all 0.15s; }
+    .search-box { display: flex; align-items: center; gap: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px; width: 280px; height: 38px; transition: all 0.15s; }
     .search-box:focus-within { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
     .search-icon { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
     .search-input { border: none; outline: none; width: 100%; font-size: 0.825rem; color: #0f172a; background: transparent; }
     .search-input::placeholder { color: #94a3b8; }
 
-    /* Custom Type Select (Replaces ugly black border select) */
+    /* Custom Type Select */
     .select-wrapper { position: relative; width: 140px; }
     .custom-select {
       width: 100%;
@@ -303,6 +322,19 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
     .ref-link { font-family: monospace; font-size: 0.825rem; font-weight: 700; color: #059669; }
 
     .type-badge { font-weight: 600; font-size: 0.825rem; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; color: #334155; }
+
+    /* Bank Brand Badge */
+    .bank-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
 
     .font-mono { font-family: monospace; font-size: 0.825rem; font-weight: 600; }
     .font-medium { font-weight: 600; }
@@ -382,6 +414,44 @@ export class TransactionListComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  getBankBadge(desc: string, type: string): BankBadge {
+    const text = (desc || '').toLowerCase();
+    if (text.includes('mb bank') || text.includes('quân đội')) {
+      return { name: 'MB Bank', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+    }
+    if (text.includes('vietcombank') || text.includes('vcb')) {
+      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+    }
+    if (text.includes('techcombank') || text.includes('tcb')) {
+      return { name: 'Techcombank', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' };
+    }
+    if (text.includes('vpbank')) {
+      return { name: 'VPBank', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' };
+    }
+    if (text.includes('momo')) {
+      return { name: 'Ví MoMo', bg: '#fdf2f8', color: '#db2777', border: '#fbcfe8' };
+    }
+    if (text.includes('zalopay') || text.includes('zalo')) {
+      return { name: 'ZaloPay', bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' };
+    }
+    if (text.includes('bidv')) {
+      return { name: 'BIDV', bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' };
+    }
+    if (text.includes('agribank')) {
+      return { name: 'Agribank', bg: '#fff1f2', color: '#be123c', border: '#fecdd3' };
+    }
+    if (text.includes('acb')) {
+      return { name: 'ACB Bank', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' };
+    }
+    if (text.includes('napas')) {
+      return { name: 'Napas ATM', bg: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+    }
+    if (type === 'TOPUP') {
+      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+    }
+    return { name: 'PayGate Wallet', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
+  }
+
   setTab(tab: 'ALL' | 'COMPLETED' | 'PROCESSING' | 'FAILED'): void {
     this.selectedTab.set(tab);
     this.pageIndex.set(0);
@@ -447,19 +517,16 @@ export class TransactionListComponent implements OnInit, OnDestroy {
         if (res.success && res.data) {
           let list = res.data.content;
 
-          // 1. Filter by Status Tab
           const status = this.selectedTab();
           if (status !== 'ALL') {
             list = list.filter(t => t.status.toUpperCase() === status.toUpperCase());
           }
 
-          // 2. Filter by Type
           const type = this.typeFilter();
           if (type) {
             list = list.filter(t => t.type.toUpperCase() === type.toUpperCase());
           }
 
-          // 3. Filter by Search Query (Reference, Note, Account ID, Amount)
           const q = this.searchQuery().trim().toLowerCase();
           if (q) {
             list = list.filter(t =>
