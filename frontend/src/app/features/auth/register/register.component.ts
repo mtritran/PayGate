@@ -36,17 +36,21 @@ import { InputComponent } from '../../../shared/components';
             <h2 class="showcase-title">Join Thousands of Businesses & Digital Wallet Users</h2>
             <p class="showcase-desc">Create your free PayGate account to access instant multi-bank linking, top-ups, and automated merchant APIs.</p>
 
-            <!-- Feature Card Preview -->
+            <!-- Feature Card Preview (Generic Mock Card) -->
             <div class="metallic-card-preview shimmer-effect">
               <div class="preview-top-row">
                 <span class="preview-brand">PayGate <i>STARTER</i></span>
-                <span class="preview-chip-icon">✨</span>
+                <span class="preview-chip-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </span>
               </div>
               <div class="preview-num">₫0 Zero Maintenance Fee</div>
               <div class="preview-bottom-row">
                 <div>
-                  <span class="lbl">INSTANT ACTIVATION</span>
-                  <span class="val">Immediate Wallet Access</span>
+                  <span class="lbl">CARD HOLDER</span>
+                  <span class="val">PAYGATE USER</span>
                 </div>
                 <div>
                   <span class="lbl">SECURITY</span>
@@ -55,24 +59,43 @@ import { InputComponent } from '../../../shared/components';
               </div>
             </div>
 
-            <!-- Highlights List -->
+            <!-- Highlights List (SVG Icons) -->
             <div class="showcase-highlights">
               <div class="highlight-item">
-                <span class="h-icon">💳</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Digital Visa Wallet Card</strong>
                   <span>Auto-generated virtual debit card for quick payments</span>
                 </div>
               </div>
+
               <div class="highlight-item">
-                <span class="h-icon">🏦</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <line x1="3" y1="21" x2="21" y2="21"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <polyline points="12 3 2 10 22 10 12 3"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Multi-Bank Linking</strong>
                   <span>Link MB Bank, Vietcombank, Techcombank, MoMo instantly</span>
                 </div>
               </div>
+
               <div class="highlight-item">
-                <span class="h-icon">📊</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Transparent Transaction Logs</strong>
                   <span>Clear bank name tags and instant ledger entries</span>
@@ -83,7 +106,7 @@ import { InputComponent } from '../../../shared/components';
 
           <!-- Footer Trust Badges -->
           <div class="showcase-footer">
-            <span>🔒 256-Bit SSL Encrypted</span>
+            <span>256-Bit SSL Encrypted</span>
             <span>•</span>
             <span>Zero Annual Fees</span>
           </div>
@@ -279,12 +302,12 @@ import { InputComponent } from '../../../shared/components';
     .preview-num { font-family: monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.06em; color: #ffffff; }
     .preview-bottom-row { display: flex; justify-content: space-between; }
     .preview-bottom-row .lbl { font-size: 0.65rem; font-weight: 700; color: #a7f3d0; display: block; }
-    .preview-bottom-row .val { font-size: 0.85rem; font-weight: 800; }
+    .preview-bottom-row .val { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em; }
     .status-badge { font-size: 0.7rem; font-weight: 800; color: #10b981; background: #dcfce7; padding: 2px 8px; border-radius: 8px; }
 
     .showcase-highlights { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
     .highlight-item { display: flex; align-items: flex-start; gap: 12px; }
-    .h-icon { font-size: 1.2rem; }
+    .h-icon-box { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
     .h-text { display: flex; flex-direction: column; gap: 1px; }
     .h-text strong { font-size: 0.9rem; font-weight: 800; color: #ffffff; }
     .h-text span { font-size: 0.8rem; color: #a7f3d0; opacity: 0.85; }

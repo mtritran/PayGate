@@ -610,7 +610,7 @@ export class TopUpComponent implements OnInit {
 
   getUserFullName(): string {
     const user = this.authService.getUsername();
-    if (!user) return 'NGUYEN VAN A';
+    if (!user) return 'PAYGATE USER';
     return user.split('@')[0].toUpperCase();
   }
 

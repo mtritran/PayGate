@@ -36,17 +36,22 @@ import { InputComponent } from '../../../shared/components';
             <h2 class="showcase-title">Next-Gen Payment Infrastructure & Digital Wallet</h2>
             <p class="showcase-desc">Experience lightning-fast transactions, real-time double-entry ledgers, and seamless multi-bank integrations.</p>
 
-            <!-- Floating Metallic Glass Card Preview -->
+            <!-- Floating Metallic Glass Card Preview (Generic Mock Card) -->
             <div class="metallic-card-preview shimmer-effect">
               <div class="preview-top-row">
                 <span class="preview-brand">PayGate <i>VISA</i></span>
-                <span class="preview-chip-icon">💳</span>
+                <span class="preview-chip-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                </span>
               </div>
               <div class="preview-num">4532 •••• •••• 8892</div>
               <div class="preview-bottom-row">
                 <div>
                   <span class="lbl">CARD HOLDER</span>
-                  <span class="val">VINH NGUYEN</span>
+                  <span class="val">PAYGATE USER</span>
                 </div>
                 <div>
                   <span class="lbl">STATUS</span>
@@ -55,24 +60,41 @@ import { InputComponent } from '../../../shared/components';
               </div>
             </div>
 
-            <!-- Highlights List -->
+            <!-- Highlights List (SVG Icons) -->
             <div class="showcase-highlights">
               <div class="highlight-item">
-                <span class="h-icon">⚡</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Instant Settlements</strong>
                   <span>Real-time transaction processing under 200ms</span>
                 </div>
               </div>
+
               <div class="highlight-item">
-                <span class="h-icon">🔒</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Bank-Grade Encryption</strong>
                   <span>PCI-DSS compliant double-entry ledger security</span>
                 </div>
               </div>
+
               <div class="highlight-item">
-                <span class="h-icon">🏦</span>
+                <div class="h-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
+                    <line x1="3" y1="21" x2="21" y2="21"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <polyline points="12 3 2 10 22 10 12 3"/>
+                  </svg>
+                </div>
                 <div class="h-text">
                   <strong>Multi-Bank Linking</strong>
                   <span>Custom brand themes & instant balance sync</span>
@@ -83,7 +105,7 @@ import { InputComponent } from '../../../shared/components';
 
           <!-- Footer Trust Badges -->
           <div class="showcase-footer">
-            <span>🛡️ ISO 27001 Certified</span>
+            <span>ISO 27001 Certified</span>
             <span>•</span>
             <span>99.99% Uptime SLA</span>
           </div>
@@ -102,10 +124,10 @@ import { InputComponent } from '../../../shared/components';
             <span class="demo-label">Quick Demo Logins:</span>
             <div class="demo-btn-group">
               <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">
-                👤 User Login
+                User Login
               </button>
               <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">
-                ⚡ Admin Login
+                Admin Login
               </button>
             </div>
           </div>
@@ -250,12 +272,12 @@ import { InputComponent } from '../../../shared/components';
     .preview-num { font-family: monospace; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.06em; color: #ffffff; }
     .preview-bottom-row { display: flex; justify-content: space-between; }
     .preview-bottom-row .lbl { font-size: 0.65rem; font-weight: 700; color: #a7f3d0; display: block; }
-    .preview-bottom-row .val { font-size: 0.85rem; font-weight: 800; }
+    .preview-bottom-row .val { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.04em; }
     .status-badge { font-size: 0.7rem; font-weight: 800; color: #10b981; background: #dcfce7; padding: 2px 8px; border-radius: 8px; }
 
     .showcase-highlights { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
     .highlight-item { display: flex; align-items: flex-start; gap: 12px; }
-    .h-icon { font-size: 1.2rem; }
+    .h-icon-box { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
     .h-text { display: flex; flex-direction: column; gap: 1px; }
     .h-text strong { font-size: 0.9rem; font-weight: 800; color: #ffffff; }
     .h-text span { font-size: 0.8rem; color: #a7f3d0; opacity: 0.85; }
