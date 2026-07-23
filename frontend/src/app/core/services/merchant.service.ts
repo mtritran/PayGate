@@ -44,6 +44,24 @@ export class MerchantService {
     return this.http.patch<ApiResponse<Merchant>>(`${this.baseUrl}/${id}/reject`, {});
   }
 
+  getMerchants(page: number = 0, size: number = 20, status?: string, query?: string): Observable<ApiResponse<PageResponse<Merchant>>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (status) params = params.set('status', status);
+    if (query) params = params.set('query', query);
+
+    return this.http.get<ApiResponse<PageResponse<Merchant>>>(this.baseUrl, { params });
+  }
+
+  approveMerchant(id: number): Observable<ApiResponse<Merchant>> {
+    return this.http.put<ApiResponse<Merchant>>(`${this.baseUrl}/${id}/approve`, {});
+  }
+
+  rejectMerchant(id: number, reason?: string): Observable<ApiResponse<Merchant>> {
+    return this.http.put<ApiResponse<Merchant>>(`${this.baseUrl}/${id}/reject`, { reason });
+  }
+
   // User Self-Service APIs
   requestMerchant(request: UserMerchantRequest): Observable<ApiResponse<Merchant>> {
     return this.http.post<ApiResponse<Merchant>>(`${this.userBaseUrl}/request`, request);

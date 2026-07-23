@@ -208,103 +208,217 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     })).pipe(delay(150));
   }
 
-  // 5. Admin Merchants API Mock (Supports Search & Status Filter)
-  if (url.includes('/api/v1/admin/merchants')) {
+  // 4c. Account Exact Lookup Mock (Strict Banking Security: Exact Phone 10 digits OR Account Number)
+  if (url.includes('/api/v1/accounts/lookup') || url.includes('/accounts/lookup')) {
+    const query = params.get('query') || params.get('accountNumber') || '';
+    const cleanQ = query.trim();
+
+    // Mock accounts database
+    const mockAccounts = [
+      { accountId: 1, accountNumber: 'PAY0000000001', phoneNumber: '0988123456', ownerName: 'VINH NGUYEN (PAYGATE USER)', ownerType: 'USER' },
+      { accountId: 2, accountNumber: 'PAY0000000002', phoneNumber: '0912345678', ownerName: 'NGUYEN VAN A', ownerType: 'USER' },
+      { accountId: 3, accountNumber: 'PAY0000000003', phoneNumber: '0977889900', ownerName: 'TRAN THI B', ownerType: 'USER' },
+      { accountId: 4, accountNumber: 'PAY0000000004', phoneNumber: '0905112233', ownerName: 'THAN VINH', ownerType: 'USER' },
+      { accountId: 100, accountNumber: 'PAY990000001', phoneNumber: '0243888999', ownerName: 'SHOPEE VIETNAM ENTERPRISE', ownerType: 'MERCHANT' }
+    ];
+
+    // Strict Security Rule: Must match exact phone number OR exact account number
+    const found = mockAccounts.find(a => 
+      a.phoneNumber === cleanQ || 
+      a.accountNumber.toLowerCase() === cleanQ.toLowerCase() ||
+      (cleanQ.length >= 10 && cleanQ.toLowerCase() === a.accountNumber.toLowerCase())
+    );
+
+    if (found) {
+      return of(new HttpResponse({
+        status: 200,
+        body: {
+          success: true,
+          data: {
+            accountId: found.accountId,
+            accountNumber: found.accountNumber,
+            ownerName: found.ownerName,
+            ownerType: found.ownerType,
+            phoneNumber: found.phoneNumber,
+            status: 'ACTIVE'
+          }
+        }
+      })).pipe(delay(200));
+    } else {
+      return of(new HttpResponse({
+        status: 404,
+        body: {
+          success: false,
+          message: 'Không tìm thấy tài khoản nhận tiền với Số điện thoại / Số tài khoản chính xác này.'
+        }
+      })).pipe(delay(200));
+    }
+  }
+
+  // 5. Admin Merchants API Mock (Supports Search, Status Filter & Tax Code MST Approval)
+  if (url.includes('/api/v1/admin/merchants') || url.includes('/api/v1/merchants')) {
+    // Helper to get persistent merchants list
+    const getStoredMerchants = () => {
+      const saved = localStorage.getItem('paygate_mock_merchants_list');
+      if (saved) return JSON.parse(saved);
+      const defaults = [
+        {
+          id: 1,
+          merchantCode: 'SHOPEE_VN',
+          taxCode: '0101234567',
+          merchantName: 'Shopee Vietnam Enterprise',
+          representativeName: 'Nguyen Van Shopee',
+          contactPhone: '0901234567',
+          contactEmail: 'merchant@shopee.vn',
+          accountNumber: 'PAY990000001',
+          webhookUrl: 'https://api.shopee.vn/v1/webhooks/paygate',
+          apiKey: 'pk_live_shopee_99182',
+          status: 'ACTIVE',
+          active: true,
+          createdAt: '2026-07-20T08:00:00Z'
+        },
+        {
+          id: 2,
+          merchantCode: 'LAZADA_VN',
+          taxCode: '0309876543',
+          merchantName: 'Lazada Logistics Payment Node',
+          representativeName: 'Tran Thi Lazada',
+          contactPhone: '0909876543',
+          contactEmail: 'finance@lazada.vn',
+          accountNumber: 'PAY990000002',
+          webhookUrl: 'https://payment.lazada.vn/paygate/callback',
+          apiKey: 'pk_live_lazada_44120',
+          status: 'ACTIVE',
+          active: true,
+          createdAt: '2026-07-21T10:30:00Z'
+        },
+        {
+          id: 3,
+          merchantCode: 'TIKI_GLOBAL',
+          taxCode: '0105556667',
+          merchantName: 'Tiki Trading Global Joint Stock Co.',
+          representativeName: 'Le Van Tiki',
+          contactPhone: '0911223344',
+          contactEmail: 'admin@tiki.vn',
+          accountNumber: 'PAY990000003',
+          webhookUrl: 'https://tiki.vn/api/v2/paygate-hook',
+          apiKey: 'pk_live_tiki_88192',
+          status: 'PENDING',
+          active: false,
+          createdAt: '2026-07-22T14:15:00Z'
+        }
+      ];
+      localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(defaults));
+      return defaults;
+    };
+
+    let merchantsList = getStoredMerchants();
+
+    // Approve Merchant Action
+    if (url.includes('/approve') && method === 'PUT') {
+      const parts = url.split('/');
+      const approveId = Number(parts[parts.indexOf('approve') - 1]);
+      merchantsList = merchantsList.map((m: any) => {
+        if (m.id === approveId) {
+          return {
+            ...m,
+            status: 'ACTIVE',
+            active: true,
+            accountNumber: m.accountNumber || `PAY9900${m.id.toString().padStart(4, '0')}`
+          };
+        }
+        return m;
+      });
+      localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(merchantsList));
+      const approved = merchantsList.find((m: any) => m.id === approveId);
+      return of(new HttpResponse({
+        status: 200,
+        body: { success: true, message: 'Phê duyệt doanh nghiệp thành công!', data: approved }
+      })).pipe(delay(200));
+    }
+
+    // Reject Merchant Action
+    if (url.includes('/reject') && method === 'PUT') {
+      const parts = url.split('/');
+      const rejectId = Number(parts[parts.indexOf('reject') - 1]);
+      merchantsList = merchantsList.map((m: any) => {
+        if (m.id === rejectId) {
+          return { ...m, status: 'REJECTED', active: false };
+        }
+        return m;
+      });
+      localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(merchantsList));
+      const rejected = merchantsList.find((m: any) => m.id === rejectId);
+      return of(new HttpResponse({
+        status: 200,
+        body: { success: true, message: 'Đã từ chối đơn đăng ký doanh nghiệp!', data: rejected }
+      })).pipe(delay(200));
+    }
+
+    // Post new registration request
     if (method === 'POST') {
+      const body = req.body as any;
+      const newMerch = {
+        id: Date.now(),
+        merchantCode: body.merchantCode || `MERCH_${Date.now()}`,
+        taxCode: body.taxCode || '010' + Math.floor(1000000 + Math.random() * 9000000),
+        merchantName: body.merchantName,
+        representativeName: body.representativeName || 'N/A',
+        contactPhone: body.contactPhone || '0900000000',
+        contactEmail: body.contactEmail || 'partner@merchant.com',
+        accountNumber: '',
+        webhookUrl: body.webhookUrl || '',
+        apiKey: `pk_live_${Date.now()}`,
+        status: 'PENDING',
+        active: false,
+        createdAt: new Date().toISOString()
+      };
+      merchantsList.unshift(newMerch);
+      localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(merchantsList));
+
       return of(new HttpResponse({
         status: 201,
         body: {
           success: true,
-          message: 'Merchant registered successfully',
-          data: {
-            id: 10,
-            merchantCode: 'MERCH-88912',
-            name: 'New E-Commerce Partner',
-            contactEmail: 'partner@merchant.com',
-            accountNumber: 'PAY990000010',
-            webhookUrl: 'https://api.partner.com/paygate/webhook',
-            apiKey: 'pk_live_891273918273891273',
-            apiSecret: 'sk_live_991827389172389172',
-            status: 'ACTIVE',
-            createdAt: new Date().toISOString()
-          }
+          message: 'Đăng ký doanh nghiệp thành công! Đang chờ Admin xét duyệt.',
+          data: newMerch
         }
       })).pipe(delay(250));
     }
 
-    const allMerchants = [
-      {
-        id: 1,
-        merchantCode: 'MERCH-10001',
-        name: 'Shopee Vietnam PayGate Integration',
-        contactEmail: 'merchant@shopee.vn',
-        accountNumber: 'PAY990000001',
-        webhookUrl: 'https://api.shopee.vn/v1/webhooks/paygate',
-        apiKey: 'pk_live_shopee_99182',
-        apiSecret: 'sk_live_shopee_secret_x881',
-        status: 'ACTIVE',
-        createdAt: '2026-07-20T08:00:00Z'
-      },
-      {
-        id: 2,
-        merchantCode: 'MERCH-10002',
-        name: 'Lazada Logistics Payment Node',
-        contactEmail: 'finance@lazada.vn',
-        accountNumber: 'PAY990000002',
-        webhookUrl: 'https://payment.lazada.vn/paygate/callback',
-        apiKey: 'pk_live_lazada_44120',
-        apiSecret: 'sk_live_lazada_secret_z771',
-        status: 'ACTIVE',
-        createdAt: '2026-07-21T10:30:00Z'
-      },
-      {
-        id: 3,
-        merchantCode: 'MERCH-10003',
-        name: 'Tiki Trading Global',
-        contactEmail: 'admin@tiki.vn',
-        accountNumber: 'PAY990000003',
-        webhookUrl: 'https://tiki.vn/api/v2/paygate-hook',
-        apiKey: 'pk_live_tiki_88192',
-        apiSecret: 'sk_live_tiki_secret_m332',
-        status: 'ACTIVE',
-        createdAt: '2026-07-22T14:15:00Z'
-      },
-      {
-        id: 4,
-        merchantCode: 'MERCH-10004',
-        name: 'GrabFood VN Enterprise',
-        contactEmail: 'pay@grab.com',
-        accountNumber: 'PAY990000004',
-        webhookUrl: 'https://api.grab.com/paygate/notification',
-        apiKey: 'pk_live_grab_11209',
-        apiSecret: 'sk_live_grab_secret_k990',
-        status: 'INACTIVE',
-        createdAt: '2026-07-22T16:45:00Z'
-      },
-      {
-        id: 5,
-        merchantCode: 'MERCH-10005',
-        name: 'Sendo Online Marketplace',
-        contactEmail: 'support@sendo.vn',
-        accountNumber: 'PAY990000005',
-        webhookUrl: 'https://sendo.vn/paygate/event',
-        apiKey: 'pk_live_sendo_99120',
-        apiSecret: 'sk_live_sendo_secret_w102',
-        status: 'ACTIVE',
-        createdAt: '2026-07-23T08:00:00Z'
-      }
-    ];
+    // GET My Merchant request
+    if (url.includes('/my')) {
+      const myMerch = merchantsList.find((m: any) => m.id === 3) || merchantsList[0];
+      return of(new HttpResponse({
+        status: 200,
+        body: { success: true, data: myMerch }
+      })).pipe(delay(150));
+    }
 
-    let filtered = [...allMerchants];
+    // GET active/approved merchants for payment lookup by exact Tax Code or Code
+    if (url.includes('/active')) {
+      const activeMerchants = merchantsList.filter((m: any) => m.status === 'ACTIVE' || m.active === true);
+      return of(new HttpResponse({
+        status: 200,
+        body: { success: true, data: activeMerchants }
+      })).pipe(delay(150));
+    }
+
+    let filtered = [...merchantsList];
     const statusFilter = params.get('status');
     const searchFilter = params.get('query') || params.get('search');
 
     if (statusFilter && statusFilter !== 'ALL') {
-      filtered = filtered.filter(m => m.status === statusFilter);
+      filtered = filtered.filter(m => m.status === statusFilter || (statusFilter === 'ACTIVE' && m.active));
     }
     if (searchFilter) {
       const q = searchFilter.toLowerCase();
-      filtered = filtered.filter(m => m.name.toLowerCase().includes(q) || m.merchantCode.toLowerCase().includes(q) || m.contactEmail.toLowerCase().includes(q));
+      filtered = filtered.filter(m => 
+        (m.merchantName && m.merchantName.toLowerCase().includes(q)) || 
+        (m.merchantCode && m.merchantCode.toLowerCase().includes(q)) || 
+        (m.taxCode && m.taxCode.includes(q)) ||
+        (m.contactEmail && m.contactEmail.toLowerCase().includes(q))
+      );
     }
 
     return of(new HttpResponse({

@@ -1,9 +1,11 @@
 export interface Merchant {
   id: number;
-  userId: number;
+  userId?: number;
   merchantName: string;
   name?: string;
   merchantCode: string;
+  taxCode?: string;
+  representativeName?: string;
   contactEmail?: string;
   contactPhone?: string;
   webhookUrl: string;
@@ -19,12 +21,18 @@ export interface CreateMerchantRequest {
   userId: number;
   merchantName: string;
   merchantCode: string;
+  taxCode?: string;
+  representativeName?: string;
+  contactPhone?: string;
   webhookUrl?: string;
 }
 
 export interface UserMerchantRequest {
   merchantName: string;
   merchantCode: string;
+  taxCode?: string;
+  representativeName?: string;
+  contactPhone?: string;
   webhookUrl?: string;
 }
 

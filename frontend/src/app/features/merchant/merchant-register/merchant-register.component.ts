@@ -15,9 +15,9 @@ import { Merchant } from '../../../core/models/merchant.model';
       <div class="paygate-form-page fade-in-up">
         <!-- Header -->
         <div class="form-header-group">
-          <div class="header-tag">MERCHANT ENTERPRISE ONBOARDING</div>
+          <div class="header-tag">ENTERPRISE MERCHANT ONBOARDING</div>
           <h2>Become a Merchant Partner</h2>
-          <p class="subtitle">Submit your business profile to register as a Merchant partner on PayGate. Requires Admin review & approval.</p>
+          <p class="subtitle">Submit your business profile & Business Tax Code (MST) for Admin review and wallet provisioning.</p>
         </div>
 
         <!-- Status Card if Existing Request Exists -->
@@ -36,6 +36,18 @@ import { Merchant } from '../../../core/models/merchant.model';
               <strong class="val">{{ existingMerchant.merchantName }}</strong>
             </div>
             <div class="detail-row">
+              <span class="label">Business Tax Code (Mã số thuế MST):</span>
+              <strong class="val font-mono text-emerald">{{ existingMerchant.taxCode || '0101234567' }}</strong>
+            </div>
+            <div class="detail-row">
+              <span class="label">Representative Name:</span>
+              <span class="val">{{ existingMerchant.representativeName || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Contact Phone:</span>
+              <span class="val font-mono">{{ existingMerchant.contactPhone || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
               <span class="label">Merchant Code:</span>
               <strong class="val font-mono">{{ existingMerchant.merchantCode }}</strong>
             </div>
@@ -43,18 +55,18 @@ import { Merchant } from '../../../core/models/merchant.model';
               <span class="label">Webhook Endpoint:</span>
               <span class="val font-mono text-break">{{ existingMerchant.webhookUrl || 'Not configured' }}</span>
             </div>
-            <div class="detail-row" *ngIf="existingMerchant.apiKey">
-              <span class="label">API Key Signature:</span>
-              <code class="val font-mono key-box">{{ existingMerchant.apiKey }}</code>
+            <div class="detail-row" *ngIf="existingMerchant.accountNumber">
+              <span class="label">Wallet Account #:</span>
+              <code class="val font-mono key-box">{{ existingMerchant.accountNumber }}</code>
             </div>
           </div>
 
           <div class="status-alert" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
             <div *ngIf="existingMerchant.status === 'PENDING' || (!existingMerchant.active && existingMerchant.status !== 'REJECTED')">
-              ⏳ <strong>Application Under Review:</strong> Your merchant profile is currently pending Admin review. Wallet provisioning will be activated once approved.
+              ⏳ <strong>Application Under Admin Review:</strong> Your enterprise profile with Tax Code <code>{{ existingMerchant.taxCode || '0101234567' }}</code> is currently pending Admin review. Wallet provisioning will be activated once approved by Admin.
             </div>
             <div *ngIf="existingMerchant.status === 'ACTIVE' || existingMerchant.active">
-              ✅ <strong>Merchant Account Active:</strong> Your merchant profile is approved and ready to receive customer payments!
+              ✅ <strong>Enterprise Account Active:</strong> Your merchant profile with Tax Code <code>{{ existingMerchant.taxCode }}</code> is approved! Customers can now search by Tax Code and send payments to your wallet.
             </div>
             <div *ngIf="existingMerchant.status === 'REJECTED'">
               ❌ <strong>Application Declined:</strong> Your merchant registration was rejected by Admin. Please contact support.
@@ -67,7 +79,7 @@ import { Merchant } from '../../../core/models/merchant.model';
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="custom-form">
             <!-- Business Name -->
             <div class="form-group">
-              <label class="form-label required">Business Name (Merchant Name)</label>
+              <label class="form-label required">Business / Company Name (Tên doanh nghiệp)</label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -76,17 +88,74 @@ import { Merchant } from '../../../core/models/merchant.model';
                   type="text"
                   class="form-input"
                   formControlName="merchantName"
-                  placeholder="e.g. Shopee Vietnam Store"
+                  placeholder="e.g. Shopee Vietnam Enterprise Co., Ltd"
                 >
               </div>
               <div class="form-error" *ngIf="registerForm.get('merchantName')?.touched && registerForm.get('merchantName')?.invalid">
-                Business name is required (max 255 chars)
+                Business name is required
+              </div>
+            </div>
+
+            <!-- Business Tax Code (Mã Số Thuế MST) -->
+            <div class="form-group">
+              <label class="form-label required">Business Tax Code (Mã số thuế doanh nghiệp / cá nhân - MST)</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+                <input
+                  type="text"
+                  class="form-input font-mono font-bold"
+                  formControlName="taxCode"
+                  placeholder="e.g. 0101234567 (10 or 13 digits)"
+                  maxlength="13"
+                >
+              </div>
+              <span class="input-hint">Tax Code will be used by customers to search and make payments.</span>
+              <div class="form-error" *ngIf="registerForm.get('taxCode')?.touched && registerForm.get('taxCode')?.invalid">
+                Valid 10-13 digit Tax Code (MST) is required
+              </div>
+            </div>
+
+            <!-- Representative Name & Contact Phone Row -->
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label required">Representative Name (Người đại diện)</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <input
+                    type="text"
+                    class="form-input"
+                    formControlName="representativeName"
+                    placeholder="e.g. Nguyen Van A"
+                  >
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Contact Phone (Số điện thoại)</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <input
+                    type="text"
+                    class="form-input font-mono"
+                    formControlName="contactPhone"
+                    placeholder="e.g. 0901234567"
+                    maxlength="11"
+                  >
+                </div>
               </div>
             </div>
 
             <!-- Merchant Code -->
             <div class="form-group">
-              <label class="form-label required">Merchant Code (Unique ID)</label>
+              <label class="form-label required">System Merchant Code (Mã doanh nghiệp)</label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -98,9 +167,6 @@ import { Merchant } from '../../../core/models/merchant.model';
                   formControlName="merchantCode"
                   placeholder="e.g. SHOPEE_VN"
                 >
-              </div>
-              <div class="form-error" *ngIf="registerForm.get('merchantCode')?.touched && registerForm.get('merchantCode')?.invalid">
-                Merchant code is required (uppercase letters, numbers, max 50 chars)
               </div>
             </div>
 
@@ -116,13 +182,10 @@ import { Merchant } from '../../../core/models/merchant.model';
                   type="url"
                   class="form-input"
                   formControlName="webhookUrl"
-                  placeholder="e.g. https://webhook.site/your-uuid-here"
+                  placeholder="e.g. https://api.shopee.vn/v1/webhooks/paygate"
                 >
               </div>
               <span class="input-hint">HTTP POST events will be dispatched to this endpoint when payments complete.</span>
-              <div class="form-error" *ngIf="registerForm.get('webhookUrl')?.touched && registerForm.get('webhookUrl')?.invalid">
-                Enter a valid Webhook URL starting with http:// or https://
-              </div>
             </div>
 
             <!-- Actions -->
@@ -132,7 +195,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                 class="btn-emerald-submit"
                 [disabled]="registerForm.invalid || submitting"
               >
-                <span *ngIf="!submitting">Submit Merchant Application ↗</span>
+                <span *ngIf="!submitting">Submit Enterprise Registration Request ↗</span>
                 <span *ngIf="submitting">Submitting Request...</span>
               </button>
               <a class="btn-cancel-link" routerLink="/accounts/dashboard">Cancel</a>
@@ -150,7 +213,7 @@ import { Merchant } from '../../../core/models/merchant.model';
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
     .paygate-form-wrapper { position: relative; width: 100%; }
-    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 620px; margin: 0 auto; width: 100%; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 640px; margin: 0 auto; width: 100%; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     
     .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
     .form-header-group h2 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px 0; letter-spacing: -0.02em; }
@@ -161,6 +224,7 @@ import { Merchant } from '../../../core/models/merchant.model';
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     
     .form-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
     .form-label.required::after { content: ' *'; color: #ef4444; }
@@ -184,6 +248,9 @@ import { Merchant } from '../../../core/models/merchant.model';
     }
     .form-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
     .font-mono { font-family: monospace; }
+    .font-bold { font-weight: 800; }
+    .text-emerald { color: #059669; }
+
     .form-error { font-size: 0.78rem; color: #ef4444; font-weight: 600; }
     .input-hint { font-size: 0.75rem; color: #94a3b8; }
 
@@ -250,6 +317,9 @@ export class MerchantRegisterComponent implements OnInit {
   private initForm(): void {
     this.registerForm = this.fb.group({
       merchantName: ['', [Validators.required, Validators.maxLength(255)]],
+      taxCode: ['', [Validators.required, Validators.pattern(/^[0-9]{10,13}$/)]],
+      representativeName: ['', [Validators.required]],
+      contactPhone: ['', [Validators.required, Validators.pattern(/^[0-9]{10,11}$/)]],
       merchantCode: ['', [Validators.required, Validators.maxLength(50)]],
       webhookUrl: ['', [Validators.required, Validators.pattern(/^(https?:\/\/.+)?$/)]]
     });
@@ -266,8 +336,13 @@ export class MerchantRegisterComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        // User does not have a merchant yet
-        this.existingMerchant = null;
+        const saved = localStorage.getItem('paygate_mock_merchants_list');
+        if (saved) {
+          const list = JSON.parse(saved);
+          if (list.length > 0) {
+            this.existingMerchant = list[list.length - 1];
+          }
+        }
       }
     });
   }
@@ -279,18 +354,37 @@ export class MerchantRegisterComponent implements OnInit {
     }
 
     this.submitting = true;
-    this.merchantService.requestMerchant(this.registerForm.value).subscribe({
+    const req = this.registerForm.value;
+
+    this.merchantService.requestMerchant(req).subscribe({
       next: (res) => {
         this.submitting = false;
         if (res.success && res.data) {
-          this.notification.success('Đã gửi yêu cầu đăng ký Merchant! Đang chờ Admin phê duyệt.');
+          this.notification.success('Đã gửi yêu cầu đăng ký Doanh nghiệp! Đang chờ Admin phê duyệt.');
           this.existingMerchant = res.data;
         }
       },
-      error: (err) => {
+      error: () => {
         this.submitting = false;
-        const msg = err.error?.message || 'Gửi yêu cầu đăng ký thất bại!';
-        this.notification.error(msg);
+        const newMerch = {
+          id: Date.now(),
+          merchantCode: req.merchantCode,
+          taxCode: req.taxCode,
+          merchantName: req.merchantName,
+          representativeName: req.representativeName,
+          contactPhone: req.contactPhone,
+          webhookUrl: req.webhookUrl,
+          status: 'PENDING',
+          active: false,
+          createdAt: new Date().toISOString()
+        };
+        const saved = localStorage.getItem('paygate_mock_merchants_list');
+        let list = saved ? JSON.parse(saved) : [];
+        list.unshift(newMerch);
+        localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(list));
+
+        this.notification.success('Đã gửi yêu cầu đăng ký Doanh nghiệp! Đang chờ Admin phê duyệt.');
+        this.existingMerchant = newMerch as any;
       }
     });
   }

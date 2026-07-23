@@ -28,6 +28,10 @@ export class TransactionService {
     return this.http.post<ApiResponse<TransactionResponse>>(`${this.apiUrl}/pay`, request);
   }
 
+  sendPayment(request: PaymentRequest): Observable<ApiResponse<TransactionResponse>> {
+    return this.processPayment(request);
+  }
+
   getTransactionByRef(ref: string): Observable<ApiResponse<TransactionDetailResponse>> {
     return this.http.get<ApiResponse<TransactionDetailResponse>>(`${this.apiUrl}/${ref}`);
   }

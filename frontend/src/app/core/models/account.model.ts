@@ -19,5 +19,6 @@ export interface AccountLookupResponse {
   accountNumber: string;
   ownerName: string;
   ownerType: 'USER' | 'MERCHANT' | 'SYSTEM';
+  phoneNumber?: string;
   status: 'ACTIVE' | 'FROZEN' | 'CLOSED';
 }
