@@ -97,9 +97,6 @@ import { Merchant } from '../../../core/models/merchant.model';
                     maxlength="30"
                   >
                 </div>
-                <div class="security-hint-box" *ngIf="!lookupQuery || lookupQuery.length < 10">
-                  <span>[Banking Security Policy] Enter exact 10-digit Phone Number (e.g. <code>0988123456</code>) or Account Number (e.g. <code>PAY0000000004</code>). No partial names revealed for privacy.</span>
-                </div>
               </div>
 
               <!-- Live Resolution Card -->
@@ -178,9 +175,6 @@ import { Merchant } from '../../../core/models/merchant.model';
                     [ngModelOptions]="{standalone: true}"
                     (input)="onMerchantTaxInput($event)"
                   >
-                </div>
-                <div class="security-hint-box" *ngIf="!merchantTaxQuery || merchantTaxQuery.length < 6">
-                  <span>[Small Business Policy] Enter exact 10-digit Tax Code (MST) for small enterprises not featured on quick list.</span>
                 </div>
               </div>
 
