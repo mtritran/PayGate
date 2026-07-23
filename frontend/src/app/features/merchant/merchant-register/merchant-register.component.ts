@@ -63,13 +63,13 @@ import { Merchant } from '../../../core/models/merchant.model';
 
           <div class="status-alert" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
             <div *ngIf="existingMerchant.status === 'PENDING' || (!existingMerchant.active && existingMerchant.status !== 'REJECTED')">
-              ⏳ <strong>Application Under Admin Review:</strong> Your enterprise profile with Tax Code <code>{{ existingMerchant.taxCode || '0101234567' }}</code> is currently pending Admin review. Wallet provisioning will be activated once approved by Admin.
+              <strong>[Application Under Admin Review]</strong> Your enterprise profile with Tax Code <code>{{ existingMerchant.taxCode || '0101234567' }}</code> is currently pending Admin review. Wallet provisioning will be activated once approved by Admin.
             </div>
             <div *ngIf="existingMerchant.status === 'ACTIVE' || existingMerchant.active">
-              ✅ <strong>Enterprise Account Active:</strong> Your merchant profile with Tax Code <code>{{ existingMerchant.taxCode }}</code> is approved! Customers can now search by Tax Code and send payments to your wallet.
+              <strong>[Enterprise Account Active]</strong> Your merchant profile with Tax Code <code>{{ existingMerchant.taxCode }}</code> is approved. Customers can now search by Tax Code and send payments to your wallet.
             </div>
             <div *ngIf="existingMerchant.status === 'REJECTED'">
-              ❌ <strong>Application Declined:</strong> Your merchant registration was rejected by Admin. Please contact support.
+              <strong>[Application Declined]</strong> Your merchant registration was rejected by Admin. Please contact support.
             </div>
           </div>
         </div>

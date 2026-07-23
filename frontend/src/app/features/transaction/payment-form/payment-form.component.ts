@@ -98,7 +98,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                   >
                 </div>
                 <div class="security-hint-box" *ngIf="!lookupQuery || lookupQuery.length < 10">
-                  <span>🔒 <strong>Banking Security Policy:</strong> Enter exact 10-digit Phone Number (e.g. <code>0988123456</code>) or Account Number (e.g. <code>PAY0000000004</code>). No partial names revealed for privacy.</span>
+                  <span>[Banking Security Policy] Enter exact 10-digit Phone Number (e.g. <code>0988123456</code>) or Account Number (e.g. <code>PAY0000000004</code>). No partial names revealed for privacy.</span>
                 </div>
               </div>
 
@@ -109,7 +109,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
 
               <div *ngIf="!lookingUp && recipientLookup" class="lookup-card success-card">
-                <div class="verified-badge">✅ VERIFIED RECIPIENT</div>
+                <div class="verified-badge">VERIFIED RECIPIENT</div>
                 <div class="recipient-details">
                   <strong class="recipient-name">{{ recipientLookup.ownerName }}</strong>
                   <span class="recipient-meta font-mono">Account #{{ recipientLookup.accountNumber }} | Phone: {{ recipientLookup.phoneNumber || 'Verified' }}</span>
@@ -117,7 +117,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
 
               <div *ngIf="!lookingUp && lookupError && lookupQuery.length >= 10" class="lookup-card error-card">
-                ⚠️ {{ lookupError }}
+                [Notice] {{ lookupError }}
               </div>
             </div>
 
@@ -130,14 +130,14 @@ import { Merchant } from '../../../core/models/merchant.model';
                   class="sub-pill-btn"
                   [class.active]="merchantSubMode === 'FEATURED'"
                   (click)="setMerchantSubMode('FEATURED')">
-                  ⭐ Featured Major Enterprise (Bấm chọn sẵn)
+                  Featured Major Enterprise (Chọn sẵn)
                 </button>
                 <button
                   type="button"
                   class="sub-pill-btn"
                   [class.active]="merchantSubMode === 'TAX_CODE_SEARCH'"
                   (click)="setMerchantSubMode('TAX_CODE_SEARCH')">
-                  🔍 Small Enterprise (Tra cứu theo Mã Số Thuế MST)
+                  Small Enterprise (Tra cứu MST)
                 </button>
               </div>
 
@@ -153,7 +153,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                   >
                     <option [ngValue]="null">-- Select a Featured Enterprise --</option>
                     <option *ngFor="let m of featuredMerchants" [ngValue]="m.id">
-                      ⭐ {{ m.merchantName }} (MST: {{ m.taxCode || '0101234567' }})
+                      {{ m.merchantName }} (MST: {{ m.taxCode || '0101234567' }})
                     </option>
                   </select>
                   <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,14 +180,14 @@ import { Merchant } from '../../../core/models/merchant.model';
                   >
                 </div>
                 <div class="security-hint-box" *ngIf="!merchantTaxQuery || merchantTaxQuery.length < 6">
-                  <span>🏢 <strong>Small Business Policy:</strong> Enter exact 10-digit Tax Code (MST) for small enterprises not featured on quick list.</span>
+                  <span>[Small Business Policy] Enter exact 10-digit Tax Code (MST) for small enterprises not featured on quick list.</span>
                 </div>
               </div>
 
               <!-- Selected Merchant Info Card -->
               <div *ngIf="selectedMerchant" class="lookup-card merchant-info-card">
                 <div class="verified-badge">
-                  {{ selectedMerchant.isFeatured ? '⭐ FEATURED MAJOR ENTERPRISE' : '🏪 VERIFIED SMALL ENTERPRISE' }}
+                  {{ selectedMerchant.isFeatured ? 'FEATURED MAJOR ENTERPRISE' : 'VERIFIED SMALL ENTERPRISE' }}
                 </div>
                 <div class="recipient-details">
                   <strong class="recipient-name">{{ selectedMerchant.merchantName }}</strong>
@@ -197,7 +197,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
 
               <div *ngIf="merchantSubMode === 'TAX_CODE_SEARCH' && merchantLookupError && merchantTaxQuery.length >= 6" class="lookup-card error-card">
-                ⚠️ {{ merchantLookupError }}
+                [Notice] {{ merchantLookupError }}
               </div>
             </div>
 

@@ -42,9 +42,9 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
             <div class="select-wrapper">
               <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="custom-select">
                 <option value="ALL">ALL STATUSES</option>
-                <option value="PENDING">⏳ PENDING APPROVAL</option>
-                <option value="ACTIVE">✅ APPROVED / ACTIVE</option>
-                <option value="REJECTED">❌ REJECTED</option>
+                <option value="PENDING">PENDING APPROVAL</option>
+                <option value="ACTIVE">APPROVED / ACTIVE</option>
+                <option value="REJECTED">REJECTED</option>
               </select>
               <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9" />
@@ -126,8 +126,8 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                       (click)="toggleFeatured(m)"
                       title="Tick to show in Quick List dropdown for users"
                     >
-                      <span *ngIf="m.isFeatured">⭐ Show in List</span>
-                      <span *ngIf="!m.isFeatured">🔒 Require MST</span>
+                      <span *ngIf="m.isFeatured">Show in List</span>
+                      <span *ngIf="!m.isFeatured">Require MST</span>
                     </button>
                   </td>
                   <td class="text-right">
@@ -475,9 +475,9 @@ export class MerchantListComponent implements OnInit {
     m.isFeatured = !m.isFeatured;
     this.updateLocalMerchantState(m);
     if (m.isFeatured) {
-      this.notification.success(`⭐ Doanh nghiệp ${m.merchantName} đã được bật hiển thị sẵn trên danh sách Quick List!`);
+      this.notification.success(`Doanh nghiệp ${m.merchantName} đã được bật hiển thị sẵn trên danh sách Quick List.`);
     } else {
-      this.notification.info(`🔒 Doanh nghiệp ${m.merchantName} yêu cầu người dùng nhập đúng Mã Số Thuế MST.`);
+      this.notification.info(`Doanh nghiệp ${m.merchantName} yêu cầu người dùng nhập đúng Mã Số Thuế MST.`);
     }
   }
 
