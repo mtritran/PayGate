@@ -447,7 +447,9 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.submitError.set(err.error?.message || 'Registration failed. Please try again.');
+        const errMsg = err.error?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.';
+        this.submitError.set(errMsg);
+        this.notification.error(errMsg);
       }
     });
   }

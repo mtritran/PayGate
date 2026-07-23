@@ -49,8 +49,20 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     })).pipe(delay(200));
   }
 
+  // Helper to read persistent wallet balance
+  const getStoredBalance = (): number => {
+    const saved = localStorage.getItem('paygate_wallet_balance');
+    if (saved !== null && !isNaN(Number(saved))) {
+      return Number(saved);
+    }
+    const defaultBal = localStorage.getItem('paygate_is_new_user') === 'true' ? 0 : 15750000;
+    localStorage.setItem('paygate_wallet_balance', defaultBal.toString());
+    return defaultBal;
+  };
+
   // 2. Account Profile Me Mock
-  if (url.includes('/api/v1/accounts/me')) {
+  if (url.includes('/api/v1/accounts/me') || url.includes('/accounts/me')) {
+    const currentBal = getStoredBalance();
     return of(new HttpResponse({
       status: 200,
       body: {
@@ -60,7 +72,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
           ownerId: 101,
           ownerType: 'USER',
           accountNumber: 'PAY0000000001',
-          balance: 15750000,
+          balance: currentBal,
           currency: 'VND',
           status: 'ACTIVE',
           createdAt: new Date().toISOString()
@@ -71,21 +83,59 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
 
   // 3. Account Balance Mock
   if (url.includes('/balance')) {
+    const currentBal = getStoredBalance();
     return of(new HttpResponse({
       status: 200,
       body: {
         success: true,
         data: {
           accountId: 1,
-          balance: 15750000,
+          balance: currentBal,
           currency: 'VND'
         }
       }
     })).pipe(delay(150));
   }
 
-  // 4. Account Top Up Mock
+  // 4. Account Top Up Mock (Automatically deducts linked bank balance & adds to wallet balance & transactions!)
   if (url.includes('/accounts/topup') && method === 'POST') {
+    const body = req.body as any;
+    const amount = Number(body.amount) || 0;
+    const currentBal = getStoredBalance();
+    const newBal = currentBal + amount;
+    localStorage.setItem('paygate_wallet_balance', newBal.toString());
+
+    // Save transaction entry
+    const savedTxns = localStorage.getItem('paygate_mock_user_transactions');
+    let txns = savedTxns ? JSON.parse(savedTxns) : [];
+    const newTxn = {
+      id: Date.now(),
+      transactionRef: 'TXN-' + Date.now(),
+      sourceAccountId: 1,
+      destAccountId: 1,
+      amount: amount,
+      type: 'TOPUP',
+      status: 'COMPLETED',
+      description: body.paymentMethodId === 'vietqr' ? 'Nạp tiền VietQR Instant Scan' : 'Wallet Top Up via Linked Bank',
+      createdAt: new Date().toISOString()
+    };
+    txns.unshift(newTxn);
+    localStorage.setItem('paygate_mock_user_transactions', JSON.stringify(txns));
+
+    // Also deduct from linked bank if paymentMethodId provided
+    if (body.paymentMethodId && body.paymentMethodId !== 'vietqr') {
+      const savedBanks = localStorage.getItem('paygate_user_linked_banks');
+      if (savedBanks) {
+        let banks = JSON.parse(savedBanks);
+        const bankIndex = banks.findIndex((b: any) => b.id == body.paymentMethodId);
+        if (bankIndex !== -1) {
+          const currentBankBal = Number(banks[bankIndex].balance) || 0;
+          banks[bankIndex].balance = Math.max(0, currentBankBal - amount);
+          localStorage.setItem('paygate_user_linked_banks', JSON.stringify(banks));
+        }
+      }
+    }
+
     return of(new HttpResponse({
       status: 200,
       body: {
@@ -93,7 +143,11 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         message: 'Top up successful',
         data: {
           accountId: 1,
-          newBalance: 20750000
+          transactionRef: newTxn.transactionRef,
+          amount: amount,
+          type: 'TOPUP',
+          status: 'COMPLETED',
+          newBalance: newBal
         }
       }
     })).pipe(delay(300));
@@ -459,98 +513,38 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
 
   // 9. Account History & Transaction List Mock (Supports Status, Type, and Search Queries)
   if (url.includes('/history') || url.includes('/transactions')) {
-    const allTxns = [
-      {
-        id: 1,
-        transactionRef: 'TXN-20260723-89123',
-        sourceAccountId: 1,
-        destAccountId: 2,
-        amount: 500000,
-        type: 'PAYMENT',
-        status: 'COMPLETED',
-        description: 'Payment for Coffee & Snacks',
-        createdAt: '2026-07-23T09:30:00Z'
-      },
-      {
-        id: 2,
-        transactionRef: 'TXN-20260723-77219',
-        sourceAccountId: 1,
-        destAccountId: 1,
-        amount: 2000000,
-        type: 'TOPUP',
-        status: 'COMPLETED',
-        description: 'Wallet Top Up via Vietcombank',
-        createdAt: '2026-07-23T08:15:00Z'
-      },
-      {
-        id: 3,
-        transactionRef: 'TXN-20260722-55102',
-        sourceAccountId: 1,
-        destAccountId: 3,
-        amount: 1250000,
-        type: 'PAYMENT',
-        status: 'COMPLETED',
-        description: 'Monthly Cloud Infrastructure Hosting',
-        createdAt: '2026-07-22T14:45:00Z'
-      },
-      {
-        id: 4,
-        transactionRef: 'TXN-20260722-11092',
-        sourceAccountId: 1,
-        destAccountId: 4,
-        amount: 350000,
-        type: 'PAYMENT',
-        status: 'PROCESSING',
-        description: 'Online E-commerce Merchant Checkout',
-        createdAt: '2026-07-22T11:20:00Z'
-      },
-      {
-        id: 5,
-        transactionRef: 'TXN-20260721-99281',
-        sourceAccountId: 1,
-        destAccountId: 5,
-        amount: 800000,
-        type: 'PAYMENT',
-        status: 'FAILED',
-        description: 'Refund reversal attempt',
-        createdAt: '2026-07-21T16:10:00Z'
-      },
-      {
-        id: 6,
-        transactionRef: 'TXN-20260720-44120',
-        sourceAccountId: 1,
-        destAccountId: 1,
-        amount: 5000000,
-        type: 'TOPUP',
-        status: 'COMPLETED',
-        description: 'Wallet Top Up via Momo',
-        createdAt: '2026-07-20T10:00:00Z'
-      },
-      {
-        id: 7,
-        transactionRef: 'TXN-20260720-33019',
-        sourceAccountId: 1,
-        destAccountId: 6,
-        amount: 250000,
-        type: 'REFUND',
-        status: 'COMPLETED',
-        description: 'Refund for order #9910',
-        createdAt: '2026-07-20T11:30:00Z'
-      },
-      {
-        id: 8,
-        transactionRef: 'TXN-20260719-11928',
-        sourceAccountId: 1,
-        destAccountId: 7,
-        amount: 1500000,
-        type: 'WITHDRAW',
-        status: 'PROCESSING',
-        description: 'Withdrawal to Techcombank account',
-        createdAt: '2026-07-19T15:20:00Z'
-      }
-    ];
+    const isNewUser = localStorage.getItem('paygate_is_new_user') === 'true';
+    const customTxnsStr = localStorage.getItem('paygate_mock_user_transactions');
+    let userTxns: any[] = customTxnsStr ? JSON.parse(customTxnsStr) : [];
 
-    let filtered = [...allTxns];
+    if (!customTxnsStr && !isNewUser) {
+      userTxns = [
+        {
+          id: 1,
+          transactionRef: 'TXN-20260723-89123',
+          sourceAccountId: 1,
+          destAccountId: 2,
+          amount: 500000,
+          type: 'PAYMENT',
+          status: 'COMPLETED',
+          description: 'Payment for Coffee & Snacks',
+          createdAt: '2026-07-23T09:30:00Z'
+        },
+        {
+          id: 2,
+          transactionRef: 'TXN-20260723-77219',
+          sourceAccountId: 1,
+          destAccountId: 1,
+          amount: 2000000,
+          type: 'TOPUP',
+          status: 'COMPLETED',
+          description: 'Wallet Top Up via Vietcombank',
+          createdAt: '2026-07-23T08:15:00Z'
+        }
+      ];
+    }
+
+    let filtered = [...userTxns];
     const statusParam = params.get('status');
     const typeParam = params.get('type');
 

@@ -755,19 +755,15 @@ export class AccountDashboardComponent implements OnInit {
       }
     });
 
-    const baseAmounts = [320000, 600000, 480000, 920000, 1240000, 780000, 1560000];
-    const volumes = days.map((d, idx) => {
-      const realVal = dayMap.get(d) || 0;
-      return realVal > 0 ? realVal : baseAmounts[idx];
-    });
+    const volumes = days.map(d => dayMap.get(d) || 0);
 
-    // Compute total 7-day volume
+    // Compute total 7-day volume strictly from actual user transactions
     this.totalVolume = volumes.reduce((sum, v) => sum + v, 0);
 
     // Scaling into ViewBox 0 0 700 240
     // x range: 70 -> 670 (spacing: 100px per day)
     // y range: 190 (0k) -> 30 (1600k)
-    const maxVal = Math.max(...volumes, 1600000);
+    const maxVal = Math.max(...volumes, 1000000);
     const xCoords = [70, 170, 270, 370, 470, 570, 670];
 
     this.dailyPoints = days.map((d, i) => {

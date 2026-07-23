@@ -278,84 +278,91 @@ export interface BankTheme {
         </div>
       </div>
 
-      <!-- VIETQR INTERACTIVE SCAN MODAL -->
+      <!-- PREMIUM REDESIGNED VIETQR INTERACTIVE SCAN MODAL -->
       <div class="modal-overlay" *ngIf="showVietQrModal">
         <div class="vietqr-modal-card fade-in-up">
-          <div class="modal-header">
+          <!-- Sleek Header Banner -->
+          <div class="vqr-banner-header">
             <div class="vqr-title-group">
-              <span class="vqr-badge">VIETQR NAPAS 24/7</span>
+              <div class="vqr-badge-pill">
+                <span class="dot-live"></span>
+                <span>VIETQR NAPAS 24/7</span>
+              </div>
               <h3>Scan QR Code to Top Up</h3>
             </div>
-            <button type="button" class="btn-close-modal" (click)="closeVietQrModal()">✕</button>
+            <button type="button" class="btn-close-modal-light" (click)="closeVietQrModal()">✕</button>
           </div>
 
-          <div class="modal-body-vqr">
-            <!-- QR Display Section -->
-            <div class="qr-display-box">
-              <div class="qr-image-wrapper">
-                <img [src]="vietQrImageUrl" alt="VietQR Code" class="vqr-img" />
-              </div>
-              <div class="qr-timer-pill">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>Expires in: <strong>{{ formattedTimer }}</strong></span>
-              </div>
-            </div>
-
-            <!-- Transfer Info Copy Details -->
-            <div class="vqr-details-box">
-              <div class="detail-row">
-                <span class="d-lbl">RECEIVER BANK</span>
-                <span class="d-val font-bold">MB Bank (Quân Đội)</span>
-              </div>
-              <div class="detail-row">
-                <span class="d-lbl">ACCOUNT NUMBER</span>
-                <div class="d-val-copy">
-                  <span class="font-mono">8888999988</span>
-                  <button type="button" class="btn-copy-mini" (click)="copyText('8888999988', 'Account Number')">Copy</button>
+          <div class="vqr-content-wrapper">
+            <!-- Top Section: High-Res QR & Transfer Details -->
+            <div class="modal-body-vqr">
+              <!-- Left Column: Enlarged QR Image -->
+              <div class="qr-display-box">
+                <div class="qr-image-wrapper">
+                  <img [src]="vietQrImageUrl" alt="VietQR Code" class="vqr-img" />
+                </div>
+                <div class="qr-timer-pill">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>Expires in: <strong>{{ formattedTimer }}</strong></span>
                 </div>
               </div>
-              <div class="detail-row">
-                <span class="d-lbl">ACCOUNT HOLDER</span>
-                <span class="d-val font-bold">PAYGATE GATEWAY SYSTEM</span>
-              </div>
-              <div class="detail-row">
-                <span class="d-lbl">AMOUNT</span>
-                <span class="d-val font-bold text-green">{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</span>
-              </div>
-              <div class="detail-row highlight-row">
-                <span class="d-lbl">TRANSFER NOTE (REQUIRING EXACT MATCH)</span>
-                <div class="d-val-copy">
-                  <span class="font-mono text-note">{{ currentTransferNote }}</span>
-                  <button type="button" class="btn-copy-mini" (click)="copyText(currentTransferNote, 'Transfer Note')">Copy</button>
+
+              <!-- Right Column: Transfer Info List -->
+              <div class="vqr-details-box">
+                <div class="detail-card">
+                  <span class="d-lbl">BENEFICIARY BANK</span>
+                  <span class="d-val font-bold">MB Bank (Quân Đội)</span>
+                </div>
+                <div class="detail-card">
+                  <span class="d-lbl">ACCOUNT NUMBER</span>
+                  <div class="d-val-copy">
+                    <span class="font-mono acc-num">8888999988</span>
+                    <button type="button" class="btn-copy-chip" (click)="copyText('8888999988', 'Account Number')">Copy</button>
+                  </div>
+                </div>
+                <div class="detail-card">
+                  <span class="d-lbl">ACCOUNT HOLDER</span>
+                  <span class="d-val font-bold">PAYGATE GATEWAY SYSTEM</span>
+                </div>
+                <div class="detail-card">
+                  <span class="d-lbl">AMOUNT</span>
+                  <span class="d-val amount-val">{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</span>
+                </div>
+                <div class="detail-card highlight-note">
+                  <span class="d-lbl">TRANSFER NOTE (EXACT MATCH)</span>
+                  <div class="d-val-copy">
+                    <span class="font-mono text-note">{{ currentTransferNote }}</span>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(currentTransferNote, 'Transfer Note')">Copy</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Deep Link Mobile Banking Apps Bar -->
-          <div class="vqr-deep-links-bar">
-            <span class="deep-link-label">Open Banking App directly:</span>
-            <div class="apps-grid">
-              <a
-                *ngFor="let app of bankingApps"
-                [href]="app.scheme"
-                target="_blank"
-                class="app-link-pill"
-                [style.background]="app.bg">
-                {{ app.name }} ↗
-              </a>
+            <!-- Deep Link Mobile Banking Apps Bar -->
+            <div class="vqr-deep-links-bar">
+              <span class="deep-link-label">Select Banking App to Open:</span>
+              <div class="apps-grid">
+                <a
+                  *ngFor="let app of bankingApps"
+                  [href]="app.scheme"
+                  target="_blank"
+                  class="app-link-pill"
+                  [style.background]="app.bg">
+                  {{ app.name }} ↗
+                </a>
+              </div>
             </div>
-          </div>
 
-          <!-- Modal Footer Actions -->
-          <div class="modal-footer-vqr">
-            <button type="button" class="btn-cancel-modal" (click)="closeVietQrModal()">Cancel</button>
-            <button type="button" class="btn-confirm-vqr pulse-glow" (click)="confirmVietQrSuccess()">
-              Simulate Instant Banking Transfer & Add Balance ➔
-            </button>
+            <!-- Modal Footer Actions -->
+            <div class="modal-footer-vqr">
+              <button type="button" class="btn-cancel-modal" (click)="closeVietQrModal()">Cancel</button>
+              <button type="button" class="btn-confirm-vqr pulse-glow" (click)="confirmVietQrSuccess()">
+                Simulate Instant Banking Transfer & Add Balance ➔
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -513,42 +520,58 @@ export interface BankTheme {
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
     /* Modal Overlay & Card */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .modal-card { background: #ffffff; border-radius: 24px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
     .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-weight: 800; }
 
-    /* VietQR Modal Specifics */
-    .vietqr-modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 580px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 20px; max-height: 90vh; overflow-y: auto; }
-    .vqr-badge { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; }
-    .vqr-title-group h3 { margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+    /* HIGH-END SLEEK VIETQR MODAL REDESIGN */
+    .vietqr-modal-card { background: #ffffff; border-radius: 32px; width: 100%; max-width: 660px; box-shadow: 0 30px 80px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+    .vqr-banner-header { background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #1d4ed8 100%); padding: 26px 32px; display: flex; justify-content: space-between; align-items: center; color: #ffffff; }
+    
+    .vqr-badge-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 800; color: #a7f3d0; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); padding: 4px 14px; border-radius: 20px; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .dot-live { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4); }
 
-    .modal-body-vqr { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: center; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; }
-    .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .qr-image-wrapper { width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 16px; border: 1px solid #cbd5e1; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+    .vqr-title-group h3 { margin: 0; font-size: 1.55rem; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+    .btn-close-modal-light { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 50%; width: 36px; height: 36px; font-size: 16px; color: #ffffff; cursor: pointer; font-weight: 800; transition: all 0.15s; }
+    .btn-close-modal-light:hover { background: rgba(255,255,255,0.3); }
+
+    .vqr-content-wrapper { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+    .modal-body-vqr { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: stretch; }
+
+    .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 14px; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: 20px; }
+    .qr-image-wrapper { width: 190px; height: 190px; background: #ffffff; padding: 10px; border-radius: 20px; border: 2px solid #a7f3d0; box-shadow: 0 10px 25px rgba(4, 120, 87, 0.12); }
     .vqr-img { width: 100%; height: 100%; object-fit: contain; }
 
-    .qr-timer-pill { display: flex; align-items: center; gap: 6px; font-size: 0.775rem; color: #64748b; background: #ffffff; padding: 4px 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .qr-timer-pill { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #047857; background: #ecfdf5; padding: 6px 16px; border-radius: 20px; border: 1px solid #a7f3d0; font-weight: 700; }
 
-    .vqr-details-box { display: flex; flex-direction: column; gap: 10px; font-size: 0.825rem; }
-    .detail-row { display: flex; flex-direction: column; gap: 2px; }
-    .detail-row.highlight-row { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 10px; }
-    .d-lbl { font-size: 0.675rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .d-val { font-size: 0.875rem; color: #0f172a; }
-    .d-val-copy { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .text-note { color: #059669; font-weight: 800; word-break: break-all; }
-    .btn-copy-mini { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; color: #059669; cursor: pointer; }
+    .vqr-details-box { display: flex; flex-direction: column; gap: 12px; }
+    .detail-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; }
+    .detail-card.highlight-note { background: #f0fdf4; border-color: #a7f3d0; }
+    
+    .d-lbl { font-size: 0.675rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .d-val { font-size: 0.925rem; color: #0f172a; }
+    .amount-val { font-size: 1.25rem; font-weight: 900; color: #059669; }
+    .acc-num { font-size: 1.05rem; font-weight: 800; color: #1e293b; letter-spacing: 0.04em; }
 
-    .vqr-deep-links-bar { display: flex; flex-direction: column; gap: 8px; background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; }
-    .deep-link-label { font-size: 0.775rem; font-weight: 800; color: #475569; }
-    .apps-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .app-link-pill { padding: 6px 12px; border-radius: 10px; font-size: 0.775rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: opacity 0.15s; }
-    .app-link-pill:hover { opacity: 0.9; }
+    .d-val-copy { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .text-note { color: #047857; font-weight: 900; font-size: 0.95rem; word-break: break-all; }
 
-    .modal-footer-vqr { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
-    .btn-cancel-modal { background: #f1f5f9; border: none; border-radius: 12px; padding: 0 18px; height: 46px; font-size: 0.875rem; font-weight: 700; color: #64748b; cursor: pointer; }
-    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 12px; padding: 0 22px; height: 46px; font-size: 0.875rem; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
+    .btn-copy-chip { background: #ffffff; border: 1px solid #059669; border-radius: 8px; padding: 3px 12px; font-size: 0.75rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
+    .btn-copy-chip:hover { background: #059669; color: #ffffff; }
+
+    .vqr-deep-links-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 18px 22px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .deep-link-label { font-size: 0.8rem; font-weight: 800; color: #334155; }
+    .apps-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .app-link-pill { padding: 8px 16px; border-radius: 12px; font-size: 0.825rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .app-link-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+
+    .modal-footer-vqr { display: grid; grid-template-columns: 1fr 2.5fr; gap: 14px; margin-top: 4px; }
+    .btn-cancel-modal { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 14px; height: 50px; font-size: 0.9rem; font-weight: 800; color: #475569; cursor: pointer; transition: background 0.15s; }
+    .btn-cancel-modal:hover { background: #e2e8f0; }
+    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 14px; height: 50px; font-size: 0.95rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4); transition: transform 0.15s; }
+    .btn-confirm-vqr:hover { transform: translateY(-2px); }
 
     .modal-form { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
@@ -558,6 +581,11 @@ export interface BankTheme {
     .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
     .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; color: #475569; cursor: pointer; }
     .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; }
+
+    @media (max-width: 680px) {
+      .modal-body-vqr { grid-template-columns: 1fr; }
+      .modal-footer-vqr { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class TopUpComponent implements OnInit, OnDestroy {
