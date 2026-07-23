@@ -7,6 +7,26 @@ import { PageResponse } from '../models/page-response.model';
 import { AccountResponse, TopUpRequest } from '../models/account.model';
 import { TransactionResponse } from '../models/transaction.model';
 
+export interface LinkedBankRequestDTO {
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  balance: number;
+  iconType?: string;
+}
+
+export interface LinkedBankResponseDTO {
+  id: string | number;
+  userId?: number;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  balance: number;
+  iconType: 'BANK' | 'CARD' | 'MOMO';
+  status?: string;
+  createdAt?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private apiUrl = `${environment.apiUrl}/accounts`;
@@ -30,5 +50,17 @@ export class AccountService {
       .set('page', page.toString())
       .set('size', size.toString());
     return this.http.get<ApiResponse<PageResponse<TransactionResponse>>>(`${this.apiUrl}/${id}/history`, { params });
+  }
+
+  getLinkedBanks(): Observable<ApiResponse<LinkedBankResponseDTO[]>> {
+    return this.http.get<ApiResponse<LinkedBankResponseDTO[]>>(`${this.apiUrl}/linked-banks`);
+  }
+
+  linkBank(request: LinkedBankRequestDTO): Observable<ApiResponse<LinkedBankResponseDTO>> {
+    return this.http.post<ApiResponse<LinkedBankResponseDTO>>(`${this.apiUrl}/linked-banks`, request);
+  }
+
+  unlinkBank(id: string | number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/linked-banks/${id}`);
   }
 }

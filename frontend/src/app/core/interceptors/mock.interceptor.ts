@@ -99,6 +99,61 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     })).pipe(delay(300));
   }
 
+  // 4b. Account Linked Banks Mock API
+  if (url.includes('/api/v1/accounts/linked-banks')) {
+    const savedBanks = localStorage.getItem('paygate_user_linked_banks');
+    let banks = savedBanks ? JSON.parse(savedBanks) : [];
+
+    if (method === 'POST') {
+      const body = req.body as any;
+      const newBank = {
+        id: Date.now(),
+        userId: 1,
+        bankName: body.bankName,
+        accountNumber: body.accountNumber,
+        accountHolder: (body.accountHolder || '').toUpperCase(),
+        balance: body.balance || 5000000,
+        iconType: body.iconType || 'BANK',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString()
+      };
+      banks.unshift(newBank);
+      localStorage.setItem('paygate_user_linked_banks', JSON.stringify(banks));
+
+      return of(new HttpResponse({
+        status: 201,
+        body: {
+          success: true,
+          message: 'Liên kết ngân hàng thành công',
+          data: newBank
+        }
+      })).pipe(delay(200));
+    }
+
+    if (method === 'DELETE') {
+      const parts = url.split('/');
+      const bankId = parts[parts.length - 1];
+      banks = banks.filter((b: any) => b.id != bankId);
+      localStorage.setItem('paygate_user_linked_banks', JSON.stringify(banks));
+
+      return of(new HttpResponse({
+        status: 200,
+        body: {
+          success: true,
+          message: 'Đã hủy liên kết ngân hàng thành công'
+        }
+      })).pipe(delay(150));
+    }
+
+    return of(new HttpResponse({
+      status: 200,
+      body: {
+        success: true,
+        data: banks
+      }
+    })).pipe(delay(150));
+  }
+
   // 5. Admin Merchants API Mock (Supports Search & Status Filter)
   if (url.includes('/api/v1/admin/merchants')) {
     if (method === 'POST') {

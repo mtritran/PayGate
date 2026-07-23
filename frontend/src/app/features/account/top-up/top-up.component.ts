@@ -567,7 +567,7 @@ export class TopUpComponent implements OnInit {
   account: AccountResponse | null = null;
   selectedBankId: string = '';
 
-  // Dynamic user's linked banks list stored in localStorage (Empty for new users)
+  // Dynamic user's linked banks list stored in DB & localStorage (Empty for new users)
   linkedBanks: LinkedBankSource[] = [];
 
   presets = [
@@ -624,21 +624,42 @@ export class TopUpComponent implements OnInit {
   }
 
   private loadLinkedBanks(): void {
-    const saved = localStorage.getItem('paygate_user_linked_banks');
-    if (saved) {
-      try {
-        this.linkedBanks = JSON.parse(saved);
-      } catch (e) {
-        this.linkedBanks = [];
+    this.accountService.getLinkedBanks().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.linkedBanks = res.data.map(b => ({
+            id: String(b.id),
+            bankName: b.bankName,
+            accountNumber: b.accountNumber,
+            accountHolder: b.accountHolder,
+            balance: b.balance,
+            iconType: b.iconType,
+            createdAt: b.createdAt || new Date().toISOString()
+          }));
+        } else {
+          this.linkedBanks = [];
+        }
+        if (this.linkedBanks.length > 0 && !this.selectedBankId) {
+          this.selectedBankId = this.linkedBanks[0].id;
+        }
+      },
+      error: () => {
+        // Fallback to local storage if offline
+        const saved = localStorage.getItem('paygate_user_linked_banks');
+        if (saved) {
+          try {
+            this.linkedBanks = JSON.parse(saved);
+          } catch (e) {
+            this.linkedBanks = [];
+          }
+        } else {
+          this.linkedBanks = [];
+        }
+        if (this.linkedBanks.length > 0 && !this.selectedBankId) {
+          this.selectedBankId = this.linkedBanks[0].id;
+        }
       }
-    } else {
-      // Clean empty array for new users without default pre-filled mock banks
-      this.linkedBanks = [];
-    }
-
-    if (this.linkedBanks.length > 0 && !this.selectedBankId) {
-      this.selectedBankId = this.linkedBanks[0].id;
-    }
+    });
   }
 
   private saveLinkedBanks(): void {
@@ -668,22 +689,51 @@ export class TopUpComponent implements OnInit {
     const isMoMo = val.bankName.toLowerCase().includes('momo') || val.bankName.toLowerCase().includes('zalo');
     const isCard = val.bankName.toLowerCase().includes('napas') || val.bankName.toLowerCase().includes('thẻ');
 
-    const newBank: LinkedBankSource = {
-      id: 'bank-' + Date.now(),
+    const req = {
       bankName: val.bankName,
       accountNumber: val.accountNumber,
       accountHolder: (val.accountHolder || '').toUpperCase(),
       balance: Number(val.balance) || 5000000,
-      iconType: isMoMo ? 'MOMO' : isCard ? 'CARD' : 'BANK',
-      createdAt: new Date().toISOString()
+      iconType: isMoMo ? 'MOMO' : isCard ? 'CARD' : 'BANK'
     };
 
-    this.linkedBanks.unshift(newBank);
-    this.saveLinkedBanks();
-    this.selectedBankId = newBank.id;
-
-    this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
-    this.closeLinkModal();
+    this.accountService.linkBank(req).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          const newBank: LinkedBankSource = {
+            id: String(res.data.id),
+            bankName: res.data.bankName,
+            accountNumber: res.data.accountNumber,
+            accountHolder: res.data.accountHolder,
+            balance: res.data.balance,
+            iconType: res.data.iconType,
+            createdAt: res.data.createdAt || new Date().toISOString()
+          };
+          this.linkedBanks.unshift(newBank);
+          this.saveLinkedBanks();
+          this.selectedBankId = newBank.id;
+          this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
+          this.closeLinkModal();
+        }
+      },
+      error: () => {
+        // Fallback to local link if offline
+        const newBank: LinkedBankSource = {
+          id: 'bank-' + Date.now(),
+          bankName: req.bankName,
+          accountNumber: req.accountNumber,
+          accountHolder: req.accountHolder,
+          balance: req.balance,
+          iconType: req.iconType as any,
+          createdAt: new Date().toISOString()
+        };
+        this.linkedBanks.unshift(newBank);
+        this.saveLinkedBanks();
+        this.selectedBankId = newBank.id;
+        this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
+        this.closeLinkModal();
+      }
+    });
   }
 
   unlinkBank(id: string, event: Event): void {
@@ -691,14 +741,24 @@ export class TopUpComponent implements OnInit {
     const bank = this.linkedBanks.find(b => b.id === id);
     if (!bank) return;
 
-    this.linkedBanks = this.linkedBanks.filter(b => b.id !== id);
-    this.saveLinkedBanks();
-
-    if (this.selectedBankId === id) {
-      this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
-    }
-
-    this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
+    this.accountService.unlinkBank(id).subscribe({
+      next: () => {
+        this.linkedBanks = this.linkedBanks.filter(b => b.id !== id);
+        this.saveLinkedBanks();
+        if (this.selectedBankId === id) {
+          this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
+        }
+        this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
+      },
+      error: () => {
+        this.linkedBanks = this.linkedBanks.filter(b => b.id !== id);
+        this.saveLinkedBanks();
+        if (this.selectedBankId === id) {
+          this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
+        }
+        this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
+      }
+    });
   }
 
   private loadAccountBalance(): void {
