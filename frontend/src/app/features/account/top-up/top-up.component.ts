@@ -7,11 +7,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AccountResponse } from '../../../core/models/account.model';
 
-export interface PaymentSourceMock {
-  id: 'BANK' | 'CARD' | 'MOMO';
-  title: string;
-  subtitle: string;
+export interface LinkedBankSource {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
   balance: number;
+  iconType: 'BANK' | 'CARD' | 'MOMO';
+  createdAt: string;
 }
 
 @Component({
@@ -142,25 +145,33 @@ export interface PaymentSourceMock {
                 </div>
               </div>
 
-              <!-- Linked Payment Source Selector -->
+              <!-- Dynamic Linked Payment Sources Section -->
               <div class="form-section">
                 <div class="flex-between mb-12">
-                  <label class="section-label mb-0">Select Linked Payment Source (Mock Balance Check)</label>
-                  <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Reset Mock Balances">
-                    🔄 Reset Mock Balances
-                  </button>
+                  <label class="section-label mb-0">Select Linked Payment Source</label>
+                  <div class="action-btn-group">
+                    <button type="button" class="btn-link-bank" (click)="openLinkModal()">
+                      + Liên kết ngân hàng mới
+                    </button>
+                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Reset Mock Balances">
+                      🔄 Reset
+                    </button>
+                  </div>
                 </div>
 
-                <div class="method-grid">
-                  <!-- Method 1: MB Bank -->
-                  <button
-                    type="button"
+                <!-- Dynamic Grid of User's Linked Banks -->
+                <div class="method-grid" *ngIf="linkedBanks.length > 0">
+                  <div
+                    *ngFor="let bank of linkedBanks"
                     class="method-card"
-                    [class.active]="selectedMethodId === 'BANK'"
-                    [class.insufficient]="isInsufficient('BANK')"
-                    (click)="setMethod('BANK')">
+                    [class.active]="selectedBankId === bank.id"
+                    [class.insufficient]="isBankInsufficient(bank)"
+                    (click)="selectBank(bank.id)">
+                    <button type="button" class="btn-unlink" (click)="unlinkBank(bank.id, $event)" title="Hủy liên kết">
+                      ✕
+                    </button>
                     <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <svg *ngIf="bank.iconType === 'BANK'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <line x1="3" y1="21" x2="21" y2="21" />
                         <line x1="3" y1="10" x2="21" y2="10" />
                         <polyline points="12 3 2 10 22 10 12 3" />
@@ -169,64 +180,40 @@ export interface PaymentSourceMock {
                         <line x1="14" y1="10" x2="14" y2="21" />
                         <line x1="18" y1="10" x2="18" y2="21" />
                       </svg>
-                    </div>
-                    <div class="method-info">
-                      <span class="method-title">MB Bank (Mock)</span>
-                      <span class="method-balance" [class.text-danger]="isInsufficient('BANK')">
-                        Hạn mức: {{ mockSources['BANK'].balance | currency:'VND':'symbol':'1.0-0' }}
-                      </span>
-                    </div>
-                  </button>
-
-                  <!-- Method 2: Napas ATM -->
-                  <button
-                    type="button"
-                    class="method-card"
-                    [class.active]="selectedMethodId === 'CARD'"
-                    [class.insufficient]="isInsufficient('CARD')"
-                    (click)="setMethod('CARD')">
-                    <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <svg *ngIf="bank.iconType === 'CARD'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                         <line x1="1" y1="10" x2="23" y2="10" />
                       </svg>
-                    </div>
-                    <div class="method-info">
-                      <span class="method-title">Napas ATM (Mock)</span>
-                      <span class="method-balance" [class.text-danger]="isInsufficient('CARD')">
-                        Hạn mức: {{ mockSources['CARD'].balance | currency:'VND':'symbol':'1.0-0' }}
-                      </span>
-                    </div>
-                  </button>
-
-                  <!-- Method 3: MoMo Wallet -->
-                  <button
-                    type="button"
-                    class="method-card"
-                    [class.active]="selectedMethodId === 'MOMO'"
-                    [class.insufficient]="isInsufficient('MOMO')"
-                    (click)="setMethod('MOMO')">
-                    <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <svg *ngIf="bank.iconType === 'MOMO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                         <line x1="12" y1="18" x2="12.01" y2="18" />
                       </svg>
                     </div>
                     <div class="method-info">
-                      <span class="method-title">MoMo (Mock)</span>
-                      <span class="method-balance" [class.text-danger]="isInsufficient('MOMO')">
-                        Hạn mức: {{ mockSources['MOMO'].balance | currency:'VND':'symbol':'1.0-0' }}
+                      <span class="method-title">{{ bank.bankName }}</span>
+                      <span class="method-acc font-mono">{{ maskAccNum(bank.accountNumber) }}</span>
+                      <span class="method-balance" [class.text-danger]="isBankInsufficient(bank)">
+                        Hạn mức: {{ bank.balance | currency:'VND':'symbol':'1.0-0' }}
                       </span>
                     </div>
-                  </button>
+                  </div>
+                </div>
+
+                <!-- Empty State if No Bank Linked -->
+                <div *ngIf="linkedBanks.length === 0" class="empty-linked-box" (click)="openLinkModal()">
+                  <div class="empty-icon">🏦</div>
+                  <div class="empty-text">
+                    <strong>Chưa có ngân hàng nào được liên kết</strong>
+                    <span>Nhấn vào đây để liên kết ngân hàng/ví điện tử của bạn ngay!</span>
+                  </div>
                 </div>
 
                 <!-- Warning Banner if Selected Source Insufficient -->
-                <div class="insufficient-banner mt-16" *ngIf="isCurrentSourceInsufficient()">
+                <div class="insufficient-banner mt-16" *ngIf="isCurrentBankInsufficient()">
                   <div class="banner-icon">⚠️</div>
                   <div class="banner-text">
-                    <strong>Số dư nguồn {{ currentSource.title }} không đủ!</strong>
-                    <span>Bạn muốn nạp <strong>{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</strong> nhưng số dư nguồn này chỉ còn <strong>{{ currentSource.balance | currency:'VND':'symbol':'1.0-0' }}</strong> (Thiếu {{ (currentAmount - currentSource.balance) | currency:'VND':'symbol':'1.0-0' }}).</span>
+                    <strong>Số dư nguồn {{ currentSelectedBank?.bankName }} không đủ!</strong>
+                    <span>Bạn muốn nạp <strong>{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</strong> nhưng số dư nguồn này chỉ còn <strong>{{ currentSelectedBank?.balance | currency:'VND':'symbol':'1.0-0' }}</strong> (Thiếu {{ (currentAmount - (currentSelectedBank?.balance || 0)) | currency:'VND':'symbol':'1.0-0' }}).</span>
                   </div>
                 </div>
               </div>
@@ -236,14 +223,14 @@ export interface PaymentSourceMock {
                 <button
                   class="btn-emerald-submit pulse-glow"
                   type="submit"
-                  [disabled]="topUpForm.invalid || submitting || isCurrentSourceInsufficient()">
+                  [disabled]="topUpForm.invalid || submitting || !currentSelectedBank || isCurrentBankInsufficient()">
                   <span *ngIf="!submitting" class="btn-content">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="16" />
                       <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
-                    Top up {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} via {{ currentSource.title }} ↗
+                    Top up {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} via {{ currentSelectedBank?.bankName || 'Ngân hàng' }} ↗
                   </span>
                   <span *ngIf="submitting" class="btn-content">
                     <span class="btn-spinner"></span>
@@ -254,6 +241,80 @@ export interface PaymentSourceMock {
             </form>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL DIALOG: LINK NEW BANK ACCOUNT (Sử dụng 100vw/100vh Backdrop Blur) -->
+    <div class="link-modal-overlay" *ngIf="showLinkModal">
+      <div class="link-modal-card fade-in-up">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-tag">PAYGATE BANK LINK</span>
+            <h3>Liên Kết Ngân Hàng Mới</h3>
+            <p class="modal-sub">Nhập thông tin tài khoản ngân hàng hoặc ví điện tử để thêm vào danh sách liên kết.</p>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="closeLinkModal()">✕</button>
+        </div>
+
+        <form [formGroup]="linkForm" (ngSubmit)="confirmLinkBank()" class="modal-form">
+          <!-- Bank Select / Provider -->
+          <div class="form-group">
+            <label class="input-label">Tên Ngân hàng / Ví điện tử</label>
+            <select formControlName="bankName" class="modal-select">
+              <option value="MB Bank">MB Bank (Ngân hàng Quân Đội)</option>
+              <option value="Vietcombank">Vietcombank (VCB)</option>
+              <option value="Techcombank">Techcombank (TCB)</option>
+              <option value="VPBank">VPBank</option>
+              <option value="BIDV">BIDV</option>
+              <option value="Agribank">Agribank</option>
+              <option value="ACB">ACB (Á Châu)</option>
+              <option value="MoMo Wallet">Ví điện tử MoMo</option>
+              <option value="ZaloPay">Ví ZaloPay</option>
+              <option value="Napas ATM Card">Thẻ ATM Nội Địa Napas</option>
+            </select>
+          </div>
+
+          <!-- Account / Card Number -->
+          <div class="form-group">
+            <label class="input-label">Số Tài Khoản / Số Thẻ (Nhập tay tự do)</label>
+            <input
+              type="text"
+              formControlName="accountNumber"
+              placeholder="VD: 9704 2200 1199 8812..."
+              class="modal-input">
+          </div>
+
+          <!-- Account Holder Name -->
+          <div class="form-group">
+            <label class="input-label">Tên Chủ Tài Khoản</label>
+            <input
+              type="text"
+              formControlName="accountHolder"
+              placeholder="VD: NGUYEN VAN A..."
+              class="modal-input uppercase">
+          </div>
+
+          <!-- Initial Mock Balance / Limit -->
+          <div class="form-group">
+            <label class="input-label">Hạn mức / Số dư ban đầu (Mock Balance - VND)</label>
+            <div class="input-wrapper">
+              <span class="currency-prefix">₫</span>
+              <input
+                type="number"
+                formControlName="balance"
+                placeholder="VD: 5000000"
+                class="modal-input pl-36">
+            </div>
+          </div>
+
+          <!-- Modal Action Bar -->
+          <div class="modal-action-bar mt-20">
+            <button type="button" class="btn-cancel" (click)="closeLinkModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-confirm-link" [disabled]="linkForm.invalid">
+              + Xác Nhận Liên Kết
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   `,
@@ -346,6 +407,10 @@ export interface PaymentSourceMock {
     .custom-topup-form { display: flex; flex-direction: column; gap: 26px; }
     .section-label { font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: block; }
     
+    .action-btn-group { display: flex; align-items: center; gap: 8px; }
+    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 4px 12px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
+    .btn-link-bank:hover { background-color: #059669; color: #ffffff; }
+
     .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
     .btn-reset-mock:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
@@ -362,25 +427,35 @@ export interface PaymentSourceMock {
     .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.15); }
     .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
-    /* Large Method Selector Grid */
+    /* Dynamic Linked Method Selector Grid */
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .method-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .method-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; text-align: center; position: relative; }
     .method-card:hover { border-color: #cbd5e1; background-color: #ffffff; transform: translateY(-2px); }
     .method-card.active { background-color: #ecfdf5; border-color: #059669; box-shadow: 0 0 0 2px #059669; }
     .method-card.insufficient { border-color: #fca5a5; background-color: #fef2f2; }
     .method-card.insufficient.active { border-color: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+
+    .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.05); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .btn-unlink:hover { background: #fee2e2; color: #dc2626; }
 
     .method-icon-box { width: 44px; height: 44px; border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
     .method-card.active .method-icon-box { background: #059669; border-color: #059669; color: #ffffff; }
     .method-card.insufficient.active .method-icon-box { background: #dc2626; border-color: #dc2626; color: #ffffff; }
     .method-icon-box svg { width: 24px; height: 24px; }
 
-    .method-info { display: flex; flex-direction: column; gap: 3px; }
-    .method-title { font-size: 0.9rem; font-weight: 800; color: #334155; }
+    .method-info { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; }
+    .method-title { font-size: 0.875rem; font-weight: 800; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .method-acc { font-size: 0.72rem; color: #64748b; }
     .method-card.active .method-title { color: #059669; }
     .method-card.insufficient.active .method-title { color: #dc2626; }
-    .method-balance { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+    .method-balance { font-size: 0.72rem; font-weight: 600; color: #64748b; }
     .text-danger { color: #dc2626 !important; font-weight: 700 !important; }
+
+    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.15s; }
+    .empty-linked-box:hover { border-color: #059669; background: #ecfdf5; }
+    .empty-icon { font-size: 32px; margin-bottom: 4px; }
+    .empty-text { display: flex; flex-direction: column; gap: 2px; color: #475569; font-size: 0.85rem; }
+    .empty-text strong { color: #059669; font-size: 0.95rem; }
 
     /* Insufficient Balance Banner */
     .insufficient-banner {
@@ -411,6 +486,55 @@ export interface PaymentSourceMock {
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 10px; }
     .btn-spinner { width: 22px; height: 22px; border: 2.5px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
+    /* Fullscreen Modal Backdrop (100vw / 100vh) */
+    .link-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .link-modal-card {
+      background: #ffffff;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 520px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .modal-tag { font-size: 0.7rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; text-transform: uppercase; }
+    .modal-title-group h3 { font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 4px 0; }
+    .modal-sub { font-size: 0.85rem; color: #64748b; margin: 0; }
+    .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; font-weight: 700; color: #64748b; cursor: pointer; }
+    .btn-close-modal:hover { background: #e2e8f0; color: #0f172a; }
+
+    .modal-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
+    .modal-input { height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.95rem; font-weight: 700; color: #0f172a; outline: none; transition: border-color 0.15s; }
+    .modal-input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
+    .modal-input.uppercase { text-transform: uppercase; }
+    .modal-select { height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.95rem; font-weight: 700; color: #0f172a; background: #ffffff; outline: none; }
+    .pl-36 { padding-left: 36px; }
+
+    .modal-action-bar { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
+    .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; font-size: 0.9rem; color: #475569; cursor: pointer; }
+    .btn-cancel:hover { background: #f8fafc; color: #0f172a; }
+    .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
+    .btn-confirm-link:disabled { opacity: 0.55; cursor: not-allowed; }
+
     @media (max-width: 960px) {
       .topup-grid { grid-template-columns: 1fr; }
     }
@@ -418,17 +542,15 @@ export interface PaymentSourceMock {
 })
 export class TopUpComponent implements OnInit {
   topUpForm!: FormGroup;
+  linkForm!: FormGroup;
   submitting = false;
+  showLinkModal = false;
   accountBalance = 0;
   account: AccountResponse | null = null;
-  selectedMethodId: 'BANK' | 'CARD' | 'MOMO' = 'BANK';
+  selectedBankId: string = '';
 
-  // Level 2 Mock: External Linked Bank / Source balances
-  mockSources: Record<'BANK' | 'CARD' | 'MOMO', PaymentSourceMock> = {
-    BANK: { id: 'BANK', title: 'MB Bank', subtitle: 'Ngân hàng MB', balance: 5000000 },
-    CARD: { id: 'CARD', title: 'Napas ATM Card', subtitle: 'Thẻ ATM Nội địa', balance: 2000000 },
-    MOMO: { id: 'MOMO', title: 'MoMo Wallet', subtitle: 'Ví điện tử MoMo', balance: 1000000 }
-  };
+  // Dynamic user's linked banks list stored in localStorage
+  linkedBanks: LinkedBankSource[] = [];
 
   presets = [
     { label: '100k', val: 100000 },
@@ -448,7 +570,8 @@ export class TopUpComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadMockBalances();
+    this.initLinkForm();
+    this.loadLinkedBanks();
     this.loadAccountBalance();
   }
 
@@ -456,8 +579,8 @@ export class TopUpComponent implements OnInit {
     return Number(this.topUpForm?.value?.amount) || 0;
   }
 
-  get currentSource(): PaymentSourceMock {
-    return this.mockSources[this.selectedMethodId];
+  get currentSelectedBank(): LinkedBankSource | undefined {
+    return this.linkedBanks.find(b => b.id === this.selectedBankId);
   }
 
   getUserFullName(): string {
@@ -473,35 +596,122 @@ export class TopUpComponent implements OnInit {
     });
   }
 
-  private loadMockBalances(): void {
-    const saved = localStorage.getItem('paygate_mock_source_balances');
+  private initLinkForm(): void {
+    this.linkForm = this.fb.group({
+      bankName: ['MB Bank', [Validators.required]],
+      accountNumber: ['9704 2200 1199 8812', [Validators.required]],
+      accountHolder: [this.getUserFullName(), [Validators.required]],
+      balance: [5000000, [Validators.required, Validators.min(0)]]
+    });
+  }
+
+  private loadLinkedBanks(): void {
+    const saved = localStorage.getItem('paygate_user_linked_banks');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed.BANK !== undefined) this.mockSources.BANK.balance = parsed.BANK;
-        if (parsed.CARD !== undefined) this.mockSources.CARD.balance = parsed.CARD;
-        if (parsed.MOMO !== undefined) this.mockSources.MOMO.balance = parsed.MOMO;
+        this.linkedBanks = JSON.parse(saved);
       } catch (e) {
-        // use defaults
+        this.linkedBanks = [];
       }
+    }
+
+    // Default initial mock linked banks if empty
+    if (!this.linkedBanks || this.linkedBanks.length === 0) {
+      this.linkedBanks = [
+        {
+          id: 'bank-mb-101',
+          bankName: 'MB Bank',
+          accountNumber: '9704 2200 1199 8812',
+          accountHolder: this.getUserFullName(),
+          balance: 5000000,
+          iconType: 'BANK',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'card-napas-102',
+          bankName: 'Napas ATM Card',
+          accountNumber: '9704 1800 8821 1092',
+          accountHolder: this.getUserFullName(),
+          balance: 2000000,
+          iconType: 'CARD',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'wallet-momo-103',
+          bankName: 'Ví MoMo',
+          accountNumber: '0987 654 321',
+          accountHolder: this.getUserFullName(),
+          balance: 1000000,
+          iconType: 'MOMO',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      this.saveLinkedBanks();
+    }
+
+    if (this.linkedBanks.length > 0 && !this.selectedBankId) {
+      this.selectedBankId = this.linkedBanks[0].id;
     }
   }
 
-  private saveMockBalances(): void {
-    const toSave = {
-      BANK: this.mockSources.BANK.balance,
-      CARD: this.mockSources.CARD.balance,
-      MOMO: this.mockSources.MOMO.balance
-    };
-    localStorage.setItem('paygate_mock_source_balances', JSON.stringify(toSave));
+  private saveLinkedBanks(): void {
+    localStorage.setItem('paygate_user_linked_banks', JSON.stringify(this.linkedBanks));
   }
 
   resetMockBalances(): void {
-    this.mockSources.BANK.balance = 5000000;
-    this.mockSources.CARD.balance = 2000000;
-    this.mockSources.MOMO.balance = 1000000;
-    this.saveMockBalances();
-    this.notification.success('Đã khôi phục số dư Mock ban đầu (MB Bank 5M, Napas 2M, MoMo 1M)!');
+    localStorage.removeItem('paygate_user_linked_banks');
+    this.selectedBankId = '';
+    this.loadLinkedBanks();
+    this.notification.success('Đã khôi phục danh sách ngân hàng liên kết ban đầu!');
+  }
+
+  openLinkModal(): void {
+    this.initLinkForm();
+    this.showLinkModal = true;
+  }
+
+  closeLinkModal(): void {
+    this.showLinkModal = false;
+  }
+
+  confirmLinkBank(): void {
+    if (this.linkForm.invalid) return;
+
+    const val = this.linkForm.value;
+    const isMoMo = val.bankName.toLowerCase().includes('momo') || val.bankName.toLowerCase().includes('zalo');
+    const isCard = val.bankName.toLowerCase().includes('napas') || val.bankName.toLowerCase().includes('thẻ');
+
+    const newBank: LinkedBankSource = {
+      id: 'bank-' + Date.now(),
+      bankName: val.bankName,
+      accountNumber: val.accountNumber,
+      accountHolder: (val.accountHolder || '').toUpperCase(),
+      balance: Number(val.balance) || 5000000,
+      iconType: isMoMo ? 'MOMO' : isCard ? 'CARD' : 'BANK',
+      createdAt: new Date().toISOString()
+    };
+
+    this.linkedBanks.unshift(newBank);
+    this.saveLinkedBanks();
+    this.selectedBankId = newBank.id;
+
+    this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
+    this.closeLinkModal();
+  }
+
+  unlinkBank(id: string, event: Event): void {
+    event.stopPropagation();
+    const bank = this.linkedBanks.find(b => b.id === id);
+    if (!bank) return;
+
+    this.linkedBanks = this.linkedBanks.filter(b => b.id !== id);
+    this.saveLinkedBanks();
+
+    if (this.selectedBankId === id) {
+      this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
+    }
+
+    this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
   }
 
   private loadAccountBalance(): void {
@@ -519,27 +729,36 @@ export class TopUpComponent implements OnInit {
     this.topUpForm.patchValue({ amount });
   }
 
-  setMethod(method: 'BANK' | 'CARD' | 'MOMO'): void {
-    this.selectedMethodId = method;
+  selectBank(id: string): void {
+    this.selectedBankId = id;
   }
 
-  isInsufficient(method: 'BANK' | 'CARD' | 'MOMO'): boolean {
-    return this.currentAmount > this.mockSources[method].balance;
+  isBankInsufficient(bank: LinkedBankSource): boolean {
+    return this.currentAmount > bank.balance;
   }
 
-  isCurrentSourceInsufficient(): boolean {
-    return this.isInsufficient(this.selectedMethodId);
+  isCurrentBankInsufficient(): boolean {
+    const bank = this.currentSelectedBank;
+    if (!bank) return false;
+    return this.isBankInsufficient(bank);
+  }
+
+  maskAccNum(num: string): string {
+    if (!num) return '•••• 8892';
+    const clean = num.replace(/\s+/g, '');
+    if (clean.length <= 4) return clean;
+    return '•••• ' + clean.slice(-4);
   }
 
   onSubmit(): void {
-    if (this.topUpForm.invalid) return;
+    if (this.topUpForm.invalid || !this.currentSelectedBank) return;
 
     const amount = this.currentAmount;
-    const source = this.currentSource;
+    const bank = this.currentSelectedBank;
 
-    // Check mock balance of selected source
-    if (amount > source.balance) {
-      const msg = `Số dư tài khoản ${source.title} (Mock) không đủ! Bạn muốn nạp ${amount.toLocaleString()} ₫ nhưng ${source.title} chỉ còn ${source.balance.toLocaleString()} ₫.`;
+    // Check balance of selected linked bank
+    if (amount > bank.balance) {
+      const msg = `Số dư tài khoản ${bank.bankName} không đủ! Bạn muốn nạp ${amount.toLocaleString()} ₫ nhưng ${bank.bankName} chỉ còn ${bank.balance.toLocaleString()} ₫.`;
       this.notification.error(msg);
       return;
     }
@@ -549,11 +768,11 @@ export class TopUpComponent implements OnInit {
       next: (res) => {
         this.submitting = false;
         if (res.success) {
-          // Deduct amount from mock source balance
-          source.balance -= amount;
-          this.saveMockBalances();
+          // Deduct amount from selected linked bank balance
+          bank.balance -= amount;
+          this.saveLinkedBanks();
 
-          this.notification.success(`Nạp thành công ${amount.toLocaleString()} ₫ từ ${source.title}! Số dư ${source.title} còn lại: ${source.balance.toLocaleString()} ₫.`);
+          this.notification.success(`Nạp thành công ${amount.toLocaleString()} ₫ từ ${bank.bankName}! Số dư ${bank.bankName} còn lại: ${bank.balance.toLocaleString()} ₫.`);
           this.router.navigate(['/accounts/me']);
         }
       },
