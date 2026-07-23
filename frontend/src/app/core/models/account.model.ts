@@ -13,3 +13,11 @@ export interface TopUpRequest {
   amount: number;
   description?: string;
 }
+
+export interface AccountLookupResponse {
+  accountId: number;
+  accountNumber: string;
+  ownerName: string;
+  ownerType: 'USER' | 'MERCHANT' | 'SYSTEM';
+  status: 'ACTIVE' | 'FROZEN' | 'CLOSED';
+}

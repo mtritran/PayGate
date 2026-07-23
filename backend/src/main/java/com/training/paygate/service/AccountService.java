@@ -1,5 +1,6 @@
 package com.training.paygate.service;
 
+import com.training.paygate.dto.response.AccountLookupResponse;
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.TransactionResponse;
@@ -24,4 +25,6 @@ public interface AccountService {
     AccountResponse getBalanceChecked(Long accountId, String currentUsername);
 
     Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable);
+
+    AccountLookupResponse lookupAccount(String query);
 }

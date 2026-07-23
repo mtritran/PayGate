@@ -63,4 +63,9 @@ export class AccountService {
   unlinkBank(id: string | number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/linked-banks/${id}`);
   }
+
+  lookupAccount(query: string): Observable<ApiResponse<import('../models/account.model').AccountLookupResponse>> {
+    const params = new HttpParams().set('query', query);
+    return this.http.get<ApiResponse<import('../models/account.model').AccountLookupResponse>>(`${this.apiUrl}/lookup`, { params });
+  }
 }

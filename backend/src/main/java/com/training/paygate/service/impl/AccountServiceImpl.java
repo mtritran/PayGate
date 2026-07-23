@@ -18,6 +18,9 @@ import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.AccountMapper;
+import com.training.paygate.dto.response.AccountLookupResponse;
+import com.training.paygate.entity.Merchant;
+import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.repository.TransactionRepository;
@@ -33,6 +36,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -41,6 +45,7 @@ public class AccountServiceImpl implements AccountService {
 
         private final AccountRepository accountRepository;
         private final UserRepository userRepository;
+        private final MerchantRepository merchantRepository;
         private final TransactionRepository transactionRepository;
         private final LedgerEntryRepository ledgerEntryRepository;
         private final BalanceCacheService balanceCacheService;
@@ -244,5 +249,54 @@ public class AccountServiceImpl implements AccountService {
                         t.getDescription(),
                         t.getCreatedAt()
                 ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AccountLookupResponse lookupAccount(String query) {
+        if (query == null || query.isBlank()) {
+            throw new BadRequestException("Lookup query cannot be empty");
+        }
+
+        String cleaned = query.trim();
+        Optional<Account> accountOpt = accountRepository.findByAccountNumber(cleaned);
+
+        // Try numeric ID if not found by account number
+        if (accountOpt.isEmpty()) {
+            try {
+                Long accountId = Long.parseLong(cleaned);
+                accountOpt = accountRepository.findById(accountId);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // Try username if still not found
+        if (accountOpt.isEmpty()) {
+            Optional<User> userOpt = userRepository.findByUsername(cleaned);
+            if (userOpt.isPresent()) {
+                accountOpt = accountRepository.findByOwnerIdAndOwnerType(userOpt.get().getId(), OwnerType.USER);
+            }
+        }
+
+        Account account = accountOpt.orElseThrow(() ->
+                new ResourceNotFoundException("Tài khoản nhận tiền không tồn tại với thông tin: " + query));
+
+        String ownerName = "Tài khoản PayGate";
+        if (account.getOwnerType() == OwnerType.USER) {
+            ownerName = userRepository.findById(account.getOwnerId())
+                    .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
+                    .orElse("Khách hàng PayGate");
+        } else if (account.getOwnerType() == OwnerType.MERCHANT) {
+            ownerName = merchantRepository.findById(account.getOwnerId())
+                    .map(Merchant::getMerchantName)
+                    .orElse("Doanh nghiệp Merchant");
+        }
+
+        return new AccountLookupResponse(
+                account.getId(),
+                account.getAccountNumber(),
+                ownerName,
+                account.getOwnerType(),
+                account.getStatus()
+        );
     }
 }

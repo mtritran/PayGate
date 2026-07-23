@@ -111,4 +111,11 @@ public class AccountController {
         Page<TransactionResponse> result = accountService.getAccountHistory(id, principal.getName(), PageRequest.of(page, size, sort));
         return ApiResponse.success(PageResponse.from(result, r -> r));
     }
+
+    @GetMapping("/lookup")
+    @Operation(summary = "Lookup account details by account number, ID, or username", description = "Resolves recipient account details and verified owner name in real-time.")
+    public ApiResponse<com.training.paygate.dto.response.AccountLookupResponse> lookupAccount(@RequestParam String query) {
+        com.training.paygate.dto.response.AccountLookupResponse response = accountService.lookupAccount(query);
+        return ApiResponse.success(response);
+    }
 }
