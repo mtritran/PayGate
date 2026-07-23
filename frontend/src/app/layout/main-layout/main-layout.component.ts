@@ -189,8 +189,8 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
             <span class="breadcrumb-text">PayGate Console</span>
           </div>
 
-          <!-- User Profile Menu -->
-          <div class="header-user-menu">
+          <!-- User Profile Menu (With Interactive Click Event) -->
+          <div class="header-user-menu" (click)="toggleUserDropdown($event)">
             <pg-avatar
               [name]="authService.getUsername() || 'User'"
               size="sm"
@@ -200,25 +200,25 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
               <span class="user-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
               <span class="user-role">{{ authService.getRole() || 'USER' }}</span>
             </div>
-            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="dropdown-chevron" [class.rotated]="showUserDropdown()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9" />
             </svg>
 
             <!-- Dropdown Menu -->
-            <div class="user-dropdown" *ngIf="showUserDropdown()">
+            <div class="user-dropdown" *ngIf="showUserDropdown()" (click)="$event.stopPropagation()">
               <div class="dropdown-header">
                 <span class="dropdown-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
                 <span class="dropdown-role">Role: {{ authService.getRole() || 'USER' }}</span>
               </div>
               <hr class="dropdown-divider" />
-              <a class="dropdown-item" routerLink="/accounts/me">
+              <a class="dropdown-item" routerLink="/accounts/me" (click)="showUserDropdown.set(false)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
                 <span>My Account</span>
               </a>
-              <a class="dropdown-item" routerLink="/transactions/history">
+              <a class="dropdown-item" routerLink="/transactions/history" (click)="showUserDropdown.set(false)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
                   <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -503,6 +503,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       border-radius: var(--radius-md);
       transition: background-color var(--transition-fast);
       position: relative;
+      user-select: none;
     }
 
     .header-user-menu:hover {
@@ -536,13 +537,18 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       width: 18px;
       height: 18px;
       color: var(--color-text-tertiary);
+      transition: transform var(--transition-fast);
+    }
+
+    .dropdown-chevron.rotated {
+      transform: rotate(180deg);
     }
 
     .user-dropdown {
       position: absolute;
       top: calc(100% + var(--space-2));
       right: 0;
-      min-width: 200px;
+      min-width: 210px;
       background-color: var(--color-bg-secondary);
       border: 1px solid var(--color-border-primary);
       border-radius: var(--radius-lg);
@@ -698,6 +704,11 @@ export class MainLayoutComponent {
 
   toggleCollapse(): void {
     this.collapsed.update(v => !v);
+  }
+
+  toggleUserDropdown(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserDropdown.update(v => !v);
   }
 
   closeOnMobile(): void {
