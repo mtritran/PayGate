@@ -17,6 +17,7 @@ interface DailyVolumePoint {
   amount: number;
   x: number;
   y: number;
+  delayMs: number;
 }
 
 @Component({
@@ -139,7 +140,7 @@ interface DailyVolumePoint {
 
         <!-- Middle Section: Payment Volume Line-Spline Chart & Digital Wallet Card -->
         <div class="middle-grid">
-          <!-- PROPORTIONATE FULL-WIDTH CHART CARD -->
+          <!-- PROPORTIONATE FULL-WIDTH CHART CARD WITH DAY 1 TO DAY 7 ANIMATION -->
           <div class="content-card chart-card-exact hover-lift">
             <div class="chart-header-row flex-between">
               <div>
@@ -152,7 +153,7 @@ interface DailyVolumePoint {
               </div>
             </div>
 
-            <!-- PROPORTIONATE SVG CHART (ViewBox 0 0 700 240) -->
+            <!-- PROPORTIONATE ANIMATED SVG CHART -->
             <div class="exact-chart-container">
               <svg viewBox="0 0 700 240" preserveAspectRatio="xMidYMid meet" class="svg-chart-exact">
                 <defs>
@@ -204,13 +205,14 @@ interface DailyVolumePoint {
                 <text x="58" y="154" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">400k</text>
                 <text x="58" y="194" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">0k</text>
 
-                <!-- Mint Gradient Area Path -->
+                <!-- Mint Gradient Area Path (Reveals Left to Right) -->
                 <path
                   [attr.d]="chartAreaPath"
                   fill="url(#mintGradient)"
+                  class="animated-area"
                 />
 
-                <!-- Primary Emerald Spline Curve Line -->
+                <!-- Primary Emerald Spline Curve Line (Draws Left to Right Mon -> Sun) -->
                 <path
                   [attr.d]="chartPath"
                   fill="none"
@@ -218,12 +220,13 @@ interface DailyVolumePoint {
                   stroke-width="3"
                   stroke-linecap="round"
                   stroke-linejoin="round"
+                  class="animated-curve"
                 />
 
-                <!-- Data Points Hover Node Circles -->
+                <!-- Staggered Animated Data Points Node Circles -->
                 <g class="chart-nodes">
                   <circle
-                    *ngFor="let p of dailyPoints"
+                    *ngFor="let p of dailyPoints; let idx = index"
                     [attr.cx]="p.x"
                     [attr.cy]="p.y"
                     r="4.5"
@@ -231,6 +234,7 @@ interface DailyVolumePoint {
                     stroke="#059669"
                     stroke-width="2.5"
                     class="chart-node-point"
+                    [style.animation-delay.ms]="p.delayMs"
                   >
                     <title>{{ p.day }}: {{ p.amount | currency:'VND':'symbol':'1.0-0' }}</title>
                   </circle>
@@ -382,8 +386,66 @@ interface DailyVolumePoint {
       100% { transform: translateX(100%); }
     }
 
+    /* Left-to-Right SVG Stroke Drawing Animation (Day 1 -> Day 7) */
+    @keyframes drawSplinePath {
+      0% {
+        stroke-dashoffset: 1400;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* Gradient Area Reveal Animation */
+    @keyframes revealAreaGrad {
+      0% {
+        clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+        opacity: 0;
+      }
+      100% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        opacity: 1;
+      }
+    }
+
+    /* Node Circle Pop Animation */
+    @keyframes popNodeCircle {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      60% {
+        transform: scale(1.4);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     
+    .animated-curve {
+      stroke-dasharray: 1400;
+      stroke-dashoffset: 1400;
+      animation: drawSplinePath 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    .animated-area {
+      animation: revealAreaGrad 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    .chart-node-point {
+      transform-origin: center;
+      animation: popNodeCircle 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      cursor: pointer;
+      transition: transform 0.15s, r 0.15s;
+    }
+    .chart-node-point:hover {
+      r: 6.5;
+      fill: #047857;
+    }
+
     .console-dashboard { display: flex; flex-direction: column; gap: 32px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     .loading-box { display: flex; justify-content: center; padding: 60px; }
 
@@ -461,8 +523,6 @@ interface DailyVolumePoint {
 
     .exact-chart-container { width: 100%; height: 280px; display: flex; align-items: center; justify-content: center; margin-top: 8px; }
     .svg-chart-exact { width: 100%; height: 100%; display: block; }
-    .chart-node-point { cursor: pointer; transition: transform 0.15s, r 0.15s; }
-    .chart-node-point:hover { r: 6.5; fill: #047857; }
 
     /* Metallic Emerald Wallet Card */
     .wallet-box-card { display: flex; flex-direction: column; justify-content: space-between; }
@@ -653,7 +713,8 @@ export class AccountDashboardComponent implements OnInit {
     this.dailyPoints = days.map((d, i) => {
       const vol = volumes[i];
       const y = Math.round(190 - (vol / maxVal) * 160);
-      return { day: d, amount: vol, x: xCoords[i], y };
+      const delayMs = 200 + i * 200; // Staggered delays from Day 1 to Day 7
+      return { day: d, amount: vol, x: xCoords[i], y, delayMs };
     });
 
     // Generate smooth spline curve d attribute
