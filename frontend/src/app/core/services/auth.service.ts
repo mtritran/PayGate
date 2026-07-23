@@ -38,16 +38,27 @@ export class AuthService {
     );
   }
 
+  refreshToken(refreshToken: string): Observable<ApiResponse<AuthResponse>> {
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.storeTokens(res.data);
+        }
+      })
+    );
+  }
+
   logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
+    this.clearTokens();
     this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
     return localStorage.getItem('access_token');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refresh_token');
   }
 
   getUsername(): string | null {
@@ -62,10 +73,25 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  clearTokens(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+  }
+
   private storeTokens(auth: AuthResponse): void {
-    localStorage.setItem('access_token', auth.accessToken);
-    localStorage.setItem('refresh_token', auth.refreshToken);
-    localStorage.setItem('username', auth.username);
-    localStorage.setItem('role', auth.role);
+    if (auth.accessToken) {
+      localStorage.setItem('access_token', auth.accessToken);
+    }
+    if (auth.refreshToken) {
+      localStorage.setItem('refresh_token', auth.refreshToken);
+    }
+    if (auth.username) {
+      localStorage.setItem('username', auth.username);
+    }
+    if (auth.role) {
+      localStorage.setItem('role', auth.role);
+    }
   }
 }
