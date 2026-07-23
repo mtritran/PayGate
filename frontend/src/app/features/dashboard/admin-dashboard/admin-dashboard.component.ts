@@ -1,14 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { WebhookLogService } from '../../../core/services/webhook-log.service';
-import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -16,53 +11,64 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [
     CommonModule,
     RouterLink,
-    CurrencyPipe,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule
+    CurrencyPipe
   ],
   template: `
-    <div class="console-dashboard">
+    <div class="console-dashboard fade-in-up">
       <!-- Welcome Header Banner -->
       <div class="welcome-header">
         <div class="welcome-title-group">
           <div class="role-badge">SYSTEM ADMINISTRATION CONSOLE</div>
           <h2>PayGate Operational Overview</h2>
-          <p class="welcome-subtitle">Real-time monitoring of merchant onboardings, double-entry ledger balance, and webhook dispatches.</p>
+          <p class="welcome-subtitle">Real-time monitoring of merchant onboardings, double-entry ledger integrity, and webhook dispatches.</p>
         </div>
         <div class="header-action-buttons">
-          <a mat-button class="btn-secondary" routerLink="/admin/merchants">
-            <mat-icon class="btn-icon">storefront</mat-icon> Merchants
+          <a class="btn-secondary" routerLink="/admin/merchants">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            </svg>
+            <span>Merchants</span>
           </a>
-          <a mat-raised-button class="btn-primary" routerLink="/admin/ledger">
-            <mat-icon class="btn-icon">account_balance</mat-icon> Run Ledger Audit
+          <a class="btn-emerald-primary pulse-glow" routerLink="/admin/ledger">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Run Ledger Audit ↗</span>
           </a>
         </div>
       </div>
 
       <div *ngIf="loading" class="loading-box">
-        <mat-spinner diameter="40"></mat-spinner>
+        <div class="spinner"></div>
       </div>
 
       <div *ngIf="!loading" class="dashboard-body">
         <!-- 4 Core Metric Cards Grid -->
         <div class="metrics-grid">
           <!-- Metric 1: Active Merchants -->
-          <div class="metric-card">
+          <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">ACTIVE MERCHANTS</span>
-              <mat-icon class="metric-icon blue">storefront</mat-icon>
+              <div class="metric-icon-bg emerald">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                </svg>
+              </div>
             </div>
             <div class="metric-value">{{ totalMerchants }}</div>
             <div class="metric-footer success">✓ Provisioned & Active</div>
           </div>
 
           <!-- Metric 2: Double-Entry Ledger Balance -->
-          <div class="metric-card">
+          <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">LEDGER BALANCE</span>
-              <mat-icon class="metric-icon green">verified_user</mat-icon>
+              <div class="metric-icon-bg green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
             </div>
             <div class="metric-value" [class.text-green]="ledgerBalanced" [class.text-red]="!ledgerBalanced">
               {{ ledgerBalanced ? 'BALANCED' : 'UNBALANCED' }}
@@ -71,22 +77,32 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
 
           <!-- Metric 3: Pending Webhook Retries -->
-          <div class="metric-card">
+          <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">PENDING WEBHOOKS</span>
-              <mat-icon class="metric-icon amber">rss_feed</mat-icon>
+              <div class="metric-icon-bg amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 11a9 9 0 0 1 9 9" />
+                  <path d="M4 4a16 16 0 0 1 16 16" />
+                  <circle cx="5" cy="19" r="1" />
+                </svg>
+              </div>
             </div>
             <div class="metric-value text-amber">{{ pendingWebhooks }}</div>
             <div class="metric-footer muted">Scheduled Backoff Retries</div>
           </div>
 
           <!-- Metric 4: System Health -->
-          <div class="metric-card">
+          <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">SYSTEM HEALTH</span>
-              <mat-icon class="metric-icon purple">health_and_safety</mat-icon>
+              <div class="metric-icon-bg blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
             </div>
-            <div class="metric-value text-purple">OPERATIONAL</div>
+            <div class="metric-value text-blue">OPERATIONAL</div>
             <div class="metric-footer muted">Postgres • RabbitMQ • Redis</div>
           </div>
         </div>
@@ -96,30 +112,53 @@ import { AuthService } from '../../../core/services/auth.service';
           <h3 class="section-title">Admin Operational Modules</h3>
           <div class="quick-nav-grid">
             <!-- Card 1: Merchant Management -->
-            <a routerLink="/admin/merchants" class="nav-card">
+            <a routerLink="/admin/merchants" class="nav-card hover-lift">
               <div class="nav-card-header">
-                <mat-icon class="nav-card-icon indigo">storefront</mat-icon>
-                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+                <div class="nav-card-icon-box emerald">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  </svg>
+                </div>
+                <svg class="nav-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
               </div>
               <h4 class="nav-card-title">Merchant Management</h4>
               <p class="nav-card-desc">Register new business partners, manage API keys, auto-provision merchant wallets, and update webhook endpoints.</p>
             </a>
 
             <!-- Card 2: Double-Entry Ledger Audit -->
-            <a routerLink="/admin/ledger" class="nav-card">
+            <a routerLink="/admin/ledger" class="nav-card hover-lift">
               <div class="nav-card-header">
-                <mat-icon class="nav-card-icon purple">account_balance</mat-icon>
-                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+                <div class="nav-card-icon-box purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <svg class="nav-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
               </div>
               <h4 class="nav-card-title">Double-Entry Ledger Audit</h4>
               <p class="nav-card-desc">Execute real-time double-entry ledger balance integrity verification and inspect account journal history.</p>
             </a>
 
             <!-- Card 3: Webhook Logs & Retries -->
-            <a routerLink="/admin/webhooks" class="nav-card">
+            <a routerLink="/admin/webhooks" class="nav-card hover-lift">
               <div class="nav-card-header">
-                <mat-icon class="nav-card-icon amber">rss_feed</mat-icon>
-                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+                <div class="nav-card-icon-box amber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 11a9 9 0 0 1 9 9" />
+                    <path d="M4 4a16 16 0 0 1 16 16" />
+                    <circle cx="5" cy="19" r="1" />
+                  </svg>
+                </div>
+                <svg class="nav-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
               </div>
               <h4 class="nav-card-title">Webhook Logs & Retries</h4>
               <p class="nav-card-desc">Audit outbound HTTP notification webhooks, inspect payload JSON data, and filter delivery attempts by status.</p>
@@ -130,124 +169,159 @@ import { AuthService } from '../../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    .console-dashboard { display: flex; flex-direction: column; gap: 24px; padding: 4px; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+
+    .console-dashboard { display: flex; flex-direction: column; gap: 24px; padding: 4px; font-family: 'Inter', system-ui, sans-serif; color: #0f172a; }
     
     /* Header Banner */
     .welcome-header {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 28px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04);
     }
+    
     .role-badge {
       display: inline-block;
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 800;
-      letter-spacing: 0.06em;
-      color: #4f46e5;
-      background: #eef2ff;
-      border: 1px solid #c7d2fe;
-      padding: 2px 8px;
-      border-radius: 12px;
-      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+      color: #059669;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 3px 10px;
+      border-radius: 14px;
+      margin-bottom: 8px;
     }
-    .welcome-title-group h2 { margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; }
+    .welcome-title-group h2 { margin: 0; font-size: 1.65rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
     .welcome-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.875rem; }
     
     .header-action-buttons { display: flex; gap: 12px; align-items: center; }
+    
     .btn-secondary {
-      border: 1px solid #cbd5e1;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
       color: #334155;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 600;
-      font-size: 0.85rem;
-      height: 38px;
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-secondary:hover { background-color: #f8fafc; }
-    .btn-primary {
-      background-color: #4f46e5;
-      color: #ffffff;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      height: 38px;
+      font-size: 0.875rem;
+      height: 42px;
       padding: 0 18px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.15s;
     }
-    .btn-primary:hover { background-color: #4338ca; }
-    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+    .btn-secondary:hover { background-color: #f8fafc; border-color: #cbd5e1; }
 
-    .loading-box { display: flex; justify-content: center; padding: 40px; }
+    .btn-emerald-primary {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff !important;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      height: 42px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      transition: all 0.2s;
+    }
+    .btn-emerald-primary:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); }
+
+    .loading-box { display: flex; justify-content: center; padding: 48px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
     .dashboard-body { display: flex; flex-direction: column; gap: 28px; }
 
-    /* Top 4 Metrics Cards */
+    /* Metrics Grid */
     .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    
     .metric-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 18px 20px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03);
+      transition: all 0.2s;
     }
-    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .metric-label { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
-    .metric-icon { font-size: 20px; width: 20px; height: 20px; }
-    .metric-icon.green { color: #059669; }
-    .metric-icon.blue { color: #0284c7; }
-    .metric-icon.purple { color: #8b5cf6; }
-    .metric-icon.amber { color: #d97706; }
     
-    .metric-value { font-size: 1.45rem; font-weight: 800; color: #0f172a; }
+    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .metric-label { font-size: 0.72rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; }
+    
+    .metric-icon-bg {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .metric-icon-bg.emerald { background: #ecfdf5; color: #059669; }
+    .metric-icon-bg.green { background: #dcfce7; color: #16a34a; }
+    .metric-icon-bg.amber { background: #fef3c7; color: #d97706; }
+    .metric-icon-bg.blue { background: #e0f2fe; color: #0284c7; }
+    .metric-icon-bg svg { width: 18px; height: 18px; }
+    
+    .metric-value { font-size: 1.55rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
     .metric-value.text-green { color: #059669; }
     .metric-value.text-red { color: #dc2626; }
     .metric-value.text-amber { color: #d97706; }
-    .metric-value.text-purple { color: #7c3aed; }
+    .metric-value.text-blue { color: #0284c7; }
     
     .metric-footer { font-size: 0.75rem; margin-top: 6px; }
-    .metric-footer.success { color: #059669; font-weight: 600; }
+    .metric-footer.success { color: #059669; font-weight: 700; }
     .metric-footer.muted { color: #64748b; }
 
     /* Quick Navigation Cards Section */
-    .quick-nav-section { display: flex; flex-direction: column; gap: 14px; }
-    .section-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0; }
+    .quick-nav-section { display: flex; flex-direction: column; gap: 16px; }
+    .section-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.01em; }
     .quick-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     
     .nav-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03);
       text-decoration: none;
       transition: all 0.2s ease-in-out;
       display: flex;
       flex-direction: column;
     }
     .nav-card:hover {
-      border-color: #cbd5e1;
+      border-color: #a7f3d0;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 8px 24px -5px rgba(5, 150, 105, 0.12);
     }
-    .nav-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .nav-card-icon { font-size: 24px; width: 24px; height: 24px; }
-    .nav-card-icon.indigo { color: #4f46e5; }
-    .nav-card-icon.purple { color: #7c3aed; }
-    .nav-card-icon.amber { color: #d97706; }
-    .nav-card-arrow { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; transition: transform 0.2s; }
-    .nav-card:hover .nav-card-arrow { transform: translateX(3px); color: #0f172a; }
     
-    .nav-card-title { margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
-    .nav-card-desc { margin: 0; font-size: 0.825rem; color: #64748b; line-height: 1.45; }
+    .nav-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    
+    .nav-card-icon-box { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .nav-card-icon-box.emerald { background: #ecfdf5; color: #059669; }
+    .nav-card-icon-box.purple { background: #f3e8ff; color: #7c3aed; }
+    .nav-card-icon-box.amber { background: #fef3c7; color: #d97706; }
+    .nav-card-icon-box svg { width: 22px; height: 22px; }
+
+    .nav-card-arrow { width: 18px; height: 18px; color: #94a3b8; transition: transform 0.2s; }
+    .nav-card:hover .nav-card-arrow { transform: translateX(4px); color: #059669; }
+    
+    .nav-card-title { margin: 0 0 6px 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+    .nav-card-desc { margin: 0; font-size: 0.825rem; color: #64748b; line-height: 1.5; }
 
     @media (max-width: 1024px) {
       .metrics-grid { grid-template-columns: repeat(2, 1fr); }
@@ -264,8 +338,7 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private merchantService: MerchantService,
     private ledgerService: LedgerService,
-    private webhookLogService: WebhookLogService,
-    private authService: AuthService
+    private webhookLogService: WebhookLogService
   ) {}
 
   ngOnInit(): void {

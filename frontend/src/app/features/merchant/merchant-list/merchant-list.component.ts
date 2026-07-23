@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { Merchant } from '../../../core/models/merchant.model';
 import { MerchantFormComponent } from '../merchant-form/merchant-form.component';
@@ -10,24 +7,29 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
 @Component({
   selector: 'app-merchant-list',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MerchantFormComponent],
+  imports: [CommonModule, MerchantFormComponent],
   template: `
-    <div class="console-page">
+    <div class="console-page fade-in-up">
       <!-- Page Header -->
-      <div class="page-header">
-        <div class="header-title-group">
+      <div class="page-header flex-between">
+        <div>
+          <div class="header-tag">ENTERPRISE MERCHANT PROVISIONING</div>
           <h2>Merchant Management</h2>
           <p class="header-subtitle">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
         </div>
-        <button mat-raised-button class="btn-primary" (click)="openCreateModal()">
-          <mat-icon class="btn-icon">add</mat-icon> Register Merchant
+        <button class="btn-emerald-primary pulse-glow" (click)="openCreateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Register Merchant ↗</span>
         </button>
       </div>
 
       <!-- Main Content Card / Table -->
       <div class="table-card">
         <div *ngIf="loading" class="loading-box">
-          <mat-spinner diameter="40"></mat-spinner>
+          <div class="spinner"></div>
         </div>
 
         <div *ngIf="!loading" class="custom-table-wrapper">
@@ -43,19 +45,29 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let m of merchants">
+              <tr *ngFor="let m of merchants" class="merchant-row">
                 <td>
                   <div class="merchant-cell">
                     <div class="merchant-avatar">{{ m.name.substring(0, 2).toUpperCase() }}</div>
                     <div>
-                      <div class="font-bold">{{ m.name }}</div>
-                      <div class="text-muted text-xs">Account: {{ m.accountNumber || 'Pending' }}</div>
+                      <div class="merchant-name">{{ m.name }}</div>
+                      <div class="account-num font-mono">Account: {{ m.accountNumber || 'Pending' }}</div>
                     </div>
                   </div>
                 </td>
                 <td><span class="code-badge">{{ m.merchantCode }}</span></td>
-                <td>{{ m.contactEmail }}</td>
-                <td class="max-w-url" [title]="m.webhookUrl"><span class="font-mono text-muted">{{ m.webhookUrl }}</span></td>
+                <td>
+                  <div class="contact-email">
+                    <svg class="email-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <span>{{ m.contactEmail || 'N/A' }}</span>
+                  </div>
+                </td>
+                <td class="max-w-url" [title]="m.webhookUrl">
+                  <span class="webhook-url font-mono">{{ m.webhookUrl }}</span>
+                </td>
                 <td>
                   <span
                     [class.active]="m.status === 'ACTIVE'"
@@ -63,31 +75,35 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                     [class.suspended]="m.status === 'SUSPENDED'"
                     class="status-pill"
                   >
+                    <span class="pill-dot"></span>
                     {{ m.status }}
                   </span>
                 </td>
                 <td class="text-right">
-                  <button mat-icon-button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
-                    <mat-icon class="icon-edit">edit</mat-icon>
+                  <button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
                   </button>
                 </td>
               </tr>
 
               <tr *ngIf="merchants.length === 0">
-                <td colspan="6" class="text-center py-6 text-muted">
-                  No merchants found. Click "Register Merchant" to create one.
+                <td colspan="6" class="text-center py-8 text-muted">
+                  No merchants found. Click "Register Merchant" to onboard a business partner.
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Pagination Bar -->
+        <!-- Custom Pagination Bar -->
         <div class="pagination-bar">
-          <span class="page-info">Showing page {{ currentPage + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} items)</span>
+          <span class="page-info">Showing {{ merchants.length }} of {{ totalElements }} items</span>
           <div class="page-buttons">
-            <button mat-button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
-            <button mat-button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
+            <button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
+            <button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
           </div>
         </div>
       </div>
@@ -102,87 +118,114 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
     </div>
   `,
   styles: [`
-    .console-page { display: flex; flex-direction: column; gap: 20px; padding: 4px; }
-    
-    .page-header {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .header-title-group h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
-    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .btn-primary {
-      background-color: #059669;
+    .console-page { display: flex; flex-direction: column; gap: 20px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .page-header h2 { margin: 0; font-size: 1.65rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.875rem; }
+
+    .btn-emerald-primary {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      height: 38px;
-      padding: 0 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      height: 42px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      transition: all 0.2s;
     }
-    .btn-primary:hover { background-color: #047857; }
-    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+    .btn-emerald-primary:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); }
 
     .table-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04);
       overflow: hidden;
     }
-    .loading-box { display: flex; justify-content: center; padding: 40px; }
+    
+    .loading-box { display: flex; justify-content: center; padding: 48px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
     .custom-table-wrapper { overflow-x: auto; }
     .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; }
+    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; text-transform: uppercase; }
     .paygate-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
     
+    .merchant-row { transition: background-color 0.15s; }
+    .merchant-row:hover td { background-color: #f8fafc; }
+
     .merchant-cell { display: flex; align-items: center; gap: 12px; }
     .merchant-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: #e0e7ff;
-      color: #4338ca;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      color: #059669;
       font-weight: 800;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      border: 1px solid #a7f3d0;
+      flex-shrink: 0;
     }
     
-    .code-badge { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #334155; font-weight: 700; }
-    .max-w-url { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    
-    .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
-    .status-pill.active { background-color: #dcfce7; color: #15803d; }
-    .status-pill.inactive { background-color: #fef3c7; color: #b45309; }
-    .status-pill.suspended { background-color: #fee2e2; color: #b91c1c; }
+    .merchant-name { font-weight: 700; color: #0f172a; font-size: 0.9rem; }
+    .account-num { font-size: 0.75rem; color: #059669; font-weight: 600; margin-top: 2px; }
 
-    .btn-icon-action { color: #64748b; }
-    .btn-icon-action:hover { color: #4338ca; background: #eef2ff; }
-    .icon-edit { font-size: 18px; width: 18px; height: 18px; }
+    .code-badge { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #334155; font-weight: 700; }
+    
+    .contact-email { display: flex; align-items: center; gap: 6px; color: #475569; font-weight: 500; font-size: 0.85rem; }
+    .email-icon { width: 14px; height: 14px; color: #94a3b8; flex-shrink: 0; }
+    
+    .webhook-url { color: #64748b; font-size: 0.8rem; }
+    .max-w-url { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .status-pill.active { background-color: #dcfce7; color: #15803d; }
+    .status-pill.active .pill-dot { background-color: #16a34a; }
+
+    .status-pill.inactive { background-color: #fef3c7; color: #b45309; }
+    .status-pill.inactive .pill-dot { background-color: #d97706; }
+
+    .status-pill.suspended { background-color: #fee2e2; color: #b91c1c; }
+    .status-pill.suspended .pill-dot { background-color: #dc2626; }
+
+    .btn-icon-action { width: 34px; height: 34px; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 8px; color: #64748b; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .btn-icon-action:hover { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+    .btn-icon-action svg { width: 16px; height: 16px; }
 
     .pagination-bar { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .page-info { font-size: 0.8rem; color: #64748b; }
+    .page-info { font-size: 0.825rem; color: #64748b; font-weight: 500; }
     .page-buttons { display: flex; gap: 8px; }
-    .btn-page { border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; height: 32px; color: #334155; }
-    
-    .font-bold { font-weight: 700; color: #0f172a; }
+    .btn-page { border: 1px solid #e2e8f0; background: #ffffff; border-radius: 8px; padding: 0 14px; height: 34px; font-size: 0.825rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .btn-page:hover:not(:disabled) { border-color: #059669; color: #059669; background: #ecfdf5; }
+    .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .font-mono { font-family: monospace; }
     .text-muted { color: #64748b; }
-    .text-xs { font-size: 0.75rem; }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
-    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+    .py-8 { padding-top: 32px; padding-bottom: 32px; }
   `]
 })
 export class MerchantListComponent implements OnInit {
