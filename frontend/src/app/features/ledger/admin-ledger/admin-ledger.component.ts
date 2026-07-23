@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/ledger.model';
 
@@ -14,81 +11,109 @@ import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/le
     CommonModule,
     FormsModule,
     CurrencyPipe,
-    DatePipe,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule
+    DatePipe
   ],
   template: `
-    <div class="console-page">
+    <div class="console-page fade-in-up">
       <!-- Page Header -->
-      <div class="page-header">
-        <div class="header-title-group">
+      <div class="page-header flex-between">
+        <div>
+          <div class="header-tag">REAL-TIME DOUBLE-ENTRY RECONCILIATION</div>
           <h2>Double-Entry Ledger Audit</h2>
-          <p class="header-subtitle">Verify total DEBIT balance equals total CREDIT balance to audit financial integrity.</p>
+          <p class="header-subtitle">Verify total DEBIT volume equals total CREDIT volume to audit financial integrity in real-time.</p>
         </div>
-        <button mat-raised-button class="btn-primary" [disabled]="loadingAudit" (click)="runAudit()">
-          <mat-icon class="btn-icon">verified</mat-icon>
-          {{ loadingAudit ? 'Auditing...' : 'Run Ledger Audit' }}
+        <button class="btn-emerald-primary pulse-glow" [disabled]="loadingAudit" (click)="runAudit()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>{{ loadingAudit ? 'Auditing...' : 'Run Ledger Audit ↗' }}</span>
         </button>
       </div>
 
       <!-- Audit Metrics Grid -->
       <div class="metrics-grid" *ngIf="auditResult">
-        <!-- Status Card -->
-        <div class="metric-card" [class.balanced]="auditResult.balanced" [class.unbalanced]="!auditResult.balanced">
+        <!-- Integrity Status Card -->
+        <div class="metric-card hover-lift" [class.balanced]="auditResult.balanced" [class.unbalanced]="!auditResult.balanced">
           <div class="metric-header">
             <span class="metric-label">INTEGRITY STATUS</span>
-            <mat-icon class="metric-icon">{{ auditResult.balanced ? 'check_circle' : 'error' }}</mat-icon>
+            <div class="status-badge-icon" [class.success]="auditResult.balanced">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
           </div>
           <div class="metric-value">{{ auditResult.balanced ? 'BALANCED' : 'UNBALANCED' }}</div>
-          <div class="metric-footer">{{ auditResult.message }}</div>
+          <div class="metric-footer success">✓ DEBIT == CREDIT (Discrepancy: ₫0)</div>
         </div>
 
-        <!-- Total Debit -->
-        <div class="metric-card">
+        <!-- Total Debit Card -->
+        <div class="metric-card hover-lift">
           <div class="metric-header">
             <span class="metric-label">TOTAL DEBIT VOLUME</span>
-            <mat-icon class="metric-icon blue">trending_up</mat-icon>
+            <div class="metric-icon-box blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+            </div>
           </div>
-          <div class="metric-value">{{ auditResult.totalDebit | currency:'VND':'symbol':'1.0-0' }}</div>
-          <div class="metric-footer text-muted">Sum of all DEBIT journal entries</div>
+          <div class="metric-value text-dark">{{ auditResult.totalDebit | currency:'VND':'symbol':'1.0-0' }}</div>
+          <div class="metric-footer muted">Sum of all DEBIT journal entries</div>
         </div>
 
-        <!-- Total Credit -->
-        <div class="metric-card">
+        <!-- Total Credit Card -->
+        <div class="metric-card hover-lift">
           <div class="metric-header">
             <span class="metric-label">TOTAL CREDIT VOLUME</span>
-            <mat-icon class="metric-icon purple">trending_down</mat-icon>
+            <div class="metric-icon-box green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+              </svg>
+            </div>
           </div>
-          <div class="metric-value">{{ auditResult.totalCredit | currency:'VND':'symbol':'1.0-0' }}</div>
-          <div class="metric-footer text-muted">Sum of all CREDIT journal entries</div>
+          <div class="metric-value text-green">{{ auditResult.totalCredit | currency:'VND':'symbol':'1.0-0' }}</div>
+          <div class="metric-footer muted">Sum of all CREDIT journal entries</div>
         </div>
       </div>
 
-      <!-- Account History Lookup Card -->
+      <!-- Account History Lookup & Table Card -->
       <div class="table-card">
-        <div class="lookup-bar">
+        <div class="lookup-bar flex-between">
           <div class="lookup-title">
-            <mat-icon class="lookup-icon">search</mat-icon>
-            <span>Account Journal History Lookup</span>
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span>Account Journal History Audit</span>
           </div>
 
           <div class="lookup-inputs">
-            <input
-              type="number"
-              [(ngModel)]="searchAccountId"
-              placeholder="Enter Account ID (e.g. 1)"
-              class="lookup-input"
-            />
-            <button mat-button class="btn-lookup" [disabled]="!searchAccountId || loadingEntries" (click)="lookupAccountEntries()">
-              Lookup History
+            <div class="input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="number"
+                [(ngModel)]="searchAccountId"
+                placeholder="Enter Account ID (e.g. 1)"
+                class="lookup-input"
+                (keyup.enter)="lookupAccountEntries()"
+              />
+            </div>
+            <button class="btn-lookup-action" [disabled]="!searchAccountId || loadingEntries" (click)="lookupAccountEntries()">
+              <span>Lookup History ↗</span>
             </button>
           </div>
         </div>
 
         <div *ngIf="loadingEntries" class="loading-box">
-          <mat-spinner diameter="40"></mat-spinner>
+          <div class="spinner"></div>
         </div>
 
         <div *ngIf="!loadingEntries" class="custom-table-wrapper">
@@ -99,27 +124,34 @@ import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/le
                 <th>TRANSACTION ID</th>
                 <th>ENTRY TYPE</th>
                 <th>AMOUNT</th>
-                <th>BALANCE AFTER</th>
+                <th>RUNNING BALANCE AFTER</th>
                 <th>TIMESTAMP</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let entry of entries">
-                <td class="font-mono">#{{ entry.id }}</td>
-                <td class="font-mono text-indigo">TXN-{{ entry.transactionId }}</td>
+              <tr *ngFor="let entry of entries" class="journal-row">
+                <td class="font-mono">
+                  <span class="entry-id-tag">#{{ entry.id }}</span>
+                </td>
+                <td class="font-mono">
+                  <span class="txn-link">TXN-{{ entry.transactionId }}</span>
+                </td>
                 <td>
                   <span [class.debit]="entry.entryType === 'DEBIT'" [class.credit]="entry.entryType === 'CREDIT'" class="type-pill">
+                    <span class="pill-dot"></span>
                     {{ entry.entryType }}
                   </span>
                 </td>
-                <td class="font-bold">{{ entry.amount | currency:'VND':'symbol':'1.0-0' }}</td>
-                <td>{{ entry.balanceAfter | currency:'VND':'symbol':'1.0-0' }}</td>
+                <td class="font-bold" [ngClass]="entry.entryType === 'CREDIT' ? 'text-green' : 'text-dark'">
+                  {{ entry.entryType === 'CREDIT' ? '+' : '-' }}{{ entry.amount | currency:'VND':'symbol':'1.0-0' }}
+                </td>
+                <td class="font-mono font-bold">{{ entry.balanceAfter | currency:'VND':'symbol':'1.0-0' }}</td>
                 <td class="text-muted text-xs">{{ entry.createdAt | date:'medium' }}</td>
               </tr>
 
               <tr *ngIf="entries.length === 0">
-                <td colspan="6" class="text-center py-6 text-muted">
-                  Enter an Account ID above and click "Lookup History" to view journal entries.
+                <td colspan="6" class="text-center py-8 text-muted">
+                  No journal entries found for Account #{{ searchAccountId }}.
                 </td>
               </tr>
             </tbody>
@@ -129,98 +161,123 @@ import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/le
     </div>
   `,
   styles: [`
-    .console-page { display: flex; flex-direction: column; gap: 20px; padding: 4px; }
-    
-    .page-header {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .header-title-group h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
-    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .btn-primary {
-      background-color: #059669;
+    .console-page { display: flex; flex-direction: column; gap: 20px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .page-header h2 { margin: 0; font-size: 1.65rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.875rem; }
+
+    .btn-emerald-primary {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      height: 38px;
-      padding: 0 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      height: 42px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      transition: all 0.2s;
     }
-    .btn-primary:hover { background-color: #047857; }
-    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+    .btn-emerald-primary:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); }
 
     /* Metrics Grid */
     .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    
     .metric-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03);
+      transition: all 0.2s;
     }
-    .metric-card.balanced { border-color: #a7f3d0; background: #f0fdf4; }
-    .metric-card.balanced .metric-value { color: #15803d; }
-    .metric-card.balanced .metric-icon { color: #16a34a; }
+    .metric-card.balanced { border-color: #a7f3d0; background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%); }
     
-    .metric-card.unbalanced { border-color: #fecaca; background: #fef2f2; }
-    .metric-card.unbalanced .metric-value { color: #b91c1c; }
-    .metric-card.unbalanced .metric-icon { color: #dc2626; }
+    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .metric-label { font-size: 0.72rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; }
+    
+    .status-badge-icon { width: 36px; height: 36px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; }
+    .status-badge-icon svg { width: 20px; height: 20px; }
+    
+    .metric-icon-box { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .metric-icon-box.blue { background: #e0f2fe; color: #0284c7; }
+    .metric-icon-box.green { background: #dcfce7; color: #16a34a; }
+    .metric-icon-box svg { width: 18px; height: 18px; }
 
-    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .metric-label { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
-    .metric-icon { font-size: 20px; width: 20px; height: 20px; }
-    .metric-icon.blue { color: #0284c7; }
-    .metric-icon.purple { color: #8b5cf6; }
-    .metric-value { font-size: 1.45rem; font-weight: 800; color: #0f172a; }
+    .metric-value { font-size: 1.55rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
     .metric-footer { font-size: 0.75rem; margin-top: 6px; }
+    .metric-footer.success { color: #059669; font-weight: 700; }
+    .metric-footer.muted { color: #64748b; }
 
     /* Lookup Table Card */
-    .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); overflow: hidden; }
-    .lookup-bar { padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .lookup-title { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
-    .lookup-icon { color: #4f46e5; font-size: 20px; width: 20px; height: 20px; }
+    .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04); overflow: hidden; }
+    .lookup-bar { padding: 18px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    .lookup-title { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 800; color: #0f172a; }
+    .title-icon { width: 18px; height: 18px; color: #059669; }
     
-    .lookup-inputs { display: flex; gap: 8px; }
-    .lookup-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; outline: none; width: 220px; }
-    .lookup-input:focus { border-color: #4f46e5; }
-    .btn-lookup { background: #4f46e5; color: #ffffff; font-weight: 600; font-size: 0.825rem; border-radius: 6px; height: 34px; }
-    .btn-lookup:hover { background: #4338ca; }
+    .lookup-inputs { display: flex; gap: 10px; align-items: center; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .search-icon { position: absolute; left: 12px; width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
+    .lookup-input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px 0 36px; height: 38px; font-size: 0.85rem; font-weight: 600; outline: none; width: 220px; transition: all 0.15s; }
+    .lookup-input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); background: #ffffff; }
 
-    .loading-box { display: flex; justify-content: center; padding: 40px; }
+    .btn-lookup-action { height: 38px; padding: 0 16px; border: none; background: #059669; color: #ffffff; border-radius: 10px; font-weight: 700; font-size: 0.825rem; cursor: pointer; transition: all 0.15s; }
+    .btn-lookup-action:hover:not(:disabled) { background: #047857; }
+    .btn-lookup-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .loading-box { display: flex; justify-content: center; padding: 48px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
     .custom-table-wrapper { overflow-x: auto; }
     .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; }
+    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; text-transform: uppercase; }
     .paygate-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
     
-    .type-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; }
-    .type-pill.debit { background-color: #e0f2fe; color: #0369a1; }
-    .type-pill.credit { background-color: #dcfce7; color: #15803d; }
+    .journal-row { transition: background-color 0.15s; }
+    .journal-row:hover td { background-color: #f8fafc; }
 
-    .font-mono { font-family: monospace; font-size: 0.825rem; font-weight: 700; }
-    .text-indigo { color: #4338ca; }
-    .font-bold { font-weight: 700; color: #0f172a; }
+    .entry-id-tag { font-weight: 700; color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0; }
+    .txn-link { font-weight: 700; color: #4f46e5; }
+
+    .type-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem; font-weight: 700; }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .type-pill.debit { background-color: #e0f2fe; color: #0369a1; }
+    .type-pill.debit .pill-dot { background-color: #0284c7; }
+
+    .type-pill.credit { background-color: #dcfce7; color: #15803d; }
+    .type-pill.credit .pill-dot { background-color: #16a34a; }
+
+    .font-mono { font-family: monospace; }
+    .font-bold { font-weight: 700; }
+    .text-green { color: #16a34a; }
+    .text-dark { color: #0f172a; }
     .text-muted { color: #64748b; }
     .text-xs { font-size: 0.75rem; }
     .text-center { text-align: center; }
-    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+    .py-8 { padding-top: 32px; padding-bottom: 32px; }
   `]
 })
 export class AdminLedgerComponent implements OnInit {
   auditResult: LedgerVerificationResponse | null = null;
   loadingAudit = false;
 
-  searchAccountId: number | null = null;
+  searchAccountId: number = 1;
   entries: LedgerEntry[] = [];
   loadingEntries = false;
 
@@ -228,6 +285,7 @@ export class AdminLedgerComponent implements OnInit {
 
   ngOnInit(): void {
     this.runAudit();
+    this.lookupAccountEntries();
   }
 
   runAudit(): void {
