@@ -1,11 +1,22 @@
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-}
+// ==========================================================================
+// PayGate - Main Styles Entry Point
+// ==========================================================================
 
+// Design System Variables (must be first)
+@use './styles/_variables' as *;
+
+// Base Styles (reset, typography, utilities)
+@use './styles/_base' as *;
+
+// Component Styles
+@use './styles/_components' as *;
+
+// Legacy compatibility classes (to be deprecated)
 .container {
-  padding: 24px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
 }
 
 .full-width {
@@ -16,16 +27,50 @@ html, body {
   flex: 1 1 auto;
 }
 
-.error-message {
-  color: #f44336;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
+// Material Snackbar overrides (legacy - will be replaced by custom toast)
 .mat-mdc-snack-bar-container.success-snackbar .mdc-snackbar__surface {
-  background-color: #4caf50;
+  background-color: var(--color-success-500);
 }
 
 .mat-mdc-snack-bar-container.error-snackbar .mdc-snackbar__surface {
-  background-color: #f44336;
+  background-color: var(--color-error-500);
+}
+
+// Global focus styles for Material components
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch {
+  border-color: var(--color-primary-500) !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__trailing,
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__notch {
+  border-color: var(--color-error-500) !important;
+}
+
+// Input colors for Material form fields
+.mat-mdc-form-field .mdc-text-field__input {
+  color: var(--color-text-primary) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--color-text-tertiary) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--color-primary-500) !important;
+}
+
+.mat-mdc-form-field .mdc-line-ripple::after {
+  background-color: var(--color-primary-500) !important;
+}
+
+// Material button overrides to match design system
+.mat-mdc-raised-button.mat-primary {
+  --mdc-protected-background-color: var(--color-primary-600) !important;
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+-protected-background-color: var(--color-primary-700) !important;
 }

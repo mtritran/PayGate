@@ -1,10 +1,13 @@
+export type TransactionType = 'PAYMENT' | 'TOPUP' | 'REFUND' | 'WITHDRAW';
+export type TransactionStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+
 export interface TransactionResponse {
   transactionRef: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+  status: TransactionStatus;
   amount: number;
   sourceAccountId: number;
   destAccountId: number;
-  type: 'PAYMENT' | 'TOPUP' | 'REFUND' | 'WITHDRAW';
+  type: TransactionType;
   description: string;
   createdAt: string;
 }
