@@ -77,6 +77,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                   <th>MERCHANT CODE</th>
                   <th>WEBHOOK URL</th>
                   <th>STATUS</th>
+                  <th>QUICK LIST (HIỂN THỊ SẴN)</th>
                   <th class="text-right">ADMIN ACTIONS</th>
                 </tr>
               </thead>
@@ -117,6 +118,18 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                       {{ m.status || (m.active ? 'ACTIVE' : 'PENDING') }}
                     </span>
                   </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn-toggle-featured"
+                      [class.is-active]="m.isFeatured"
+                      (click)="toggleFeatured(m)"
+                      title="Tick to show in Quick List dropdown for users"
+                    >
+                      <span *ngIf="m.isFeatured">⭐ Show in List</span>
+                      <span *ngIf="!m.isFeatured">🔒 Require MST</span>
+                    </button>
+                  </td>
                   <td class="text-right">
                     <div class="actions-group">
                       <!-- Approve Button if Pending -->
@@ -150,7 +163,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
                 </tr>
 
                 <tr *ngIf="filteredMerchants().length === 0">
-                  <td colspan="7" class="text-center py-8 text-muted">
+                  <td colspan="8" class="text-center py-8 text-muted">
                     No enterprise merchant requests found matching your criteria.
                   </td>
                 </tr>
@@ -267,6 +280,24 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
 
     .status-pill.rejected { background-color: #fee2e2; color: #b91c1c; }
     .status-pill.rejected .pill-dot { background-color: #dc2626; }
+
+    .btn-toggle-featured {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-toggle-featured.is-active {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #b45309;
+    }
+    .btn-toggle-featured:hover { transform: translateY(-1.5px); }
 
     .actions-group { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
     
@@ -438,6 +469,16 @@ export class MerchantListComponent implements OnInit {
       return (words[0][0] + words[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  toggleFeatured(m: any): void {
+    m.isFeatured = !m.isFeatured;
+    this.updateLocalMerchantState(m);
+    if (m.isFeatured) {
+      this.notification.success(`⭐ Doanh nghiệp ${m.merchantName} đã được bật hiển thị sẵn trên danh sách Quick List!`);
+    } else {
+      this.notification.info(`🔒 Doanh nghiệp ${m.merchantName} yêu cầu người dùng nhập đúng Mã Số Thuế MST.`);
+    }
   }
 
   approveMerchant(m: any): void {

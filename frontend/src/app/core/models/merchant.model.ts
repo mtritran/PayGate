@@ -11,6 +11,7 @@ export interface Merchant {
   webhookUrl: string;
   apiKey?: string;
   active?: boolean;
+  isFeatured?: boolean;
   status?: 'PENDING' | 'ACTIVE' | 'REJECTED';
   accountNumber?: string;
   createdAt: string;
@@ -25,6 +26,7 @@ export interface CreateMerchantRequest {
   representativeName?: string;
   contactPhone?: string;
   webhookUrl?: string;
+  isFeatured?: boolean;
 }
 
 export interface UserMerchantRequest {
@@ -34,6 +36,7 @@ export interface UserMerchantRequest {
   representativeName?: string;
   contactPhone?: string;
   webhookUrl?: string;
+  isFeatured?: boolean;
 }
 
 export interface UpdateMerchantRequest {
@@ -42,5 +45,6 @@ export interface UpdateMerchantRequest {
   contactEmail?: string;
   contactPhone?: string;
   webhookUrl?: string;
+  isFeatured?: boolean;
   status?: 'PENDING' | 'ACTIVE' | 'REJECTED';
 }

@@ -72,7 +72,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span>Merchant Payment (Doanh nghiệp / MST)</span>
+              <span>Merchant Payment (Doanh nghiệp)</span>
             </button>
           </div>
 
@@ -121,9 +121,50 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
             </div>
 
-            <!-- TAB 2: MERCHANT PAYMENT (Exact Business Tax Code MST Lookup) -->
+            <!-- TAB 2: MERCHANT PAYMENT (Featured Major Enterprise VS Small Enterprise Tax Code Search) -->
             <div *ngIf="activeTab === 'MERCHANT'" class="tab-content fade-in-up">
-              <div class="form-group">
+              <!-- Sub-mode Selector: Featured Major Enterprise VS Manual Tax Code Search -->
+              <div class="merchant-mode-pills mb-12">
+                <button
+                  type="button"
+                  class="sub-pill-btn"
+                  [class.active]="merchantSubMode === 'FEATURED'"
+                  (click)="setMerchantSubMode('FEATURED')">
+                  ⭐ Featured Major Enterprise (Bấm chọn sẵn)
+                </button>
+                <button
+                  type="button"
+                  class="sub-pill-btn"
+                  [class.active]="merchantSubMode === 'TAX_CODE_SEARCH'"
+                  (click)="setMerchantSubMode('TAX_CODE_SEARCH')">
+                  🔍 Small Enterprise (Tra cứu theo Mã Số Thuế MST)
+                </button>
+              </div>
+
+              <!-- MODE A: FEATURED MAJOR ENTERPRISES LIST (ADMIN TICKED SHOW) -->
+              <div *ngIf="merchantSubMode === 'FEATURED'" class="form-group">
+                <label class="form-label required">Select Major Enterprise Partner</label>
+                <div class="select-wrapper">
+                  <select
+                    class="custom-select"
+                    [(ngModel)]="selectedFeaturedMerchantId"
+                    [ngModelOptions]="{standalone: true}"
+                    (change)="onFeaturedMerchantSelect()"
+                  >
+                    <option [ngValue]="null">-- Select a Featured Enterprise --</option>
+                    <option *ngFor="let m of featuredMerchants" [ngValue]="m.id">
+                      ⭐ {{ m.merchantName }} (MST: {{ m.taxCode || '0101234567' }})
+                    </option>
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+                <span class="input-hint">List of major enterprise partners pre-approved and featured by Admin.</span>
+              </div>
+
+              <!-- MODE B: MANUAL EXACT TAX CODE LOOKUP (FOR SMALL ENTERPRISES) -->
+              <div *ngIf="merchantSubMode === 'TAX_CODE_SEARCH'" class="form-group">
                 <label class="form-label required">Enterprise Tax Code (Mã số thuế MST) OR Merchant Code</label>
                 <div class="input-wrapper">
                   <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -132,20 +173,22 @@ import { Merchant } from '../../../core/models/merchant.model';
                   <input
                     type="text"
                     class="form-input font-mono"
-                    placeholder="Enter 10-digit Tax Code (e.g. 0101234567) or Merchant Code (e.g. SHOPEE_VN)"
+                    placeholder="Enter 10-digit Tax Code (e.g. 0109998881) or Merchant Code"
                     [(ngModel)]="merchantTaxQuery"
                     [ngModelOptions]="{standalone: true}"
                     (input)="onMerchantTaxInput($event)"
                   >
                 </div>
                 <div class="security-hint-box" *ngIf="!merchantTaxQuery || merchantTaxQuery.length < 6">
-                  <span>🏢 <strong>Enterprise Security Policy:</strong> Enter exact 10-digit Business Tax Code (MST) or Merchant Code. Only Admin-approved active enterprises are searchable.</span>
+                  <span>🏢 <strong>Small Business Policy:</strong> Enter exact 10-digit Tax Code (MST) for small enterprises not featured on quick list.</span>
                 </div>
               </div>
 
               <!-- Selected Merchant Info Card -->
               <div *ngIf="selectedMerchant" class="lookup-card merchant-info-card">
-                <div class="verified-badge">🏪 VERIFIED ADMIN-APPROVED ENTERPRISE</div>
+                <div class="verified-badge">
+                  {{ selectedMerchant.isFeatured ? '⭐ FEATURED MAJOR ENTERPRISE' : '🏪 VERIFIED SMALL ENTERPRISE' }}
+                </div>
                 <div class="recipient-details">
                   <strong class="recipient-name">{{ selectedMerchant.merchantName }}</strong>
                   <span class="recipient-meta font-mono">Tax Code (MST): {{ selectedMerchant.taxCode || '0101234567' }} | Code: {{ selectedMerchant.merchantCode }}</span>
@@ -153,7 +196,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                 </div>
               </div>
 
-              <div *ngIf="merchantLookupError && merchantTaxQuery.length >= 6" class="lookup-card error-card">
+              <div *ngIf="merchantSubMode === 'TAX_CODE_SEARCH' && merchantLookupError && merchantTaxQuery.length >= 6" class="lookup-card error-card">
                 ⚠️ {{ merchantLookupError }}
               </div>
             </div>
@@ -341,6 +384,30 @@ import { Merchant } from '../../../core/models/merchant.model';
     .tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: none; background: transparent; border-radius: 8px; font-size: 0.825rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
     .tab-btn.active { background: #ffffff; color: #059669; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .tab-icon { width: 16px; height: 16px; }
+
+    /* Merchant Sub-Mode Selector Pills */
+    .merchant-mode-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sub-pill-btn { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 10px; font-size: 0.75rem; font-weight: 800; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .sub-pill-btn:hover { background: #ffffff; border-color: #059669; }
+    .sub-pill-btn.active { background: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 0 0 2px #059669; }
+
+    /* Select Wrapper */
+    .select-wrapper { position: relative; width: 100%; }
+    .custom-select {
+      width: 100%;
+      height: 44px;
+      padding: 0 36px 0 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+    .select-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
     
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
@@ -473,7 +540,7 @@ import { Merchant } from '../../../core/models/merchant.model';
     .btn-confirm-emerald {
       flex: 1; height: 44px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); transition: all 0.2s;
     }
-    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
     .btn-confirm-emerald:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     
     .spinner-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -483,6 +550,7 @@ import { Merchant } from '../../../core/models/merchant.model';
 export class PaymentFormComponent implements OnInit, OnDestroy {
   paymentForm!: FormGroup;
   activeTab: 'USER' | 'MERCHANT' = 'USER';
+  merchantSubMode: 'FEATURED' | 'TAX_CODE_SEARCH' = 'FEATURED';
   myBalance = 0;
   submitting = false;
   showConfirmModal = false;
@@ -496,7 +564,9 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   private lookupSub!: Subscription;
 
   // Merchant state for MERCHANT tab
-  activeMerchants: any[] = [];
+  allActiveMerchants: any[] = [];
+  featuredMerchants: any[] = [];
+  selectedFeaturedMerchantId: number | null = null;
   merchantTaxQuery = '';
   selectedMerchant: any = null;
   merchantLookupError: string | null = null;
@@ -528,6 +598,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.activeTab = tab;
     this.recipientLookup = null;
     this.selectedMerchant = null;
+    this.selectedFeaturedMerchantId = null;
     this.lookupQuery = '';
     this.merchantTaxQuery = '';
     this.lookupError = null;
@@ -537,6 +608,15 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       destAccountId: '',
       merchantId: null
     });
+  }
+
+  setMerchantSubMode(mode: 'FEATURED' | 'TAX_CODE_SEARCH'): void {
+    this.merchantSubMode = mode;
+    this.selectedMerchant = null;
+    this.selectedFeaturedMerchantId = null;
+    this.merchantTaxQuery = '';
+    this.merchantLookupError = null;
+    this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
   }
 
   private initForm(): void {
@@ -563,17 +643,39 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.merchantService.getActiveMerchants().subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          this.activeMerchants = res.data;
+          this.allActiveMerchants = res.data;
+          this.filterFeaturedMerchants();
         }
       },
       error: () => {
         const saved = localStorage.getItem('paygate_mock_merchants_list');
         if (saved) {
           const list = JSON.parse(saved);
-          this.activeMerchants = list.filter((m: any) => m.status === 'ACTIVE' || m.active === true);
+          this.allActiveMerchants = list.filter((m: any) => m.status === 'ACTIVE' || m.active === true);
+          this.filterFeaturedMerchants();
         }
       }
     });
+  }
+
+  private filterFeaturedMerchants(): void {
+    this.featuredMerchants = this.allActiveMerchants.filter(m => m.isFeatured === true || m.isFeatured === undefined);
+  }
+
+  onFeaturedMerchantSelect(): void {
+    if (!this.selectedFeaturedMerchantId) {
+      this.selectedMerchant = null;
+      this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
+      return;
+    }
+    const found = this.allActiveMerchants.find(m => m.id === this.selectedFeaturedMerchantId);
+    if (found) {
+      this.selectedMerchant = found;
+      this.paymentForm.patchValue({
+        destAccountId: found.accountId || found.id || 100,
+        merchantId: found.id
+      });
+    }
   }
 
   private setupLookupDebounce(): void {
@@ -589,7 +691,6 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     const val = (event.target as HTMLInputElement).value.trim();
     this.lookupQuery = val;
 
-    // Security Rule: Require exact 10 digits (Phone number) or exact Account Number (e.g. PAY0000000004 or >= 10 chars)
     if (!val || val.length < 10) {
       this.lookingUp = false;
       this.recipientLookup = null;
@@ -640,8 +741,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Lookup from Admin-Approved active merchants list
-    const found = this.activeMerchants.find(m => 
+    // Lookup from Admin-Approved active merchants list by exact Tax Code (MST) or Code
+    const found = this.allActiveMerchants.find(m => 
       (m.taxCode && m.taxCode.toLowerCase() === q) || 
       (m.merchantCode && m.merchantCode.toLowerCase() === q)
     );
@@ -689,7 +790,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
 
   openConfirmation(): void {
     if (this.paymentForm.invalid || !this.hasValidRecipient()) {
-      this.notification.error('Vui lòng nhập đúng SĐT/STK hoặc Mã số thuế doanh nghiệp.');
+      this.notification.error('Vui lòng chọn hoặc nhập đúng SĐT/STK/MST doanh nghiệp.');
       return;
     }
 

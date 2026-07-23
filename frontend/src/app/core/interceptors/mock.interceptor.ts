@@ -275,6 +275,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
           apiKey: 'pk_live_shopee_99182',
           status: 'ACTIVE',
           active: true,
+          isFeatured: true,
           createdAt: '2026-07-20T08:00:00Z'
         },
         {
@@ -290,6 +291,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
           apiKey: 'pk_live_lazada_44120',
           status: 'ACTIVE',
           active: true,
+          isFeatured: true,
           createdAt: '2026-07-21T10:30:00Z'
         },
         {
@@ -305,7 +307,24 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
           apiKey: 'pk_live_tiki_88192',
           status: 'PENDING',
           active: false,
+          isFeatured: false,
           createdAt: '2026-07-22T14:15:00Z'
+        },
+        {
+          id: 4,
+          merchantCode: 'AN_BINH_STORE',
+          taxCode: '0109998881',
+          merchantName: 'Hộ Kinh Doanh An Bình Store (Doanh nghiệp nhỏ)',
+          representativeName: 'Nguyen Van An',
+          contactPhone: '0988776655',
+          contactEmail: 'anbinh@smallshop.vn',
+          accountNumber: 'PAY990000004',
+          webhookUrl: 'https://anbinh.shop/paygate/hook',
+          apiKey: 'pk_live_anbinh_771',
+          status: 'ACTIVE',
+          active: true,
+          isFeatured: false,
+          createdAt: '2026-07-23T09:00:00Z'
         }
       ];
       localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(defaults));
