@@ -1,36 +1,35 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { WebhookLogService } from '../../../core/services/webhook-log.service';
 import { WebhookLog } from '../../../core/models/webhook-log.model';
 
 @Component({
   selector: 'app-webhook-log',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],
   template: `
-    <div class="space-y-6">
-      <!-- Title & Filter Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/60 p-6 rounded-2xl border border-slate-700/60 backdrop-blur-xl">
-        <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-            <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </span>
-            Webhook Execution Logs
-          </h1>
-          <p class="text-slate-400 text-sm mt-1">Audit outbound webhook dispatches, HTTP delivery statuses, and automatic exponential backoff retries.</p>
+    <div class="console-page">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-title-group">
+          <h2>Webhook Execution Logs</h2>
+          <p class="header-subtitle">Audit outbound HTTP webhook dispatches, status codes, and exponential backoff retries.</p>
         </div>
 
-        <div class="flex items-center gap-3">
-          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status Filter:</label>
-          <select
-            [(ngModel)]="selectedStatus"
-            (change)="onStatusChange()"
-            class="bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
-          >
+        <div class="filter-group">
+          <label class="filter-label">Filter Status:</label>
+          <select [(ngModel)]="selectedStatus" (change)="onStatusChange()" class="filter-select">
             <option value="ALL">ALL STATUSES</option>
             <option value="SUCCESS">SUCCESS</option>
             <option value="FAILED">FAILED</option>
@@ -40,70 +39,60 @@ import { WebhookLog } from '../../../core/models/webhook-log.model';
         </div>
       </div>
 
-      <!-- Logs Table -->
-      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden backdrop-blur-xl shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+      <!-- Logs Table Card -->
+      <div class="table-card">
+        <div *ngIf="loading" class="loading-box">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loading" class="custom-table-wrapper">
+          <table class="paygate-table">
             <thead>
-              <tr class="border-b border-slate-700/60 bg-slate-800/80 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <th class="px-6 py-4">ID</th>
-                <th class="px-6 py-4">Target Webhook URL</th>
-                <th class="px-6 py-4">Status</th>
-                <th class="px-6 py-4">Attempt</th>
-                <th class="px-6 py-4">HTTP Status</th>
-                <th class="px-6 py-4">Next Retry At</th>
-                <th class="px-6 py-4">Timestamp</th>
-                <th class="px-6 py-4 text-right">Details</th>
+              <tr>
+                <th>ID</th>
+                <th>TARGET WEBHOOK URL</th>
+                <th>STATUS</th>
+                <th>ATTEMPT</th>
+                <th>HTTP STATUS</th>
+                <th>NEXT RETRY AT</th>
+                <th>TIMESTAMP</th>
+                <th class="text-right">DETAILS</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700/40 text-sm">
-              <tr *ngFor="let log of logs" class="hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4 font-mono text-slate-400 text-xs">#{{ log.id }}</td>
-                <td class="px-6 py-4 font-mono text-slate-300 text-xs max-w-xs truncate" [title]="log.url">
-                  {{ log.url }}
-                </td>
-                <td class="px-6 py-4">
+            <tbody>
+              <tr *ngFor="let log of logs">
+                <td class="font-mono">#{{ log.id }}</td>
+                <td class="max-w-url font-mono" [title]="log.url">{{ log.url }}</td>
+                <td>
                   <span
-                    [ngClass]="{
-                      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': log.status === 'SUCCESS',
-                      'bg-rose-500/10 text-rose-400 border-rose-500/20': log.status === 'FAILED',
-                      'bg-amber-500/10 text-amber-400 border-amber-500/20': log.status === 'RETRYING',
-                      'bg-blue-500/10 text-blue-400 border-blue-500/20': log.status === 'PENDING'
-                    }"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-md border text-xs font-bold"
+                    [class.success]="log.status === 'SUCCESS'"
+                    [class.failed]="log.status === 'FAILED'"
+                    [class.retrying]="log.status === 'RETRYING'"
+                    [class.pending]="log.status === 'PENDING'"
+                    class="status-pill"
                   >
                     {{ log.status }}
                   </span>
                 </td>
-                <td class="px-6 py-4 font-semibold text-slate-300">
-                  {{ log.attempt }}/5
-                </td>
-                <td class="px-6 py-4 font-mono text-xs">
-                  <span *ngIf="log.responseStatus" [ngClass]="log.responseStatus >= 200 && log.responseStatus < 300 ? 'text-emerald-400' : 'text-rose-400'">
+                <td class="font-bold">{{ log.attempt }}/5</td>
+                <td>
+                  <span *ngIf="log.responseStatus" [class.text-green]="log.responseStatus >= 200 && log.responseStatus < 300" [class.text-red]="log.responseStatus >= 400" class="font-mono font-bold">
                     {{ log.responseStatus }}
                   </span>
-                  <span *ngIf="!log.responseStatus" class="text-slate-500">N/A</span>
+                  <span *ngIf="!log.responseStatus" class="text-muted">N/A</span>
                 </td>
-                <td class="px-6 py-4 text-xs text-slate-400">
-                  <span *ngIf="log.nextRetryAt" class="text-amber-300 font-mono">{{ log.nextRetryAt | date:'short' }}</span>
-                  <span *ngIf="!log.nextRetryAt" class="text-slate-600">-</span>
+                <td class="text-xs text-muted">
+                  <span *ngIf="log.nextRetryAt" class="font-mono text-amber">{{ log.nextRetryAt | date:'short' }}</span>
+                  <span *ngIf="!log.nextRetryAt">-</span>
                 </td>
-                <td class="px-6 py-4 text-xs text-slate-400">
-                  {{ log.createdAt | date:'medium' }}
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <button
-                    (click)="selectedLog = log"
-                    class="px-3 py-1 rounded-lg bg-slate-700/50 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 text-xs font-medium transition-all"
-                  >
-                    Inspect
-                  </button>
+                <td class="text-xs text-muted">{{ log.createdAt | date:'medium' }}</td>
+                <td class="text-right">
+                  <button mat-button class="btn-inspect" (click)="selectedLog = log">Inspect</button>
                 </td>
               </tr>
 
-              <!-- Empty State -->
-              <tr *ngIf="!loading && logs.length === 0">
-                <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+              <tr *ngIf="logs.length === 0">
+                <td colspan="8" class="text-center py-6 text-muted">
                   No webhook execution logs found.
                 </td>
               </tr>
@@ -112,69 +101,114 @@ import { WebhookLog } from '../../../core/models/webhook-log.model';
         </div>
 
         <!-- Pagination Bar -->
-        <div class="px-6 py-4 border-t border-slate-700/60 flex items-center justify-between bg-slate-800/40">
-          <div class="text-xs text-slate-400">
-            Page {{ currentPage + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} items)
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              [disabled]="currentPage === 0 || loading"
-              (click)="changePage(currentPage - 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-700/50 disabled:opacity-40 transition-all"
-            >
-              Previous
-            </button>
-            <button
-              [disabled]="currentPage >= totalPages - 1 || loading"
-              (click)="changePage(currentPage + 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-700/50 disabled:opacity-40 transition-all"
-            >
-              Next
-            </button>
+        <div class="pagination-bar">
+          <span class="page-info">Showing page {{ currentPage + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} items)</span>
+          <div class="page-buttons">
+            <button mat-button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
+            <button mat-button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
           </div>
         </div>
       </div>
 
-      <!-- Inspect Drawer / Modal -->
-      <div *ngIf="selectedLog" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-          <div class="px-6 py-4 border-b border-slate-700/60 flex items-center justify-between bg-slate-800/80">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              Webhook Log Details #{{ selectedLog.id }}
-            </h3>
-            <button (click)="selectedLog = null" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700/50">
-              ✕
-            </button>
+      <!-- Inspect Log Detail Modal -->
+      <div *ngIf="selectedLog" class="modal-backdrop">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3>Webhook Log Details #{{ selectedLog.id }}</h3>
+            <button mat-icon-button (click)="selectedLog = null"><mat-icon>close</mat-icon></button>
           </div>
 
-          <div class="p-6 space-y-4 text-sm">
-            <div>
-              <span class="text-xs font-semibold text-slate-400 uppercase">Target URL:</span>
-              <div class="font-mono text-xs text-amber-300 mt-1 break-all bg-slate-900 p-3 rounded-xl border border-slate-700/80">
-                {{ selectedLog.url }}
-              </div>
+          <div class="modal-body">
+            <div class="detail-group">
+              <span class="detail-label">TARGET WEBHOOK URL:</span>
+              <div class="detail-code text-amber">{{ selectedLog.url }}</div>
             </div>
 
-            <div>
-              <span class="text-xs font-semibold text-slate-400 uppercase">Payload JSON:</span>
-              <pre class="font-mono text-xs text-emerald-300 mt-1 bg-slate-900 p-3 rounded-xl border border-slate-700/80 overflow-x-auto">{{ selectedLog.payload }}</pre>
+            <div class="detail-group">
+              <span class="detail-label">PAYLOAD JSON:</span>
+              <pre class="detail-code text-green">{{ selectedLog.payload }}</pre>
             </div>
 
-            <div>
-              <span class="text-xs font-semibold text-slate-400 uppercase">Response Body:</span>
-              <pre class="font-mono text-xs text-slate-300 mt-1 bg-slate-900 p-3 rounded-xl border border-slate-700/80 overflow-x-auto max-h-40">{{ selectedLog.responseBody || 'No response body' }}</pre>
+            <div class="detail-group">
+              <span class="detail-label">RESPONSE BODY:</span>
+              <pre class="detail-code">{{ selectedLog.responseBody || 'No response body' }}</pre>
             </div>
           </div>
 
-          <div class="px-6 py-4 border-t border-slate-700/60 bg-slate-800/40 flex justify-end">
-            <button (click)="selectedLog = null" class="px-4 py-2 rounded-xl bg-slate-700 text-white text-xs font-medium hover:bg-slate-600">
-              Close
-            </button>
+          <div class="modal-footer">
+            <button mat-button class="btn-close" (click)="selectedLog = null">Close</button>
           </div>
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .console-page { display: flex; flex-direction: column; gap: 20px; padding: 4px; }
+    
+    .page-header {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .header-title-group h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+
+    .filter-group { display: flex; align-items: center; gap: 8px; }
+    .filter-label { font-size: 0.75rem; font-weight: 700; color: #64748b; }
+    .filter-select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.825rem; font-weight: 600; color: #1e293b; outline: none; background: #ffffff; }
+
+    .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); overflow: hidden; }
+    .loading-box { display: flex; justify-content: center; padding: 40px; }
+
+    .custom-table-wrapper { overflow-x: auto; }
+    .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; }
+    .paygate-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+    
+    .max-w-url { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    
+    .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .status-pill.success { background-color: #dcfce7; color: #15803d; }
+    .status-pill.failed { background-color: #fee2e2; color: #b91c1c; }
+    .status-pill.retrying { background-color: #fef3c7; color: #b45309; }
+    .status-pill.pending { background-color: #e0f2fe; color: #0369a1; }
+
+    .btn-inspect { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-size: 0.78rem; font-weight: 600; border-radius: 6px; height: 30px; }
+    .btn-inspect:hover { background: #e2e8f0; }
+
+    .pagination-bar { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .page-info { font-size: 0.8rem; color: #64748b; }
+    .page-buttons { display: flex; gap: 8px; }
+    .btn-page { border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; height: 32px; color: #334155; }
+    
+    /* Modal Backdrop */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .modal-card { background: #ffffff; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 600px; overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .detail-group { display: flex; flex-direction: column; gap: 4px; }
+    .detail-label { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
+    .detail-code { background: #0f172a; color: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.8rem; max-height: 160px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin: 0; }
+    .modal-footer { padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; }
+    .btn-close { background: #334155; color: #ffffff; font-weight: 600; font-size: 0.825rem; border-radius: 6px; }
+
+    .font-mono { font-family: monospace; font-size: 0.825rem; }
+    .font-bold { font-weight: 700; color: #0f172a; }
+    .text-green { color: #16a34a; }
+    .text-amber { color: #d97706; }
+    .text-red { color: #dc2626; }
+    .text-muted { color: #64748b; }
+    .text-xs { font-size: 0.75rem; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+  `]
 })
 export class WebhookLogComponent implements OnInit {
   logs: WebhookLog[] = [];
