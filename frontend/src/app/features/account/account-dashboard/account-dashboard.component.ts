@@ -324,6 +324,7 @@ interface DailyVolumePoint {
                 <tr>
                   <th>Reference</th>
                   <th>Type</th>
+                  <th>Bank Source</th>
                   <th>Counterparty</th>
                   <th>Amount</th>
                   <th>Status</th>
@@ -343,6 +344,15 @@ interface DailyVolumePoint {
                   <td class="font-medium">
                     <span class="type-badge">{{ tx.type }}</span>
                   </td>
+                  <td>
+                    <span
+                      class="bank-brand-badge"
+                      [style.backgroundColor]="getBankBadge(tx.description, tx.type).bg"
+                      [style.color]="getBankBadge(tx.description, tx.type).color"
+                      [style.borderColor]="getBankBadge(tx.description, tx.type).border">
+                      🏦 {{ getBankBadge(tx.description, tx.type).name }}
+                    </span>
+                  </td>
                   <td class="font-mono text-muted">PAY000000000{{ tx.destAccountId }}</td>
                   <td class="font-bold" [ngClass]="tx.type === 'TOPUP' ? 'text-green' : 'text-dark'">
                     {{ tx.type === 'TOPUP' ? '+' : '-' }}{{ tx.amount | currency:'VND':'symbol':'1.0-0' }}
@@ -356,7 +366,7 @@ interface DailyVolumePoint {
                   <td class="text-muted">{{ tx.createdAt | date:'dd MMM YYYY, HH:mm' }}</td>
                 </tr>
                 <tr *ngIf="recentTransactions.length === 0">
-                  <td colspan="6" class="text-center py-6 text-muted">
+                  <td colspan="7" class="text-center py-6 text-muted">
                     <div class="empty-state">
                       <mat-icon class="empty-icon">receipt_long</mat-icon>
                       <div>No transactions found. Make your first payment or top up today!</div>
@@ -446,7 +456,7 @@ interface DailyVolumePoint {
       fill: #047857;
     }
 
-    .console-dashboard { display: flex; flex-direction: column; gap: 32px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .console-dashboard { display: flex; flex-direction: column; gap: 36px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     .loading-box { display: flex; justify-content: center; padding: 60px; }
 
     /* Welcome Header Banner */
@@ -455,8 +465,8 @@ interface DailyVolumePoint {
     .pulse-indicator { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; animation: pulseGlow 2s infinite; }
     .badge-text { font-size: 0.72rem; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .welcome-title-group h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px 0; color: #0f172a; letter-spacing: -0.02em; }
-    .welcome-subtitle { font-size: 0.9rem; color: #64748b; margin: 0; }
+    .welcome-title-group h2 { font-size: 1.85rem; font-weight: 800; margin: 0 0 4px 0; color: #0f172a; letter-spacing: -0.02em; }
+    .welcome-subtitle { font-size: 0.95rem; color: #64748b; margin: 0; }
     .header-action-buttons { display: flex; align-items: center; gap: 14px; }
 
     .btn-topup { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; border-radius: 10px; font-weight: 600; font-size: 0.875rem; padding: 0 18px; height: 44px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
@@ -471,15 +481,15 @@ interface DailyVolumePoint {
     .hover-lift { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
     .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08); }
 
-    .dashboard-content { display: flex; flex-direction: column; gap: 32px; }
+    .dashboard-content { display: flex; flex-direction: column; gap: 36px; }
 
     /* 4 Top Metric Cards Grid */
-    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    .metric-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px 24px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .metric-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 26px 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; }
     .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .metric-label { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+    .metric-label { font-size: 0.725rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
 
-    .icon-circle { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .icon-circle { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
     .emerald-tint { background-color: #ecfdf5; border: 1px solid #a7f3d0; }
     .blue-tint { background-color: #e0f2fe; border: 1px solid #bae6fd; }
     .purple-tint { background-color: #f3e8ff; border: 1px solid #e9d5ff; }
@@ -492,7 +502,7 @@ interface DailyVolumePoint {
     .metric-icon.red { color: #dc2626; }
 
     .metric-value-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-    .metric-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .metric-value { font-size: 1.7rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; }
     
     .trend-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
     .trend-badge.positive { background-color: #dcfce7; color: #15803d; }
@@ -502,8 +512,8 @@ interface DailyVolumePoint {
     .metric-subtext { font-size: 0.75rem; color: #94a3b8; }
 
     /* Middle Grid (Chart + Wallet Card) */
-    .middle-grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 24px; }
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); }
+    .middle-grid { display: grid; grid-template-columns: 1.75fr 1.25fr; gap: 32px; }
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 34px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03); }
     .card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
     .hero-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
     .card-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
@@ -597,6 +607,18 @@ interface DailyVolumePoint {
     .status-pill.processing { background-color: #e0f2fe; color: #0369a1; }
     .status-pill.processing .pill-dot { background-color: #0284c7; }
 
+    .bank-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
     .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #94a3b8; }
     .empty-icon { font-size: 32px; width: 32px; height: 32px; color: #cbd5e1; }
 
@@ -627,6 +649,44 @@ export class AccountDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+  }
+
+  getBankBadge(desc: string, type: string) {
+    const text = (desc || '').toLowerCase();
+    if (text.includes('mb bank') || text.includes('quân đội')) {
+      return { name: 'MB Bank', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+    }
+    if (text.includes('vietcombank') || text.includes('vcb')) {
+      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+    }
+    if (text.includes('techcombank') || text.includes('tcb')) {
+      return { name: 'Techcombank', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' };
+    }
+    if (text.includes('vpbank')) {
+      return { name: 'VPBank', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' };
+    }
+    if (text.includes('momo')) {
+      return { name: 'Ví MoMo', bg: '#fdf2f8', color: '#db2777', border: '#fbcfe8' };
+    }
+    if (text.includes('zalopay') || text.includes('zalo')) {
+      return { name: 'ZaloPay', bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' };
+    }
+    if (text.includes('bidv')) {
+      return { name: 'BIDV', bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' };
+    }
+    if (text.includes('agribank')) {
+      return { name: 'Agribank', bg: '#fff1f2', color: '#be123c', border: '#fecdd3' };
+    }
+    if (text.includes('acb')) {
+      return { name: 'ACB Bank', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' };
+    }
+    if (text.includes('napas')) {
+      return { name: 'Napas ATM', bg: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+    }
+    if (type === 'TOPUP') {
+      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+    }
+    return { name: 'PayGate Wallet', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
   }
 
   getDisplayName(): string {

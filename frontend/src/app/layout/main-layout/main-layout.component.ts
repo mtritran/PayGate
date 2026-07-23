@@ -829,7 +829,11 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     /* Content Body */
     .content-body {
       flex: 1;
-      padding: var(--space-6);
+      padding: 36px 48px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
     }
 
     /* Mobile Responsive */
