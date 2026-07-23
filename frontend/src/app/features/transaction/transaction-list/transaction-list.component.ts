@@ -2,24 +2,14 @@ import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject } from 'rxjs';
 import { TransactionService, TransactionFilters } from '../../../core/services/transaction.service';
 import { TransactionResponse, TransactionType, TransactionStatus } from '../../../core/models/transaction.model';
 import { TransactionDetailComponent } from '../transaction-detail/transaction-detail.component';
 import { SkeletonComponent } from '../../../shared/components/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
-import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { CardComponent } from '../../../shared/components/card/card.component';
 
 @Component({
   selector: 'app-transaction-list',
@@ -30,43 +20,34 @@ import { CardComponent } from '../../../shared/components/card/card.component';
     FormsModule,
     CurrencyPipe,
     DatePipe,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
     MatDialogModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatInputModule,
     SkeletonComponent,
     EmptyStateComponent,
-    BadgeComponent,
-    ButtonComponent,
-    CardComponent
+    BadgeComponent
   ],
   template: `
-    <div class="transactions-page">
+    <div class="transactions-page fade-in-up">
       <!-- Header Group -->
       <div class="page-header flex-between">
         <div>
+          <div class="header-tag">PAYGATE LEDGER & TRANSACTIONS</div>
           <h2>Transactions</h2>
-          <p class="subtitle">All payments, refunds and top-ups on your wallet.</p>
+          <p class="subtitle">All payments, refunds, and top-ups processed on your PayGate wallet.</p>
         </div>
-        <pg-button variant="primary" size="md" routerLink="/transactions/pay">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <a class="btn-new-payment pulse-glow" routerLink="/transactions/pay">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19" />
             <polyline points="19 12 12 19 5 12" />
           </svg>
-          New payment
-        </pg-button>
+          <span>New payment ↗</span>
+        </a>
       </div>
 
-      <!-- Main Content Card -->
-      <pg-card variant="outlined" class="table-card">
-        <!-- Filter Tabs & Search Bar Row -->
+      <!-- Main Content Glass Card -->
+      <div class="table-card hover-lift">
+        <!-- Filter Tabs & Controls Header Row -->
         <div class="filter-row flex-between">
-          <!-- Filter Tabs -->
+          <!-- Status Filter Tabs -->
           <div class="filter-tabs">
             <button
               class="tab-btn"
@@ -94,35 +75,41 @@ import { CardComponent } from '../../../shared/components/card/card.component';
             </button>
           </div>
 
-          <!-- Search & Type Filter -->
-          <div class="filter-controls flex-between" style="gap: 12px; align-items: center;">
-            <div class="search-box" style="width: 280px;">
-              <mat-icon class="search-icon">search</mat-icon>
+          <!-- Search Box & Custom Type Filter Select -->
+          <div class="filter-controls">
+            <div class="search-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
               <input
                 type="text"
                 class="search-input"
-                placeholder="Search by reference or note"
+                placeholder="Search by reference or note..."
                 [value]="searchQuery()"
                 (input)="onSearchChange($event)"
               >
             </div>
 
-            <mat-form-field appearance="outline" class="type-filter">
-              <mat-label>Type</mat-label>
-              <mat-select [value]="typeFilter()" (selectionChange)="onTypeFilterChange($event)">
-                <mat-option value="">All Types</mat-option>
-                <mat-option value="PAYMENT">Payment</mat-option>
-                <mat-option value="TOPUP">Top Up</mat-option>
-                <mat-option value="REFUND">Refund</mat-option>
-                <mat-option value="WITHDRAW">Withdraw</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <!-- Custom Clean Select Dropdown (Replaces Ugly Material Field) -->
+            <div class="select-wrapper">
+              <select class="custom-select" [value]="typeFilter()" (change)="onTypeSelectChange($event)">
+                <option value="">All Types</option>
+                <option value="PAYMENT">Payment</option>
+                <option value="TOPUP">Top Up</option>
+                <option value="REFUND">Refund</option>
+                <option value="WITHDRAW">Withdraw</option>
+              </select>
+              <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- Table Loading / Skeleton -->
+        <!-- Skeleton Loader -->
         <div *ngIf="loading()" class="skeleton-table">
-          <pg-skeleton variant="rectangular" width="100%" height="56px" *ngFor="let _ of [1,2,3,4,5]"></pg-skeleton>
+          <pg-skeleton variant="rectangular" width="100%" height="48px" *ngFor="let _ of [1,2,3,4,5]"></pg-skeleton>
         </div>
 
         <!-- Transactions Table -->
@@ -140,25 +127,36 @@ import { CardComponent } from '../../../shared/components/card/card.component';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let tx of transactions()" class="transaction-row">
+              <tr *ngFor="let tx of transactions()" class="transaction-row" (click)="openDetail(tx.transactionRef)">
                 <td class="font-mono">
-                  <span class="ref-green-link" (click)="openDetail(tx.transactionRef)">
-                    {{ tx.transactionRef }}
-                  </span>
+                  <div class="ref-cell">
+                    <svg class="dir-icon" [class.inbound]="tx.type === 'TOPUP'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <line x1="7" y1="17" x2="17" y2="7" *ngIf="tx.type !== 'TOPUP'" />
+                      <polyline points="7 7 17 7 17 17" *ngIf="tx.type !== 'TOPUP'" />
+                      <line x1="17" y1="7" x2="7" y2="17" *ngIf="tx.type === 'TOPUP'" />
+                      <polyline points="17 17 7 17 7 7" *ngIf="tx.type === 'TOPUP'" />
+                    </svg>
+                    <span class="ref-link">{{ tx.transactionRef }}</span>
+                  </div>
                 </td>
                 <td class="font-medium">
-                  <pg-badge [variant]="getTypeVariant(tx.type)">{{ tx.type }}</pg-badge>
+                  <span class="type-badge">{{ tx.type }}</span>
                 </td>
                 <td class="font-mono text-muted">PAY000000000{{ tx.sourceAccountId }}</td>
                 <td class="font-mono text-muted">PAY000000000{{ tx.destAccountId }}</td>
-                <td class="font-bold">{{ tx.amount | currency:'VND':'symbol':'1.0-0' }}</td>
+                <td class="font-bold" [ngClass]="tx.type === 'TOPUP' ? 'text-green' : 'text-dark'">
+                  {{ tx.type === 'TOPUP' ? '+' : '-' }}{{ tx.amount | currency:'VND':'symbol':'1.0-0' }}
+                </td>
                 <td>
-                  <pg-badge [variant]="getStatusVariant(tx.status)">{{ tx.status }}</pg-badge>
+                  <span class="status-pill" [ngClass]="tx.status.toLowerCase()">
+                    <span class="pill-dot"></span>
+                    {{ tx.status }}
+                  </span>
                 </td>
                 <td class="text-muted">{{ tx.createdAt | date:'dd MMM YYYY, HH:mm' }}</td>
               </tr>
               <tr *ngIf="transactions().length === 0">
-                <td colspan="7" class="text-center py-4 text-muted">
+                <td colspan="7" class="text-center py-6 text-muted">
                   <pg-empty-state
                     icon="receipt_long"
                     title="No transactions found"
@@ -172,74 +170,191 @@ import { CardComponent } from '../../../shared/components/card/card.component';
           </table>
         </div>
 
-        <!-- Paginator -->
-        <mat-paginator
-          [length]="totalElements()"
-          [pageSize]="pageSize()"
-          [pageSizeOptions]="[5, 10, 20, 50]"
-          [pageIndex]="pageIndex()"
-          (page)="onPageChange($event)"
-          class="custom-paginator"
-          [showFirstLastButtons]="true"
-          [hidePageSize]="false">
-        </mat-paginator>
-      </pg-card>
+        <!-- Custom Beautiful Paginator (Replaces Ugly Native Paginator) -->
+        <div class="paginator-bar">
+          <div class="page-size-selector">
+            <span class="paginator-label">Items per page:</span>
+            <div class="mini-select-wrapper">
+              <select class="mini-select" [value]="pageSize()" (change)="onPageSizeChange($event)">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="20">20</option>
+                <option [value]="50">50</option>
+              </select>
+              <svg class="mini-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="pagination-info">
+            {{ getPaginationRangeText() }}
+          </div>
+
+          <div class="paginator-controls">
+            <button class="page-btn" [disabled]="pageIndex() === 0" (click)="goToPage(0)" title="First Page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 19 4 12 11 5 11 19" /><line x1="18" y1="19" x2="18" y2="5" /></svg>
+            </button>
+            <button class="page-btn" [disabled]="pageIndex() === 0" (click)="goToPage(pageIndex() - 1)" title="Previous Page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <button class="page-btn" [disabled]="isLastPage()" (click)="goToPage(pageIndex() + 1)" title="Next Page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+            <button class="page-btn" [disabled]="isLastPage()" (click)="goToPage(getTotalPages() - 1)" title="Last Page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 19 20 12 13 5 13 19" /><line x1="6" y1="19" x2="6" y2="5" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
-    .transactions-page { display: flex; flex-direction: column; gap: 20px; color: var(--color-text-primary); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-    .page-header h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px 0; }
-    .subtitle { font-size: 0.875rem; color: var(--color-text-tertiary); margin: 0; }
+    .transactions-page { display: flex; flex-direction: column; gap: 24px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
-    .table-card { background: var(--color-bg-secondary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-xl); overflow: hidden; }
+    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .page-header h2 { font-size: 1.65rem; font-weight: 800; margin: 0 0 4px 0; color: #0f172a; letter-spacing: -0.02em; }
+    .subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
+
+    .btn-new-payment {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff !important;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0 20px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      transition: all 0.2s;
+    }
+    .btn-new-payment:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); }
+
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
     .filter-row { margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
 
-    /* Tabs Pill Group */
-    .filter-tabs { display: flex; background-color: var(--color-bg-tertiary); padding: 4px; border-radius: var(--radius-md); gap: 2px; }
-    .tab-btn { background: transparent; border: none; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.825rem; font-weight: 600; color: var(--color-text-tertiary); cursor: pointer; transition: all var(--transition-fast); }
-    .tab-btn:hover { color: var(--color-text-primary); }
-    .tab-btn.active { background-color: var(--color-bg-secondary); color: var(--color-text-primary); box-shadow: var(--shadow-sm); }
-
-    /* Search Box */
-    .search-box { display: flex; align-items: center; background-color: var(--color-bg-secondary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-md); padding: 0 12px; width: 280px; height: 36px; }
-    .search-icon { font-size: 18px; width: 18px; height: 18px; color: var(--color-text-tertiary); margin-right: 8px; }
-    .search-input { border: none; outline: none; width: 100%; font-size: 0.825rem; color: var(--color-text-primary); background: transparent; }
-    .search-input::placeholder { color: var(--color-text-tertiary); }
-
-    /* Type Filter */
-    .type-filter { min-width: 180px; }
-    :host ::ng-deep .type-filter .mat-mdc-form-field { width: 100%; }
+    /* Filter Tabs */
+    .filter-tabs { display: flex; background-color: #f1f5f9; padding: 4px; border-radius: 10px; gap: 2px; }
+    .tab-btn { background: transparent; border: none; padding: 7px 16px; border-radius: 8px; font-size: 0.825rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.15s; }
+    .tab-btn:hover { color: #0f172a; }
+    .tab-btn.active { background-color: #ffffff; color: #059669; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
     .filter-controls { display: flex; align-items: center; gap: 12px; }
 
-    .spinner-box { display: flex; justify-content: center; padding: 48px; }
-    .skeleton-table { padding: var(--space-6); }
+    /* Search Box */
+    .search-box { display: flex; align-items: center; gap: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px; width: 260px; height: 38px; transition: all 0.15s; }
+    .search-box:focus-within { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+    .search-icon { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
+    .search-input { border: none; outline: none; width: 100%; font-size: 0.825rem; color: #0f172a; background: transparent; }
+    .search-input::placeholder { color: #94a3b8; }
+
+    /* Custom Type Select (Replaces ugly black border select) */
+    .select-wrapper { position: relative; width: 140px; }
+    .custom-select {
+      width: 100%;
+      height: 38px;
+      padding: 0 32px 0 12px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: #334155;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .custom-select:hover { border-color: #cbd5e1; }
+    .custom-select:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+    .select-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
+
+    .skeleton-table { padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
     .custom-table-wrapper { overflow-x: auto; }
+    
+    /* Table */
     .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-    .paygate-table th { padding: 12px 14px; font-size: 0.75rem; font-weight: 600; color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-primary); text-transform: uppercase; letter-spacing: 0.05em; }
-    .paygate-table td { padding: 14px; border-bottom: 1px solid var(--color-border-primary); color: var(--color-text-primary); }
-    .paygate-table tr:last-child td { border-bottom: none; }
-    .transaction-row { transition: background-color var(--transition-fast); }
-    .transaction-row:hover { background-color: var(--color-bg-hover); }
+    .paygate-table th { padding: 12px 16px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.04em; }
+    .paygate-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+    
+    .transaction-row { cursor: pointer; transition: background-color 0.15s; }
+    .transaction-row:hover td { background-color: #f8fafc; }
 
-    .ref-green-link { color: var(--color-primary-600); font-weight: 600; cursor: pointer; text-decoration: none; }
-    .ref-green-link:hover { text-decoration: underline; }
+    .ref-cell { display: flex; align-items: center; gap: 8px; }
+    .dir-icon { width: 18px; height: 18px; color: #dc2626; }
+    .dir-icon.inbound { color: #16a34a; }
+    .ref-link { font-family: monospace; font-size: 0.825rem; font-weight: 700; color: #059669; }
 
-    .font-mono { font-family: var(--font-family-mono); font-size: 0.825rem; font-weight: 600; }
+    .type-badge { font-weight: 600; font-size: 0.825rem; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; color: #334155; }
+
+    .font-mono { font-family: monospace; font-size: 0.825rem; font-weight: 600; }
     .font-medium { font-weight: 600; }
-    .font-bold { font-weight: 700; color: var(--color-text-primary); }
-    .text-muted { color: var(--color-text-tertiary); }
+    .font-bold { font-weight: 700; }
+    .text-green { color: #16a34a; }
+    .text-dark { color: #0f172a; }
+    .text-muted { color: #64748b; }
     .text-center { text-align: center; }
-    .py-4 { padding-top: 16px; padding-bottom: 16px; }
+    .py-6 { padding-top: 24px; padding-bottom: 24px; }
 
-    .custom-paginator { margin-top: 12px; border-top: 1px solid var(--color-border-primary); padding-top: 12px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
+    
+    .status-pill.completed { background-color: #dcfce7; color: #15803d; }
+    .status-pill.completed .pill-dot { background-color: #16a34a; }
+    
+    .status-pill.failed { background-color: #fee2e2; color: #b91c1c; }
+    .status-pill.failed .pill-dot { background-color: #dc2626; }
+    
+    .status-pill.processing { background-color: #e0f2fe; color: #0369a1; }
+    .status-pill.processing .pill-dot { background-color: #0284c7; }
+
+    /* Custom Paginator Bar */
+    .paginator-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 0.825rem;
+      color: #64748b;
+    }
+
+    .page-size-selector { display: flex; align-items: center; gap: 8px; }
+    .paginator-label { font-weight: 500; }
+    .mini-select-wrapper { position: relative; width: 64px; }
+    .mini-select { width: 100%; height: 32px; padding: 0 20px 0 8px; font-size: 0.825rem; font-weight: 600; color: #334155; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; outline: none; appearance: none; cursor: pointer; }
+    .mini-chevron { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #94a3b8; pointer-events: none; }
+
+    .pagination-info { font-weight: 600; color: #334155; }
+    .paginator-controls { display: flex; align-items: center; gap: 4px; }
+    .page-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .page-btn:hover:not(:disabled) { background-color: #f8fafc; color: #059669; border-color: #cbd5e1; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-btn svg { width: 16px; height: 16px; }
 
     @media (max-width: 768px) {
       .filter-row { flex-direction: column; align-items: stretch; }
       .search-box { width: 100%; }
-      .type-filter { width: 100%; }
+      .select-wrapper { width: 100%; }
+      .paginator-bar { flex-direction: column; gap: 12px; }
     }
   `]
 })
@@ -248,7 +363,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private destroy$ = new Subject<void>();
 
-  // Signals for reactive state
   transactions = signal<TransactionResponse[]>([]);
   loading = signal(false);
   pageIndex = signal(0);
@@ -278,20 +392,45 @@ export class TransactionListComponent implements OnInit, OnDestroy {
     const value = (event.target as HTMLInputElement).value;
     this.searchQuery.set(value);
     this.pageIndex.set(0);
-    this.debouncedSearch();
+    this.loadTransactions();
   }
 
-  onTypeFilterChange(event: any): void {
-    this.typeFilter.set(event.value);
+  onTypeSelectChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as TransactionType | '';
+    this.typeFilter.set(value);
     this.pageIndex.set(0);
     this.loadTransactions();
   }
 
-  private debouncedSearch = () => {
-    this.searchSubject.next(this.searchQuery());
-  };
+  onPageSizeChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.pageSize.set(value);
+    this.pageIndex.set(0);
+    this.loadTransactions();
+  }
 
-  private searchSubject = new Subject<string>();
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.getTotalPages()) {
+      this.pageIndex.set(page);
+      this.loadTransactions();
+    }
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.totalElements() / this.pageSize()) || 1;
+  }
+
+  isLastPage(): boolean {
+    return this.pageIndex() >= this.getTotalPages() - 1;
+  }
+
+  getPaginationRangeText(): string {
+    const total = this.totalElements();
+    if (total === 0) return '0 - 0 of 0';
+    const start = this.pageIndex() * this.pageSize() + 1;
+    const end = Math.min((this.pageIndex() + 1) * this.pageSize(), total);
+    return `${start} – ${end} of ${total}`;
+  }
 
   loadTransactions(): void {
     this.loading.set(true);
@@ -301,8 +440,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       size: this.pageSize(),
       status: this.selectedTab() === 'ALL' ? undefined : this.selectedTab() as TransactionStatus,
       type: this.typeFilter() || undefined,
-      // Note: search query would need backend support for full server-side search
-      // For now we apply client-side filtering on the returned page
     };
 
     this.transactionService.getMyTransactions(filters).subscribe({
@@ -310,7 +447,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
         if (res.success && res.data) {
           let transactions = res.data.content;
 
-          // Client-side search filtering (temporary until backend supports it)
           if (this.searchQuery().trim()) {
             const q = this.searchQuery().toLowerCase();
             transactions = transactions.filter(t =>
@@ -330,12 +466,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
     });
   }
 
-  onPageChange(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-    this.loadTransactions();
-  }
-
   clearFilters(): void {
     this.searchQuery.set('');
     this.typeFilter.set('');
@@ -349,25 +479,5 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       width: '640px',
       data: { ref }
     });
-  }
-
-  getTypeVariant(type: string): 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral' {
-    switch (type) {
-      case 'PAYMENT': return 'primary';
-      case 'TOPUP': return 'success';
-      case 'REFUND': return 'info';
-      case 'WITHDRAW': return 'warning';
-      default: return 'neutral';
-    }
-  }
-
-  getStatusVariant(status: string): 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral' {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'success';
-      case 'failed': return 'error';
-      case 'processing': return 'primary';
-      case 'pending': return 'warning';
-      default: return 'neutral';
-    }
   }
 }
