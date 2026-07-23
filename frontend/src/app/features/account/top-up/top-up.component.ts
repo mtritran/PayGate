@@ -31,12 +31,12 @@ export interface PaymentSourceMock {
         <p class="subtitle">Add funds to your PayGate balance via linked mock payment sources.</p>
       </div>
 
-      <!-- 2-Column Main Grid Layout (Left: Visa Card & Balance, Right: Top Up Form) -->
+      <!-- 2-Column Main Grid Layout (Spacious 1200px Grid) -->
       <div class="topup-grid">
-        <!-- LEFT COLUMN: Metallic Visa Card + Real-time Balance Box -->
+        <!-- LEFT COLUMN: Large Metallic Visa Card + Real-time Balance Box -->
         <div class="left-card-column">
           <div class="content-card visa-card-wrapper hover-lift">
-            <div class="card-header-flex mb-16">
+            <div class="card-header-flex mb-20">
               <div>
                 <span class="hero-tag">PAYGATE VISA DEBIT</span>
                 <div class="card-title">Digital Wallet Card</div>
@@ -44,7 +44,7 @@ export interface PaymentSourceMock {
               <span class="status-chip active">ACTIVE</span>
             </div>
 
-            <!-- Metallic Shimmer Visa Card -->
+            <!-- Large Metallic Shimmer Visa Card -->
             <div class="metallic-visa-card shimmer-box">
               <div class="card-top-row">
                 <div class="visa-brand-logo">
@@ -52,29 +52,29 @@ export interface PaymentSourceMock {
                   <span class="visa-tag">VISA</span>
                 </div>
                 <div class="card-contactless">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a7f3d0" stroke-width="2.2">
                     <path d="M5 12.55a11 11 0 0 1 14.08 0" />
                     <path d="M1.42 9a16 16 0 0 1 21.16 0" />
                     <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                    <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3"/>
+                    <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3.5"/>
                   </svg>
                 </div>
               </div>
 
-              <!-- EMV Chip -->
-              <div class="card-chip-row mt-16">
+              <!-- Large EMV Chip -->
+              <div class="card-chip-row mt-20">
                 <div class="emv-chip">
                   <div class="chip-line horizontal"></div>
                   <div class="chip-line vertical"></div>
                 </div>
               </div>
 
-              <div class="card-mid-section mt-16">
+              <div class="card-mid-section mt-24">
                 <div class="wallet-field-label">CARD NUMBER</div>
                 <div class="card-num font-mono">4532 •••• •••• {{ account?.id ? ('000' + account?.id).slice(-4) : '8892' }}</div>
               </div>
 
-              <div class="card-bottom-row mt-20">
+              <div class="card-bottom-row mt-24">
                 <div>
                   <div class="wallet-field-label">CARD HOLDER</div>
                   <div class="card-holder-name">{{ getUserFullName() }}</div>
@@ -86,15 +86,15 @@ export interface PaymentSourceMock {
               </div>
             </div>
 
-            <!-- Balance Details Box Under Visa Card -->
-            <div class="wallet-balance-box mt-20">
+            <!-- Large Balance Details Box Under Visa Card -->
+            <div class="wallet-balance-box mt-24">
               <div class="balance-meta">
                 <span class="field-label">Current PayGate Balance</span>
                 <div class="balance-display">{{ accountBalance | currency:'VND':'symbol':'1.0-0' }}</div>
               </div>
 
-              <div class="after-topup-badge mt-12">
-                <span class="preview-lbl">Preview after top-up:</span>
+              <div class="after-topup-badge mt-16">
+                <span class="preview-lbl">Preview balance after top-up:</span>
                 <strong class="preview-val">
                   +{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}
                   <span class="arrow">➔</span>
@@ -105,7 +105,7 @@ export interface PaymentSourceMock {
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Interactive Top Up Form -->
+        <!-- RIGHT COLUMN: Prominent Large Top Up Form -->
         <div class="right-form-column">
           <div class="content-card form-card hover-lift">
             <form [formGroup]="topUpForm" (ngSubmit)="onSubmit()" class="custom-topup-form">
@@ -144,7 +144,7 @@ export interface PaymentSourceMock {
 
               <!-- Linked Payment Source Selector -->
               <div class="form-section">
-                <div class="flex-between mb-8">
+                <div class="flex-between mb-12">
                   <label class="section-label mb-0">Select Linked Payment Source (Mock Balance Check)</label>
                   <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Reset Mock Balances">
                     🔄 Reset Mock Balances
@@ -160,7 +160,7 @@ export interface PaymentSourceMock {
                     [class.insufficient]="isInsufficient('BANK')"
                     (click)="setMethod('BANK')">
                     <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <line x1="3" y1="21" x2="21" y2="21" />
                         <line x1="3" y1="10" x2="21" y2="10" />
                         <polyline points="12 3 2 10 22 10 12 3" />
@@ -186,7 +186,7 @@ export interface PaymentSourceMock {
                     [class.insufficient]="isInsufficient('CARD')"
                     (click)="setMethod('CARD')">
                     <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                         <line x1="1" y1="10" x2="23" y2="10" />
                       </svg>
@@ -207,7 +207,7 @@ export interface PaymentSourceMock {
                     [class.insufficient]="isInsufficient('MOMO')"
                     (click)="setMethod('MOMO')">
                     <div class="method-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                         <line x1="12" y1="18" x2="12.01" y2="18" />
                       </svg>
@@ -222,7 +222,7 @@ export interface PaymentSourceMock {
                 </div>
 
                 <!-- Warning Banner if Selected Source Insufficient -->
-                <div class="insufficient-banner mt-12" *ngIf="isCurrentSourceInsufficient()">
+                <div class="insufficient-banner mt-16" *ngIf="isCurrentSourceInsufficient()">
                   <div class="banner-icon">⚠️</div>
                   <div class="banner-text">
                     <strong>Số dư nguồn {{ currentSource.title }} không đủ!</strong>
@@ -231,14 +231,14 @@ export interface PaymentSourceMock {
                 </div>
               </div>
 
-              <!-- Submit Button -->
-              <div class="submit-action mt-24">
+              <!-- Prominent Submit Button -->
+              <div class="submit-action mt-28">
                 <button
                   class="btn-emerald-submit pulse-glow"
                   type="submit"
                   [disabled]="topUpForm.invalid || submitting || isCurrentSourceInsufficient()">
                   <span *ngIf="!submitting" class="btn-content">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="16" />
                       <line x1="8" y1="12" x2="16" y2="12" />
@@ -271,144 +271,147 @@ export interface PaymentSourceMock {
     }
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .topup-page { display: flex; flex-direction: column; gap: 28px; color: #0f172a; align-items: center; font-family: 'Inter', system-ui, sans-serif; }
+    .topup-page { display: flex; flex-direction: column; gap: 32px; color: #0f172a; align-items: center; font-family: 'Inter', system-ui, sans-serif; padding-bottom: 40px; }
     .text-center { text-align: center; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
     .mb-8 { margin-bottom: 8px; }
+    .mb-12 { margin-bottom: 12px; }
     .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
     .mb-0 { margin-bottom: 0 !important; }
     .mt-12 { margin-top: 12px; }
     .mt-16 { margin-top: 16px; }
     .mt-20 { margin-top: 20px; }
     .mt-24 { margin-top: 24px; }
+    .mt-28 { margin-top: 28px; }
     
-    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .page-header h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px 0; letter-spacing: -0.02em; }
-    .subtitle { font-size: 0.9rem; color: #64748b; margin: 0; }
+    .header-tag { font-size: 0.75rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .page-header h2 { font-size: 2.1rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; }
+    .subtitle { font-size: 0.975rem; color: #64748b; margin: 0; }
 
-    /* 2-Column Grid Layout */
-    .topup-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 28px; width: 100%; max-width: 1060px; }
+    /* Spacious 2-Column Grid Layout (1200px Max-Width) */
+    .topup-grid { display: grid; grid-template-columns: 1.1fr 1.25fr; gap: 36px; width: 100%; max-width: 1200px; }
 
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04); }
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 34px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
     .hover-lift { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08); }
+    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.09); }
 
-    /* Left Column: Metallic Visa Glass Card */
+    /* Left Column: Large Metallic Visa Glass Card */
     .card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
-    .hero-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
-    .card-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
-    .status-chip { font-size: 0.68rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; letter-spacing: 0.04em; }
+    .hero-tag { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .card-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
+    .status-chip { font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; letter-spacing: 0.04em; }
     .status-chip.active { background-color: #dcfce7; color: #15803d; border: 1px solid #a7f3d0; }
 
     .metallic-visa-card {
       background: linear-gradient(135deg, #047857 0%, #065f46 50%, #064e3b 100%);
       color: #ffffff;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 20px;
+      padding: 30px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 12px 28px rgba(4, 120, 87, 0.28);
+      box-shadow: 0 14px 32px rgba(4, 120, 87, 0.3);
     }
-    .shimmer-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(60deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%); transform: rotate(30deg); transition: transform 0.6s; }
+    .shimmer-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(60deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%); transform: rotate(30deg); transition: transform 0.6s; }
     .metallic-visa-card:hover::after { animation: shimmer 1.5s infinite; }
 
     .card-top-row { display: flex; justify-content: space-between; align-items: center; }
-    .visa-brand-logo { display: flex; align-items: center; gap: 8px; }
-    .paygate-brand { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; }
-    .visa-tag { font-size: 0.75rem; font-weight: 900; font-style: italic; background: #ffffff; color: #047857; padding: 1px 7px; border-radius: 4px; letter-spacing: 0.05em; }
+    .visa-brand-logo { display: flex; align-items: center; gap: 10px; }
+    .paygate-brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; }
+    .visa-tag { font-size: 0.85rem; font-weight: 900; font-style: italic; background: #ffffff; color: #047857; padding: 2px 9px; border-radius: 5px; letter-spacing: 0.06em; }
 
-    /* EMV Chip */
-    .emv-chip { width: 42px; height: 30px; background: linear-gradient(135deg, #fef08a 0%, #eab308 100%); border-radius: 6px; border: 1px solid #ca8a04; position: relative; overflow: hidden; }
-    .chip-line.horizontal { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.2); }
-    .chip-line.vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.2); }
+    /* Large EMV Chip */
+    .emv-chip { width: 50px; height: 36px; background: linear-gradient(135deg, #fef08a 0%, #eab308 100%); border-radius: 8px; border: 1px solid #ca8a04; position: relative; overflow: hidden; }
+    .chip-line.horizontal { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.25); }
+    .chip-line.vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.25); }
 
-    .wallet-field-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; color: #a7f3d0; opacity: 0.9; text-transform: uppercase; }
-    .card-num { font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: 0.06em; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    .wallet-field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; color: #a7f3d0; opacity: 0.95; text-transform: uppercase; }
+    .card-num { font-size: 1.5rem; font-weight: 800; color: #ffffff; letter-spacing: 0.08em; margin-top: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
 
     .card-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
-    .card-holder-name { font-size: 0.95rem; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
-    .expiry-date { font-size: 0.9rem; font-weight: 800; color: #ffffff; margin-top: 2px; font-family: monospace; }
+    .card-holder-name { font-size: 1.1rem; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+    .expiry-date { font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-top: 4px; font-family: monospace; }
 
-    /* Wallet Balance Details Box Under Visa Card */
-    .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .field-label { font-size: 0.78rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .balance-display { font-size: 1.85rem; font-weight: 800; color: #0f172a; margin-top: 2px; letter-spacing: -0.02em; }
+    /* Large Wallet Balance Details Box Under Visa Card */
+    .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .field-label { font-size: 0.825rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .balance-display { font-size: 2.35rem; font-weight: 800; color: #0f172a; margin-top: 4px; letter-spacing: -0.02em; }
 
-    .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 10px 14px; border-radius: 12px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 2px; }
-    .preview-lbl { font-size: 0.75rem; font-weight: 700; color: #047857; }
-    .preview-val { font-size: 0.925rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 6px; }
-    .arrow { font-size: 0.85rem; }
+    .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px 18px; border-radius: 14px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
+    .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #047857; }
+    .preview-val { font-size: 1.05rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 8px; }
+    .arrow { font-size: 0.95rem; }
 
     /* Form Sections */
-    .custom-topup-form { display: flex; flex-direction: column; gap: 22px; }
-    .section-label { font-size: 0.825rem; font-weight: 700; color: #334155; margin-bottom: 10px; display: block; }
+    .custom-topup-form { display: flex; flex-direction: column; gap: 26px; }
+    .section-label { font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 12px; display: block; }
     
-    .btn-reset-mock { background: transparent; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 0.725rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.15s; }
-    .btn-reset-mock:hover { background-color: #f1f5f9; color: #0f172a; }
+    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .btn-reset-mock:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
-    /* Preset Grid */
-    .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-    .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 0; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
+    /* Large Preset Grid */
+    .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px 0; font-size: 0.95rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; }
     .preset-btn:hover { border-color: #cbd5e1; background-color: #ffffff; }
-    .preset-btn.active { background-color: #ecfdf5; border-color: #059669; color: #059669; box-shadow: 0 0 0 1px #059669; }
+    .preset-btn.active { background-color: #ecfdf5; border-color: #059669; color: #059669; box-shadow: 0 0 0 2px #059669; }
 
-    /* Custom Amount Input */
+    /* Large Custom Amount Input */
     .input-wrapper { position: relative; display: flex; align-items: center; }
-    .currency-prefix { position: absolute; left: 14px; font-weight: 700; color: #059669; font-size: 1.1rem; pointer-events: none; }
-    .custom-amount-input { width: 100%; height: 46px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px 0 36px; font-size: 1rem; font-weight: 700; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.15s; box-sizing: border-box; }
-    .custom-amount-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
-    .error-msg { font-size: 0.78rem; color: #ef4444; margin-top: 4px; font-weight: 600; }
+    .currency-prefix { position: absolute; left: 16px; font-weight: 800; color: #059669; font-size: 1.3rem; pointer-events: none; }
+    .custom-amount-input { width: 100%; height: 54px; border: 1px solid #cbd5e1; border-radius: 12px; padding: 0 16px 0 42px; font-size: 1.15rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; box-sizing: border-box; }
+    .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 3.5px rgba(5, 150, 105, 0.15); }
+    .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
-    /* Method Selector Grid */
-    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .method-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .method-card:hover { border-color: #cbd5e1; background-color: #ffffff; transform: translateY(-1px); }
-    .method-card.active { background-color: #ecfdf5; border-color: #059669; box-shadow: 0 0 0 1px #059669; }
+    /* Large Method Selector Grid */
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .method-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .method-card:hover { border-color: #cbd5e1; background-color: #ffffff; transform: translateY(-2px); }
+    .method-card.active { background-color: #ecfdf5; border-color: #059669; box-shadow: 0 0 0 2px #059669; }
     .method-card.insufficient { border-color: #fca5a5; background-color: #fef2f2; }
-    .method-card.insufficient.active { border-color: #ef4444; box-shadow: 0 0 0 1px #ef4444; }
+    .method-card.insufficient.active { border-color: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
 
-    .method-icon-box { width: 36px; height: 36px; border-radius: 10px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
+    .method-icon-box { width: 44px; height: 44px; border-radius: 12px; background: #ffffff; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; flex-shrink: 0; }
     .method-card.active .method-icon-box { background: #059669; border-color: #059669; color: #ffffff; }
     .method-card.insufficient.active .method-icon-box { background: #dc2626; border-color: #dc2626; color: #ffffff; }
-    .method-icon-box svg { width: 20px; height: 20px; }
+    .method-icon-box svg { width: 24px; height: 24px; }
 
-    .method-info { display: flex; flex-direction: column; gap: 2px; }
-    .method-title { font-size: 0.8rem; font-weight: 700; color: #334155; }
+    .method-info { display: flex; flex-direction: column; gap: 3px; }
+    .method-title { font-size: 0.9rem; font-weight: 800; color: #334155; }
     .method-card.active .method-title { color: #059669; }
     .method-card.insufficient.active .method-title { color: #dc2626; }
-    .method-balance { font-size: 0.68rem; font-weight: 600; color: #64748b; }
+    .method-balance { font-size: 0.75rem; font-weight: 600; color: #64748b; }
     .text-danger { color: #dc2626 !important; font-weight: 700 !important; }
 
     /* Insufficient Balance Banner */
     .insufficient-banner {
-      background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 12px 16px;
-      display: flex; gap: 12px; align-items: flex-start; color: #991b1b; font-size: 0.8rem;
+      background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 14px 18px;
+      display: flex; gap: 14px; align-items: flex-start; color: #991b1b; font-size: 0.85rem;
     }
-    .banner-icon { font-size: 1.2rem; flex-shrink: 0; }
-    .banner-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
-    .banner-text strong { font-weight: 700; color: #b91c1c; }
+    .banner-icon { font-size: 1.35rem; flex-shrink: 0; }
+    .banner-text { display: flex; flex-direction: column; gap: 3px; line-height: 1.45; }
+    .banner-text strong { font-weight: 800; color: #b91c1c; }
 
-    /* Submit Button */
+    /* Prominent Submit Button */
     .btn-emerald-submit {
       width: 100%;
-      height: 48px;
+      height: 56px;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #ffffff;
-      font-size: 0.95rem;
-      font-weight: 700;
+      font-size: 1.05rem;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
       transition: all 0.2s;
     }
-    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(5, 150, 105, 0.45); }
     .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; background: #94a3b8; }
     
-    .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-spinner { width: 18px; height: 18px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .btn-content { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-spinner { width: 22px; height: 22px; border: 2.5px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .topup-grid { grid-template-columns: 1fr; }
     }
   `]
