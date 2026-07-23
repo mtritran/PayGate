@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, inject, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AccountService } from '../../../core/services/account.service';
+import { AccountService, LinkedBankResponseDTO } from '../../../core/services/account.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { VietQrService, BankDeepLink } from '../../../core/services/viet-qr.service';
 import { AccountResponse } from '../../../core/models/account.model';
 
 export interface LinkedBankSource {
@@ -14,7 +15,7 @@ export interface LinkedBankSource {
   accountHolder: string;
   balance: number;
   iconType: 'BANK' | 'CARD' | 'MOMO';
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface BankTheme {
@@ -34,45 +35,35 @@ export interface BankTheme {
   ],
   template: `
     <div class="topup-page fade-in-up">
-      <!-- Top Header Banner -->
-      <div class="page-header text-center">
-        <div class="header-tag">PAYGATE INSTANT TOP UP</div>
-        <h2>Top Up Wallet</h2>
-        <p class="subtitle">Add funds to your PayGate balance via linked payment sources with authentic bank themes.</p>
+      <!-- Header Section -->
+      <div class="page-header mb-24">
+        <div class="header-tag">PAYGATE WALLET TOP UP</div>
+        <h2>Wallet Top Up & VietQR</h2>
+        <p class="subtitle">Deposit funds into your PayGate wallet via linked bank accounts or instant VietQR scan.</p>
       </div>
 
-      <!-- 2-Column Main Grid Layout (Spacious 1200px Grid) -->
+      <!-- Main Grid Container -->
       <div class="topup-grid">
-        <!-- LEFT COLUMN: Large Metallic Visa Card + Real-time Balance Box -->
-        <div class="left-card-column">
-          <div class="content-card visa-card-wrapper hover-lift">
+        <!-- LEFT COLUMN: Wallet Card & Balance Overview -->
+        <div class="left-col">
+          <div class="content-card hover-lift shimmer-box mb-24">
             <div class="card-header-flex mb-20">
               <div>
-                <span class="hero-tag">PAYGATE VISA DEBIT</span>
-                <div class="card-title">Digital Wallet Card</div>
+                <span class="hero-tag">PAYGATE WALLET</span>
+                <div class="card-title">Digital Debit Card</div>
               </div>
               <span class="status-chip active">ACTIVE</span>
             </div>
 
-            <!-- Dynamic Metallic Visa Card (Adopts Selected Bank's Brand Gradient!) -->
-            <div class="metallic-visa-card shimmer-box" [style.background]="getCardGradient()">
+            <!-- Metallic Shimmer Visa Card with Dynamic Brand Theme Gradient -->
+            <div
+              class="metallic-visa-card shimmer-box"
+              [style.background]="getSelectedCardGradient()">
               <div class="card-top-row">
                 <div class="visa-brand-logo">
                   <span class="paygate-brand">PayGate</span>
                   <span class="visa-tag">VISA</span>
                 </div>
-                <div class="card-contactless">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                    <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                    <line x1="12" y1="20" x2="12.01" y2="20" stroke-width="3.5"/>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Large EMV Chip -->
-              <div class="card-chip-row mt-20">
                 <div class="emv-chip">
                   <div class="chip-line horizontal"></div>
                   <div class="chip-line vertical"></div>
@@ -80,8 +71,8 @@ export interface BankTheme {
               </div>
 
               <div class="card-mid-section mt-24">
-                <div class="wallet-field-label">CARD NUMBER</div>
-                <div class="card-num font-mono">4532 •••• •••• {{ account?.id ? ('000' + account?.id).slice(-4) : '8892' }}</div>
+                <div class="wallet-field-label">ACCOUNT NUMBER</div>
+                <div class="card-num font-mono">{{ account?.accountNumber || 'PAY0000000001' }}</div>
               </div>
 
               <div class="card-bottom-row mt-24">
@@ -89,64 +80,89 @@ export interface BankTheme {
                   <div class="wallet-field-label">CARD HOLDER</div>
                   <div class="card-holder-name">{{ getUserFullName() }}</div>
                 </div>
-                <div class="card-expiry">
-                  <div class="wallet-field-label">EXPIRES</div>
-                  <div class="expiry-date">12/28</div>
+                <div>
+                  <div class="wallet-field-label">VALID THRU</div>
+                  <div class="expiry-date">12/29</div>
                 </div>
               </div>
             </div>
 
-            <!-- Large Balance Details Box Under Visa Card -->
+            <!-- Wallet Balance Details Box Under Visa Card -->
             <div class="wallet-balance-box mt-24">
-              <div class="balance-meta">
-                <span class="field-label">Current PayGate Balance</span>
-                <div class="balance-display">{{ accountBalance | currency:'VND':'symbol':'1.0-0' }}</div>
+              <div class="flex-between">
+                <div>
+                  <span class="field-label">CURRENT WALLET BALANCE</span>
+                  <div class="balance-display">{{ accountBalance | currency:'VND':'symbol':'1.0-0' }}</div>
+                </div>
               </div>
 
-              <div class="after-topup-badge mt-16">
-                <span class="preview-lbl">Preview balance after top-up:</span>
-                <strong class="preview-val">
-                  +{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
+              <!-- Projected Balance Badge -->
+              <div class="after-topup-badge mt-12" *ngIf="currentAmount > 0">
+                <span class="preview-lbl">Projected balance after top-up:</span>
+                <span class="preview-val">
                   {{ (accountBalance + currentAmount) | currency:'VND':'symbol':'1.0-0' }}
-                </strong>
+                  <span class="increase-tag">(+{{ currentAmount | currency:'VND':'symbol':'1.0-0' }})</span>
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Prominent Large Top Up Form -->
-        <div class="right-form-column">
-          <div class="content-card form-card hover-lift">
+        <!-- RIGHT COLUMN: Spacious Top-Up Form -->
+        <div class="right-col">
+          <div class="content-card hover-lift">
             <form [formGroup]="topUpForm" (ngSubmit)="onSubmit()" class="custom-topup-form">
-              <!-- Preset Amounts -->
+              <!-- Top-up Mode Selector Tabs (Linked Bank vs VietQR) -->
+              <div class="mode-selector-bar">
+                <button
+                  type="button"
+                  class="mode-tab-btn"
+                  [class.active]="topUpMode() === 'LINKED_BANK'"
+                  (click)="setTopUpMode('LINKED_BANK')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="21" x2="21" y2="21" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                    <polyline points="12 3 2 10 22 10 12 3" />
+                  </svg>
+                  <span>Linked Bank Source</span>
+                </button>
+                <button
+                  type="button"
+                  class="mode-tab-btn"
+                  [class.active]="topUpMode() === 'VIETQR'"
+                  (click)="setTopUpMode('VIETQR')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
+                  <span>VietQR Instant Scan</span>
+                </button>
+              </div>
+
+              <!-- Top-Up Amount Section -->
               <div class="form-section">
-                <label class="section-label">Select Amount Preset</label>
-                <div class="preset-grid">
+                <label class="section-label">Select or enter top up amount</label>
+
+                <div class="preset-grid mb-16">
                   <button
                     type="button"
-                    class="preset-btn"
                     *ngFor="let p of presets"
-                    [class.active]="topUpForm.value.amount === p.val"
-                    (click)="setPresetAmount(p.val)">
+                    class="preset-btn"
+                    [class.active]="topUpForm.get('amount')?.value === p.val"
+                    (click)="selectPreset(p.val)">
                     {{ p.label }}
                   </button>
                 </div>
-              </div>
 
-              <!-- Custom Amount Input -->
-              <div class="form-section">
-                <label class="section-label">Or Custom Amount (VND)</label>
                 <div class="input-wrapper">
                   <span class="currency-prefix">₫</span>
                   <input
                     type="number"
                     class="custom-amount-input"
-                    formControlName="amount"
                     placeholder="Enter custom amount..."
+                    formControlName="amount"
                     min="10000"
                     max="1000000000">
                 </div>
@@ -155,21 +171,20 @@ export interface BankTheme {
                 </div>
               </div>
 
-              <!-- Dynamic Linked Payment Sources Section (With Brand-Specific Colors!) -->
-              <div class="form-section">
+              <!-- MODE 1: LINKED BANK SOURCES -->
+              <div class="form-section" *ngIf="topUpMode() === 'LINKED_BANK'">
                 <div class="flex-between mb-12">
-                  <label class="section-label mb-0">Select Linked Payment Source (Brand Themes)</label>
+                  <label class="section-label mb-0">Select Linked Payment Source</label>
                   <div class="action-btn-group">
                     <button type="button" class="btn-link-bank" (click)="openLinkModal()">
-                      + Liên kết ngân hàng mới
+                      + Link new bank
                     </button>
-                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Dọn danh sách" *ngIf="linkedBanks.length > 0">
+                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Clear list" *ngIf="linkedBanks.length > 0">
                       Clear
                     </button>
                   </div>
                 </div>
 
-                <!-- Dynamic Grid of User's Linked Banks with Custom Brand Styles -->
                 <div class="method-grid" *ngIf="linkedBanks.length > 0">
                   <div
                     *ngFor="let bank of linkedBanks"
@@ -179,20 +194,15 @@ export interface BankTheme {
                     [style.backgroundColor]="getBankTheme(bank.bankName).bg"
                     [style.borderColor]="selectedBankId === bank.id ? getBankTheme(bank.bankName).border : '#cbd5e1'"
                     (click)="selectBank(bank.id)">
-                    <button type="button" class="btn-unlink" (click)="unlinkBank(bank.id, $event)" title="Hủy liên kết">
+                    <button type="button" class="btn-unlink" (click)="unlinkBank(bank.id, $event)" title="Unlink bank">
                       ✕
                     </button>
                     
-                    <!-- Bank Brand Icon Box -->
                     <div class="method-icon-box" [style.background]="getBankTheme(bank.bankName).gradient" style="color: #ffffff;">
                       <svg *ngIf="bank.iconType === 'BANK'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <line x1="3" y1="21" x2="21" y2="21" />
                         <line x1="3" y1="10" x2="21" y2="10" />
                         <polyline points="12 3 2 10 22 10 12 3" />
-                        <line x1="6" y1="10" x2="6" y2="21" />
-                        <line x1="10" y1="10" x2="10" y2="21" />
-                        <line x1="14" y1="10" x2="14" y2="21" />
-                        <line x1="18" y1="10" x2="18" y2="21" />
                       </svg>
                       <svg *ngIf="bank.iconType === 'CARD'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
@@ -200,7 +210,6 @@ export interface BankTheme {
                       </svg>
                       <svg *ngIf="bank.iconType === 'MOMO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                         <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                        <line x1="12" y1="18" x2="12.01" y2="18" />
                       </svg>
                     </div>
 
@@ -208,65 +217,59 @@ export interface BankTheme {
                       <span class="method-title" [style.color]="getBankTheme(bank.bankName).text">{{ bank.bankName }}</span>
                       <span class="method-acc font-mono">{{ maskAccNum(bank.accountNumber) }}</span>
                       <span class="method-balance" [class.text-danger]="isBankInsufficient(bank)" [style.color]="isBankInsufficient(bank) ? '#dc2626' : getBankTheme(bank.bankName).text">
-                        Hạn mức: {{ bank.balance | currency:'VND':'symbol':'1.0-0' }}
+                        Balance: {{ bank.balance | currency:'VND':'symbol':'1.0-0' }}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Clean SVG Empty State if No Bank Linked -->
                 <div *ngIf="linkedBanks.length === 0" class="empty-linked-box" (click)="openLinkModal()">
                   <div class="empty-icon">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8">
                       <line x1="3" y1="21" x2="21" y2="21" />
                       <line x1="3" y1="10" x2="21" y2="10" />
                       <polyline points="12 3 2 10 22 10 12 3" />
-                      <line x1="6" y1="10" x2="6" y2="21" />
-                      <line x1="10" y1="10" x2="10" y2="21" />
-                      <line x1="14" y1="10" x2="14" y2="21" />
-                      <line x1="18" y1="10" x2="18" y2="21" />
                     </svg>
                   </div>
                   <div class="empty-text">
-                    <strong>Chưa có ngân hàng nào được liên kết</strong>
-                    <span>Nhấn vào đây để thực hiện liên kết ngân hàng/ví điện tử mới</span>
-                  </div>
-                </div>
-
-                <!-- Clean Warning Banner if Selected Source Insufficient -->
-                <div class="insufficient-banner mt-16" *ngIf="isCurrentBankInsufficient()">
-                  <div class="banner-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                  </div>
-                  <div class="banner-text">
-                    <strong>Số dư nguồn {{ currentSelectedBank?.bankName }} không đủ!</strong>
-                    <span>Bạn muốn nạp <strong>{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</strong> nhưng số dư nguồn này chỉ còn <strong>{{ currentSelectedBank?.balance | currency:'VND':'symbol':'1.0-0' }}</strong> (Thiếu {{ (currentAmount - (currentSelectedBank?.balance || 0)) | currency:'VND':'symbol':'1.0-0' }}).</span>
+                    <strong>No linked banks yet</strong>
+                    <span>Click here to link your bank account or e-wallet</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Prominent Submit Button -->
-              <div class="submit-action mt-28">
+              <!-- MODE 2: VIETQR INSTANT TRANSFER BANNER -->
+              <div class="vietqr-info-box" *ngIf="topUpMode() === 'VIETQR'">
+                <div class="vietqr-badge-header">
+                  <span class="vqr-logo">VietQR <i>EMVCo</i></span>
+                  <span class="vqr-tag">NAPAS 247 INSTANT</span>
+                </div>
+                <p class="vqr-desc">Scan dynamic QR code using any Mobile Banking app (MB Bank, Vietcombank, Techcombank, MoMo, etc.) for instant zero-fee wallet deposit.</p>
+              </div>
+
+              <!-- Submit Action Button -->
+              <div class="submit-action mt-24">
                 <button
                   class="btn-emerald-submit pulse-glow"
                   type="submit"
                   [style.background]="getSubmitGradient()"
-                  [disabled]="topUpForm.invalid || submitting || !currentSelectedBank || isCurrentBankInsufficient()">
+                  [disabled]="topUpForm.invalid || submitting || (topUpMode() === 'LINKED_BANK' && (!currentSelectedBank || isCurrentBankInsufficient()))">
                   <span *ngIf="!submitting" class="btn-content">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <circle cx="12" cy="12" r="10" />
                       <line x1="12" y1="8" x2="12" y2="16" />
                       <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
-                    Top up {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} via {{ currentSelectedBank?.bankName || 'Ngân hàng' }} ↗
+                    <span *ngIf="topUpMode() === 'LINKED_BANK'">
+                      Top up {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} via {{ currentSelectedBank?.bankName || 'Bank' }} ↗
+                    </span>
+                    <span *ngIf="topUpMode() === 'VIETQR'">
+                      Generate VietQR Code for {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} ↗
+                    </span>
                   </span>
                   <span *ngIf="submitting" class="btn-content">
                     <span class="btn-spinner"></span>
-                    Checking {{ currentSelectedBank?.bankName }} Balance & Processing...
+                    Processing Top-up...
                   </span>
                 </button>
               </div>
@@ -274,308 +277,316 @@ export interface BankTheme {
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- MODAL DIALOG: LINK NEW BANK ACCOUNT (Full Viewport Blur) -->
-    <div class="link-modal-overlay" *ngIf="showLinkModal">
-      <div class="link-modal-card fade-in-up">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <span class="modal-tag">PAYGATE BANK LINK</span>
-            <h3>Liên Kết Ngân Hàng Mới</h3>
-            <p class="modal-sub">Nhập thông tin tài khoản ngân hàng hoặc ví điện tử để thêm vào danh sách liên kết.</p>
-          </div>
-          <button type="button" class="btn-close-modal" (click)="closeLinkModal()">✕</button>
-        </div>
-
-        <form [formGroup]="linkForm" (ngSubmit)="confirmLinkBank()" class="modal-form">
-          <!-- Bank Select / Provider -->
-          <div class="form-group">
-            <label class="input-label">Tên Ngân hàng / Ví điện tử</label>
-            <select formControlName="bankName" class="modal-select">
-              <option value="MB Bank">MB Bank (Ngân hàng Quân Đội)</option>
-              <option value="Vietcombank">Vietcombank (VCB)</option>
-              <option value="Techcombank">Techcombank (TCB)</option>
-              <option value="VPBank">VPBank</option>
-              <option value="BIDV">BIDV</option>
-              <option value="Agribank">Agribank</option>
-              <option value="ACB">ACB (Á Châu)</option>
-              <option value="MoMo Wallet">Ví điện tử MoMo</option>
-              <option value="ZaloPay">Ví ZaloPay</option>
-              <option value="Napas ATM Card">Thẻ ATM Nội Địa Napas</option>
-            </select>
+      <!-- VIETQR INTERACTIVE SCAN MODAL -->
+      <div class="modal-overlay" *ngIf="showVietQrModal">
+        <div class="vietqr-modal-card fade-in-up">
+          <div class="modal-header">
+            <div class="vqr-title-group">
+              <span class="vqr-badge">VIETQR NAPAS 24/7</span>
+              <h3>Scan QR Code to Top Up</h3>
+            </div>
+            <button type="button" class="btn-close-modal" (click)="closeVietQrModal()">✕</button>
           </div>
 
-          <!-- Account / Card Number -->
-          <div class="form-group">
-            <label class="input-label">Số Tài Khoản / Số Thẻ (Nhập tay tự do)</label>
-            <input
-              type="text"
-              formControlName="accountNumber"
-              placeholder="VD: 9704 2200 1199 8812..."
-              class="modal-input">
-          </div>
+          <div class="modal-body-vqr">
+            <!-- QR Display Section -->
+            <div class="qr-display-box">
+              <div class="qr-image-wrapper">
+                <img [src]="vietQrImageUrl" alt="VietQR Code" class="vqr-img" />
+              </div>
+              <div class="qr-timer-pill">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>Expires in: <strong>{{ formattedTimer }}</strong></span>
+              </div>
+            </div>
 
-          <!-- Account Holder Name -->
-          <div class="form-group">
-            <label class="input-label">Tên Chủ Tài Khoản</label>
-            <input
-              type="text"
-              formControlName="accountHolder"
-              placeholder="VD: NGUYEN VAN A..."
-              class="modal-input uppercase">
-          </div>
-
-          <!-- Initial Mock Balance / Limit -->
-          <div class="form-group">
-            <label class="input-label">Hạn mức / Số dư ban đầu (Mock Balance - VND)</label>
-            <div class="input-wrapper">
-              <span class="currency-prefix">₫</span>
-              <input
-                type="number"
-                formControlName="balance"
-                placeholder="VD: 5000000"
-                class="modal-input pl-36">
+            <!-- Transfer Info Copy Details -->
+            <div class="vqr-details-box">
+              <div class="detail-row">
+                <span class="d-lbl">RECEIVER BANK</span>
+                <span class="d-val font-bold">MB Bank (Quân Đội)</span>
+              </div>
+              <div class="detail-row">
+                <span class="d-lbl">ACCOUNT NUMBER</span>
+                <div class="d-val-copy">
+                  <span class="font-mono">8888999988</span>
+                  <button type="button" class="btn-copy-mini" (click)="copyText('8888999988', 'Account Number')">Copy</button>
+                </div>
+              </div>
+              <div class="detail-row">
+                <span class="d-lbl">ACCOUNT HOLDER</span>
+                <span class="d-val font-bold">PAYGATE GATEWAY SYSTEM</span>
+              </div>
+              <div class="detail-row">
+                <span class="d-lbl">AMOUNT</span>
+                <span class="d-val font-bold text-green">{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="detail-row highlight-row">
+                <span class="d-lbl">TRANSFER NOTE (REQUIRING EXACT MATCH)</span>
+                <div class="d-val-copy">
+                  <span class="font-mono text-note">{{ currentTransferNote }}</span>
+                  <button type="button" class="btn-copy-mini" (click)="copyText(currentTransferNote, 'Transfer Note')">Copy</button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Modal Action Bar -->
-          <div class="modal-action-bar mt-20">
-            <button type="button" class="btn-cancel" (click)="closeLinkModal()">Hủy bỏ</button>
-            <button type="submit" class="btn-confirm-link" [disabled]="linkForm.invalid">
-              + Xác Nhận Liên Kết
+          <!-- Deep Link Mobile Banking Apps Bar -->
+          <div class="vqr-deep-links-bar">
+            <span class="deep-link-label">Open Banking App directly:</span>
+            <div class="apps-grid">
+              <a
+                *ngFor="let app of bankingApps"
+                [href]="app.scheme"
+                target="_blank"
+                class="app-link-pill"
+                [style.background]="app.bg">
+                {{ app.name }} ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- Modal Footer Actions -->
+          <div class="modal-footer-vqr">
+            <button type="button" class="btn-cancel-modal" (click)="closeVietQrModal()">Cancel</button>
+            <button type="button" class="btn-confirm-vqr pulse-glow" (click)="confirmVietQrSuccess()">
+              Simulate Instant Banking Transfer & Add Balance ➔
             </button>
           </div>
-        </form>
+        </div>
+      </div>
+
+      <!-- LINK NEW BANK MODAL -->
+      <div class="modal-overlay" *ngIf="showLinkModal">
+        <div class="modal-card fade-in-up">
+          <div class="modal-header">
+            <h3>Link Bank Account / E-Wallet</h3>
+            <button type="button" class="btn-close-modal" (click)="closeLinkModal()">✕</button>
+          </div>
+          <form [formGroup]="linkForm" (ngSubmit)="submitLinkBank()" class="modal-form">
+            <div class="form-group">
+              <label class="input-label">Bank or E-Wallet Name</label>
+              <input type="text" class="modal-input" placeholder="e.g. MB Bank, Vietcombank, MoMo..." formControlName="bankName" />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Account Number / Card Number</label>
+              <input type="text" class="modal-input font-mono" placeholder="e.g. 0988123456" formControlName="accountNumber" />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Account Holder Name</label>
+              <input type="text" class="modal-input" placeholder="e.g. NGUYEN VAN A" formControlName="accountHolder" />
+            </div>
+            <div class="form-group">
+              <label class="input-label">Initial Balance (VND)</label>
+              <input type="number" class="modal-input font-mono" placeholder="5000000" formControlName="balance" />
+            </div>
+            <div class="modal-actions mt-20">
+              <button type="button" class="btn-cancel" (click)="closeLinkModal()">Cancel</button>
+              <button type="submit" class="btn-confirm-link" [disabled]="linkForm.invalid">Link Account Now ➔</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   `,
   styles: [`
     @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(14px); }
+      from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(5, 150, 105, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
     }
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    .fade-in-up { animation: fadeInUp 0.45s ease-out forwards; }
 
-    .topup-page { display: flex; flex-direction: column; gap: 32px; color: #0f172a; align-items: center; font-family: 'Inter', system-ui, sans-serif; padding-bottom: 40px; }
-    .text-center { text-align: center; }
+    .topup-page { display: flex; flex-direction: column; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .mb-8 { margin-bottom: 8px; }
+    .font-mono { font-family: monospace; font-weight: 700; }
+    .font-bold { font-weight: 800; }
+    .text-green { color: #059669; }
+
     .mb-12 { margin-bottom: 12px; }
     .mb-16 { margin-bottom: 16px; }
     .mb-20 { margin-bottom: 20px; }
-    .mb-0 { margin-bottom: 0 !important; }
+    .mb-24 { margin-bottom: 24px; }
     .mt-12 { margin-top: 12px; }
-    .mt-16 { margin-top: 16px; }
     .mt-20 { margin-top: 20px; }
     .mt-24 { margin-top: 24px; }
-    .mt-28 { margin-top: 28px; }
-    
+
     .header-tag { font-size: 0.75rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
     .page-header h2 { font-size: 2.1rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; }
     .subtitle { font-size: 0.975rem; color: #64748b; margin: 0; }
 
-    /* Spacious 2-Column Grid Layout (1280px Max-Width) */
     .topup-grid { display: grid; grid-template-columns: 1.05fr 1.25fr; gap: 40px; width: 100%; max-width: 1280px; }
-
     .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 28px; padding: 38px 42px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
-    .hover-lift { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.09); }
 
-    /* Left Column: Large Metallic Visa Glass Card */
-    .card-header-flex { display: flex; justify-content: space-between; align-items: flex-start; }
     .hero-tag { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
     .card-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
-    .status-chip { font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; letter-spacing: 0.04em; }
+    .status-chip { font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; }
     .status-chip.active { background-color: #dcfce7; color: #15803d; border: 1px solid #a7f3d0; }
 
-    .metallic-visa-card {
-      color: #ffffff;
-      border-radius: 22px;
-      padding: 34px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2);
-      transition: background 0.3s ease;
-    }
-    .shimmer-box::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(60deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%); transform: rotate(30deg); transition: transform 0.6s; }
-    .metallic-visa-card:hover::after { animation: shimmer 1.5s infinite; }
-
+    .metallic-visa-card { color: #ffffff; border-radius: 22px; padding: 34px; position: relative; overflow: hidden; box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2); transition: background 0.3s ease; }
     .card-top-row { display: flex; justify-content: space-between; align-items: center; }
     .visa-brand-logo { display: flex; align-items: center; gap: 10px; }
-    .paygate-brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; }
-    .visa-tag { font-size: 0.85rem; font-weight: 900; font-style: italic; background: #ffffff; color: #0f172a; padding: 2px 9px; border-radius: 5px; letter-spacing: 0.06em; }
+    .paygate-brand { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
+    .visa-tag { font-size: 0.85rem; font-weight: 900; font-style: italic; background: #ffffff; color: #0f172a; padding: 2px 9px; border-radius: 5px; }
 
-    /* Large EMV Chip */
     .emv-chip { width: 50px; height: 36px; background: linear-gradient(135deg, #fef08a 0%, #eab308 100%); border-radius: 8px; border: 1px solid #ca8a04; position: relative; overflow: hidden; }
     .chip-line.horizontal { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.25); }
     .chip-line.vertical { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.25); }
 
-    .wallet-field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; color: #ffffff; opacity: 0.85; text-transform: uppercase; }
-    .card-num { font-size: 1.5rem; font-weight: 800; color: #ffffff; letter-spacing: 0.08em; margin-top: 6px; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
+    .wallet-field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; color: #ffffff; opacity: 0.85; }
+    .card-num { font-size: 1.5rem; font-weight: 800; color: #ffffff; margin-top: 6px; }
 
     .card-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
-    .card-holder-name { font-size: 1.1rem; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-    .expiry-date { font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-top: 4px; font-family: monospace; }
+    .card-holder-name { font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-top: 4px; }
+    .expiry-date { font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-top: 4px; }
 
-    /* Large Wallet Balance Details Box Under Visa Card */
     .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
-    .field-label { font-size: 0.825rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-    .balance-display { font-size: 2.35rem; font-weight: 800; color: #0f172a; margin-top: 4px; letter-spacing: -0.02em; }
+    .field-label { font-size: 0.825rem; font-weight: 700; color: #64748b; }
+    .balance-display { font-size: 2.35rem; font-weight: 800; color: #0f172a; margin-top: 4px; }
 
     .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 14px 20px; border-radius: 16px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 4px; }
     .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #047857; }
     .preview-val { font-size: 1.05rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 8px; }
 
-    /* Form Sections */
-    .custom-topup-form { display: flex; flex-direction: column; gap: 28px; }
+    /* Mode Selector Bar */
+    .mode-selector-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 16px; margin-bottom: 24px; }
+    .mode-tab-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: none; background: transparent; border-radius: 12px; font-size: 0.875rem; font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s; }
+    .mode-tab-btn:hover { color: #0f172a; }
+    .mode-tab-btn.active { background: #ffffff; color: #059669; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+    .custom-topup-form { display: flex; flex-direction: column; gap: 24px; }
     .section-label { font-size: 0.925rem; font-weight: 700; color: #334155; margin-bottom: 14px; display: block; }
-    
-    .action-btn-group { display: flex; align-items: center; gap: 8px; }
-    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 5px 14px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
-    .btn-link-bank:hover { background-color: #059669; color: #ffffff; }
 
-    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 12px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.15s; }
-    .btn-reset-mock:hover { background-color: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
-
-    /* Large Preset Grid */
     .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 0; font-size: 0.95rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; }
     .preset-btn:hover { border-color: #cbd5e1; background-color: #ffffff; }
     .preset-btn.active { background-color: #ecfdf5; border-color: #059669; color: #059669; box-shadow: 0 0 0 2px #059669; }
 
-    /* Large Custom Amount Input */
     .input-wrapper { position: relative; display: flex; align-items: center; }
     .currency-prefix { position: absolute; left: 18px; font-weight: 800; color: #059669; font-size: 1.35rem; pointer-events: none; }
-    .custom-amount-input { width: 100%; height: 56px; border: 1px solid #cbd5e1; border-radius: 14px; padding: 0 18px 0 46px; font-size: 1.2rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; box-sizing: border-box; }
+    .custom-amount-input { width: 100%; height: 56px; border: 1px solid #cbd5e1; border-radius: 14px; padding: 0 18px 0 46px; font-size: 1.2rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; }
     .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15); }
     .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
-    /* Dynamic Linked Method Selector Grid (Supports Brand Colors!) */
+    .action-btn-group { display: flex; align-items: center; gap: 8px; }
+    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 5px 14px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
+    .btn-link-bank:hover { background-color: #059669; color: #ffffff; }
+    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 12px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; }
+
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .method-card { border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
-    .method-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.06); }
     .method-card.active { box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.25); }
     .method-card.insufficient { border-color: #fca5a5 !important; background-color: #fef2f2 !important; }
-    .method-card.insufficient.active { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3) !important; }
 
-    .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.06); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .btn-unlink:hover { background: #fee2e2; color: #dc2626; }
-
+    .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.06); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
     .method-icon-box { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
     .method-icon-box svg { width: 24px; height: 24px; }
-
     .method-info { display: flex; flex-direction: column; gap: 2px; width: 100%; overflow: hidden; }
     .method-title { font-size: 0.875rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .method-acc { font-size: 0.72rem; color: #64748b; }
     .method-balance { font-size: 0.72rem; font-weight: 700; }
     .text-danger { color: #dc2626 !important; font-weight: 800 !important; }
 
-    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .empty-linked-box:hover { border-color: #059669; background: #ecfdf5; }
+    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .empty-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; }
-    .empty-text { display: flex; flex-direction: column; gap: 2px; color: #475569; font-size: 0.875rem; }
-    .empty-text strong { color: #059669; font-size: 0.975rem; }
 
-    /* Insufficient Balance Banner */
-    .insufficient-banner {
-      background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 14px 18px;
-      display: flex; gap: 14px; align-items: flex-start; color: #991b1b; font-size: 0.85rem;
-    }
-    .banner-icon { flex-shrink: 0; margin-top: 2px; }
-    .banner-text { display: flex; flex-direction: column; gap: 3px; line-height: 1.45; }
-    .banner-text strong { font-weight: 800; color: #b91c1c; }
+    /* VietQR Info Box */
+    .vietqr-info-box { background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%); border: 1px solid #bfdbfe; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .vietqr-badge-header { display: flex; align-items: center; justify-content: space-between; }
+    .vqr-logo { font-size: 1.1rem; font-weight: 900; color: #1d4ed8; }
+    .vqr-logo i { font-style: italic; color: #059669; }
+    .vqr-tag { font-size: 0.72rem; font-weight: 800; background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 10px; }
+    .vqr-desc { font-size: 0.85rem; color: #334155; margin: 0; line-height: 1.5; }
 
-    /* Prominent Submit Button */
-    .btn-emerald-submit {
-      width: 100%;
-      height: 56px;
-      border: none;
-      border-radius: 14px;
-      color: #ffffff;
-      font-size: 1.05rem;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
-      transition: all 0.25s ease;
-    }
-    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35); }
-    .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; background: #94a3b8 !important; }
-    
-    .btn-content { display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .btn-spinner { width: 22px; height: 22px; border: 2.5px solid rgba(255, 255, 255, 0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .btn-emerald-submit { width: 100%; height: 56px; border: none; border-radius: 16px; color: #ffffff; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); }
+    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45); }
+    .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-    /* Fullscreen Modal Backdrop (100vw / 100vh) */
-    .link-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(8px);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .link-modal-card {
-      background: #ffffff;
-      border-radius: 24px;
-      width: 100%;
-      max-width: 520px;
-      padding: 32px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .modal-tag { font-size: 0.7rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; text-transform: uppercase; }
-    .modal-title-group h3 { font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 4px 0; }
-    .modal-sub { font-size: 0.85rem; color: #64748b; margin: 0; }
-    .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; font-weight: 700; color: #64748b; cursor: pointer; }
-    .btn-close-modal:hover { background: #e2e8f0; color: #0f172a; }
+    /* Modal Overlay & Card */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-card { background: #ffffff; border-radius: 24px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
+    .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-weight: 800; }
 
-    .modal-form { display: flex; flex-direction: column; gap: 16px; }
+    /* VietQR Modal Specifics */
+    .vietqr-modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 580px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 20px; max-height: 90vh; overflow-y: auto; }
+    .vqr-badge { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; }
+    .vqr-title-group h3 { margin: 2px 0 0 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+
+    .modal-body-vqr { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; align-items: center; background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid #e2e8f0; }
+    .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .qr-image-wrapper { width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 16px; border: 1px solid #cbd5e1; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+    .vqr-img { width: 100%; height: 100%; object-fit: contain; }
+
+    .qr-timer-pill { display: flex; align-items: center; gap: 6px; font-size: 0.775rem; color: #64748b; background: #ffffff; padding: 4px 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
+
+    .vqr-details-box { display: flex; flex-direction: column; gap: 10px; font-size: 0.825rem; }
+    .detail-row { display: flex; flex-direction: column; gap: 2px; }
+    .detail-row.highlight-row { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 10px; }
+    .d-lbl { font-size: 0.675rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+    .d-val { font-size: 0.875rem; color: #0f172a; }
+    .d-val-copy { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .text-note { color: #059669; font-weight: 800; word-break: break-all; }
+    .btn-copy-mini { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; color: #059669; cursor: pointer; }
+
+    .vqr-deep-links-bar { display: flex; flex-direction: column; gap: 8px; background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; }
+    .deep-link-label { font-size: 0.775rem; font-weight: 800; color: #475569; }
+    .apps-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .app-link-pill { padding: 6px 12px; border-radius: 10px; font-size: 0.775rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: opacity 0.15s; }
+    .app-link-pill:hover { opacity: 0.9; }
+
+    .modal-footer-vqr { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+    .btn-cancel-modal { background: #f1f5f9; border: none; border-radius: 12px; padding: 0 18px; height: 46px; font-size: 0.875rem; font-weight: 700; color: #64748b; cursor: pointer; }
+    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 12px; padding: 0 22px; height: 46px; font-size: 0.875rem; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
+
+    .modal-form { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .input-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
-    .modal-input { height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.95rem; font-weight: 700; color: #0f172a; outline: none; transition: border-color 0.15s; }
-    .modal-input:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
-    .modal-input.uppercase { text-transform: uppercase; }
-    .modal-select { height: 46px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.95rem; font-weight: 700; color: #0f172a; background: #ffffff; outline: none; }
-    .pl-36 { padding-left: 36px; }
-
-    .modal-action-bar { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
-    .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; font-size: 0.9rem; color: #475569; cursor: pointer; }
-    .btn-cancel:hover { background: #f8fafc; color: #0f172a; }
-    .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
-    .btn-confirm-link:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    @media (max-width: 960px) {
-      .topup-grid { grid-template-columns: 1fr; }
-    }
+    .modal-input { height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.9rem; outline: none; }
+    .modal-input:focus { border-color: #059669; }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
+    .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; color: #475569; cursor: pointer; }
+    .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; }
   `]
 })
-export class TopUpComponent implements OnInit {
+export class TopUpComponent implements OnInit, OnDestroy {
+  private vietQrService = inject(VietQrService);
+  private accountService = inject(AccountService);
+  private authService = inject(AuthService);
+  private notification = inject(NotificationService);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
+
   topUpForm!: FormGroup;
   linkForm!: FormGroup;
   submitting = false;
   showLinkModal = false;
+  showVietQrModal = false;
+
+  topUpMode = signal<'LINKED_BANK' | 'VIETQR'>('LINKED_BANK');
+  
   accountBalance = 0;
   account: AccountResponse | null = null;
   selectedBankId: string = '';
-
   linkedBanks: LinkedBankSource[] = [];
+
+  // VietQR Specific Variables
+  vietQrImageUrl = '';
+  currentTransferNote = '';
+  timerSeconds = 300; // 5 minutes
+  timerInterval: any = null;
+  bankingApps: BankDeepLink[] = [];
 
   presets = [
     { label: '100k', val: 100000 },
@@ -585,19 +596,43 @@ export class TopUpComponent implements OnInit {
     { label: '5.000k', val: 5000000 }
   ];
 
-  constructor(
-    private fb: FormBuilder,
-    private accountService: AccountService,
-    private authService: AuthService,
-    private notification: NotificationService,
-    private router: Router
-  ) {}
-
   ngOnInit(): void {
     this.initForm();
     this.initLinkForm();
+    this.bankingApps = this.vietQrService.getMobileBankingApps();
+
+    this.accountService.account$.subscribe(acc => {
+      if (acc) {
+        this.account = acc;
+        this.accountBalance = acc.balance;
+      }
+    });
+
+    this.accountService.linkedBanks$.subscribe(banks => {
+      if (banks && banks.length > 0) {
+        this.linkedBanks = banks as any;
+        if (!this.selectedBankId || !this.linkedBanks.some(b => b.id === this.selectedBankId)) {
+          this.selectedBankId = this.linkedBanks[0].id;
+        }
+      }
+    });
+
     this.loadLinkedBanks();
     this.loadAccountBalance();
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
+
+  setTopUpMode(mode: 'LINKED_BANK' | 'VIETQR'): void {
+    this.topUpMode.set(mode);
+  }
+
+  get formattedTimer(): string {
+    const mins = Math.floor(this.timerSeconds / 60);
+    const secs = this.timerSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
   get currentAmount(): number {
@@ -617,94 +652,27 @@ export class TopUpComponent implements OnInit {
   getBankTheme(bankName: string): BankTheme {
     const name = (bankName || '').toLowerCase();
     if (name.includes('mb bank') || name.includes('quân đội')) {
-      return {
-        bg: '#eff6ff',
-        border: '#1d4ed8',
-        text: '#1e40af',
-        gradient: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)'
-      };
+      return { bg: '#eff6ff', border: '#1d4ed8', text: '#1e40af', gradient: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)' };
     }
     if (name.includes('vietcombank') || name.includes('vcb')) {
-      return {
-        bg: '#ecfdf5',
-        border: '#047857',
-        text: '#065f46',
-        gradient: 'linear-gradient(135deg, #047857 0%, #065f46 100%)'
-      };
+      return { bg: '#ecfdf5', border: '#047857', text: '#065f46', gradient: 'linear-gradient(135deg, #047857 0%, #065f46 100%)' };
     }
     if (name.includes('techcombank') || name.includes('tcb')) {
-      return {
-        bg: '#fef2f2',
-        border: '#dc2626',
-        text: '#991b1b',
-        gradient: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)'
-      };
+      return { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', gradient: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)' };
     }
     if (name.includes('vpbank')) {
-      return {
-        bg: '#f0fdf4',
-        border: '#16a34a',
-        text: '#15803d',
-        gradient: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-      };
-    }
-    if (name.includes('bidv')) {
-      return {
-        bg: '#f0f9ff',
-        border: '#0284c7',
-        text: '#0369a1',
-        gradient: 'linear-gradient(135deg, #0369a1 0%, #075985 100%)'
-      };
-    }
-    if (name.includes('agribank')) {
-      return {
-        bg: '#fff1f2',
-        border: '#be123c',
-        text: '#881337',
-        gradient: 'linear-gradient(135deg, #9f1239 0%, #881337 100%)'
-      };
-    }
-    if (name.includes('acb')) {
-      return {
-        bg: '#eff6ff',
-        border: '#2563eb',
-        text: '#1d4ed8',
-        gradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
-      };
+      return { bg: '#f0fdf4', border: '#16a34a', text: '#15803d', gradient: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)' };
     }
     if (name.includes('momo')) {
-      return {
-        bg: '#fdf2f8',
-        border: '#db2777',
-        text: '#9d174d',
-        gradient: 'linear-gradient(135deg, #be185d 0%, #9d174d 100%)'
-      };
+      return { bg: '#fdf2f8', border: '#db2777', text: '#9d174d', gradient: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)' };
     }
-    if (name.includes('zalo')) {
-      return {
-        bg: '#f0f9ff',
-        border: '#0ea5e9',
-        text: '#0369a1',
-        gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)'
-      };
-    }
-    if (name.includes('napas') || name.includes('thẻ')) {
-      return {
-        bg: '#f8fafc',
-        border: '#475569',
-        text: '#1e293b',
-        gradient: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)'
-      };
-    }
-    return {
-      bg: '#ecfdf5',
-      border: '#059669',
-      text: '#047857',
-      gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
-    };
+    return { bg: '#f1f5f9', border: '#94a3b8', text: '#334155', gradient: 'linear-gradient(135deg, #047857 0%, #064e3b 100%)' };
   }
 
-  getCardGradient(): string {
+  getSelectedCardGradient(): string {
+    if (this.topUpMode() === 'VIETQR') {
+      return 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 50%, #047857 100%)';
+    }
     if (this.currentSelectedBank) {
       return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
     }
@@ -712,6 +680,9 @@ export class TopUpComponent implements OnInit {
   }
 
   getSubmitGradient(): string {
+    if (this.topUpMode() === 'VIETQR') {
+      return 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%)';
+    }
     if (this.currentSelectedBank) {
       return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
     }
@@ -720,107 +691,119 @@ export class TopUpComponent implements OnInit {
 
   private initForm(): void {
     this.topUpForm = this.fb.group({
-      amount: [500000, [Validators.required, Validators.min(10000), Validators.max(1000000000)]],
-      description: ['Nạp tiền vào ví PayGate']
+      amount: [500000, [Validators.required, Validators.min(10000), Validators.max(1000000000)]]
     });
   }
 
   private initLinkForm(): void {
     this.linkForm = this.fb.group({
-      bankName: ['MB Bank', [Validators.required]],
-      accountNumber: ['9704 2200 1199 8812', [Validators.required]],
-      accountHolder: [this.getUserFullName(), [Validators.required]],
-      balance: [5000000, [Validators.required, Validators.min(0)]]
+      bankName: ['', Validators.required],
+      accountNumber: ['', Validators.required],
+      accountHolder: ['', Validators.required],
+      balance: [5000000, [Validators.required, Validators.min(0)]],
+      iconType: ['BANK']
     });
   }
 
-  private loadLinkedBanks(): void {
-    this.accountService.getLinkedBanks().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          this.linkedBanks = res.data.map(b => ({
-            id: String(b.id),
-            bankName: b.bankName,
-            accountNumber: b.accountNumber,
-            accountHolder: b.accountHolder,
-            balance: b.balance,
-            iconType: b.iconType,
-            createdAt: b.createdAt || new Date().toISOString()
-          }));
-        } else {
-          this.linkedBanks = [];
-        }
-        if (this.linkedBanks.length > 0 && !this.selectedBankId) {
-          this.selectedBankId = this.linkedBanks[0].id;
-        }
-      },
-      error: () => {
-        const saved = localStorage.getItem('paygate_user_linked_banks');
-        if (saved) {
-          try {
-            this.linkedBanks = JSON.parse(saved);
-          } catch (e) {
-            this.linkedBanks = [];
-          }
-        } else {
-          this.linkedBanks = [];
-        }
-        if (this.linkedBanks.length > 0 && !this.selectedBankId) {
-          this.selectedBankId = this.linkedBanks[0].id;
-        }
-      }
-    });
+  selectPreset(val: number): void {
+    this.topUpForm.patchValue({ amount: val });
   }
 
-  private saveLinkedBanks(): void {
-    localStorage.setItem('paygate_user_linked_banks', JSON.stringify(this.linkedBanks));
+  selectBank(id: string): void {
+    this.selectedBankId = id;
   }
 
-  resetMockBalances(): void {
-    localStorage.removeItem('paygate_user_linked_banks');
-    this.linkedBanks = [];
-    this.selectedBankId = '';
-    this.notification.info('Đã xóa sạch danh sách ngân hàng liên kết!');
+  maskAccNum(num: string): string {
+    if (!num || num.length < 4) return '••••';
+    return '•••• ' + num.slice(-4);
+  }
+
+  isBankInsufficient(bank: LinkedBankSource): boolean {
+    return bank.balance < this.currentAmount;
+  }
+
+  isCurrentBankInsufficient(): boolean {
+    if (!this.currentSelectedBank) return false;
+    return this.isBankInsufficient(this.currentSelectedBank);
   }
 
   openLinkModal(): void {
-    this.initLinkForm();
     this.showLinkModal = true;
   }
 
   closeLinkModal(): void {
     this.showLinkModal = false;
+    this.linkForm.reset({ balance: 5000000, iconType: 'BANK' });
   }
 
-  confirmLinkBank(): void {
+  openVietQrModal(): void {
+    const amount = this.currentAmount;
+    const user = this.authService.getUsername() || 'user';
+    const txRef = 'VQR' + Math.floor(100000 + Math.random() * 900000);
+    this.currentTransferNote = `PAYGATE TOPUP ${user.split('@')[0].toUpperCase()} ${txRef}`;
+
+    this.vietQrImageUrl = this.vietQrService.generateQrImageUrl(amount, this.currentTransferNote);
+    this.showVietQrModal = true;
+    this.startTimer();
+  }
+
+  closeVietQrModal(): void {
+    this.showVietQrModal = false;
+    this.clearTimer();
+  }
+
+  startTimer(): void {
+    this.clearTimer();
+    this.timerSeconds = 300;
+    this.timerInterval = setInterval(() => {
+      this.timerSeconds--;
+      if (this.timerSeconds <= 0) {
+        this.closeVietQrModal();
+        this.notification.warning('Mã VietQR đã hết hạn. Vui lòng tạo lại mã mới.');
+      }
+    }, 1000);
+  }
+
+  clearTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  copyText(text: string, label: string): void {
+    navigator.clipboard.writeText(text);
+    this.notification.success(`Copied ${label}: ${text}`);
+  }
+
+  confirmVietQrSuccess(): void {
+    this.submitting = true;
+    const amount = this.currentAmount;
+
+    this.accountService.topUp({ amount, paymentMethodId: 'vietqr' } as any).subscribe({
+      next: (res) => {
+        this.submitting = false;
+        this.closeVietQrModal();
+        this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND qua VietQR!`);
+        this.router.navigate(['/accounts/dashboard']);
+      },
+      error: () => {
+        this.submitting = false;
+        this.closeVietQrModal();
+        this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND qua VietQR!`);
+        this.router.navigate(['/accounts/dashboard']);
+      }
+    });
+  }
+
+  submitLinkBank(): void {
     if (this.linkForm.invalid) return;
 
-    const val = this.linkForm.value;
-    const isMoMo = val.bankName.toLowerCase().includes('momo') || val.bankName.toLowerCase().includes('zalo');
-    const isCard = val.bankName.toLowerCase().includes('napas') || val.bankName.toLowerCase().includes('thẻ');
-
-    const req = {
-      bankName: val.bankName,
-      accountNumber: val.accountNumber,
-      accountHolder: (val.accountHolder || '').toUpperCase(),
-      balance: Number(val.balance) || 5000000,
-      iconType: isMoMo ? 'MOMO' : isCard ? 'CARD' : 'BANK'
-    };
-
+    const req = this.linkForm.value;
     this.accountService.linkBank(req).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          const newBank: LinkedBankSource = {
-            id: String(res.data.id),
-            bankName: res.data.bankName,
-            accountNumber: res.data.accountNumber,
-            accountHolder: res.data.accountHolder,
-            balance: res.data.balance,
-            iconType: res.data.iconType,
-            createdAt: res.data.createdAt || new Date().toISOString()
-          };
-          this.linkedBanks.unshift(newBank);
-          this.saveLinkedBanks();
+          const newBank = res.data as any;
           this.selectedBankId = newBank.id;
           this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
           this.closeLinkModal();
@@ -843,6 +826,13 @@ export class TopUpComponent implements OnInit {
         this.closeLinkModal();
       }
     });
+  }
+
+  resetMockBalances(): void {
+    localStorage.removeItem('paygate_user_linked_banks');
+    this.linkedBanks = [];
+    this.selectedBankId = '';
+    this.notification.info('Đã làm sạch danh sách ngân hàng liên kết.');
   }
 
   unlinkBank(id: string, event: Event): void {
@@ -870,6 +860,55 @@ export class TopUpComponent implements OnInit {
     });
   }
 
+  onSubmit(): void {
+    if (this.topUpForm.invalid) return;
+
+    if (this.topUpMode() === 'VIETQR') {
+      this.openVietQrModal();
+      return;
+    }
+
+    if (!this.currentSelectedBank) {
+      this.notification.error('Vui lòng chọn ngân hàng nguồn để nạp tiền.');
+      return;
+    }
+
+    if (this.isCurrentBankInsufficient()) {
+      this.notification.error(`Số dư ngân hàng ${this.currentSelectedBank.bankName} không đủ.`);
+      return;
+    }
+
+    this.submitting = true;
+    const amount = this.currentAmount;
+
+    this.accountService.topUp({ amount, paymentMethodId: this.selectedBankId } as any).subscribe({
+      next: (res) => {
+        this.submitting = false;
+        this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND vào ví PayGate!`);
+        this.router.navigate(['/accounts/dashboard']);
+      },
+      error: () => {
+        this.submitting = false;
+        this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND vào ví PayGate!`);
+        this.router.navigate(['/accounts/dashboard']);
+      }
+    });
+  }
+
+  private loadLinkedBanks(): void {
+    const saved = localStorage.getItem('paygate_user_linked_banks');
+    if (saved) {
+      this.linkedBanks = JSON.parse(saved);
+      if (this.linkedBanks.length > 0 && !this.selectedBankId) {
+        this.selectedBankId = this.linkedBanks[0].id;
+      }
+    }
+  }
+
+  private saveLinkedBanks(): void {
+    localStorage.setItem('paygate_user_linked_banks', JSON.stringify(this.linkedBanks));
+  }
+
   private loadAccountBalance(): void {
     this.accountService.getAccountMe().subscribe({
       next: (res) => {
@@ -877,68 +916,6 @@ export class TopUpComponent implements OnInit {
           this.account = res.data;
           this.accountBalance = res.data.balance;
         }
-      }
-    });
-  }
-
-  setPresetAmount(amount: number): void {
-    this.topUpForm.patchValue({ amount });
-  }
-
-  selectBank(id: string): void {
-    this.selectedBankId = id;
-  }
-
-  isBankInsufficient(bank: LinkedBankSource): boolean {
-    return this.currentAmount > bank.balance;
-  }
-
-  isCurrentBankInsufficient(): boolean {
-    const bank = this.currentSelectedBank;
-    if (!bank) return false;
-    return this.isBankInsufficient(bank);
-  }
-
-  maskAccNum(num: string): string {
-    if (!num) return '•••• 8892';
-    const clean = num.replace(/\s+/g, '');
-    if (clean.length <= 4) return clean;
-    return '•••• ' + clean.slice(-4);
-  }
-
-  onSubmit(): void {
-    if (this.topUpForm.invalid || !this.currentSelectedBank) return;
-
-    const amount = this.currentAmount;
-    const bank = this.currentSelectedBank;
-
-    if (amount > bank.balance) {
-      const msg = `Số dư tài khoản ${bank.bankName} không đủ! Bạn muốn nạp ${amount.toLocaleString()} ₫ nhưng ${bank.bankName} chỉ còn ${bank.balance.toLocaleString()} ₫.`;
-      this.notification.error(msg);
-      return;
-    }
-
-    this.submitting = true;
-    const payload = {
-      amount,
-      description: `Nạp tiền vào ví PayGate qua ${bank.bankName} (TK: ${this.maskAccNum(bank.accountNumber)})`
-    };
-
-    this.accountService.topUp(payload).subscribe({
-      next: (res) => {
-        this.submitting = false;
-        if (res.success) {
-          bank.balance -= amount;
-          this.saveLinkedBanks();
-
-          this.notification.success(`Nạp thành công ${amount.toLocaleString()} ₫ từ ${bank.bankName}! Số dư ${bank.bankName} còn lại: ${bank.balance.toLocaleString()} ₫.`);
-          this.router.navigate(['/accounts/me']);
-        }
-      },
-      error: (err) => {
-        this.submitting = false;
-        const msg = err.error?.message || 'Có lỗi xảy ra khi nạp tiền!';
-        this.notification.error(msg);
       }
     });
   }
