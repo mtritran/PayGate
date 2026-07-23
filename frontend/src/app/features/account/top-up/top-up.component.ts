@@ -25,6 +25,13 @@ export interface BankTheme {
   gradient: string;
 }
 
+export interface AvailableBankOption {
+  code: string;
+  name: string;
+  shortName: string;
+  iconType: 'BANK' | 'CARD' | 'MOMO';
+}
+
 @Component({
   selector: 'app-top-up',
   standalone: true,
@@ -179,12 +186,13 @@ export interface BankTheme {
                     <button type="button" class="btn-link-bank" (click)="openLinkModal()">
                       + Link new bank
                     </button>
-                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Clear list" *ngIf="linkedBanks.length > 0">
-                      Clear
+                    <button type="button" class="btn-reset-mock" (click)="restoreDefaultBanks()" title="Restore default list">
+                      Restore Defaults
                     </button>
                   </div>
                 </div>
 
+                <!-- Linked Bank Grid Cards -->
                 <div class="method-grid" *ngIf="linkedBanks.length > 0">
                   <div
                     *ngFor="let bank of linkedBanks"
@@ -233,7 +241,7 @@ export interface BankTheme {
                   </div>
                   <div class="empty-text">
                     <strong>No linked banks yet</strong>
-                    <span>Click here to link your bank account or e-wallet</span>
+                    <span>Click here to select a bank from list and link account</span>
                   </div>
                 </div>
               </div>
@@ -367,17 +375,37 @@ export interface BankTheme {
         </div>
       </div>
 
-      <!-- LINK NEW BANK MODAL -->
+      <!-- LINK NEW BANK MODAL WITH POPULAR VIETNAMESE BANK PICKER -->
       <div class="modal-overlay" *ngIf="showLinkModal">
-        <div class="modal-card fade-in-up">
+        <div class="modal-card fade-in-up link-modal-wide">
           <div class="modal-header">
-            <h3>Link Bank Account / E-Wallet</h3>
+            <div>
+              <span class="hero-tag">BANK LINKING</span>
+              <h3>Link Bank Account / E-Wallet</h3>
+            </div>
             <button type="button" class="btn-close-modal" (click)="closeLinkModal()">✕</button>
           </div>
+
+          <!-- Popular Bank Selection Grid -->
+          <div class="bank-picker-section mb-16">
+            <label class="input-label mb-8">Click to select popular bank:</label>
+            <div class="bank-options-grid">
+              <button
+                type="button"
+                *ngFor="let b of popularBankOptions"
+                class="bank-chip-btn"
+                [class.selected]="selectedBankOptionCode === b.code"
+                (click)="selectBankOption(b)"
+              >
+                <span class="chip-bank-name">{{ b.shortName }}</span>
+              </button>
+            </div>
+          </div>
+
           <form [formGroup]="linkForm" (ngSubmit)="submitLinkBank()" class="modal-form">
             <div class="form-group">
               <label class="input-label">Bank or E-Wallet Name</label>
-              <input type="text" class="modal-input" placeholder="e.g. MB Bank, Vietcombank, MoMo..." formControlName="bankName" />
+              <input type="text" class="modal-input" placeholder="Selected bank name" formControlName="bankName" />
             </div>
             <div class="form-group">
               <label class="input-label">Account Number / Card Number</label>
@@ -388,7 +416,7 @@ export interface BankTheme {
               <input type="text" class="modal-input" placeholder="e.g. NGUYEN VAN A" formControlName="accountHolder" />
             </div>
             <div class="form-group">
-              <label class="input-label">Initial Balance (VND)</label>
+              <label class="input-label">Initial Bank Balance (VND)</label>
               <input type="number" class="modal-input font-mono" placeholder="5000000" formControlName="balance" />
             </div>
             <div class="modal-actions mt-20">
@@ -419,6 +447,7 @@ export interface BankTheme {
     .font-bold { font-weight: 800; }
     .text-green { color: #059669; }
 
+    .mb-8 { margin-bottom: 8px; }
     .mb-12 { margin-bottom: 12px; }
     .mb-16 { margin-bottom: 16px; }
     .mb-20 { margin-bottom: 20px; }
@@ -522,9 +551,16 @@ export interface BankTheme {
     /* 100% FULL-VIEWPORT OVERLAY (Covers 100vw x 100vh Edge-to-Edge) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px; box-sizing: border-box; }
     .modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
+    .link-modal-wide { max-width: 520px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
     .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-weight: 800; }
+
+    /* Bank Options Picker Grid */
+    .bank-options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .bank-chip-btn { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 8px 4px; font-size: 0.75rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .bank-chip-btn:hover { background: #ffffff; border-color: #059669; }
+    .bank-chip-btn.selected { background: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 0 0 2px #059669; }
 
     /* NON-OVERFLOWING SLEEK VIETQR MODAL */
     .vietqr-modal-card { background: #ffffff; border-radius: 28px; width: 100%; max-width: 620px; max-height: 85vh; box-shadow: 0 30px 80px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
@@ -609,6 +645,23 @@ export class TopUpComponent implements OnInit, OnDestroy {
   selectedBankId: string = '';
   linkedBanks: LinkedBankSource[] = [];
 
+  // Popular Vietnamese Banks options for quick picker modal
+  popularBankOptions: AvailableBankOption[] = [
+    { code: 'VCB', name: 'Vietcombank', shortName: 'Vietcombank', iconType: 'BANK' },
+    { code: 'MB', name: 'MB Bank', shortName: 'MB Bank', iconType: 'BANK' },
+    { code: 'TCB', name: 'Techcombank', shortName: 'Techcombank', iconType: 'BANK' },
+    { code: 'VPB', name: 'VPBank', shortName: 'VPBank', iconType: 'BANK' },
+    { code: 'ACB', name: 'ACB', shortName: 'ACB Bank', iconType: 'BANK' },
+    { code: 'CTG', name: 'VietinBank', shortName: 'VietinBank', iconType: 'BANK' },
+    { code: 'BIDV', name: 'BIDV', shortName: 'BIDV Bank', iconType: 'BANK' },
+    { code: 'VBA', name: 'Agribank', shortName: 'Agribank', iconType: 'BANK' },
+    { code: 'TPB', name: 'TPBank', shortName: 'TPBank', iconType: 'BANK' },
+    { code: 'STB', name: 'Sacombank', shortName: 'Sacombank', iconType: 'BANK' },
+    { code: 'MOMO', name: 'MoMo E-Wallet', shortName: 'MoMo', iconType: 'MOMO' },
+    { code: 'ZALO', name: 'ZaloPay E-Wallet', shortName: 'ZaloPay', iconType: 'MOMO' }
+  ];
+  selectedBankOptionCode: string = '';
+
   // VietQR Specific Variables
   vietQrImageUrl = '';
   currentTransferNote = '';
@@ -679,7 +732,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   getBankTheme(bankName: string): BankTheme {
     const name = (bankName || '').toLowerCase();
-    if (name.includes('mb bank') || name.includes('quân đội')) {
+    if (name.includes('mb bank') || name.includes('quân đội') || name.includes('mb')) {
       return { bg: '#eff6ff', border: '#1d4ed8', text: '#1e40af', gradient: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)' };
     }
     if (name.includes('vietcombank') || name.includes('vcb')) {
@@ -688,11 +741,29 @@ export class TopUpComponent implements OnInit, OnDestroy {
     if (name.includes('techcombank') || name.includes('tcb')) {
       return { bg: '#fef2f2', border: '#dc2626', text: '#991b1b', gradient: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)' };
     }
-    if (name.includes('vpbank')) {
+    if (name.includes('vpbank') || name.includes('vpb')) {
       return { bg: '#f0fdf4', border: '#16a34a', text: '#15803d', gradient: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)' };
+    }
+    if (name.includes('acb')) {
+      return { bg: '#f0f9ff', border: '#0284c7', text: '#0369a1', gradient: 'linear-gradient(135deg, #0369a1 0%, #0284c7 100%)' };
+    }
+    if (name.includes('vietinbank') || name.includes('ctg')) {
+      return { bg: '#f0f9ff', border: '#0284c7', text: '#0284c7', gradient: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' };
+    }
+    if (name.includes('bidv')) {
+      return { bg: '#f0fdf4', border: '#047857', text: '#065f46', gradient: 'linear-gradient(135deg, #065f46 0%, #047857 100%)' };
+    }
+    if (name.includes('agribank') || name.includes('vba')) {
+      return { bg: '#fef2f2', border: '#b91c1c', text: '#881337', gradient: 'linear-gradient(135deg, #881337 0%, #9f1239 100%)' };
+    }
+    if (name.includes('tpbank') || name.includes('tpb')) {
+      return { bg: '#faf5ff', border: '#7e22ce', text: '#6b21a8', gradient: 'linear-gradient(135deg, #6b21a8 0%, #7e22ce 100%)' };
     }
     if (name.includes('momo')) {
       return { bg: '#fdf2f8', border: '#db2777', text: '#9d174d', gradient: 'linear-gradient(135deg, #db2777 0%, #be185d 100%)' };
+    }
+    if (name.includes('zalo')) {
+      return { bg: '#eff6ff', border: '#2563eb', text: '#1e40af', gradient: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)' };
     }
     return { bg: '#f1f5f9', border: '#94a3b8', text: '#334155', gradient: 'linear-gradient(135deg, #047857 0%, #064e3b 100%)' };
   }
@@ -725,9 +796,9 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   private initLinkForm(): void {
     this.linkForm = this.fb.group({
-      bankName: ['', Validators.required],
-      accountNumber: ['', Validators.required],
-      accountHolder: ['', Validators.required],
+      bankName: ['Vietcombank', Validators.required],
+      accountNumber: ['998877665544', Validators.required],
+      accountHolder: [this.getUserFullName(), Validators.required],
       balance: [5000000, [Validators.required, Validators.min(0)]],
       iconType: ['BANK']
     });
@@ -739,6 +810,16 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   selectBank(id: string): void {
     this.selectedBankId = id;
+  }
+
+  selectBankOption(b: AvailableBankOption): void {
+    this.selectedBankOptionCode = b.code;
+    const randomAccNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    this.linkForm.patchValue({
+      bankName: b.name,
+      accountNumber: randomAccNum,
+      iconType: b.iconType
+    });
   }
 
   maskAccNum(num: string): string {
@@ -757,11 +838,13 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   openLinkModal(): void {
     this.showLinkModal = true;
+    if (this.popularBankOptions.length > 0) {
+      this.selectBankOption(this.popularBankOptions[0]);
+    }
   }
 
   closeLinkModal(): void {
     this.showLinkModal = false;
-    this.linkForm.reset({ balance: 5000000, iconType: 'BANK' });
   }
 
   openVietQrModal(): void {
@@ -805,13 +888,11 @@ export class TopUpComponent implements OnInit, OnDestroy {
   }
 
   private performLocalTopUpSuccess(amount: number, methodId: string): void {
-    // 1. Update wallet balance in localStorage
     const savedBal = localStorage.getItem('paygate_wallet_balance');
     const currentBal = savedBal !== null ? Number(savedBal) : (this.accountBalance || 0);
     const newBal = currentBal + amount;
     localStorage.setItem('paygate_wallet_balance', newBal.toString());
 
-    // 2. Unshift new TOPUP transaction
     const savedTxns = localStorage.getItem('paygate_mock_user_transactions');
     let txns = savedTxns ? JSON.parse(savedTxns) : [];
     const newTxn = {
@@ -828,7 +909,6 @@ export class TopUpComponent implements OnInit, OnDestroy {
     txns.unshift(newTxn);
     localStorage.setItem('paygate_mock_user_transactions', JSON.stringify(txns));
 
-    // 3. Deduct from bank if linked bank used
     if (methodId && methodId !== 'vietqr') {
       const savedBanks = localStorage.getItem('paygate_user_linked_banks');
       if (savedBanks) {
@@ -842,10 +922,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 4. Trigger AccountService refresh
     this.accountService.refreshAccountState();
-
-    // 5. Feedback and navigate
     this.submitting = false;
     this.closeVietQrModal();
     this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND vào ví PayGate!`);
@@ -861,7 +938,6 @@ export class TopUpComponent implements OnInit, OnDestroy {
         this.performLocalTopUpSuccess(amount, 'vietqr');
       },
       error: () => {
-        // Guaranteed fallback so balance is ALWAYS added even if backend HTTP proxy is offline
         this.performLocalTopUpSuccess(amount, 'vietqr');
       }
     });
@@ -885,7 +961,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
           id: 'bank-' + Date.now(),
           bankName: req.bankName,
           accountNumber: req.accountNumber,
-          accountHolder: req.accountHolder,
+          accountHolder: req.accountHolder || this.getUserFullName(),
           balance: req.balance,
           iconType: req.iconType as any,
           createdAt: new Date().toISOString()
@@ -899,11 +975,53 @@ export class TopUpComponent implements OnInit, OnDestroy {
     });
   }
 
-  resetMockBalances(): void {
-    localStorage.removeItem('paygate_user_linked_banks');
-    this.linkedBanks = [];
-    this.selectedBankId = '';
-    this.notification.info('Đã làm sạch danh sách ngân hàng liên kết.');
+  restoreDefaultBanks(): void {
+    const defaults: LinkedBankSource[] = [
+      {
+        id: 'bank-vcb-01',
+        bankName: 'Vietcombank',
+        accountNumber: '998877665544',
+        accountHolder: this.getUserFullName(),
+        balance: 15000000,
+        iconType: 'BANK'
+      },
+      {
+        id: 'bank-mb-02',
+        bankName: 'MB Bank',
+        accountNumber: '0988123456',
+        accountHolder: this.getUserFullName(),
+        balance: 10000000,
+        iconType: 'BANK'
+      },
+      {
+        id: 'bank-tcb-03',
+        bankName: 'Techcombank',
+        accountNumber: '1903888999',
+        accountHolder: this.getUserFullName(),
+        balance: 8500000,
+        iconType: 'BANK'
+      },
+      {
+        id: 'bank-vp-04',
+        bankName: 'VPBank',
+        accountNumber: '2233445566',
+        accountHolder: this.getUserFullName(),
+        balance: 5000000,
+        iconType: 'BANK'
+      },
+      {
+        id: 'bank-momo-05',
+        bankName: 'MoMo E-Wallet',
+        accountNumber: '0988123456',
+        accountHolder: this.getUserFullName(),
+        balance: 2000000,
+        iconType: 'MOMO'
+      }
+    ];
+    this.linkedBanks = defaults;
+    this.saveLinkedBanks();
+    this.selectedBankId = defaults[0].id;
+    this.notification.success('Đã khôi phục danh sách ngân hàng liên kết sẵn.');
   }
 
   unlinkBank(id: string, event: Event): void {
@@ -966,11 +1084,18 @@ export class TopUpComponent implements OnInit, OnDestroy {
   private loadLinkedBanks(): void {
     const saved = localStorage.getItem('paygate_user_linked_banks');
     if (saved) {
-      this.linkedBanks = JSON.parse(saved);
-      if (this.linkedBanks.length > 0 && !this.selectedBankId) {
-        this.selectedBankId = this.linkedBanks[0].id;
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0) {
+        this.linkedBanks = parsed;
+        if (!this.selectedBankId) {
+          this.selectedBankId = this.linkedBanks[0].id;
+        }
+        return;
       }
     }
+
+    // Default pre-populated popular banks list if empty
+    this.restoreDefaultBanks();
   }
 
   private saveLinkedBanks(): void {
