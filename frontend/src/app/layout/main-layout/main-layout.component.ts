@@ -1,6 +1,7 @@
 import { Component, input, output, signal, effect, inject, HostListener, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
@@ -23,7 +24,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
         <!-- Brand Header -->
         <div class="brand-header">
           <div class="brand-logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
@@ -175,74 +176,115 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
         </button>
       </aside>
 
-      <!-- Main Content -->
+      <!-- Main Content Container -->
       <main class="main-content" [class.main-content-expanded]="collapsed()">
-        <!-- Top Header -->
+        <!-- Top Header Navigation Bar -->
         <header class="top-header">
-          <div class="header-breadcrumb">
-            <svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            <span class="breadcrumb-text">PayGate Console</span>
-          </div>
+          <!-- Left Section: Breadcrumb & Mobile Menu Button -->
+          <div class="header-left">
+            <button class="mobile-toggle-btn" *ngIf="isMobile()" (click)="toggleCollapse()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
 
-          <!-- User Profile Menu (With Interactive Click Event) -->
-          <div class="header-user-menu" (click)="toggleUserDropdown($event)">
-            <pg-avatar
-              [name]="authService.getUsername() || 'User'"
-              size="sm"
-              class="user-avatar"
-            ></pg-avatar>
-            <div class="user-info" *ngIf="!collapsed()">
-              <span class="user-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
-              <span class="user-role">{{ authService.getRole() || 'USER' }}</span>
-            </div>
-            <svg class="dropdown-chevron" [class.rotated]="showUserDropdown()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-
-            <!-- Dropdown Menu -->
-            <div class="user-dropdown" *ngIf="showUserDropdown()" (click)="$event.stopPropagation()">
-              <div class="dropdown-header">
-                <span class="dropdown-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
-                <span class="dropdown-role">Role: {{ authService.getRole() || 'USER' }}</span>
+            <div class="header-breadcrumb">
+              <div class="breadcrumb-icon-wrapper">
+                <svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
               </div>
-              <hr class="dropdown-divider" />
-              <a class="dropdown-item" routerLink="/accounts/me" (click)="showUserDropdown.set(false)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span>My Account</span>
-              </a>
-              <a class="dropdown-item" routerLink="/transactions/history" (click)="showUserDropdown.set(false)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-                <span>Transaction History</span>
-              </a>
-              <hr class="dropdown-divider" />
-              <button class="dropdown-item dropdown-item-danger" (click)="logout()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                <span>Logout</span>
-              </button>
+              <span class="breadcrumb-brand">PayGate Console</span>
             </div>
           </div>
 
-          <!-- Theme Toggle -->
-          <pg-theme-toggle class="theme-toggle" />
+          <!-- Right Section: Action Controls & User Profile Dropdown -->
+          <div class="header-right">
+            <!-- Search Bar Input -->
+            <div class="header-search-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" placeholder="Search transactions..." class="search-input" />
+            </div>
+
+            <!-- Notifications Icon Button -->
+            <button class="icon-btn" title="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+              <span class="notif-dot"></span>
+            </button>
+
+            <!-- Theme Toggle Component -->
+            <div class="theme-wrapper">
+              <pg-theme-toggle class="theme-toggle" />
+            </div>
+
+            <!-- Vertical Divider -->
+            <div class="header-divider"></div>
+
+            <!-- User Profile Menu Pill -->
+            <div class="header-user-menu" (click)="toggleUserDropdown($event)">
+              <pg-avatar
+                [name]="getDisplayName()"
+                size="sm"
+                class="user-avatar"
+              ></pg-avatar>
+
+              <div class="user-info">
+                <span class="user-name">{{ getDisplayName() }}</span>
+                <span class="user-role-badge" [class.admin-role]="isAdmin()">{{ authService.getRole() || 'USER' }}</span>
+              </div>
+
+              <svg class="dropdown-chevron" [class.rotated]="showUserDropdown()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+
+              <!-- User Dropdown Menu -->
+              <div class="user-dropdown" *ngIf="showUserDropdown()" (click)="$event.stopPropagation()">
+                <div class="dropdown-header">
+                  <span class="dropdown-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
+                  <span class="dropdown-role">Role: {{ authService.getRole() || 'USER' }}</span>
+                </div>
+                <hr class="dropdown-divider" />
+                <a class="dropdown-item" routerLink="/accounts/me" (click)="showUserDropdown.set(false)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>My Account</span>
+                </a>
+                <a class="dropdown-item" routerLink="/transactions/history" (click)="showUserDropdown.set(false)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </svg>
+                  <span>Transaction History</span>
+                </a>
+                <hr class="dropdown-divider" />
+                <button class="dropdown-item dropdown-item-danger" (click)="logout()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </header>
 
-        <!-- Page Content -->
+        <!-- Page Content Body -->
         <div class="content-body">
           <router-outlet></router-outlet>
         </div>
@@ -293,7 +335,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       display: flex;
       align-items: center;
       gap: var(--space-3);
-      padding: var(--space-5) var(--space-4) var(--space-4);
+      padding: var(--space-4) var(--space-4);
       border-bottom: 1px solid var(--color-border-primary);
       min-height: var(--header-height);
     }
@@ -301,26 +343,19 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     .brand-logo {
       width: 36px;
       height: 36px;
-      background-color: var(--color-primary-100);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-    }
-
-    .dark .brand-logo {
-      background-color: var(--color-primary-900);
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
     }
 
     .brand-logo svg {
       width: 22px;
       height: 22px;
-      color: var(--color-primary-600);
-    }
-
-    .dark .brand-logo svg {
-      color: var(--color-primary-400);
+      color: #ffffff;
     }
 
     .brand-text {
@@ -331,10 +366,11 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
 
     .brand-title {
       font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-lg);
+      font-size: 1.05rem;
       color: var(--color-text-primary);
       line-height: 1.2;
       white-space: nowrap;
+      letter-spacing: -0.01em;
     }
 
     .brand-subtitle {
@@ -389,14 +425,14 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     }
 
     .nav-link.active {
-      background-color: var(--color-primary-50);
-      color: var(--color-primary-600);
+      background-color: #ecfdf5;
+      color: #059669;
       font-weight: var(--font-weight-semibold);
     }
 
     .dark .nav-link.active {
-      background-color: var(--color-primary-900);
-      color: var(--color-primary-400);
+      background-color: rgba(5, 150, 105, 0.15);
+      color: #34d399;
     }
 
     .nav-icon {
@@ -409,12 +445,12 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
 
     .nav-link:hover .nav-icon,
     .nav-link.active .nav-icon {
-      color: var(--color-primary-600);
+      color: #059669;
     }
 
     .dark .nav-link:hover .nav-icon,
     .dark .nav-link.active .nav-icon {
-      color: var(--color-primary-400);
+      color: #34d399;
     }
 
     .nav-title {
@@ -465,10 +501,10 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       margin-left: var(--sidebar-width-collapsed);
     }
 
-    /* Top Header */
+    /* Top Header Bar */
     .top-header {
       height: var(--header-height);
-      background-color: var(--color-bg-secondary);
+      background-color: #ffffff;
       border-bottom: 1px solid var(--color-border-primary);
       display: flex;
       justify-content: space-between;
@@ -477,37 +513,184 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       position: sticky;
       top: 0;
       z-index: var(--z-sticky);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .dark .top-header {
+      background-color: var(--color-bg-secondary);
+    }
+
+    /* Header Left Section */
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .mobile-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      padding: var(--space-1);
+      display: flex;
+      align-items: center;
+    }
+
+    .mobile-toggle-btn svg {
+      width: 22px;
+      height: 22px;
     }
 
     .header-breadcrumb {
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      color: var(--color-text-secondary);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
+    }
+
+    .breadcrumb-icon-wrapper {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background-color: #ecfdf5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .breadcrumb-icon {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      color: #059669;
+    }
+
+    .breadcrumb-brand {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+    }
+
+    /* Header Right Section */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    /* Search Box */
+    .header-search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #f8fafc;
+      border: 1px solid var(--color-border-primary);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      width: 220px;
+      transition: all var(--transition-fast);
+    }
+
+    .dark .header-search-box {
+      background-color: var(--color-bg-tertiary);
+    }
+
+    .header-search-box:focus-within {
+      border-color: #059669;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    .search-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--color-text-tertiary);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      border: none;
+      background: none;
+      outline: none;
+      font-size: 0.8rem;
+      color: var(--color-text-primary);
+      width: 100%;
+    }
+
+    .search-input::placeholder {
       color: var(--color-text-tertiary);
     }
 
+    /* Icon Buttons (Notifications, Theme Toggle) */
+    .icon-btn {
+      position: relative;
+      background: none;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+    }
+
+    .icon-btn:hover {
+      background-color: var(--color-bg-hover);
+      color: var(--color-text-primary);
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 8px;
+      height: 8px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+    }
+
+    .theme-wrapper {
+      display: flex;
+      align-items: center;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background-color: var(--color-border-primary);
+    }
+
+    /* User Profile Pill */
     .header-user-menu {
       display: flex;
       align-items: center;
-      gap: var(--space-2);
+      gap: 10px;
       cursor: pointer;
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-md);
-      transition: background-color var(--transition-fast);
+      padding: 4px 10px 4px 6px;
+      border: 1px solid var(--color-border-primary);
+      border-radius: var(--radius-full);
+      background-color: #ffffff;
+      transition: all var(--transition-fast);
       position: relative;
       user-select: none;
     }
 
+    .dark .header-user-menu {
+      background-color: var(--color-bg-tertiary);
+    }
+
     .header-user-menu:hover {
       background-color: var(--color-bg-hover);
+      border-color: var(--color-border-secondary);
+      box-shadow: var(--shadow-sm);
     }
 
     .user-avatar {
@@ -517,25 +700,31 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     .user-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
 
     .user-name {
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
+      font-size: 0.8rem;
+      font-weight: var(--font-weight-semibold);
       color: var(--color-text-primary);
+      line-height: 1.1;
     }
 
-    .user-role {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
+    .user-role-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
+    }
+
+    .user-role-badge.admin-role {
+      color: #059669;
     }
 
     .dropdown-chevron {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       color: var(--color-text-tertiary);
       transition: transform var(--transition-fast);
     }
@@ -544,11 +733,12 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       transform: rotate(180deg);
     }
 
+    /* User Dropdown */
     .user-dropdown {
       position: absolute;
-      top: calc(100% + var(--space-2));
+      top: calc(100% + 8px);
       right: 0;
-      min-width: 210px;
+      min-width: 220px;
       background-color: var(--color-bg-secondary);
       border: 1px solid var(--color-border-primary);
       border-radius: var(--radius-lg);
@@ -627,10 +817,6 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       background-color: var(--color-error-900);
     }
 
-    .theme-toggle {
-      flex-shrink: 0;
-    }
-
     /* Content Body */
     .content-body {
       flex: 1;
@@ -663,6 +849,10 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       .collapse-toggle {
         display: none;
       }
+
+      .header-search-box {
+        display: none;
+      }
     }
 
     @media (max-width: 768px) {
@@ -693,6 +883,12 @@ export class MainLayoutComponent {
       this.isMobile.set(window.innerWidth < 1024);
       window.addEventListener('resize', this.onResize.bind(this));
     }
+  }
+
+  getDisplayName(): string {
+    const user = this.authService.getUsername();
+    if (!user) return 'User';
+    return user.split('@')[0];
   }
 
   onResize(): void {
