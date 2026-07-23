@@ -241,7 +241,7 @@ export interface AvailableBankOption {
                   </div>
                   <div class="empty-text">
                     <strong>No linked banks yet</strong>
-                    <span>Click here to select a bank from list and link account</span>
+                    <span>Click here to select a bank from dropdown and link account</span>
                   </div>
                 </div>
               </div>
@@ -375,9 +375,9 @@ export interface AvailableBankOption {
         </div>
       </div>
 
-      <!-- LINK NEW BANK MODAL WITH POPULAR VIETNAMESE BANK PICKER -->
+      <!-- LINK NEW BANK MODAL WITH DROPDOWN (NAVDOWN) & USER-ENTERED CARD NUMBER -->
       <div class="modal-overlay" *ngIf="showLinkModal">
-        <div class="modal-card fade-in-up link-modal-wide">
+        <div class="modal-card fade-in-up">
           <div class="modal-header">
             <div>
               <span class="hero-tag">BANK LINKING</span>
@@ -386,39 +386,65 @@ export interface AvailableBankOption {
             <button type="button" class="btn-close-modal" (click)="closeLinkModal()">✕</button>
           </div>
 
-          <!-- Popular Bank Selection Grid -->
-          <div class="bank-picker-section mb-16">
-            <label class="input-label mb-8">Click to select popular bank:</label>
-            <div class="bank-options-grid">
-              <button
-                type="button"
-                *ngFor="let b of popularBankOptions"
-                class="bank-chip-btn"
-                [class.selected]="selectedBankOptionCode === b.code"
-                (click)="selectBankOption(b)"
-              >
-                <span class="chip-bank-name">{{ b.shortName }}</span>
-              </button>
-            </div>
-          </div>
-
           <form [formGroup]="linkForm" (ngSubmit)="submitLinkBank()" class="modal-form">
+            <!-- Dropdown / Navdown Select Menu for Bank Selection -->
             <div class="form-group">
-              <label class="input-label">Bank or E-Wallet Name</label>
-              <input type="text" class="modal-input" placeholder="Selected bank name" formControlName="bankName" />
+              <label class="input-label required">Select Bank / E-Wallet (Danh sách ngân hàng)</label>
+              <div class="select-wrapper">
+                <select
+                  class="custom-select modal-select font-bold"
+                  formControlName="bankName"
+                  (change)="onBankDropdownChange($event)"
+                >
+                  <option value="">-- Choose Bank or E-Wallet --</option>
+                  <option *ngFor="let b of popularBankOptions" [value]="b.name">
+                    {{ b.name }} ({{ b.code }})
+                  </option>
+                  <option value="Other Bank">Other Bank / E-Wallet</option>
+                </select>
+                <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
             </div>
+
+            <!-- Card / Account Number - Must be Entered by User -->
             <div class="form-group">
-              <label class="input-label">Account Number / Card Number</label>
-              <input type="text" class="modal-input font-mono" placeholder="e.g. 0988123456" formControlName="accountNumber" />
+              <label class="input-label required">Account Number / Card Number (Số thẻ / tài khoản do bạn nhập)</label>
+              <input
+                type="text"
+                class="modal-input font-mono font-bold"
+                placeholder="Enter your exact account or card number..."
+                formControlName="accountNumber"
+              />
+              <div class="form-error" *ngIf="linkForm.get('accountNumber')?.touched && linkForm.get('accountNumber')?.invalid">
+                Card or Account number is required
+              </div>
             </div>
+
+            <!-- Account Holder Name -->
             <div class="form-group">
-              <label class="input-label">Account Holder Name</label>
-              <input type="text" class="modal-input" placeholder="e.g. NGUYEN VAN A" formControlName="accountHolder" />
+              <label class="input-label required">Account Holder Name (Tên chủ tài khoản)</label>
+              <input
+                type="text"
+                class="modal-input"
+                placeholder="e.g. NGUYEN VAN A"
+                formControlName="accountHolder"
+              />
             </div>
+
+            <!-- Initial Bank Balance -->
             <div class="form-group">
-              <label class="input-label">Initial Bank Balance (VND)</label>
-              <input type="number" class="modal-input font-mono" placeholder="5000000" formControlName="balance" />
+              <label class="input-label required">Initial Bank Balance (VND)</label>
+              <input
+                type="number"
+                class="modal-input font-mono"
+                placeholder="5000000"
+                formControlName="balance"
+              />
             </div>
+
+            <!-- Modal Actions -->
             <div class="modal-actions mt-20">
               <button type="button" class="btn-cancel" (click)="closeLinkModal()">Cancel</button>
               <button type="submit" class="btn-confirm-link" [disabled]="linkForm.invalid">Link Account Now ➔</button>
@@ -551,16 +577,29 @@ export interface AvailableBankOption {
     /* 100% FULL-VIEWPORT OVERLAY (Covers 100vw x 100vh Edge-to-Edge) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px; box-sizing: border-box; }
     .modal-card { background: #ffffff; border-radius: 28px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); }
-    .link-modal-wide { max-width: 520px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; }
     .btn-close-modal { background: #f1f5f9; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; font-weight: 800; }
 
-    /* Bank Options Picker Grid */
-    .bank-options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .bank-chip-btn { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 8px 4px; font-size: 0.75rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; text-align: center; }
-    .bank-chip-btn:hover { background: #ffffff; border-color: #059669; }
-    .bank-chip-btn.selected { background: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 0 0 2px #059669; }
+    /* Dropdown / Navdown Select Styling */
+    .select-wrapper { position: relative; width: 100%; }
+    .custom-select.modal-select {
+      width: 100%;
+      height: 48px;
+      padding: 0 36px 0 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .custom-select.modal-select:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15); background-color: #ffffff; }
+    .select-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
 
     /* NON-OVERFLOWING SLEEK VIETQR MODAL */
     .vietqr-modal-card { background: #ffffff; border-radius: 28px; width: 100%; max-width: 620px; max-height: 85vh; box-shadow: 0 30px 80px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
@@ -612,8 +651,10 @@ export interface AvailableBankOption {
     .modal-form { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .input-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
+    .input-label.required::after { content: ' *'; color: #ef4444; }
     .modal-input { height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 14px; font-size: 0.9rem; outline: none; }
     .modal-input:focus { border-color: #059669; }
+    .form-error { font-size: 0.78rem; color: #ef4444; font-weight: 600; }
     .modal-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
     .btn-cancel { height: 46px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 700; color: #475569; cursor: pointer; }
     .btn-confirm-link { height: 46px; border: none; background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 10px; font-weight: 800; font-size: 0.95rem; color: #ffffff; cursor: pointer; }
@@ -645,7 +686,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
   selectedBankId: string = '';
   linkedBanks: LinkedBankSource[] = [];
 
-  // Popular Vietnamese Banks options for quick picker modal
+  // Popular Vietnamese Banks options for navdown dropdown
   popularBankOptions: AvailableBankOption[] = [
     { code: 'VCB', name: 'Vietcombank', shortName: 'Vietcombank', iconType: 'BANK' },
     { code: 'MB', name: 'MB Bank', shortName: 'MB Bank', iconType: 'BANK' },
@@ -660,7 +701,6 @@ export class TopUpComponent implements OnInit, OnDestroy {
     { code: 'MOMO', name: 'MoMo E-Wallet', shortName: 'MoMo', iconType: 'MOMO' },
     { code: 'ZALO', name: 'ZaloPay E-Wallet', shortName: 'ZaloPay', iconType: 'MOMO' }
   ];
-  selectedBankOptionCode: string = '';
 
   // VietQR Specific Variables
   vietQrImageUrl = '';
@@ -797,7 +837,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
   private initLinkForm(): void {
     this.linkForm = this.fb.group({
       bankName: ['Vietcombank', Validators.required],
-      accountNumber: ['998877665544', Validators.required],
+      accountNumber: ['', [Validators.required, Validators.minLength(4)]],
       accountHolder: [this.getUserFullName(), Validators.required],
       balance: [5000000, [Validators.required, Validators.min(0)]],
       iconType: ['BANK']
@@ -812,14 +852,21 @@ export class TopUpComponent implements OnInit, OnDestroy {
     this.selectedBankId = id;
   }
 
-  selectBankOption(b: AvailableBankOption): void {
-    this.selectedBankOptionCode = b.code;
-    const randomAccNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-    this.linkForm.patchValue({
-      bankName: b.name,
-      accountNumber: randomAccNum,
-      iconType: b.iconType
-    });
+  onBankDropdownChange(event: Event): void {
+    const selectedName = (event.target as HTMLSelectElement).value;
+    const found = this.popularBankOptions.find(b => b.name === selectedName);
+    if (found) {
+      this.linkForm.patchValue({
+        bankName: found.name,
+        iconType: found.iconType
+      });
+    } else {
+      this.linkForm.patchValue({
+        bankName: selectedName,
+        iconType: 'BANK'
+      });
+    }
+    // Card/Account number MUST be entered manually by the user!
   }
 
   maskAccNum(num: string): string {
@@ -838,9 +885,13 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   openLinkModal(): void {
     this.showLinkModal = true;
-    if (this.popularBankOptions.length > 0) {
-      this.selectBankOption(this.popularBankOptions[0]);
-    }
+    this.linkForm.reset({
+      bankName: 'Vietcombank',
+      accountNumber: '',
+      accountHolder: this.getUserFullName(),
+      balance: 5000000,
+      iconType: 'BANK'
+    });
   }
 
   closeLinkModal(): void {
@@ -944,7 +995,10 @@ export class TopUpComponent implements OnInit, OnDestroy {
   }
 
   submitLinkBank(): void {
-    if (this.linkForm.invalid) return;
+    if (this.linkForm.invalid) {
+      this.linkForm.markAllAsTouched();
+      return;
+    }
 
     const req = this.linkForm.value;
     this.accountService.linkBank(req).subscribe({
@@ -1094,7 +1148,6 @@ export class TopUpComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Default pre-populated popular banks list if empty
     this.restoreDefaultBanks();
   }
 
