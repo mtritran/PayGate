@@ -31,7 +31,7 @@ export interface LinkedBankSource {
       <div class="page-header text-center">
         <div class="header-tag">PAYGATE INSTANT TOP UP</div>
         <h2>Top Up Wallet</h2>
-        <p class="subtitle">Add funds to your PayGate balance via linked mock payment sources.</p>
+        <p class="subtitle">Add funds to your PayGate balance via linked payment sources.</p>
       </div>
 
       <!-- 2-Column Main Grid Layout (Spacious 1200px Grid) -->
@@ -100,7 +100,10 @@ export interface LinkedBankSource {
                 <span class="preview-lbl">Preview balance after top-up:</span>
                 <strong class="preview-val">
                   +{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}
-                  <span class="arrow">➔</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
                   {{ (accountBalance + currentAmount) | currency:'VND':'symbol':'1.0-0' }}
                 </strong>
               </div>
@@ -153,8 +156,8 @@ export interface LinkedBankSource {
                     <button type="button" class="btn-link-bank" (click)="openLinkModal()">
                       + Liên kết ngân hàng mới
                     </button>
-                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Reset Mock Balances">
-                      🔄 Reset
+                    <button type="button" class="btn-reset-mock" (click)="resetMockBalances()" title="Dọn danh sách" *ngIf="linkedBanks.length > 0">
+                      Clear
                     </button>
                   </div>
                 </div>
@@ -199,18 +202,34 @@ export interface LinkedBankSource {
                   </div>
                 </div>
 
-                <!-- Empty State if No Bank Linked -->
+                <!-- Clean SVG Empty State if No Bank Linked -->
                 <div *ngIf="linkedBanks.length === 0" class="empty-linked-box" (click)="openLinkModal()">
-                  <div class="empty-icon">🏦</div>
+                  <div class="empty-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8">
+                      <line x1="3" y1="21" x2="21" y2="21" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                      <polyline points="12 3 2 10 22 10 12 3" />
+                      <line x1="6" y1="10" x2="6" y2="21" />
+                      <line x1="10" y1="10" x2="10" y2="21" />
+                      <line x1="14" y1="10" x2="14" y2="21" />
+                      <line x1="18" y1="10" x2="18" y2="21" />
+                    </svg>
+                  </div>
                   <div class="empty-text">
                     <strong>Chưa có ngân hàng nào được liên kết</strong>
-                    <span>Nhấn vào đây để liên kết ngân hàng/ví điện tử của bạn ngay!</span>
+                    <span>Nhấn vào đây để thực hiện liên kết ngân hàng/ví điện tử mới</span>
                   </div>
                 </div>
 
-                <!-- Warning Banner if Selected Source Insufficient -->
+                <!-- Clean Warning Banner if Selected Source Insufficient -->
                 <div class="insufficient-banner mt-16" *ngIf="isCurrentBankInsufficient()">
-                  <div class="banner-icon">⚠️</div>
+                  <div class="banner-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </div>
                   <div class="banner-text">
                     <strong>Số dư nguồn {{ currentSelectedBank?.bankName }} không đủ!</strong>
                     <span>Bạn muốn nạp <strong>{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</strong> nhưng số dư nguồn này chỉ còn <strong>{{ currentSelectedBank?.balance | currency:'VND':'symbol':'1.0-0' }}</strong> (Thiếu {{ (currentAmount - (currentSelectedBank?.balance || 0)) | currency:'VND':'symbol':'1.0-0' }}).</span>
@@ -244,7 +263,7 @@ export interface LinkedBankSource {
       </div>
     </div>
 
-    <!-- MODAL DIALOG: LINK NEW BANK ACCOUNT (Sử dụng 100vw/100vh Backdrop Blur) -->
+    <!-- MODAL DIALOG: LINK NEW BANK ACCOUNT (Full Viewport Blur) -->
     <div class="link-modal-overlay" *ngIf="showLinkModal">
       <div class="link-modal-card fade-in-up">
         <div class="modal-header">
@@ -401,7 +420,6 @@ export interface LinkedBankSource {
     .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px 18px; border-radius: 14px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
     .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #047857; }
     .preview-val { font-size: 1.05rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 8px; }
-    .arrow { font-size: 0.95rem; }
 
     /* Form Sections */
     .custom-topup-form { display: flex; flex-direction: column; gap: 26px; }
@@ -451,18 +469,18 @@ export interface LinkedBankSource {
     .method-balance { font-size: 0.72rem; font-weight: 600; color: #64748b; }
     .text-danger { color: #dc2626 !important; font-weight: 700 !important; }
 
-    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.15s; }
+    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .empty-linked-box:hover { border-color: #059669; background: #ecfdf5; }
-    .empty-icon { font-size: 32px; margin-bottom: 4px; }
-    .empty-text { display: flex; flex-direction: column; gap: 2px; color: #475569; font-size: 0.85rem; }
-    .empty-text strong { color: #059669; font-size: 0.95rem; }
+    .empty-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; }
+    .empty-text { display: flex; flex-direction: column; gap: 2px; color: #475569; font-size: 0.875rem; }
+    .empty-text strong { color: #059669; font-size: 0.975rem; }
 
     /* Insufficient Balance Banner */
     .insufficient-banner {
       background: #fef2f2; border: 1px solid #fecaca; border-radius: 14px; padding: 14px 18px;
       display: flex; gap: 14px; align-items: flex-start; color: #991b1b; font-size: 0.85rem;
     }
-    .banner-icon { font-size: 1.35rem; flex-shrink: 0; }
+    .banner-icon { flex-shrink: 0; margin-top: 2px; }
     .banner-text { display: flex; flex-direction: column; gap: 3px; line-height: 1.45; }
     .banner-text strong { font-weight: 800; color: #b91c1c; }
 
@@ -549,7 +567,7 @@ export class TopUpComponent implements OnInit {
   account: AccountResponse | null = null;
   selectedBankId: string = '';
 
-  // Dynamic user's linked banks list stored in localStorage
+  // Dynamic user's linked banks list stored in localStorage (Empty for new users)
   linkedBanks: LinkedBankSource[] = [];
 
   presets = [
@@ -613,40 +631,9 @@ export class TopUpComponent implements OnInit {
       } catch (e) {
         this.linkedBanks = [];
       }
-    }
-
-    // Default initial mock linked banks if empty
-    if (!this.linkedBanks || this.linkedBanks.length === 0) {
-      this.linkedBanks = [
-        {
-          id: 'bank-mb-101',
-          bankName: 'MB Bank',
-          accountNumber: '9704 2200 1199 8812',
-          accountHolder: this.getUserFullName(),
-          balance: 5000000,
-          iconType: 'BANK',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'card-napas-102',
-          bankName: 'Napas ATM Card',
-          accountNumber: '9704 1800 8821 1092',
-          accountHolder: this.getUserFullName(),
-          balance: 2000000,
-          iconType: 'CARD',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'wallet-momo-103',
-          bankName: 'Ví MoMo',
-          accountNumber: '0987 654 321',
-          accountHolder: this.getUserFullName(),
-          balance: 1000000,
-          iconType: 'MOMO',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      this.saveLinkedBanks();
+    } else {
+      // Clean empty array for new users without default pre-filled mock banks
+      this.linkedBanks = [];
     }
 
     if (this.linkedBanks.length > 0 && !this.selectedBankId) {
@@ -660,9 +647,9 @@ export class TopUpComponent implements OnInit {
 
   resetMockBalances(): void {
     localStorage.removeItem('paygate_user_linked_banks');
+    this.linkedBanks = [];
     this.selectedBankId = '';
-    this.loadLinkedBanks();
-    this.notification.success('Đã khôi phục danh sách ngân hàng liên kết ban đầu!');
+    this.notification.info('Đã xóa sạch danh sách ngân hàng liên kết!');
   }
 
   openLinkModal(): void {
