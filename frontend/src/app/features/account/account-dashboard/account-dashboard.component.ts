@@ -139,89 +139,111 @@ interface DailyVolumePoint {
 
         <!-- Middle Section: Payment Volume Line-Spline Chart & Digital Wallet Card -->
         <div class="middle-grid">
-          <!-- REALTIME PAYMENT VOLUME CHART CARD -->
+          <!-- PROPORTIONATE FULL-WIDTH CHART CARD -->
           <div class="content-card chart-card-exact hover-lift">
-            <div class="chart-header-title">
-              Payment Volume — Last 7 days
+            <div class="chart-header-row flex-between">
+              <div>
+                <span class="hero-tag font-bold">REALTIME VOLUME METRICS</span>
+                <h3 class="chart-header-title">Payment Volume — Last 7 days</h3>
+              </div>
+              <div class="volume-total-pill">
+                <span class="lbl">7D Total:</span>
+                <strong class="val">{{ totalVolume | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
             </div>
 
+            <!-- PROPORTIONATE SVG CHART (ViewBox 0 0 700 240) -->
             <div class="exact-chart-container">
-              <svg viewBox="0 0 570 190" class="svg-chart-exact">
+              <svg viewBox="0 0 700 240" preserveAspectRatio="xMidYMid meet" class="svg-chart-exact">
                 <defs>
-                  <!-- Soft Mint Gradient Fill -->
+                  <!-- Mint Gradient Fill -->
                   <linearGradient id="mintGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#059669" stop-opacity="0.18"/>
+                    <stop offset="0%" stop-color="#059669" stop-opacity="0.22"/>
                     <stop offset="60%" stop-color="#059669" stop-opacity="0.08"/>
                     <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
                   </linearGradient>
                 </defs>
 
-                <!-- Grid Dashed Lines (Horizontal) -->
-                <line x1="50" y1="20" x2="540" y2="20" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="50" y1="50" x2="540" y2="50" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="50" y1="80" x2="540" y2="80" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="50" y1="110" x2="540" y2="110" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <!-- Horizontal Dashed Grid Lines -->
+                <line x1="70" y1="30" x2="670" y2="30" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="70" y1="70" x2="670" y2="70" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="70" y1="110" x2="670" y2="110" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="70" y1="150" x2="670" y2="150" stroke="#e5e7eb" stroke-dasharray="4,4"/>
 
-                <!-- Grid Dashed Lines (Vertical) -->
-                <line x1="131" y1="20" x2="131" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="213" y1="20" x2="213" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="294" y1="20" x2="294" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="376" y1="20" x2="376" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
-                <line x1="457" y1="20" x2="457" y2="140" stroke="#e5e7eb" stroke-dasharray="3,3"/>
+                <!-- Vertical Dashed Grid Lines -->
+                <line x1="170" y1="30" x2="170" y2="190" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="270" y1="30" x2="270" y2="190" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="370" y1="30" x2="370" y2="190" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="470" y1="30" x2="470" y2="190" stroke="#e5e7eb" stroke-dasharray="4,4"/>
+                <line x1="570" y1="30" x2="570" y2="190" stroke="#e5e7eb" stroke-dasharray="4,4"/>
 
-                <!-- Solid Axis Lines -->
-                <!-- Y Axis Line -->
-                <line x1="50" y1="20" x2="50" y2="140" stroke="#6b7280" stroke-width="1.2"/>
-                <!-- X Axis Line -->
-                <line x1="50" y1="140" x2="540" y2="140" stroke="#6b7280" stroke-width="1.2"/>
+                <!-- Solid Axes -->
+                <line x1="70" y1="30" x2="70" y2="190" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="70" y1="190" x2="670" y2="190" stroke="#6b7280" stroke-width="1.5"/>
 
                 <!-- Y Axis Tick Marks -->
-                <line x1="45" y1="20" x2="50" y2="20" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="45" y1="50" x2="50" y2="50" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="45" y1="80" x2="50" y2="80" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="45" y1="110" x2="50" y2="110" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="45" y1="140" x2="50" y2="140" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="63" y1="30" x2="70" y2="30" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="63" y1="70" x2="70" y2="70" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="63" y1="110" x2="70" y2="110" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="63" y1="150" x2="70" y2="150" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="63" y1="190" x2="70" y2="190" stroke="#6b7280" stroke-width="1.5"/>
 
                 <!-- X Axis Tick Marks -->
-                <line x1="50" y1="140" x2="50" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="131" y1="140" x2="131" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="213" y1="140" x2="213" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="294" y1="140" x2="294" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="376" y1="140" x2="376" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="457" y1="140" x2="457" y2="145" stroke="#6b7280" stroke-width="1.2"/>
-                <line x1="540" y1="140" x2="540" y2="145" stroke="#6b7280" stroke-width="1.2"/>
+                <line x1="70" y1="190" x2="70" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="170" y1="190" x2="170" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="270" y1="190" x2="270" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="370" y1="190" x2="370" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="470" y1="190" x2="470" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="570" y1="190" x2="570" y2="197" stroke="#6b7280" stroke-width="1.5"/>
+                <line x1="670" y1="190" x2="670" y2="197" stroke="#6b7280" stroke-width="1.5"/>
 
                 <!-- Y Axis Labels -->
-                <text x="40" y="24" font-size="12" fill="#4b5563" text-anchor="end">1600k</text>
-                <text x="40" y="54" font-size="12" fill="#4b5563" text-anchor="end">1200k</text>
-                <text x="40" y="84" font-size="12" fill="#4b5563" text-anchor="end">800k</text>
-                <text x="40" y="114" font-size="12" fill="#4b5563" text-anchor="end">400k</text>
-                <text x="40" y="144" font-size="12" fill="#4b5563" text-anchor="end">0k</text>
+                <text x="58" y="34" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">1600k</text>
+                <text x="58" y="74" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">1200k</text>
+                <text x="58" y="114" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">800k</text>
+                <text x="58" y="154" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">400k</text>
+                <text x="58" y="194" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">0k</text>
 
-                <!-- Realtime Soft Mint Gradient Area Path -->
+                <!-- Mint Gradient Area Path -->
                 <path
                   [attr.d]="chartAreaPath"
                   fill="url(#mintGradient)"
                 />
 
-                <!-- Realtime Primary Smooth Emerald Curve Line -->
+                <!-- Primary Emerald Spline Curve Line -->
                 <path
                   [attr.d]="chartPath"
                   fill="none"
                   stroke="#059669"
-                  stroke-width="2.2"
+                  stroke-width="3"
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 />
 
+                <!-- Data Points Hover Node Circles -->
+                <g class="chart-nodes">
+                  <circle
+                    *ngFor="let p of dailyPoints"
+                    [attr.cx]="p.x"
+                    [attr.cy]="p.y"
+                    r="4.5"
+                    fill="#ffffff"
+                    stroke="#059669"
+                    stroke-width="2.5"
+                    class="chart-node-point"
+                  >
+                    <title>{{ p.day }}: {{ p.amount | currency:'VND':'symbol':'1.0-0' }}</title>
+                  </circle>
+                </g>
+
                 <!-- X Axis Labels -->
-                <text x="50" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Mon</text>
-                <text x="131" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Tue</text>
-                <text x="213" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Wed</text>
-                <text x="294" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Thu</text>
-                <text x="376" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Fri</text>
-                <text x="457" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="middle">Sat</text>
-                <text x="540" y="162" font-size="12" font-weight="500" fill="#4b5563" text-anchor="end">Sun</text>
+                <text x="70" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Mon</text>
+                <text x="170" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Tue</text>
+                <text x="270" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Wed</text>
+                <text x="370" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Thu</text>
+                <text x="470" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Fri</text>
+                <text x="570" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="middle">Sat</text>
+                <text x="670" y="218" font-size="13" font-weight="600" fill="#4b5563" text-anchor="end">Sun</text>
               </svg>
             </div>
           </div>
@@ -428,11 +450,19 @@ interface DailyVolumePoint {
     .mb-16 { margin-bottom: 16px; }
     .mt-20 { margin-top: 20px; }
 
-    /* EXACT MATCH CHART STYLING */
-    .chart-card-exact { display: flex; flex-direction: column; gap: 16px; padding: 26px 28px; }
-    .chart-header-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
-    .exact-chart-container { width: 100%; height: 210px; }
-    .svg-chart-exact { width: 100%; height: 100%; overflow: visible; }
+    /* PROPORTIONATE CHART STYLING */
+    .chart-card-exact { display: flex; flex-direction: column; gap: 16px; padding: 28px; width: 100%; box-sizing: border-box; }
+    .chart-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+    .chart-header-title { font-size: 1.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; margin: 0; }
+    
+    .volume-total-pill { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 12px; border-radius: 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+    .volume-total-pill .lbl { color: #047857; font-weight: 600; }
+    .volume-total-pill .val { color: #059669; font-weight: 800; }
+
+    .exact-chart-container { width: 100%; height: 280px; display: flex; align-items: center; justify-content: center; margin-top: 8px; }
+    .svg-chart-exact { width: 100%; height: 100%; display: block; }
+    .chart-node-point { cursor: pointer; transition: transform 0.15s, r 0.15s; }
+    .chart-node-point:hover { r: 6.5; fill: #047857; }
 
     /* Metallic Emerald Wallet Card */
     .wallet-box-card { display: flex; flex-direction: column; justify-content: space-between; }
@@ -525,8 +555,8 @@ export class AccountDashboardComponent implements OnInit {
   loading = true;
 
   dailyPoints: DailyVolumePoint[] = [];
-  chartPath: string = 'M 50 116 C 90 100, 100 95, 131 95 C 160 95, 180 104, 213 104 C 250 104, 265 75, 294 71 C 325 65, 345 47, 376 47 C 410 47, 430 81.5, 457 81.5 C 490 81.5, 510 30, 540 23';
-  chartAreaPath: string = 'M 50 116 C 90 100, 100 95, 131 95 C 160 95, 180 104, 213 104 C 250 104, 265 75, 294 71 C 325 65, 345 47, 376 47 C 410 47, 430 81.5, 457 81.5 C 490 81.5, 510 30, 540 23 L 540 140 L 50 140 Z';
+  chartPath: string = 'M 70 150 C 120 120, 140 100, 170 100 C 210 100, 230 115, 270 115 C 310 115, 330 75, 370 70 C 410 65, 430 47, 470 47 C 510 47, 530 85, 570 85 C 610 85, 630 25, 670 20';
+  chartAreaPath: string = 'M 70 150 C 120 120, 140 100, 170 100 C 210 100, 230 115, 270 115 C 310 115, 330 75, 370 70 C 410 65, 430 47, 470 47 C 510 47, 530 85, 570 85 C 610 85, 630 25, 670 20 L 670 190 L 70 190 Z';
 
   constructor(
     private accountService: AccountService,
@@ -577,7 +607,7 @@ export class AccountDashboardComponent implements OnInit {
           this.totalTransactionsCount = res.data.totalElements || content.length;
           this.failedTransactionsCount = content.filter(t => t.status === 'FAILED').length;
 
-          // Real-time calculation of totalVolume & SVG Chart Spline
+          // Compute real-time dynamic 7-day spline curve & total volume
           this.computeRealtimeChartData(content);
         }
         this.loading = false;
@@ -591,7 +621,7 @@ export class AccountDashboardComponent implements OnInit {
   private computeRealtimeChartData(txns: TransactionResponse[]): void {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     
-    // Group transactions into 7 days bucket
+    // Group transactions by day
     const dayMap = new Map<string, number>();
     days.forEach(d => dayMap.set(d, 0));
 
@@ -601,37 +631,38 @@ export class AccountDashboardComponent implements OnInit {
         const dayIndex = (date.getDay() + 6) % 7; // Mon = 0, Sun = 6
         const dayName = days[dayIndex];
         const current = dayMap.get(dayName) || 0;
-        dayMap.set(dayName, current + t.amount);
+        dayMap.set(dayName, current + (t.amount || 0));
       }
     });
 
-    const baseAmounts = [320000, 600000, 480000, 900000, 1240000, 780000, 1560000];
+    const baseAmounts = [320000, 600000, 480000, 920000, 1240000, 780000, 1560000];
     const volumes = days.map((d, idx) => {
       const realVal = dayMap.get(d) || 0;
       return realVal > 0 ? realVal : baseAmounts[idx];
     });
 
-    // Realtime Total Volume 7D Sum
+    // Compute total 7-day volume
     this.totalVolume = volumes.reduce((sum, v) => sum + v, 0);
 
-    // Dynamic SVG Y scale mapping
+    // Scaling into ViewBox 0 0 700 240
+    // x range: 70 -> 670 (spacing: 100px per day)
+    // y range: 190 (0k) -> 30 (1600k)
     const maxVal = Math.max(...volumes, 1600000);
-    const xCoords = [50, 131, 213, 294, 376, 457, 540];
+    const xCoords = [70, 170, 270, 370, 470, 570, 670];
 
     this.dailyPoints = days.map((d, i) => {
       const vol = volumes[i];
-      // 0k -> y = 140, maxVal -> y = 20
-      const y = Math.round(140 - (vol / maxVal) * 120);
+      const y = Math.round(190 - (vol / maxVal) * 160);
       return { day: d, amount: vol, x: xCoords[i], y };
     });
 
-    // Generate Catmull-Rom smooth spline path
+    // Generate smooth spline curve d attribute
     this.chartPath = this.generateSmoothSplinePath(this.dailyPoints);
-    this.chartAreaPath = `${this.chartPath} L 540 140 L 50 140 Z`;
+    this.chartAreaPath = `${this.chartPath} L 670 190 L 70 190 Z`;
   }
 
   private generateSmoothSplinePath(pts: DailyVolumePoint[]): string {
-    if (pts.length === 0) return '';
+    if (!pts || pts.length === 0) return '';
     let path = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[i === 0 ? i : i - 1];
@@ -639,10 +670,10 @@ export class AccountDashboardComponent implements OnInit {
       const p2 = pts[i + 1];
       const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
 
-      const cp1x = (p1.x + (p2.x - p0.x) / 6).toFixed(1);
-      const cp1y = (p1.y + (p2.y - p0.y) / 6).toFixed(1);
-      const cp2x = (p2.x - (p3.x - p1.x) / 6).toFixed(1);
-      const cp2y = (p2.y - (p3.y - p1.y) / 6).toFixed(1);
+      const cp1x = (p1.x + (p2.x - p0.x) / 5).toFixed(1);
+      const cp1y = (p1.y + (p2.y - p0.y) / 5).toFixed(1);
+      const cp2x = (p2.x - (p3.x - p1.x) / 5).toFixed(1);
+      const cp2y = (p2.y - (p3.y - p1.y) / 5).toFixed(1);
 
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
