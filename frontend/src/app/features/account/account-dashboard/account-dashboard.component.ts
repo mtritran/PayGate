@@ -12,6 +12,16 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
 
+interface DailyVolume {
+  day: string;
+  fullDay: string;
+  amount: number;
+  barHeight: number;
+  yPos: number;
+  xPos: number;
+  isPeak?: boolean;
+}
+
 @Component({
   selector: 'app-account-dashboard',
   standalone: true,
@@ -132,23 +142,23 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
 
         <!-- Middle Section: Payment Volume Centerpiece Hero Chart & Wallet Card -->
         <div class="middle-grid">
-          <!-- PAYMENT VOLUME CENTERPIECE HERO CARD -->
+          <!-- PREMIUM PAYMENT VOLUME CENTERPIECE HERO CARD -->
           <div class="content-card chart-card-hero hover-lift">
-            <!-- Centerpiece Title & Tag -->
+            <!-- Header -->
             <div class="hero-chart-header flex-between">
               <div>
-                <span class="hero-tag">7-DAY PAYMENT ANALYTICS</span>
-                <h3 class="hero-title">Payment Volume Breakdown</h3>
+                <span class="hero-tag">ENTERPRISE ANALYTICS</span>
+                <h3 class="hero-title">7-Day Payment Volume Centerpiece</h3>
               </div>
-              <div class="time-range-badge">
-                <mat-icon class="time-icon">calendar_today</mat-icon>
-                <span>Mon – Sun</span>
+              <div class="growth-chip">
+                <mat-icon class="chip-trend-icon">trending_up</mat-icon>
+                <span>+14.2% vs last week</span>
               </div>
             </div>
 
             <!-- PAYMENT AMOUNT AS CENTRAL FOCUS -->
             <div class="payment-centerpiece">
-              <div class="centerpiece-sub">TOTAL PROCESSED PAYMENT VOLUME</div>
+              <div class="centerpiece-sub">TOTAL PROCESSED VOLUME (7D)</div>
               <div class="centerpiece-amount-hero">
                 {{ totalVolume | currency:'VND':'symbol':'1.0-0' }}
               </div>
@@ -169,74 +179,103 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
               </div>
             </div>
 
-            <!-- HIGH-END GRADIENT BAR & AREA HYBRID CHART -->
+            <!-- Dynamic Selected Hover Tooltip Badge -->
+            <div class="chart-active-tooltip flex-between" *ngIf="activeDayData">
+              <div class="tooltip-left">
+                <span class="active-day-title">{{ activeDayData.fullDay }}:</span>
+                <strong class="active-day-amount">{{ activeDayData.amount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+              <span class="tooltip-peak-tag" *ngIf="activeDayData.isPeak">🔥 Peak Daily Volume</span>
+            </div>
+
+            <!-- STUNNING GRADIENT WAVE & DYNAMIC BAR CHART -->
             <div class="hero-chart-container">
-              <svg viewBox="0 0 540 160" class="svg-chart">
+              <svg viewBox="0 0 540 170" class="svg-chart">
                 <defs>
-                  <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#059669" stop-opacity="0.9"/>
-                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.3"/>
+                  <!-- Ultra Premium Gradients -->
+                  <linearGradient id="waveGlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#059669" stop-opacity="0.45"/>
+                    <stop offset="50%" stop-color="#10b981" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#34d399" stop-opacity="0.0"/>
                   </linearGradient>
-                  <linearGradient id="barGradActive" x1="0" y1="0" x2="0" y2="1">
+                  
+                  <linearGradient id="barGradientNormal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#059669" stop-opacity="0.85"/>
+                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.25"/>
+                  </linearGradient>
+
+                  <linearGradient id="barGradientPeak" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#047857" stop-opacity="1"/>
-                    <stop offset="100%" stop-color="#059669" stop-opacity="0.6"/>
+                    <stop offset="100%" stop-color="#059669" stop-opacity="0.7"/>
                   </linearGradient>
-                  <linearGradient id="glowArea" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
-                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
-                  </linearGradient>
-                  <filter id="shadowGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="4" result="blur" />
+
+                  <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over" />
                   </filter>
                 </defs>
 
-                <!-- Grid Horizontal Guidelines -->
-                <line x1="30" y1="20" x2="510" y2="20" stroke="#f1f5f9" stroke-dasharray="4,4"/>
-                <line x1="30" y1="60" x2="510" y2="60" stroke="#f1f5f9" stroke-dasharray="4,4"/>
-                <line x1="30" y1="100" x2="510" y2="100" stroke="#f1f5f9" stroke-dasharray="4,4"/>
+                <!-- Soft Horizontal Grid Lines -->
+                <line x1="30" y1="25" x2="510" y2="25" stroke="#f1f5f9" stroke-dasharray="4,4"/>
+                <line x1="30" y1="65" x2="510" y2="65" stroke="#f1f5f9" stroke-dasharray="4,4"/>
+                <line x1="30" y1="105" x2="510" y2="105" stroke="#f1f5f9" stroke-dasharray="4,4"/>
 
-                <!-- Area Fill Glow -->
-                <path d="M 50 110 Q 125 70, 200 90 T 350 40 T 490 30 L 490 120 L 50 120 Z" fill="url(#glowArea)"/>
+                <!-- Wave Area Fill -->
+                <path d="M 50 80 Q 123 55, 196 75 T 342 35 T 488 28 L 488 125 L 50 125 Z" fill="url(#waveGlow)"/>
 
-                <!-- 7 Day Vertical Volume Bars with Rounded Tops -->
+                <!-- Dynamic Bars -->
                 <g class="chart-bars">
-                  <!-- Mon: 750k -->
-                  <rect x="42" y="70" width="16" height="50" rx="6" fill="url(#barGrad)" class="chart-bar"/>
-                  <!-- Tue: 1,000k -->
-                  <rect x="115" y="55" width="16" height="65" rx="6" fill="url(#barGrad)" class="chart-bar"/>
-                  <!-- Wed: 850k -->
-                  <rect x="188" y="65" width="16" height="55" rx="6" fill="url(#barGrad)" class="chart-bar"/>
-                  <!-- Thu: 1,150k -->
-                  <rect x="261" y="45" width="16" height="75" rx="6" fill="url(#barGrad)" class="chart-bar"/>
-                  <!-- Fri: 1,400k -->
-                  <rect x="334" y="32" width="16" height="88" rx="6" fill="url(#barGrad)" class="chart-bar"/>
-                  <!-- Sat (Active High Peak): 1,550k -->
-                  <rect x="407" y="24" width="16" height="96" rx="6" fill="url(#barGradActive)" class="chart-bar active" filter="url(#shadowGlow)"/>
-                  <!-- Sun: 1,500k -->
-                  <rect x="480" y="28" width="16" height="92" rx="6" fill="url(#barGrad)" class="chart-bar"/>
+                  <rect
+                    *ngFor="let item of dailyVolumes"
+                    [attr.x]="item.xPos - 10"
+                    [attr.y]="item.yPos"
+                    width="20"
+                    [attr.height]="item.barHeight"
+                    rx="8"
+                    [attr.fill]="item.isPeak ? 'url(#barGradientPeak)' : 'url(#barGradientNormal)'"
+                    class="chart-bar"
+                    [class.active-bar]="activeDayData?.day === item.day"
+                    (mouseenter)="setActiveDay(item)"
+                  />
                 </g>
 
-                <!-- Trend Connection Line -->
-                <path d="M 50 70 L 123 55 L 196 65 L 269 45 L 342 32 L 415 24 L 488 28" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+                <!-- Glowing Wave Curve Line -->
+                <path
+                  d="M 50 80 L 123 60 L 196 75 L 269 48 L 342 35 L 415 22 L 488 28"
+                  fill="none"
+                  stroke="#059669"
+                  stroke-width="3.5"
+                  stroke-linecap="round"
+                  filter="url(#neonGlow)"
+                />
 
-                <!-- Nodes -->
-                <circle cx="50" cy="70" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
-                <circle cx="123" cy="55" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
-                <circle cx="196" cy="65" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
-                <circle cx="269" cy="45" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
-                <circle cx="342" cy="32" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
-                <circle cx="415" cy="24" r="5" fill="#059669" stroke="#ffffff" stroke-width="2.5"/>
-                <circle cx="488" cy="28" r="3.5" fill="#ffffff" stroke="#059669" stroke-width="2"/>
+                <!-- Interactive Data Node Rings -->
+                <g class="chart-nodes">
+                  <circle
+                    *ngFor="let item of dailyVolumes"
+                    [attr.cx]="item.xPos"
+                    [attr.cy]="item.yPos"
+                    [attr.r]="item.day === activeDayData?.day ? '6.5' : '4.5'"
+                    [attr.fill]="item.day === activeDayData?.day ? '#059669' : '#ffffff'"
+                    stroke="#059669"
+                    stroke-width="2.5"
+                    class="chart-point"
+                    (mouseenter)="setActiveDay(item)"
+                  />
+                </g>
 
-                <!-- X Axis Labels -->
-                <text x="50" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Mon</text>
-                <text x="123" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Tue</text>
-                <text x="196" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Wed</text>
-                <text x="269" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Thu</text>
-                <text x="342" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Fri</text>
-                <text x="415" y="142" font-size="11" font-weight="800" fill="#059669" text-anchor="middle">Sat</text>
-                <text x="488" y="142" font-size="11" font-weight="600" fill="#64748b" text-anchor="middle">Sun</text>
+                <!-- Day Labels -->
+                <text
+                  *ngFor="let item of dailyVolumes"
+                  [attr.x]="item.xPos"
+                  y="148"
+                  font-size="11"
+                  [attr.font-weight]="item.day === activeDayData?.day ? '800' : '600'"
+                  [attr.fill]="item.day === activeDayData?.day ? '#059669' : '#64748b'"
+                  text-anchor="middle"
+                >
+                  {{ item.day }}
+                </text>
               </svg>
             </div>
           </div>
@@ -446,18 +485,18 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
     .mt-20 { margin-top: 20px; }
 
     /* HERO PAYMENT CENTERPIECE CARD */
-    .chart-card-hero { display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+    .chart-card-hero { display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
     .hero-chart-header { display: flex; justify-content: space-between; align-items: flex-start; }
     
-    .time-range-badge { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; color: #475569; }
-    .time-icon { font-size: 14px; width: 14px; height: 14px; color: #059669; }
+    .growth-chip { display: flex; align-items: center; gap: 6px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; color: #059669; }
+    .chip-trend-icon { font-size: 16px; width: 16px; height: 16px; color: #059669; }
 
     /* Centered Payment Amount Focus */
     .payment-centerpiece {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 16px;
-      padding: 24px;
+      padding: 22px;
       text-align: center;
       box-shadow: 0 4px 16px -4px rgba(5, 150, 105, 0.08);
       display: flex;
@@ -466,7 +505,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
       justify-content: center;
     }
     .centerpiece-sub { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
-    .centerpiece-amount-hero { font-size: 2.5rem; font-weight: 900; color: #059669; letter-spacing: -0.03em; margin: 2px 0 14px 0; text-shadow: 0 2px 10px rgba(5, 150, 105, 0.15); }
+    .centerpiece-amount-hero { font-size: 2.6rem; font-weight: 900; color: #059669; letter-spacing: -0.03em; margin: 2px 0 12px 0; text-shadow: 0 2px 10px rgba(5, 150, 105, 0.15); }
     
     .breakdown-badges { display: flex; align-items: center; gap: 18px; background: #f8fafc; padding: 8px 18px; border-radius: 12px; border: 1px solid #e2e8f0; }
     .breakdown-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
@@ -477,11 +516,19 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
     .breakdown-val { color: #0f172a; font-weight: 700; }
     .breakdown-divider { width: 1px; height: 16px; background-color: #cbd5e1; }
 
-    .hero-chart-container { width: 100%; height: 170px; margin-top: 4px; }
+    /* Active Tooltip Badge */
+    .chart-active-tooltip { background: #0f172a; color: #ffffff; padding: 8px 16px; border-radius: 10px; font-size: 0.825rem; margin-top: 4px; }
+    .active-day-title { font-weight: 600; color: #94a3b8; margin-right: 6px; }
+    .active-day-amount { color: #34d399; font-weight: 800; font-family: monospace; }
+    .tooltip-peak-tag { font-size: 0.72rem; font-weight: 800; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 6px; }
+
+    .hero-chart-container { width: 100%; height: 175px; }
     .svg-chart { width: 100%; height: 100%; overflow: visible; }
     
-    .chart-bar { transition: all 0.2s ease; cursor: pointer; }
-    .chart-bar:hover { fill: #047857 !important; filter: drop-shadow(0 4px 8px rgba(5, 150, 105, 0.4)); }
+    .chart-bar { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
+    .chart-bar:hover, .chart-bar.active-bar { fill: #047857 !important; filter: drop-shadow(0 4px 10px rgba(5, 150, 105, 0.5)); transform: scaleY(1.03); }
+    .chart-point { cursor: pointer; transition: all 0.2s; }
+    .chart-point:hover { r: 7.5; }
 
     /* Metallic Emerald Wallet Card */
     .wallet-box-card { display: flex; flex-direction: column; justify-content: space-between; }
@@ -573,6 +620,18 @@ export class AccountDashboardComponent implements OnInit {
   failedTransactionsCount = 0;
   loading = true;
 
+  dailyVolumes: DailyVolume[] = [
+    { day: 'Mon', fullDay: 'Thứ Hai', amount: 750000, barHeight: 45, yPos: 80, xPos: 50 },
+    { day: 'Tue', fullDay: 'Thứ Ba', amount: 1000000, barHeight: 65, yPos: 60, xPos: 123 },
+    { day: 'Wed', fullDay: 'Thứ Tư', amount: 850000, barHeight: 50, yPos: 75, xPos: 196 },
+    { day: 'Thu', fullDay: 'Thứ Năm', amount: 1150000, barHeight: 77, yPos: 48, xPos: 269 },
+    { day: 'Fri', fullDay: 'Thứ Sáu', amount: 1400000, barHeight: 90, yPos: 35, xPos: 342 },
+    { day: 'Sat', fullDay: 'Thứ Bảy', amount: 1550000, barHeight: 103, yPos: 22, xPos: 415, isPeak: true },
+    { day: 'Sun', fullDay: 'Chủ Nhật', amount: 1500000, barHeight: 97, yPos: 28, xPos: 488 }
+  ];
+
+  activeDayData: DailyVolume = this.dailyVolumes[5]; // Default Sat Peak
+
   constructor(
     private accountService: AccountService,
     private transactionService: TransactionService,
@@ -582,6 +641,10 @@ export class AccountDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+  }
+
+  setActiveDay(item: DailyVolume): void {
+    this.activeDayData = item;
   }
 
   getDisplayName(): string {
