@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { Merchant } from '../../../core/models/merchant.model';
 import { MerchantFormComponent } from '../merchant-form/merchant-form.component';
@@ -7,115 +10,71 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
 @Component({
   selector: 'app-merchant-list',
   standalone: true,
-  imports: [CommonModule, MerchantFormComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MerchantFormComponent],
   template: `
-    <div class="space-y-6">
-      <!-- Top Title & Action Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/60 p-6 rounded-2xl border border-slate-700/60 backdrop-blur-xl">
-        <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-            <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h6m-6 4h6m-6 4h6" />
-              </svg>
-            </span>
-            Merchant Management
-          </h1>
-          <p class="text-slate-400 text-sm mt-1">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
+    <div class="console-page">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-title-group">
+          <h2>Merchant Management</h2>
+          <p class="header-subtitle">Manage registered business partners, webhooks, and automatic wallet provisions.</p>
         </div>
-
-        <button
-          (click)="openCreateModal()"
-          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 transition-all transform active:scale-95"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Register Merchant
+        <button mat-raised-button class="btn-primary" (click)="openCreateModal()">
+          <mat-icon class="btn-icon">add</mat-icon> Register Merchant
         </button>
       </div>
 
-      <!-- Merchant List Table Card -->
-      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl overflow-hidden backdrop-blur-xl shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+      <!-- Main Content Card / Table -->
+      <div class="table-card">
+        <div *ngIf="loading" class="loading-box">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loading" class="custom-table-wrapper">
+          <table class="paygate-table">
             <thead>
-              <tr class="border-b border-slate-700/60 bg-slate-800/80 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <th class="px-6 py-4">Merchant</th>
-                <th class="px-6 py-4">Code</th>
-                <th class="px-6 py-4">Contact</th>
-                <th class="px-6 py-4">Webhook URL</th>
-                <th class="px-6 py-4">Status</th>
-                <th class="px-6 py-4 text-right">Actions</th>
+              <tr>
+                <th>MERCHANT</th>
+                <th>CODE</th>
+                <th>CONTACT EMAIL</th>
+                <th>WEBHOOK URL</th>
+                <th>STATUS</th>
+                <th class="text-right">ACTIONS</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700/40 text-sm">
-              <tr *ngFor="let m of merchants" class="hover:bg-slate-700/30 transition-colors group">
-                <!-- Merchant Info -->
-                <td class="px-6 py-4 font-medium text-white">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                      {{ m.name.substring(0, 2).toUpperCase() }}
-                    </div>
+            <tbody>
+              <tr *ngFor="let m of merchants">
+                <td>
+                  <div class="merchant-cell">
+                    <div class="merchant-avatar">{{ m.name.substring(0, 2).toUpperCase() }}</div>
                     <div>
-                      <div class="font-semibold text-white">{{ m.name }}</div>
-                      <div class="text-xs text-slate-400">Account: {{ m.accountNumber || 'Pending' }}</div>
+                      <div class="font-bold">{{ m.name }}</div>
+                      <div class="text-muted text-xs">Account: {{ m.accountNumber || 'Pending' }}</div>
                     </div>
                   </div>
                 </td>
-
-                <!-- Code -->
-                <td class="px-6 py-4">
-                  <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 font-mono text-xs text-indigo-300">
-                    {{ m.merchantCode }}
-                  </span>
-                </td>
-
-                <!-- Contact -->
-                <td class="px-6 py-4 text-slate-300">
-                  <div>{{ m.contactEmail }}</div>
-                  <div class="text-xs text-slate-400">{{ m.contactPhone || 'No phone' }}</div>
-                </td>
-
-                <!-- Webhook URL -->
-                <td class="px-6 py-4 text-slate-300 max-w-xs truncate" [title]="m.webhookUrl">
-                  <span class="text-slate-400 font-mono text-xs">{{ m.webhookUrl }}</span>
-                </td>
-
-                <!-- Status -->
-                <td class="px-6 py-4">
+                <td><span class="code-badge">{{ m.merchantCode }}</span></td>
+                <td>{{ m.contactEmail }}</td>
+                <td class="max-w-url" [title]="m.webhookUrl"><span class="font-mono text-muted">{{ m.webhookUrl }}</span></td>
+                <td>
                   <span
-                    [ngClass]="{
-                      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': m.status === 'ACTIVE',
-                      'bg-amber-500/10 text-amber-400 border-amber-500/20': m.status === 'INACTIVE',
-                      'bg-rose-500/10 text-rose-400 border-rose-500/20': m.status === 'SUSPENDED'
-                    }"
-                    class="inline-flex items-center px-2.5 py-1 rounded-lg border text-xs font-semibold"
+                    [class.active]="m.status === 'ACTIVE'"
+                    [class.inactive]="m.status === 'INACTIVE'"
+                    [class.suspended]="m.status === 'SUSPENDED'"
+                    class="status-pill"
                   >
                     {{ m.status }}
                   </span>
                 </td>
-
-                <!-- Actions -->
-                <td class="px-6 py-4 text-right">
-                  <button
-                    (click)="openEditModal(m)"
-                    class="p-2 rounded-xl bg-slate-700/50 hover:bg-indigo-600/20 hover:text-indigo-400 text-slate-300 transition-all"
-                    title="Edit Merchant"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                <td class="text-right">
+                  <button mat-icon-button class="btn-icon-action" (click)="openEditModal(m)" title="Edit Merchant">
+                    <mat-icon class="icon-edit">edit</mat-icon>
                   </button>
                 </td>
               </tr>
 
-              <!-- Empty State -->
-              <tr *ngIf="!loading && merchants.length === 0">
-                <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h6m-6 4h6m-6 4h6" />
-                  </svg>
+              <tr *ngIf="merchants.length === 0">
+                <td colspan="6" class="text-center py-6 text-muted">
                   No merchants found. Click "Register Merchant" to create one.
                 </td>
               </tr>
@@ -124,25 +83,11 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
         </div>
 
         <!-- Pagination Bar -->
-        <div class="px-6 py-4 border-t border-slate-700/60 flex items-center justify-between bg-slate-800/40">
-          <div class="text-xs text-slate-400">
-            Showing page {{ currentPage + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} items)
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              [disabled]="currentPage === 0 || loading"
-              (click)="changePage(currentPage - 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-700/50 disabled:opacity-40 transition-all"
-            >
-              Previous
-            </button>
-            <button
-              [disabled]="currentPage >= totalPages - 1 || loading"
-              (click)="changePage(currentPage + 1)"
-              class="px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hover:bg-slate-700/50 disabled:opacity-40 transition-all"
-            >
-              Next
-            </button>
+        <div class="pagination-bar">
+          <span class="page-info">Showing page {{ currentPage + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} items)</span>
+          <div class="page-buttons">
+            <button mat-button class="btn-page" [disabled]="currentPage === 0 || loading" (click)="changePage(currentPage - 1)">Previous</button>
+            <button mat-button class="btn-page" [disabled]="currentPage >= totalPages - 1 || loading" (click)="changePage(currentPage + 1)">Next</button>
           </div>
         </div>
       </div>
@@ -155,7 +100,90 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
         (close)="showModal = false"
       ></app-merchant-form>
     </div>
-  `
+  `,
+  styles: [`
+    .console-page { display: flex; flex-direction: column; gap: 20px; padding: 4px; }
+    
+    .page-header {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .header-title-group h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+
+    .btn-primary {
+      background-color: #059669;
+      color: #ffffff;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      height: 38px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { background-color: #047857; }
+    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      overflow: hidden;
+    }
+    .loading-box { display: flex; justify-content: center; padding: 40px; }
+
+    .custom-table-wrapper { overflow-x: auto; }
+    .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; }
+    .paygate-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+    
+    .merchant-cell { display: flex; align-items: center; gap: 12px; }
+    .merchant-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #e0e7ff;
+      color: #4338ca;
+      font-weight: 800;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .code-badge { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #334155; font-weight: 700; }
+    .max-w-url { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    
+    .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .status-pill.active { background-color: #dcfce7; color: #15803d; }
+    .status-pill.inactive { background-color: #fef3c7; color: #b45309; }
+    .status-pill.suspended { background-color: #fee2e2; color: #b91c1c; }
+
+    .btn-icon-action { color: #64748b; }
+    .btn-icon-action:hover { color: #4338ca; background: #eef2ff; }
+    .icon-edit { font-size: 18px; width: 18px; height: 18px; }
+
+    .pagination-bar { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .page-info { font-size: 0.8rem; color: #64748b; }
+    .page-buttons { display: flex; gap: 8px; }
+    .btn-page { border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; height: 32px; color: #334155; }
+    
+    .font-bold { font-weight: 700; color: #0f172a; }
+    .text-muted { color: #64748b; }
+    .text-xs { font-size: 0.75rem; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+  `]
 })
 export class MerchantListComponent implements OnInit {
   merchants: Merchant[] = [];

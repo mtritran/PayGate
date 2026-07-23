@@ -84,18 +84,9 @@ import { AuthService } from '../../core/services/auth.service';
               <mat-icon matListItemIcon class="nav-icon">rss_feed</mat-icon>
               <span matListItemTitle class="nav-title">Webhook Logs</span>
             </a>
-          </mat-nav-list>
-
-          <!-- General Section -->
-          <div class="nav-section-label">General</div>
-          <mat-nav-list class="custom-nav-list">
             <a mat-list-item routerLink="/users" routerLinkActive="active">
-              <mat-icon matListItemIcon class="nav-icon">description</mat-icon>
-              <span matListItemTitle class="nav-title">API Docs</span>
-            </a>
-            <a mat-list-item routerLink="/users" routerLinkActive="active">
-              <mat-icon matListItemIcon class="nav-icon">settings</mat-icon>
-              <span matListItemTitle class="nav-title">Settings</span>
+              <mat-icon matListItemIcon class="nav-icon">people</mat-icon>
+              <span matListItemTitle class="nav-title">Users</span>
             </a>
           </mat-nav-list>
         </div>

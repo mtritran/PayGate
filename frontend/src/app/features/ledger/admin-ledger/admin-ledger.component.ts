@@ -1,153 +1,125 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/ledger.model';
 
 @Component({
   selector: 'app-admin-ledger',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CurrencyPipe,
+    DatePipe,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],
   template: `
-    <div class="space-y-6">
-      <!-- Title & Audit Action Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/60 p-6 rounded-2xl border border-slate-700/60 backdrop-blur-xl">
-        <div>
-          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-            <span class="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </span>
-            Double-Entry Ledger Audit
-          </h1>
-          <p class="text-slate-400 text-sm mt-1">Audit system-wide financial integrity by verifying total DEBIT balance equals total CREDIT balance.</p>
+    <div class="console-page">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-title-group">
+          <h2>Double-Entry Ledger Audit</h2>
+          <p class="header-subtitle">Verify total DEBIT balance equals total CREDIT balance to audit financial integrity.</p>
         </div>
-
-        <button
-          (click)="runAudit()"
-          [disabled]="loadingAudit"
-          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 disabled:opacity-50"
-        >
-          <svg *ngIf="loadingAudit" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <svg *ngIf="!loadingAudit" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          {{ loadingAudit ? 'Auditing...' : 'Run Ledger Verification' }}
+        <button mat-raised-button class="btn-primary" [disabled]="loadingAudit" (click)="runAudit()">
+          <mat-icon class="btn-icon">verified</mat-icon>
+          {{ loadingAudit ? 'Auditing...' : 'Run Ledger Audit' }}
         </button>
       </div>
 
-      <!-- Audit Results Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6" *ngIf="auditResult">
+      <!-- Audit Metrics Grid -->
+      <div class="metrics-grid" *ngIf="auditResult">
         <!-- Status Card -->
-        <div
-          [ngClass]="auditResult.balanced ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'"
-          class="p-6 rounded-2xl border backdrop-blur-xl flex flex-col justify-between shadow-lg"
-        >
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Ledger Integrity Status</span>
-            <span
-              [ngClass]="auditResult.balanced ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'"
-              class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-            >
-              {{ auditResult.balanced ? 'BALANCED' : 'INTEGRITY VIOLATION' }}
-            </span>
+        <div class="metric-card" [class.balanced]="auditResult.balanced" [class.unbalanced]="!auditResult.balanced">
+          <div class="metric-header">
+            <span class="metric-label">INTEGRITY STATUS</span>
+            <mat-icon class="metric-icon">{{ auditResult.balanced ? 'check_circle' : 'error' }}</mat-icon>
           </div>
-          <div class="mt-4">
-            <div class="text-xl font-bold text-white">{{ auditResult.message }}</div>
-            <div class="text-xs text-slate-400 mt-1">Verified at: {{ auditResult.verifiedAt | date:'medium' }}</div>
-          </div>
+          <div class="metric-value">{{ auditResult.balanced ? 'BALANCED' : 'UNBALANCED' }}</div>
+          <div class="metric-footer">{{ auditResult.message }}</div>
         </div>
 
-        <!-- Total Debit Card -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg">
-          <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Debit Volume</span>
-          <div class="text-2xl font-bold text-indigo-400 mt-2">
-            {{ auditResult.totalDebit | number:'1.2-2' }} <span class="text-sm font-normal text-slate-400">VND</span>
+        <!-- Total Debit -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">TOTAL DEBIT VOLUME</span>
+            <mat-icon class="metric-icon blue">trending_up</mat-icon>
           </div>
-          <p class="text-xs text-slate-500 mt-1">Sum of all DEBIT entries recorded in system.</p>
+          <div class="metric-value">{{ auditResult.totalDebit | currency:'VND':'symbol':'1.0-0' }}</div>
+          <div class="metric-footer text-muted">Sum of all DEBIT journal entries</div>
         </div>
 
-        <!-- Total Credit Card -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg">
-          <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Credit Volume</span>
-          <div class="text-2xl font-bold text-purple-400 mt-2">
-            {{ auditResult.totalCredit | number:'1.2-2' }} <span class="text-sm font-normal text-slate-400">VND</span>
+        <!-- Total Credit -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">TOTAL CREDIT VOLUME</span>
+            <mat-icon class="metric-icon purple">trending_down</mat-icon>
           </div>
-          <p class="text-xs text-slate-500 mt-1">Sum of all CREDIT entries recorded in system.</p>
+          <div class="metric-value">{{ auditResult.totalCredit | currency:'VND':'symbol':'1.0-0' }}</div>
+          <div class="metric-footer text-muted">Sum of all CREDIT journal entries</div>
         </div>
       </div>
 
-      <!-- Account Lookup Section -->
-      <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Account Journal Entry History
-          </h2>
+      <!-- Account History Lookup Card -->
+      <div class="table-card">
+        <div class="lookup-bar">
+          <div class="lookup-title">
+            <mat-icon class="lookup-icon">search</mat-icon>
+            <span>Account Journal History Lookup</span>
+          </div>
 
-          <div class="flex items-center gap-3">
+          <div class="lookup-inputs">
             <input
               type="number"
               [(ngModel)]="searchAccountId"
               placeholder="Enter Account ID (e.g. 1)"
-              class="bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="lookup-input"
             />
-            <button
-              (click)="lookupAccountEntries()"
-              [disabled]="!searchAccountId || loadingEntries"
-              class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-all disabled:opacity-40"
-            >
-              Lookup
+            <button mat-button class="btn-lookup" [disabled]="!searchAccountId || loadingEntries" (click)="lookupAccountEntries()">
+              Lookup History
             </button>
           </div>
         </div>
 
-        <!-- Entries Table -->
-        <div class="overflow-x-auto border border-slate-700/60 rounded-xl">
-          <table class="w-full text-left border-collapse">
+        <div *ngIf="loadingEntries" class="loading-box">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingEntries" class="custom-table-wrapper">
+          <table class="paygate-table">
             <thead>
-              <tr class="border-b border-slate-700/60 bg-slate-800/80 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <th class="px-6 py-3">ID</th>
-                <th class="px-6 py-3">Transaction ID</th>
-                <th class="px-6 py-3">Type</th>
-                <th class="px-6 py-3">Amount</th>
-                <th class="px-6 py-3">Balance After</th>
-                <th class="px-6 py-3">Timestamp</th>
+              <tr>
+                <th>ENTRY ID</th>
+                <th>TRANSACTION ID</th>
+                <th>ENTRY TYPE</th>
+                <th>AMOUNT</th>
+                <th>BALANCE AFTER</th>
+                <th>TIMESTAMP</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-700/40 text-sm">
-              <tr *ngFor="let entry of entries" class="hover:bg-slate-700/30 transition-colors">
-                <td class="px-6 py-4 font-mono text-slate-400 text-xs">#{{ entry.id }}</td>
-                <td class="px-6 py-4 font-mono text-indigo-300 text-xs">TXN-{{ entry.transactionId }}</td>
-                <td class="px-6 py-4">
-                  <span
-                    [ngClass]="entry.entryType === 'DEBIT' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'"
-                    class="inline-flex items-center px-2.5 py-0.5 rounded-md border text-xs font-bold"
-                  >
+            <tbody>
+              <tr *ngFor="let entry of entries">
+                <td class="font-mono">#{{ entry.id }}</td>
+                <td class="font-mono text-indigo">TXN-{{ entry.transactionId }}</td>
+                <td>
+                  <span [class.debit]="entry.entryType === 'DEBIT'" [class.credit]="entry.entryType === 'CREDIT'" class="type-pill">
                     {{ entry.entryType }}
                   </span>
                 </td>
-                <td class="px-6 py-4 font-semibold text-white">
-                  {{ entry.amount | number:'1.2-2' }} VND
-                </td>
-                <td class="px-6 py-4 text-slate-300">
-                  {{ entry.balanceAfter | number:'1.2-2' }} VND
-                </td>
-                <td class="px-6 py-4 text-slate-400 text-xs">
-                  {{ entry.createdAt | date:'medium' }}
-                </td>
+                <td class="font-bold">{{ entry.amount | currency:'VND':'symbol':'1.0-0' }}</td>
+                <td>{{ entry.balanceAfter | currency:'VND':'symbol':'1.0-0' }}</td>
+                <td class="text-muted text-xs">{{ entry.createdAt | date:'medium' }}</td>
               </tr>
 
-              <!-- Empty State -->
-              <tr *ngIf="!loadingEntries && entries.length === 0">
-                <td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">
-                  Enter an Account ID above and click Lookup to view journal entries.
+              <tr *ngIf="entries.length === 0">
+                <td colspan="6" class="text-center py-6 text-muted">
+                  Enter an Account ID above and click "Lookup History" to view journal entries.
                 </td>
               </tr>
             </tbody>
@@ -155,7 +127,94 @@ import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/le
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .console-page { display: flex; flex-direction: column; gap: 20px; padding: 4px; }
+    
+    .page-header {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .header-title-group h2 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+    .header-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+
+    .btn-primary {
+      background-color: #059669;
+      color: #ffffff;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      height: 38px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { background-color: #047857; }
+    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    /* Metrics Grid */
+    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .metric-card.balanced { border-color: #a7f3d0; background: #f0fdf4; }
+    .metric-card.balanced .metric-value { color: #15803d; }
+    .metric-card.balanced .metric-icon { color: #16a34a; }
+    
+    .metric-card.unbalanced { border-color: #fecaca; background: #fef2f2; }
+    .metric-card.unbalanced .metric-value { color: #b91c1c; }
+    .metric-card.unbalanced .metric-icon { color: #dc2626; }
+
+    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .metric-label { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
+    .metric-icon { font-size: 20px; width: 20px; height: 20px; }
+    .metric-icon.blue { color: #0284c7; }
+    .metric-icon.purple { color: #8b5cf6; }
+    .metric-value { font-size: 1.45rem; font-weight: 800; color: #0f172a; }
+    .metric-footer { font-size: 0.75rem; margin-top: 6px; }
+
+    /* Lookup Table Card */
+    .table-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); overflow: hidden; }
+    .lookup-bar { padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .lookup-title { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+    .lookup-icon { color: #4f46e5; font-size: 20px; width: 20px; height: 20px; }
+    
+    .lookup-inputs { display: flex; gap: 8px; }
+    .lookup-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; outline: none; width: 220px; }
+    .lookup-input:focus { border-color: #4f46e5; }
+    .btn-lookup { background: #4f46e5; color: #ffffff; font-weight: 600; font-size: 0.825rem; border-radius: 6px; height: 34px; }
+    .btn-lookup:hover { background: #4338ca; }
+
+    .loading-box { display: flex; justify-content: center; padding: 40px; }
+
+    .custom-table-wrapper { overflow-x: auto; }
+    .paygate-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+    .paygate-table th { padding: 14px 18px; font-size: 0.72rem; font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; letter-spacing: 0.04em; }
+    .paygate-table td { padding: 16px 18px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+    
+    .type-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; }
+    .type-pill.debit { background-color: #e0f2fe; color: #0369a1; }
+    .type-pill.credit { background-color: #dcfce7; color: #15803d; }
+
+    .font-mono { font-family: monospace; font-size: 0.825rem; font-weight: 700; }
+    .text-indigo { color: #4338ca; }
+    .font-bold { font-weight: 700; color: #0f172a; }
+    .text-muted { color: #64748b; }
+    .text-xs { font-size: 0.75rem; }
+    .text-center { text-align: center; }
+    .py-6 { padding-top: 24px; padding-bottom: 24px; }
+  `]
 })
 export class AdminLedgerComponent implements OnInit {
   auditResult: LedgerVerificationResponse | null = null;

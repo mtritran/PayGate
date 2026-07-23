@@ -1,179 +1,315 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { WebhookLogService } from '../../../core/services/webhook-log.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink,
+    CurrencyPipe,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],
   template: `
-    <div class="space-y-8">
-      <!-- Welcome Header -->
-      <div class="bg-gradient-to-r from-indigo-900/60 via-slate-800/80 to-purple-900/60 p-8 rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <span class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
-              System Administration
-            </span>
-            <h1 class="text-3xl font-extrabold text-white mt-3 tracking-tight">PayGate Operational Dashboard</h1>
-            <p class="text-slate-300 text-sm mt-2 max-w-xl">
-              Monitor real-time transaction processing, system double-entry balance integrity, and webhook delivery status.
-            </p>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <a
-              routerLink="/admin/ledger"
-              class="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Run Ledger Audit
-            </a>
-            <a
-              routerLink="/admin/merchants"
-              class="px-5 py-3 rounded-2xl bg-slate-700/80 hover:bg-slate-600 text-white font-semibold text-sm transition-all flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h6m-6 4h6m-6 4h6" />
-              </svg>
-              Merchants
-            </a>
-          </div>
+    <div class="console-dashboard">
+      <!-- Welcome Header Banner -->
+      <div class="welcome-header">
+        <div class="welcome-title-group">
+          <div class="role-badge">SYSTEM ADMINISTRATION CONSOLE</div>
+          <h2>PayGate Operational Overview</h2>
+          <p class="welcome-subtitle">Real-time monitoring of merchant onboardings, double-entry ledger balance, and webhook dispatches.</p>
+        </div>
+        <div class="header-action-buttons">
+          <a mat-button class="btn-secondary" routerLink="/admin/merchants">
+            <mat-icon class="btn-icon">storefront</mat-icon> Merchants
+          </a>
+          <a mat-raised-button class="btn-primary" routerLink="/admin/ledger">
+            <mat-icon class="btn-icon">account_balance</mat-icon> Run Ledger Audit
+          </a>
         </div>
       </div>
 
-      <!-- Metric Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Metric 1: Total Merchants -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg hover:border-indigo-500/30 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Merchants</span>
-            <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h6m-6 4h6m-6 4h6" />
-              </svg>
-            </div>
-          </div>
-          <div class="text-3xl font-bold text-white mt-3">{{ totalMerchants }}</div>
-          <p class="text-xs text-emerald-400 mt-2 font-medium">✓ Provisioned & Active</p>
-        </div>
-
-        <!-- Metric 2: Double-Entry Integrity -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg hover:border-emerald-500/30 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ledger Balance</span>
-            <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-          <div class="text-2xl font-bold text-emerald-400 mt-3">{{ ledgerBalanced ? 'BALANCED' : 'UNBALANCED' }}</div>
-          <p class="text-xs text-slate-400 mt-2 font-mono">DEBIT == CREDIT</p>
-        </div>
-
-        <!-- Metric 3: Webhook Retries -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg hover:border-amber-500/30 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending Webhooks</span>
-            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-          </div>
-          <div class="text-3xl font-bold text-amber-400 mt-3">{{ pendingWebhooks }}</div>
-          <p class="text-xs text-slate-400 mt-2">Scheduled Backoff Retries</p>
-        </div>
-
-        <!-- Metric 4: System Health -->
-        <div class="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl shadow-lg hover:border-purple-500/30 transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">System Health</span>
-            <div class="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
-          <div class="text-2xl font-bold text-purple-300 mt-3">OPERATIONAL</div>
-          <p class="text-xs text-slate-400 mt-2">RabbitMQ • Redis • Postgres</p>
-        </div>
+      <div *ngIf="loading" class="loading-box">
+        <mat-spinner diameter="40"></mat-spinner>
       </div>
 
-      <!-- Quick Navigation Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a routerLink="/admin/merchants" class="bg-slate-800/60 hover:bg-slate-700/50 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl transition-all group">
-          <div class="text-indigo-400 font-semibold flex items-center justify-between text-base">
-            Merchant Management
-            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
+      <div *ngIf="!loading" class="dashboard-body">
+        <!-- 4 Core Metric Cards Grid -->
+        <div class="metrics-grid">
+          <!-- Metric 1: Active Merchants -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">ACTIVE MERCHANTS</span>
+              <mat-icon class="metric-icon blue">storefront</mat-icon>
+            </div>
+            <div class="metric-value">{{ totalMerchants }}</div>
+            <div class="metric-footer success">✓ Provisioned & Active</div>
           </div>
-          <p class="text-xs text-slate-400 mt-2">Register new business partners and configure webhook URLs.</p>
-        </a>
 
-        <a routerLink="/admin/ledger" class="bg-slate-800/60 hover:bg-slate-700/50 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl transition-all group">
-          <div class="text-purple-400 font-semibold flex items-center justify-between text-base">
-            Double-Entry Ledger Audit
-            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
+          <!-- Metric 2: Double-Entry Ledger Balance -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">LEDGER BALANCE</span>
+              <mat-icon class="metric-icon green">verified_user</mat-icon>
+            </div>
+            <div class="metric-value" [class.text-green]="ledgerBalanced" [class.text-red]="!ledgerBalanced">
+              {{ ledgerBalanced ? 'BALANCED' : 'UNBALANCED' }}
+            </div>
+            <div class="metric-footer muted">DEBIT == CREDIT (Integrity OK)</div>
           </div>
-          <p class="text-xs text-slate-400 mt-2">Verify double-entry ledger balance integrity and account journals.</p>
-        </a>
 
-        <a routerLink="/admin/webhooks" class="bg-slate-800/60 hover:bg-slate-700/50 border border-slate-700/60 p-6 rounded-2xl backdrop-blur-xl transition-all group">
-          <div class="text-amber-400 font-semibold flex items-center justify-between text-base">
-            Webhook Logs & Retries
-            <svg class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
+          <!-- Metric 3: Pending Webhook Retries -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">PENDING WEBHOOKS</span>
+              <mat-icon class="metric-icon amber">rss_feed</mat-icon>
+            </div>
+            <div class="metric-value text-amber">{{ pendingWebhooks }}</div>
+            <div class="metric-footer muted">Scheduled Backoff Retries</div>
           </div>
-          <p class="text-xs text-slate-400 mt-2">Inspect outbound HTTP webhook status codes and delivery history.</p>
-        </a>
+
+          <!-- Metric 4: System Health -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">SYSTEM HEALTH</span>
+              <mat-icon class="metric-icon purple">health_and_safety</mat-icon>
+            </div>
+            <div class="metric-value text-purple">OPERATIONAL</div>
+            <div class="metric-footer muted">Postgres • RabbitMQ • Redis</div>
+          </div>
+        </div>
+
+        <!-- Quick Navigation Cards Grid -->
+        <div class="quick-nav-section">
+          <h3 class="section-title">Admin Operational Modules</h3>
+          <div class="quick-nav-grid">
+            <!-- Card 1: Merchant Management -->
+            <a routerLink="/admin/merchants" class="nav-card">
+              <div class="nav-card-header">
+                <mat-icon class="nav-card-icon indigo">storefront</mat-icon>
+                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+              </div>
+              <h4 class="nav-card-title">Merchant Management</h4>
+              <p class="nav-card-desc">Register new business partners, manage API keys, auto-provision merchant wallets, and update webhook endpoints.</p>
+            </a>
+
+            <!-- Card 2: Double-Entry Ledger Audit -->
+            <a routerLink="/admin/ledger" class="nav-card">
+              <div class="nav-card-header">
+                <mat-icon class="nav-card-icon purple">account_balance</mat-icon>
+                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+              </div>
+              <h4 class="nav-card-title">Double-Entry Ledger Audit</h4>
+              <p class="nav-card-desc">Execute real-time double-entry ledger balance integrity verification and inspect account journal history.</p>
+            </a>
+
+            <!-- Card 3: Webhook Logs & Retries -->
+            <a routerLink="/admin/webhooks" class="nav-card">
+              <div class="nav-card-header">
+                <mat-icon class="nav-card-icon amber">rss_feed</mat-icon>
+                <mat-icon class="nav-card-arrow">arrow_forward</mat-icon>
+              </div>
+              <h4 class="nav-card-title">Webhook Logs & Retries</h4>
+              <p class="nav-card-desc">Audit outbound HTTP notification webhooks, inspect payload JSON data, and filter delivery attempts by status.</p>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .console-dashboard { display: flex; flex-direction: column; gap: 24px; padding: 4px; }
+    
+    /* Header Banner */
+    .welcome-header {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .role-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #4f46e5;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+    }
+    .welcome-title-group h2 { margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; }
+    .welcome-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.875rem; }
+    
+    .header-action-buttons { display: flex; gap: 12px; align-items: center; }
+    .btn-secondary {
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      height: 38px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover { background-color: #f8fafc; }
+    .btn-primary {
+      background-color: #4f46e5;
+      color: #ffffff;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      height: 38px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { background-color: #4338ca; }
+    .btn-icon { font-size: 18px; width: 18px; height: 18px; }
+
+    .loading-box { display: flex; justify-content: center; padding: 40px; }
+    .dashboard-body { display: flex; flex-direction: column; gap: 28px; }
+
+    /* Top 4 Metrics Cards */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .metric-label { font-size: 0.72rem; font-weight: 700; color: #64748b; letter-spacing: 0.04em; }
+    .metric-icon { font-size: 20px; width: 20px; height: 20px; }
+    .metric-icon.green { color: #059669; }
+    .metric-icon.blue { color: #0284c7; }
+    .metric-icon.purple { color: #8b5cf6; }
+    .metric-icon.amber { color: #d97706; }
+    
+    .metric-value { font-size: 1.45rem; font-weight: 800; color: #0f172a; }
+    .metric-value.text-green { color: #059669; }
+    .metric-value.text-red { color: #dc2626; }
+    .metric-value.text-amber { color: #d97706; }
+    .metric-value.text-purple { color: #7c3aed; }
+    
+    .metric-footer { font-size: 0.75rem; margin-top: 6px; }
+    .metric-footer.success { color: #059669; font-weight: 600; }
+    .metric-footer.muted { color: #64748b; }
+
+    /* Quick Navigation Cards Section */
+    .quick-nav-section { display: flex; flex-direction: column; gap: 14px; }
+    .section-title { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0; }
+    .quick-nav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    
+    .nav-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      text-decoration: none;
+      transition: all 0.2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+    }
+    .nav-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .nav-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .nav-card-icon { font-size: 24px; width: 24px; height: 24px; }
+    .nav-card-icon.indigo { color: #4f46e5; }
+    .nav-card-icon.purple { color: #7c3aed; }
+    .nav-card-icon.amber { color: #d97706; }
+    .nav-card-arrow { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; transition: transform 0.2s; }
+    .nav-card:hover .nav-card-arrow { transform: translateX(3px); color: #0f172a; }
+    
+    .nav-card-title { margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+    .nav-card-desc { margin: 0; font-size: 0.825rem; color: #64748b; line-height: 1.45; }
+
+    @media (max-width: 1024px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .quick-nav-grid { grid-template-columns: 1fr; }
+    }
+  `]
 })
 export class AdminDashboardComponent implements OnInit {
   totalMerchants = 0;
   ledgerBalanced = true;
   pendingWebhooks = 0;
+  loading = true;
 
   constructor(
     private merchantService: MerchantService,
     private ledgerService: LedgerService,
-    private webhookLogService: WebhookLogService
+    private webhookLogService: WebhookLogService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.loadMetrics();
   }
 
-  loadMetrics(): void {
-    this.merchantService.getAll(0, 1).subscribe(res => {
-      if (res.success && res.data) {
-        this.totalMerchants = res.data.totalElements;
+  private loadMetrics(): void {
+    this.loading = true;
+    let completedCalls = 0;
+    const checkDone = () => {
+      completedCalls++;
+      if (completedCalls >= 3) {
+        this.loading = false;
       }
+    };
+
+    this.merchantService.getAll(0, 1).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.totalMerchants = res.data.totalElements;
+        }
+        checkDone();
+      },
+      error: () => checkDone()
     });
 
-    this.ledgerService.verifyLedger().subscribe(res => {
-      if (res.success && res.data) {
-        this.ledgerBalanced = res.data.balanced;
-      }
+    this.ledgerService.verifyLedger().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.ledgerBalanced = res.data.balanced;
+        }
+        checkDone();
+      },
+      error: () => checkDone()
     });
 
-    this.webhookLogService.getLogs(0, 1, 'RETRYING').subscribe(res => {
-      if (res.success && res.data) {
-        this.pendingWebhooks = res.data.totalElements;
-      }
+    this.webhookLogService.getLogs(0, 1, 'RETRYING').subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.pendingWebhooks = res.data.totalElements;
+        }
+        checkDone();
+      },
+      error: () => checkDone()
     });
   }
 }
