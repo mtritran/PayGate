@@ -59,7 +59,12 @@ public class AiServiceImpl implements AiService {
         String prompt = request.getPrompt();
         log.info("Processing AI Chat prompt via OpenRouter model={} for user={}", model, username);
 
-        String financialContext = buildFinancialContext(username);
+        String financialContext = "";
+        try {
+            financialContext = buildFinancialContext(username);
+        } catch (Exception e) {
+            log.warn("Failed to build financial context for user={}: {}", username, e.getMessage());
+        }
         String replyText = callOpenRouterApi(prompt, financialContext);
 
         Long suggestedAmount = extractAmount(prompt);
@@ -94,7 +99,13 @@ public class AiServiceImpl implements AiService {
         if (username == null) return "";
 
         try {
-            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsernameIgnoreCase(username);
+            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                List<com.training.paygate.entity.User> users = userRepository.findAllByUsernameIgnoreCase(username);
+                if (!users.isEmpty()) {
+                    userOpt = Optional.of(users.get(0));
+                }
+            }
             if (userOpt.isEmpty()) {
                 log.warn("User not found by username={}", username);
                 return "";
