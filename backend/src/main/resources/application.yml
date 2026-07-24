@@ -55,6 +55,11 @@ jwt:
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:}
+  model: ${OPENROUTER_MODEL:meta-llama/llama-3.3-70b-instruct:free}
+  api-url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1/chat/completions}
+
 server:
   port: 8080
 

@@ -4,12 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AccountService } from '../../../core/services/account.service';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { AiService } from '../../../core/services/ai.service';
 
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'ai';
   text: string;
   timestamp: Date;
+  modelUsed?: string;
   actionButton?: {
     text: string;
     route: string;
@@ -56,8 +58,8 @@ export interface ChatMessage {
               </svg>
             </div>
             <div class="header-text">
-              <span class="title">PayGate AI Assistant</span>
-              <span class="status"><span class="green-dot"></span> Online - Trợ lý tài chính 24/7</span>
+              <span class="title">PayGate AI (OpenRouter)</span>
+              <span class="status"><span class="green-dot"></span> Online - OpenRouter Free Engine</span>
             </div>
           </div>
 
@@ -81,7 +83,7 @@ export interface ChatMessage {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-sparkle">
                 <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
               </svg>
-              PayGate AI
+              PayGate AI <span class="model-tag" *ngIf="msg.modelUsed">[{{ msg.modelUsed }}]</span>
             </div>
 
             <div class="bubble-content" [innerHTML]="formatMessageText(msg.text)"></div>
@@ -129,7 +131,7 @@ export interface ChatMessage {
           <input 
             type="text" 
             class="chat-input" 
-            placeholder="Hỏi AI (VD: Chuyển 200k cho PAY0000000004)..." 
+            placeholder="Hỏi OpenRouter AI (VD: Chuyển 200k cho PAY0000000004)..." 
             [(ngModel)]="userInputText"
             (keyup.enter)="sendMessage()"
           />
@@ -306,6 +308,7 @@ export interface ChatMessage {
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
+    .model-tag { font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: none; }
     .mini-sparkle { width: 12px; height: 12px; }
 
     .bubble-content {
@@ -452,6 +455,7 @@ export interface ChatMessage {
   `]
 })
 export class AiAssistantComponent implements OnInit {
+  private aiService = inject(AiService);
   private accountService = inject(AccountService);
   private transactionService = inject(TransactionService);
   private router = inject(Router);
@@ -464,7 +468,7 @@ export class AiAssistantComponent implements OnInit {
     {
       id: 'init-1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là **PayGate AI Assistant**. Tôi có thể giúp bạn kiểm tra chi tiêu, tính toán tổng giao dịch hoặc tự động điền đơn chuyển tiền nhanh chóng.',
+      text: 'Xin chào! Tôi là **PayGate AI Assistant (OpenRouter Engine)**. Tôi có thể giúp bạn kiểm tra chi tiêu, tính toán tổng giao dịch hoặc tự động điền đơn chuyển tiền nhanh chóng.',
       timestamp: new Date()
     }
   ]);
@@ -503,17 +507,46 @@ export class AiAssistantComponent implements OnInit {
     this.userInputText = '';
     this.isThinking.set(true);
 
-    // Simulate AI Intent Recognition
-    setTimeout(() => {
-      this.processAiResponse(text);
-      this.isThinking.set(false);
-    }, 650);
+    // Send chat prompt to Backend OpenRouter AI endpoint
+    this.aiService.chat(text).subscribe({
+      next: (res: any) => {
+        this.isThinking.set(false);
+        const data = res.data || res;
+        const reply = data.reply || 'Dịch vụ AI đang xử lý...';
+        const model = data.modelUsed || 'OpenRouter AI';
+
+        let actionBtn: any = undefined;
+        if (data.suggestedAmount || data.suggestedRecipient) {
+          const formattedAmountStr = data.suggestedAmount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.suggestedAmount) : 'Chuyển ngay';
+          actionBtn = {
+            text: `Chuyển ngay ${formattedAmountStr} ➔`,
+            route: '/transactions/send',
+            queryParams: { amount: data.suggestedAmount, recipient: data.suggestedRecipient }
+          };
+        }
+
+        const aiMsg: ChatMessage = {
+          id: Date.now().toString(),
+          sender: 'ai',
+          text: reply,
+          modelUsed: model,
+          timestamp: new Date(),
+          actionButton: actionBtn
+        };
+
+        this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
+      },
+      error: (err: any) => {
+        this.isThinking.set(false);
+        // Fallback local processing if backend is offline
+        this.processLocalFallbackResponse(text);
+      }
+    });
   }
 
-  private processAiResponse(input: string): void {
+  private processLocalFallbackResponse(input: string): void {
     const lower = input.toLowerCase();
 
-    // Intent 1: Money Transfer Auto-fill (e.g. "Chuyển 200k cho PAY0000000004" or "Chuyển 50000 cho 0988123456")
     if (lower.includes('chuyển') || lower.includes('chuyen') || lower.includes('pay') || lower.includes('gửi')) {
       const parsed = this.extractTransferDetails(input);
       if (parsed.amount || parsed.recipient) {
@@ -523,7 +556,7 @@ export class AiAssistantComponent implements OnInit {
         const aiMsg: ChatMessage = {
           id: Date.now().toString(),
           sender: 'ai',
-          text: `Tôi đã nhận diện lệnh chuyển tiền của bạn:\n• Số tiền: **${formattedAmountStr}**\n• Người nhận: **${recipientStr}**\n\nTôi đã chuẩn bị xong thông tin. Bấm nút bên dưới để tự động mở trang chuyển tiền!`,
+          text: `Tôi đã nhận diện lệnh chuyển tiền của bạn:\n• Số tiền: **${formattedAmountStr}**\n• Người nhận: **${recipientStr}**\n\nBấm nút bên dưới để mở form chuyển tiền!`,
           timestamp: new Date(),
           actionButton: {
             text: `Chuyển ngay ${formattedAmountStr} ➔`,
@@ -536,95 +569,10 @@ export class AiAssistantComponent implements OnInit {
       }
     }
 
-    // Intent 2: Volume / Expense Summary ("Chi bao nhiêu", "7 ngày", "tổng giao dịch")
-    if (lower.includes('chi bao nhiêu') || lower.includes('tổng') || lower.includes('7 ngày') || lower.includes('thống kê')) {
-      this.transactionService.getMyTransactions({ page: 0, size: 100 }).subscribe({
-        next: (res: any) => {
-          const content = res.content || (res.data && res.data.content) || [];
-          const totalVol = content
-            .filter((t: any) => t.status === 'COMPLETED')
-            .reduce((acc: number, t: any) => acc + (t.amount || 0), 0);
-          
-          const formattedVol = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalVol);
-
-          const aiMsg: ChatMessage = {
-            id: Date.now().toString(),
-            sender: 'ai',
-            text: `Đây là tổng hợp giao dịch gần đây của bạn:`,
-            timestamp: new Date(),
-            statBadge: {
-              title: 'Tổng chi tiêu gần đây',
-              value: formattedVol,
-              subtitle: `Dựa trên ${content.length} giao dịch thành công`
-            }
-          };
-          this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-        },
-        error: () => {
-          const aiMsg: ChatMessage = {
-            id: Date.now().toString(),
-            sender: 'ai',
-            text: 'Tổng số tiền giao dịch 7 ngày qua của bạn được cập nhật trực tiếp tại trang **Account Dashboard**.',
-            timestamp: new Date(),
-            actionButton: { text: 'Xem Bảng Dashboard ➔', route: '/dashboard' }
-          };
-          this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-        }
-      });
-      return;
-    }
-
-    // Intent 3: Balance Query ("Số dư", "tài khoản", "ví")
-    if (lower.includes('số dư') || lower.includes('so du') || lower.includes('tài khoản') || lower.includes('ví')) {
-      this.accountService.getAccountMe().subscribe({
-        next: (res: any) => {
-          const acc = res.data || res;
-          const formattedBalance = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(acc.balance || 0);
-          const aiMsg: ChatMessage = {
-            id: Date.now().toString(),
-            sender: 'ai',
-            text: `Số dư khả dụng hiện tại trong Ví PayGate của bạn:`,
-            timestamp: new Date(),
-            statBadge: {
-              title: 'Số dư khả dụng',
-              value: formattedBalance,
-              subtitle: `Tài khoản số: ${acc.accountNumber}`
-            }
-          };
-          this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-        },
-        error: () => {
-          const aiMsg: ChatMessage = {
-            id: Date.now().toString(),
-            sender: 'ai',
-            text: 'Bạn có thể xem chi tiết số dư tại trang Dashboard cá nhân.',
-            timestamp: new Date(),
-            actionButton: { text: 'Đến trang Dashboard ➔', route: '/dashboard' }
-          };
-          this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-        }
-      });
-      return;
-    }
-
-    // Intent 4: Top up / VietQR guide
-    if (lower.includes('nạp') || lower.includes('nap') || lower.includes('vietqr') || lower.includes('qr')) {
-      const aiMsg: ChatMessage = {
-        id: Date.now().toString(),
-        sender: 'ai',
-        text: 'Bạn có thể nạp tiền vào ví PayGate bằng cách chọn các Ngân hàng liên kết (MB, Vietcombank...) hoặc Quét mã VietQR 24/7.',
-        timestamp: new Date(),
-        actionButton: { text: 'Đến trang Nạp tiền VietQR ➔', route: '/accounts/topup' }
-      };
-      this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-      return;
-    }
-
-    // Default Fallback
     const fallbackMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'ai',
-      text: 'Tôi có thể hỗ trợ bạn:\n1. Tự động điền đơn chuyển tiền (Gõ: *Chuyển 200k cho PAY0000000004*)\n2. Kiểm tra tổng chi tiêu 7 ngày qua\n3. Trả cứu số dư ví tức thì.',
+      text: 'Tôi là Trợ lý AI PayGate kết nối OpenRouter. Bạn có thể yêu cầu tôi chuyển tiền (Gõ: *Chuyển 200k cho PAY0000000004*), tra cứu số dư hoặc tổng chi tiêu.',
       timestamp: new Date()
     };
     this.messages.update((list: ChatMessage[]) => [...list, fallbackMsg]);
@@ -634,7 +582,6 @@ export class AiAssistantComponent implements OnInit {
     let amount: number | null = null;
     let recipient: string | null = null;
 
-    // Extract amount: e.g., 200k, 200.000, 50k, 100000, 1tr
     const kMatch = text.match(/(\d+)\s*(k|kđ|tr|triệu|000)/i);
     if (kMatch) {
       const num = parseInt(kMatch[1], 10);
@@ -651,7 +598,6 @@ export class AiAssistantComponent implements OnInit {
       }
     }
 
-    // Extract recipient: PAY0000000004 or 10-digit phone number 0988123456
     const payMatch = text.match(/(PAY\d{10})/i);
     const phoneMatch = text.match(/(0\d{9})/);
 
