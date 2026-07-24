@@ -49,6 +49,17 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     })).pipe(delay(200));
   }
 
+  // 1c. Auth Logout Mock
+  if (url.includes('/api/v1/auth/logout')) {
+    return of(new HttpResponse({
+      status: 200,
+      body: {
+        success: true,
+        message: 'Logged out successfully'
+      }
+    })).pipe(delay(100));
+  }
+
   // Helper to read persistent wallet balance
   const getStoredBalance = (): number => {
     const saved = localStorage.getItem('paygate_wallet_balance');
