@@ -1,9 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, AfterViewChecked, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AccountService } from '../../../core/services/account.service';
-import { TransactionService } from '../../../core/services/transaction.service';
 import { AiService } from '../../../core/services/ai.service';
 
 export interface ChatMessage {
@@ -17,11 +15,6 @@ export interface ChatMessage {
     route: string;
     queryParams?: any;
   };
-  statBadge?: {
-    title: string;
-    value: string;
-    subtitle?: string;
-  };
 }
 
 @Component({
@@ -29,17 +22,16 @@ export interface ChatMessage {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <!-- Floating AI Widget Trigger Button -->
-    <div class="ai-widget-container" [class.open]="isOpen()">
-      <button 
-        class="ai-trigger-btn" 
-        (click)="toggleOpen()" 
+    <div class="ai-widget-container">
+      <!-- Trigger Button -->
+      <button
+        class="ai-trigger-btn"
+        (click)="toggleOpen()"
         title="PayGate AI Financial Assistant"
         aria-label="Toggle AI Financial Assistant"
       >
-        <div class="sparkle-ring"></div>
         <div class="ai-icon-box">
-          <svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
           </svg>
         </div>
@@ -47,9 +39,9 @@ export interface ChatMessage {
         <span class="online-dot"></span>
       </button>
 
-      <!-- Expandable Floating Chat Modal Box -->
+      <!-- Chat Window -->
       <div class="ai-chat-window fade-in-up" *ngIf="isOpen()">
-        <!-- Header Bar -->
+        <!-- Header -->
         <div class="chat-header">
           <div class="header-title-box">
             <div class="ai-avatar-mini">
@@ -58,12 +50,11 @@ export interface ChatMessage {
               </svg>
             </div>
             <div class="header-text">
-              <span class="title">PayGate AI (OpenRouter)</span>
-              <span class="status"><span class="green-dot"></span> Online - OpenRouter Free Engine</span>
+              <span class="title">PayGate AI Assistant</span>
+              <span class="status"><span class="green-dot"></span> Powered by OpenRouter</span>
             </div>
           </div>
-
-          <button class="btn-close-chat" (click)="isOpen.set(false)" title="Close Chat">
+          <button class="btn-close-chat" (click)="isOpen.set(false)" title="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -71,10 +62,10 @@ export interface ChatMessage {
           </button>
         </div>
 
-        <!-- Messages Area -->
-        <div class="chat-messages-body" #messagesContainer>
-          <div 
-            *ngFor="let msg of messages()" 
+        <!-- Messages -->
+        <div class="chat-messages-body" #scrollContainer>
+          <div
+            *ngFor="let msg of messages()"
             class="chat-bubble-wrapper"
             [class.user-bubble]="msg.sender === 'user'"
             [class.ai-bubble]="msg.sender === 'ai'"
@@ -83,22 +74,14 @@ export interface ChatMessage {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-sparkle">
                 <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
               </svg>
-              PayGate AI <span class="model-tag" *ngIf="msg.modelUsed">[{{ msg.modelUsed }}]</span>
+              PayGate AI
             </div>
 
             <div class="bubble-content" [innerHTML]="formatMessageText(msg.text)"></div>
 
-            <!-- Optional Stat Badge -->
-            <div class="stat-badge-card" *ngIf="msg.statBadge">
-              <div class="sb-title">{{ msg.statBadge.title }}</div>
-              <div class="sb-value">{{ msg.statBadge.value }}</div>
-              <div class="sb-sub" *ngIf="msg.statBadge.subtitle">{{ msg.statBadge.subtitle }}</div>
-            </div>
-
-            <!-- Optional Action Button -->
-            <button 
-              *ngIf="msg.actionButton" 
-              class="btn-chat-action" 
+            <button
+              *ngIf="msg.actionButton"
+              class="btn-chat-action"
               (click)="triggerAction(msg.actionButton)"
             >
               {{ msg.actionButton.text }}
@@ -107,7 +90,7 @@ export interface ChatMessage {
             <span class="msg-time">{{ msg.timestamp | date:'HH:mm' }}</span>
           </div>
 
-          <!-- Thinking Loading Animation Indicator -->
+          <!-- Thinking Indicator -->
           <div class="chat-bubble-wrapper ai-bubble" *ngIf="isThinking()">
             <div class="thinking-dots">
               <span></span><span></span><span></span>
@@ -115,31 +98,26 @@ export interface ChatMessage {
           </div>
         </div>
 
-        <!-- Quick Prompts Bar -->
-        <div class="quick-prompts-bar">
-          <button 
-            *ngFor="let prompt of quickPrompts" 
-            class="prompt-chip"
-            (click)="sendQuickPrompt(prompt)"
-          >
-            {{ prompt }}
-          </button>
+        <!-- Error Banner -->
+        <div class="error-banner" *ngIf="errorMsg()">
+          {{ errorMsg() }}
         </div>
 
-        <!-- Chat Input Footer -->
+        <!-- Input Footer -->
         <div class="chat-footer">
-          <input 
-            type="text" 
-            class="chat-input" 
-            placeholder="Hỏi OpenRouter AI (VD: Chuyển 200k cho PAY0000000004)..." 
+          <input
+            type="text"
+            class="chat-input"
+            placeholder="Hỏi AI bất cứ điều gì..."
             [(ngModel)]="userInputText"
             (keyup.enter)="sendMessage()"
+            [disabled]="isThinking()"
           />
-          <button 
-            class="btn-send" 
-            [disabled]="!userInputText.trim()" 
+          <button
+            class="btn-send"
+            [disabled]="!userInputText.trim() || isThinking()"
             (click)="sendMessage()"
-            title="Gửi câu hỏi"
+            title="Gửi"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="22" y1="2" x2="11" y2="13" />
@@ -183,13 +161,12 @@ export interface ChatMessage {
       padding: 0 20px 0 14px;
       border-radius: 28px;
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border: 1px solid rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.2);
       color: #ffffff;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 10px 28px rgba(5, 150, 105, 0.38);
-      position: relative;
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       animation: pulseGlow 2.5s infinite;
     }
@@ -197,36 +174,25 @@ export interface ChatMessage {
       transform: translateY(-3px) scale(1.03);
       box-shadow: 0 14px 34px rgba(5, 150, 105, 0.48);
     }
-
     .ai-icon-box {
-      width: 32px;
-      height: 32px;
+      width: 30px; height: 30px;
       background: rgba(255,255,255,0.2);
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
-    .ai-sparkle-icon {
-      width: 18px;
-      height: 18px;
-      color: #ffffff;
-    }
+    .ai-icon-box svg { width: 16px; height: 16px; }
     .online-dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       background: #34d399;
       border-radius: 50%;
       border: 2px solid #ffffff;
     }
 
-    /* Floating Chat Box Window */
+    /* Chat Window */
     .ai-chat-window {
       position: absolute;
-      bottom: 66px;
-      right: 0;
-      width: 390px;
-      height: 560px;
+      bottom: 66px; right: 0;
+      width: 390px; height: 540px;
       background: #ffffff;
       border-radius: 24px;
       border: 1px solid #e2e8f0;
@@ -236,89 +202,66 @@ export interface ChatMessage {
       overflow: hidden;
     }
 
+    /* Header */
     .chat-header {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       padding: 16px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #ffffff;
     }
     .header-title-box { display: flex; align-items: center; gap: 12px; }
     .ai-avatar-mini {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #059669, #10b981);
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
+      display: flex; align-items: center; justify-content: center;
     }
-    .ai-avatar-mini svg { width: 20px; height: 20px; }
-
+    .ai-avatar-mini svg { width: 18px; height: 18px; color: #ffffff; stroke: #ffffff; }
     .header-text { display: flex; flex-direction: column; gap: 2px; }
-    .header-text .title { font-size: 0.95rem; font-weight: 800; color: #ffffff; letter-spacing: -0.01em; }
-    .header-text .status { font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; gap: 5px; font-weight: 600; }
-    .green-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; }
-
+    .header-text .title { font-size: 0.9rem; font-weight: 800; color: #ffffff; }
+    .header-text .status { font-size: 0.7rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+    .green-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; }
     .btn-close-chat {
-      background: rgba(255,255,255,0.1);
-      border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      color: #94a3b8;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: rgba(255,255,255,0.1); border: none;
+      width: 30px; height: 30px; border-radius: 50%;
+      color: #94a3b8; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
     }
-    .btn-close-chat:hover { background: rgba(255,255,255,0.2); color: #ffffff; }
-    .btn-close-chat svg { width: 16px; height: 16px; }
+    .btn-close-chat:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .btn-close-chat svg { width: 14px; height: 14px; }
 
-    /* Messages Body */
+    /* Messages */
     .chat-messages-body {
       flex: 1;
-      padding: 18px 16px;
+      padding: 16px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       background: #f8fafc;
     }
-
-    .chat-bubble-wrapper {
-      display: flex;
-      flex-direction: column;
-      max-width: 86%;
-    }
+    .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 86%; }
     .user-bubble { align-self: flex-end; }
     .ai-bubble { align-self: flex-start; }
 
     .bubble-sender-lbl {
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: #059669;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 0.68rem; font-weight: 800;
+      color: #059669; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 4px;
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
-    .model-tag { font-size: 0.65rem; color: #64748b; font-weight: 600; text-transform: none; }
-    .mini-sparkle { width: 12px; height: 12px; }
+    .mini-sparkle { width: 11px; height: 11px; }
 
     .bubble-content {
-      padding: 12px 16px;
+      padding: 11px 15px;
       border-radius: 18px;
       font-size: 0.875rem;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .user-bubble .bubble-content {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      background: linear-gradient(135deg, #059669, #047857);
       color: #ffffff;
       border-bottom-right-radius: 4px;
     }
@@ -327,47 +270,26 @@ export interface ChatMessage {
       color: #0f172a;
       border: 1px solid #e2e8f0;
       border-bottom-left-radius: 4px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-
-    .stat-badge-card {
-      background: #f0fdf4;
-      border: 1px solid #a7f3d0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .sb-title { font-size: 0.72rem; font-weight: 800; color: #047857; text-transform: uppercase; }
-    .sb-value { font-size: 1.25rem; font-weight: 900; color: #059669; }
-    .sb-sub { font-size: 0.75rem; color: #475569; }
 
     .btn-chat-action {
-      margin-top: 10px;
-      height: 42px;
-      padding: 0 16px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border: none;
-      border-radius: 12px;
-      color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: 800;
+      margin-top: 8px;
+      height: 40px; padding: 0 16px;
+      background: linear-gradient(135deg, #059669, #047857);
+      border: none; border-radius: 12px;
+      color: #ffffff; font-size: 0.82rem; font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.28);
+      box-shadow: 0 4px 12px rgba(5,150,105,0.25);
       transition: all 0.15s;
     }
-    .btn-chat-action:hover { transform: translateY(-1.5px); }
+    .btn-chat-action:hover { transform: translateY(-1px); }
 
-    .msg-time { font-size: 0.65rem; color: #94a3b8; margin-top: 4px; align-self: flex-end; }
+    .msg-time { font-size: 0.62rem; color: #94a3b8; margin-top: 3px; align-self: flex-end; }
     .ai-bubble .msg-time { align-self: flex-start; }
 
-    /* Thinking Dots */
     .thinking-dots {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      display: flex; align-items: center; gap: 4px;
       padding: 10px 16px;
       background: #ffffff;
       border-radius: 18px;
@@ -375,8 +297,7 @@ export interface ChatMessage {
       width: fit-content;
     }
     .thinking-dots span {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       background: #059669;
       border-radius: 50%;
       animation: bounceDot 1.4s infinite ease-in-out both;
@@ -384,42 +305,25 @@ export interface ChatMessage {
     .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
     .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
 
-    /* Quick Prompts Bar */
-    .quick-prompts-bar {
-      padding: 10px 14px;
-      background: #ffffff;
-      border-top: 1px solid #f1f5f9;
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
+    /* Error Banner */
+    .error-banner {
+      padding: 8px 14px;
+      background: #fef2f2;
+      border-top: 1px solid #fecaca;
+      font-size: 0.78rem;
+      color: #dc2626;
+      font-weight: 600;
     }
-    .prompt-chip {
-      padding: 6px 12px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #334155;
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    .prompt-chip:hover { background: #ecfdf5; border-color: #059669; color: #059669; }
 
     /* Input Footer */
     .chat-footer {
       padding: 12px 14px;
       background: #ffffff;
       border-top: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
     }
     .chat-input {
-      flex: 1;
-      height: 44px;
+      flex: 1; height: 44px;
       border: 1px solid #cbd5e1;
       border-radius: 14px;
       padding: 0 14px;
@@ -429,97 +333,96 @@ export interface ChatMessage {
       transition: border-color 0.15s;
     }
     .chat-input:focus { border-color: #059669; }
+    .chat-input:disabled { background: #f8fafc; cursor: not-allowed; }
 
     .btn-send {
-      width: 44px;
-      height: 44px;
+      width: 44px; height: 44px;
       background: #059669;
-      border: none;
-      border-radius: 14px;
-      color: #ffffff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border: none; border-radius: 14px;
+      color: #ffffff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      box-shadow: 0 4px 12px rgba(5,150,105,0.25);
     }
     .btn-send:hover:not(:disabled) { background: #047857; }
-    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .btn-send svg { width: 18px; height: 18px; }
+    .btn-send:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    .btn-send svg { width: 17px; height: 17px; }
 
     @media (max-width: 480px) {
       .ai-widget-container { bottom: 18px; right: 18px; }
-      .ai-chat-window { width: 94vw; right: -10px; bottom: 62px; height: 500px; }
+      .ai-chat-window { width: 94vw; right: -10px; bottom: 62px; height: 490px; }
     }
   `]
 })
-export class AiAssistantComponent implements OnInit {
+export class AiAssistantComponent implements OnInit, AfterViewChecked {
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+
   private aiService = inject(AiService);
-  private accountService = inject(AccountService);
-  private transactionService = inject(TransactionService);
   private router = inject(Router);
 
   isOpen = signal<boolean>(false);
   isThinking = signal<boolean>(false);
+  errorMsg = signal<string>('');
   userInputText = '';
 
   messages = signal<ChatMessage[]>([
     {
       id: 'init-1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là **PayGate AI Assistant (OpenRouter Engine)**. Tôi có thể giúp bạn kiểm tra chi tiêu, tính toán tổng giao dịch hoặc tự động điền đơn chuyển tiền nhanh chóng.',
+      text: 'Xin chào! Tôi là **PayGate AI Assistant**, được cung cấp bởi OpenRouter. Hãy hỏi tôi bất cứ điều gì về tài chính, thanh toán hoặc các tính năng PayGate.',
       timestamp: new Date()
     }
   ]);
 
-  quickPrompts = [
-    'Chuyển 200k cho PAY0000000004',
-    'Tổng chi tiêu 7 ngày qua?',
-    'Kiểm tra số dư Ví',
-    'Hướng dẫn nạp VietQR'
-  ];
-
   ngOnInit(): void {}
+
+  ngAfterViewChecked(): void {
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom(): void {
+    try {
+      if (this.scrollContainer) {
+        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      }
+    } catch {}
+  }
 
   toggleOpen(): void {
     this.isOpen.update((v: boolean) => !v);
-  }
-
-  sendQuickPrompt(promptText: string): void {
-    this.userInputText = promptText;
-    this.sendMessage();
+    this.errorMsg.set('');
   }
 
   sendMessage(): void {
     const text = this.userInputText.trim();
-    if (!text) return;
+    if (!text || this.isThinking()) return;
 
-    // Add user message
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'user',
-      text: text,
+      text,
       timestamp: new Date()
     };
 
     this.messages.update((list: ChatMessage[]) => [...list, userMsg]);
     this.userInputText = '';
     this.isThinking.set(true);
+    this.errorMsg.set('');
 
-    // Send chat prompt to Backend OpenRouter AI endpoint
     this.aiService.chat(text).subscribe({
       next: (res: any) => {
         this.isThinking.set(false);
         const data = res.data || res;
-        const reply = data.reply || 'Dịch vụ AI đang xử lý...';
-        const model = data.modelUsed || 'OpenRouter AI';
+        const reply = data.reply || 'Dịch vụ AI không trả về phản hồi.';
+        const model = data.modelUsed;
 
         let actionBtn: any = undefined;
         if (data.suggestedAmount || data.suggestedRecipient) {
-          const formattedAmountStr = data.suggestedAmount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.suggestedAmount) : 'Chuyển ngay';
+          const formattedAmt = data.suggestedAmount
+            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.suggestedAmount)
+            : '';
           actionBtn = {
-            text: `Chuyển ngay ${formattedAmountStr} ➔`,
+            text: formattedAmt ? `Chuyển ngay ${formattedAmt}` : 'Mở form chuyển tiền',
             route: '/transactions/send',
             queryParams: { amount: data.suggestedAmount, recipient: data.suggestedRecipient }
           };
@@ -538,76 +441,18 @@ export class AiAssistantComponent implements OnInit {
       },
       error: (err: any) => {
         this.isThinking.set(false);
-        // Fallback local processing if backend is offline
-        this.processLocalFallbackResponse(text);
+        const status = err?.status;
+        if (status === 0) {
+          this.errorMsg.set('Không thể kết nối đến server. Vui lòng kiểm tra backend đang chạy.');
+        } else if (status === 401 || status === 403) {
+          this.errorMsg.set('API Key OpenRouter không hợp lệ. Vui lòng kiểm tra cấu hình OPENROUTER_API_KEY.');
+        } else if (status === 429) {
+          this.errorMsg.set('Đã vượt quá giới hạn yêu cầu OpenRouter. Vui lòng thử lại sau.');
+        } else {
+          this.errorMsg.set(`Lỗi từ server (${status || 'unknown'}). Vui lòng thử lại.`);
+        }
       }
     });
-  }
-
-  private processLocalFallbackResponse(input: string): void {
-    const lower = input.toLowerCase();
-
-    if (lower.includes('chuyển') || lower.includes('chuyen') || lower.includes('pay') || lower.includes('gửi')) {
-      const parsed = this.extractTransferDetails(input);
-      if (parsed.amount || parsed.recipient) {
-        const formattedAmountStr = parsed.amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parsed.amount) : 'Chưa rõ số tiền';
-        const recipientStr = parsed.recipient || 'chưa rõ số tài khoản';
-
-        const aiMsg: ChatMessage = {
-          id: Date.now().toString(),
-          sender: 'ai',
-          text: `Tôi đã nhận diện lệnh chuyển tiền của bạn:\n• Số tiền: **${formattedAmountStr}**\n• Người nhận: **${recipientStr}**\n\nBấm nút bên dưới để mở form chuyển tiền!`,
-          timestamp: new Date(),
-          actionButton: {
-            text: `Chuyển ngay ${formattedAmountStr} ➔`,
-            route: '/transactions/send',
-            queryParams: { amount: parsed.amount, recipient: parsed.recipient }
-          }
-        };
-        this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
-        return;
-      }
-    }
-
-    const fallbackMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'ai',
-      text: 'Tôi là Trợ lý AI PayGate kết nối OpenRouter. Bạn có thể yêu cầu tôi chuyển tiền (Gõ: *Chuyển 200k cho PAY0000000004*), tra cứu số dư hoặc tổng chi tiêu.',
-      timestamp: new Date()
-    };
-    this.messages.update((list: ChatMessage[]) => [...list, fallbackMsg]);
-  }
-
-  private extractTransferDetails(text: string): { amount: number | null; recipient: string | null } {
-    let amount: number | null = null;
-    let recipient: string | null = null;
-
-    const kMatch = text.match(/(\d+)\s*(k|kđ|tr|triệu|000)/i);
-    if (kMatch) {
-      const num = parseInt(kMatch[1], 10);
-      const unit = kMatch[2].toLowerCase();
-      if (unit === 'k' || unit === 'kđ' || unit === '000') {
-        amount = num * 1000;
-      } else if (unit === 'tr' || unit === 'triệu') {
-        amount = num * 1000000;
-      }
-    } else {
-      const rawNum = text.match(/(\d{4,9})/);
-      if (rawNum) {
-        amount = parseInt(rawNum[1], 10);
-      }
-    }
-
-    const payMatch = text.match(/(PAY\d{10})/i);
-    const phoneMatch = text.match(/(0\d{9})/);
-
-    if (payMatch) {
-      recipient = payMatch[1].toUpperCase();
-    } else if (phoneMatch) {
-      recipient = phoneMatch[1];
-    }
-
-    return { amount, recipient };
   }
 
   triggerAction(actionBtn: { text: string; route: string; queryParams?: any }): void {
@@ -619,6 +464,8 @@ export class AiAssistantComponent implements OnInit {
     if (!text) return '';
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:0.85em">$1</code>')
       .replace(/\n/g, '<br/>');
   }
 }
