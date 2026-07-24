@@ -103,6 +103,22 @@ export interface ChatMessage {
           {{ errorMsg() }}
         </div>
 
+        <!-- Quick Suggestion Chips -->
+        <div class="quick-chips-bar" *ngIf="!isThinking()">
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Số dư ví của tôi là bao nhiêu?')">
+            <span>Số dư ví</span>
+          </button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Tôi có bao nhiêu lịch định kỳ đang chạy?')">
+            <span>Lịch định kỳ</span>
+          </button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cài đặt tự động thanh toán tiền điện')">
+            <span>Tự động đóng tiền điện</span>
+          </button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cho tôi xem lịch sử giao dịch gần đây')">
+            <span>Lịch sử giao dịch</span>
+          </button>
+        </div>
+
         <!-- Input Footer -->
         <div class="chat-footer">
           <input
@@ -315,6 +331,38 @@ export interface ChatMessage {
       font-weight: 600;
     }
 
+    /* Quick Suggestion Chips */
+    .quick-chips-bar {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+    }
+    .quick-chips-bar::-webkit-scrollbar { display: none; }
+    .chip-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .chip-btn:hover {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+
     /* Input Footer */
     .chat-footer {
       padding: 12px 14px;
@@ -391,6 +439,11 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   toggleOpen(): void {
     this.isOpen.update((v: boolean) => !v);
     this.errorMsg.set('');
+  }
+
+  sendQuickPrompt(text: string): void {
+    this.userInputText = text;
+    this.sendMessage();
   }
 
   sendMessage(): void {
