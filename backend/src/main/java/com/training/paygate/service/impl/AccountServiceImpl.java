@@ -280,15 +280,21 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountOpt.orElseThrow(() ->
                 new ResourceNotFoundException("Tài khoản nhận tiền không tồn tại với thông tin: " + query));
 
+        Long merchantId = null;
         String ownerName = "Tài khoản PayGate";
         if (account.getOwnerType() == OwnerType.USER) {
             ownerName = userRepository.findById(account.getOwnerId())
                     .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
                     .orElse("Khách hàng PayGate");
         } else if (account.getOwnerType() == OwnerType.MERCHANT) {
-            ownerName = merchantRepository.findById(account.getOwnerId())
-                    .map(Merchant::getMerchantName)
-                    .orElse("Doanh nghiệp Merchant");
+            Optional<Merchant> mOpt = merchantRepository.findById(account.getOwnerId());
+            if (mOpt.isPresent()) {
+                Merchant m = mOpt.get();
+                ownerName = m.getMerchantName();
+                merchantId = m.getId();
+            } else {
+                ownerName = "Doanh nghiệp Merchant";
+            }
         }
 
         return new AccountLookupResponse(
@@ -296,7 +302,8 @@ public class AccountServiceImpl implements AccountService {
                 account.getAccountNumber(),
                 ownerName,
                 account.getOwnerType(),
-                account.getStatus()
+                account.getStatus(),
+                merchantId
         );
     }
 }

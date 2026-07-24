@@ -8,5 +8,10 @@ public record AccountLookupResponse(
         String accountNumber,
         String ownerName,
         OwnerType ownerType,
-        AccountStatus status
-) {}
+        AccountStatus status,
+        Long merchantId
+) {
+    public AccountLookupResponse(Long accountId, String accountNumber, String ownerName, OwnerType ownerType, AccountStatus status) {
+        this(accountId, accountNumber, ownerName, ownerType, status, null);
+    }
+}

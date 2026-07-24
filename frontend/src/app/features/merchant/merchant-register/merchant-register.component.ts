@@ -17,7 +17,7 @@ import { Merchant } from '../../../core/models/merchant.model';
         <div class="form-header-group">
           <div class="header-tag">ENTERPRISE MERCHANT ONBOARDING</div>
           <h2>Become a Merchant Partner</h2>
-          <p class="subtitle">Submit your business profile & Business Tax Code (MST) for Admin review and wallet provisioning.</p>
+          <p class="subtitle">Submit your business profile & Business Tax Code  for Admin review and wallet provisioning.</p>
         </div>
 
         <!-- Status Card if Existing Request Exists -->
@@ -36,7 +36,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               <strong class="val">{{ existingMerchant.merchantName }}</strong>
             </div>
             <div class="detail-row">
-              <span class="label">Business Tax Code (Mã số thuế MST):</span>
+              <span class="label">Business Tax Code:</span>
               <strong class="val font-mono text-emerald">{{ existingMerchant.taxCode || '0101234567' }}</strong>
             </div>
             <div class="detail-row">
@@ -79,7 +79,7 @@ import { Merchant } from '../../../core/models/merchant.model';
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="custom-form">
             <!-- Business Name -->
             <div class="form-group">
-              <label class="form-label required">Business / Company Name (Tên doanh nghiệp)</label>
+              <label class="form-label required">Company Name</label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -96,9 +96,9 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
             </div>
 
-            <!-- Business Tax Code (Mã Số Thuế MST) -->
+            <!-- Business Tax Code -->
             <div class="form-group">
-              <label class="form-label required">Business Tax Code (Mã số thuế doanh nghiệp / cá nhân - MST)</label>
+              <label class="form-label required">Business Tax Code </label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
@@ -114,14 +114,14 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
               <span class="input-hint">Tax Code will be used by customers to search and make payments.</span>
               <div class="form-error" *ngIf="registerForm.get('taxCode')?.touched && registerForm.get('taxCode')?.invalid">
-                Valid 10-13 digit Tax Code (MST) is required
+                Valid 10-13 digit Tax Code  is required
               </div>
             </div>
 
             <!-- Representative Name & Contact Phone Row -->
             <div class="form-row-2col">
               <div class="form-group">
-                <label class="form-label required">Representative Name (Người đại diện)</label>
+                <label class="form-label required">Representative Name</label>
                 <div class="input-wrapper">
                   <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -137,7 +137,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               </div>
 
               <div class="form-group">
-                <label class="form-label required">Contact Phone (Số điện thoại)</label>
+                <label class="form-label required">Contact Phone</label>
                 <div class="input-wrapper">
                   <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -155,7 +155,7 @@ import { Merchant } from '../../../core/models/merchant.model';
 
             <!-- Merchant Code -->
             <div class="form-group">
-              <label class="form-label required">System Merchant Code (Mã doanh nghiệp)</label>
+              <label class="form-label required">System Merchant Code</label>
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -247,7 +247,11 @@ import { Merchant } from '../../../core/models/merchant.model';
       box-sizing: border-box;
     }
     .form-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
-    .font-mono { font-family: monospace; }
+    .paygate-form-wrapper,
+    .paygate-form-wrapper * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
     .font-bold { font-weight: 800; }
     .text-emerald { color: #059669; }
 
@@ -307,7 +311,7 @@ export class MerchantRegisterComponent implements OnInit {
     private fb: FormBuilder,
     private merchantService: MerchantService,
     private notification: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initForm();
@@ -360,7 +364,7 @@ export class MerchantRegisterComponent implements OnInit {
       next: (res) => {
         this.submitting = false;
         if (res.success && res.data) {
-          this.notification.success('Đã gửi yêu cầu đăng ký Doanh nghiệp! Đang chờ Admin phê duyệt.');
+          this.notification.success('Submitted Merchant Registration Request! Awaiting Admin Approval.');
           this.existingMerchant = res.data;
         }
       },
@@ -383,7 +387,7 @@ export class MerchantRegisterComponent implements OnInit {
         list.unshift(newMerch);
         localStorage.setItem('paygate_mock_merchants_list', JSON.stringify(list));
 
-        this.notification.success('Đã gửi yêu cầu đăng ký Doanh nghiệp! Đang chờ Admin phê duyệt.');
+        this.notification.success('Submitted Merchant Registration Request! Awaiting Admin Approval.');
         this.existingMerchant = newMerch as any;
       }
     });
