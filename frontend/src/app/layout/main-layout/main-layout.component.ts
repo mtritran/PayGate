@@ -52,7 +52,27 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Money">
+              <a class="nav-link" routerLink="/accounts/me" routerLinkActive="active" title="My Account">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12V7H5a2 2 0 01-2-2V3a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2" />
+                  <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
+                  <path d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">My Account</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/transactions/history" routerLinkActive="active" title="Transactions">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Transactions</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Payment">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -61,20 +81,11 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up & Link Banks">
+              <a class="nav-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up Wallet">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
                 <span class="nav-title" *ngIf="!collapsed()">Top Up Wallet</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/transactions/history" routerLinkActive="active" title="History">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span class="nav-title" *ngIf="!collapsed()">History</span>
               </a>
             </li>
           </ul>
