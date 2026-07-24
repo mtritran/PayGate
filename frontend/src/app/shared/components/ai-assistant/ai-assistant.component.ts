@@ -448,7 +448,8 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.router.navigate([actionBtn.route], { queryParams: actionBtn.queryParams });
   }
 
-  /** Map backend action + suggestedAmount/recipient to an action button */
+  /** Chỉ hiển thị nút redirect cho TOPUP và TRANSFER.
+   *  Câu hỏi về số dư / lịch sử → AI trả lời trực tiếp trong chat, không cần redirect. */
   private resolveActionButton(data: any): ChatMessage['actionButton'] | undefined {
     const action: string | undefined = data.action;
     const amount: number | undefined = data.suggestedAmount;
@@ -457,7 +458,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     if (action === 'TOPUP') {
       return { text: '💳 Nạp tiền ngay', route: '/top-up' };
     }
-    if (action === 'TRANSFER' || amount || recipient) {
+    if (action === 'TRANSFER' || (!action && (amount || recipient))) {
       const formattedAmt = amount
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
         : '';
@@ -467,14 +468,10 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
         queryParams: { amount, recipient }
       };
     }
-    if (action === 'VIEW_TRANSACTIONS') {
-      return { text: '📋 Xem lịch sử giao dịch', route: '/transactions' };
-    }
-    if (action === 'VIEW_BALANCE') {
-      return { text: '💰 Xem số dư tài khoản', route: '/accounts/dashboard' };
-    }
+    // VIEW_BALANCE, VIEW_TRANSACTIONS → AI đã trả lời text đầy đủ rồi, không cần nút
     return undefined;
   }
+
 
   formatMessageText(text: string): string {
     if (!text) return '';

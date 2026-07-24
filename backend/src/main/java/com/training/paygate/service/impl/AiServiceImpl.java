@@ -79,10 +79,9 @@ public class AiServiceImpl implements AiService {
     private String detectAction(String prompt) {
         if (prompt == null) return null;
         String lower = prompt.toLowerCase();
-        if (lower.matches(".*(nạp|nap|top.?up|recharge|deposit|vietqr).*")) return "TOPUP";
-        if (lower.matches(".*(chuyển|chuyen|transfer|gửi tiền|gui tien|thanh toán|pay).*")) return "TRANSFER";
-        if (lower.matches(".*(lịch sử|lich su|history|giao dịch|giao dich|transaction).*")) return "VIEW_TRANSACTIONS";
-        if (lower.matches(".*(số dư|so du|balance|bao nhiêu tiền|con bao nhieu).*")) return "VIEW_BALANCE";
+        if (lower.matches(".*(nạp|nap|top.?up|recharge|deposit|vietqr|nap tien).*")) return "TOPUP";
+        if (lower.matches(".*(chuyển|chuyen|transfer|gửi tiền|gui tien|thanh toán|thanh toan|pay|send).*")) return "TRANSFER";
+        // Số dư, lịch sử → AI tự trả lời trực tiếp trong chat, không cần redirect
         return null;
     }
 
@@ -180,14 +179,14 @@ public class AiServiceImpl implements AiService {
             throw new RuntimeException("OPENROUTER_API_KEY is not configured.");
         }
 
-        String systemPrompt = "Ban la PayGate AI Assistant - tro ly tai chinh ngan gon, chinh xac.\n\n" +
-                "QUY TAC BAT BUOC (vi pham se bi tu choi):\n" +
-                "- Chi tra loi bang van ban thuan tuy (plain text) ngan gon, toi da 3-4 cau.\n" +
-                "- TUYET DOI KHONG tao: ma QR, hinh anh, bang bieu (table), code block dai, link ngoai, so tai khoan ngan hang that.\n" +
-                "- KHONG goi y chuyen khoan qua ngan hang ben ngoai.\n" +
-                "- Neu nguoi dung muon nap tien / chuyen tien / xem giao dich: chi noi ngan '(ten chuc nang) co the thuc hien tai trang (ten trang)' - frontend se tu hien nut redirect.\n" +
-                "- Neu hoi ve so du / lich su: tra loi truc tiep tu du lieu tai chinh ben duoi.\n" +
-                "- Tra loi bang tieng Viet, lich su, than thien.\n" +
+        String systemPrompt = "Bạn là PayGate AI Assistant — trợ lý tài chính thông minh, ngắn gọn và chính xác.\n\n" +
+                "QUY TẮC BẮT BUỘC:\n" +
+                "- Trả lời bằng tiếng Việt có dấu đầy đủ, lịch sự, thân thiện.\n" +
+                "- Chỉ dùng văn bản thuần túy, tối đa 3-4 câu ngắn gọn.\n" +
+                "- TUYỆT ĐỐI KHÔNG tạo: mã QR, hình ảnh, bảng biểu, code block dài, link ngoài, số tài khoản ngân hàng thật.\n" +
+                "- KHÔNG gợi ý chuyển khoản qua ngân hàng bên ngoài hệ thống PayGate.\n" +
+                "- Khi hỏi về số dư hoặc lịch sử giao dịch: trả lời trực tiếp từ dữ liệu tài chính bên dưới.\n" +
+                "- Khi người dùng muốn NẠP TIỀN hoặc CHUYỂN TIỀN: chỉ nói ngắn gọn rằng họ có thể thực hiện trên ứng dụng — nút chuyển hướng sẽ xuất hiện tự động.\n" +
                 financialContext;
 
 
