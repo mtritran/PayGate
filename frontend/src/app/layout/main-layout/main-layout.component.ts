@@ -864,6 +864,21 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
         padding: var(--space-4);
       }
     }
+
+    @media (max-width: 480px) {
+      .top-header {
+        padding: 0 12px;
+      }
+      .content-body {
+        padding: 16px 12px;
+      }
+      .header-right {
+        gap: 8px;
+      }
+      .header-user-menu {
+        padding: 3px 8px 3px 4px;
+      }
+    }
   `]
 })
 export class MainLayoutComponent {
