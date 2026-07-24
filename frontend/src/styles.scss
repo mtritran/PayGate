@@ -2,16 +2,15 @@
 // PayGate - Main Styles Entry Point
 // ==========================================================================
 
-// Design System Variables (must be first)
+// Design System Variables & Base Modules (Sass @use MUST be at top)
 @use './styles/_variables' as *;
-
-// Base Styles (reset, typography, utilities)
 @use './styles/_base' as *;
-
-// Component Styles
 @use './styles/_components' as *;
 
-// Legacy compatibility classes (to be deprecated)
+// Import Angular Material Prebuilt Theme (Required for CDK Overlay / MatDialog layout & positioning)
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+// Legacy compatibility classes
 .container {
   width: 100%;
   max-width: 1280px;
@@ -27,7 +26,69 @@
   flex: 1 1 auto;
 }
 
-// Material Snackbar overrides (legacy - will be replaced by custom toast)
+/* ==========================================================================
+   CDK Overlay & MatDialog Layout Fixes (Centers modals in viewport)
+   ========================================================================== */
+.cdk-overlay-container {
+  position: fixed !important;
+  z-index: 1000 !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  pointer-events: none !important;
+}
+
+.cdk-overlay-backdrop {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0;
+
+  &.cdk-overlay-backdrop-showing {
+    opacity: 1;
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.cdk-global-overlay-wrapper {
+  display: flex !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+.cdk-overlay-pane {
+  position: relative !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  margin: auto !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 24px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  padding: 24px !important;
+  background: #ffffff !important;
+}
+
+// Material Snackbar overrides
 .mat-mdc-snack-bar-container.success-snackbar .mdc-snackbar__surface {
   background-color: var(--color-success-500);
 }
@@ -72,5 +133,5 @@
 }
 
 .mat-mdc-raised-button.mat-primary:hover {
--protected-background-color: var(--color-primary-700) !important;
+  --mdc-protected-background-color: var(--color-primary-700) !important;
 }

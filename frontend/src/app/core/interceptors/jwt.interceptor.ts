@@ -23,7 +23,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
         // Avoid infinite refresh loops for auth endpoints
-        if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh')) {
+        if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh') || req.url.includes('/auth/logout')) {
           authService.clearTokens();
           router.navigate(['/login']);
           return throwError(() => error);
@@ -47,37 +47,29 @@ function handle401Error(
     isRefreshing = true;
     refreshTokenSubject.next(null);
 
-    const refreshToken = authService.getRefreshToken();
-
-    if (refreshToken) {
-      return authService.refreshToken(refreshToken).pipe(
-        switchMap((res) => {
-          isRefreshing = false;
-          if (res.success && res.data && res.data.accessToken) {
-            refreshTokenSubject.next(res.data.accessToken);
-            return next(
-              req.clone({
-                setHeaders: { Authorization: `Bearer ${res.data.accessToken}` }
-              })
-            );
-          }
-          authService.clearTokens();
-          router.navigate(['/login']);
-          return throwError(() => error);
-        }),
-        catchError((refreshErr) => {
-          isRefreshing = false;
-          authService.clearTokens();
-          router.navigate(['/login']);
-          return throwError(() => refreshErr);
-        })
-      );
-    } else {
-      isRefreshing = false;
-      authService.clearTokens();
-      router.navigate(['/login']);
-      return throwError(() => error);
-    }
+    // Call /api/v1/auth/refresh without argument (browser automatically sends HttpOnly Cookie)
+    return authService.refreshToken().pipe(
+      switchMap((res) => {
+        isRefreshing = false;
+        if (res.success && res.data && res.data.accessToken) {
+          refreshTokenSubject.next(res.data.accessToken);
+          return next(
+            req.clone({
+              setHeaders: { Authorization: `Bearer ${res.data.accessToken}` }
+            })
+          );
+        }
+        authService.clearTokens();
+        router.navigate(['/login']);
+        return throwError(() => error);
+      }),
+      catchError((refreshErr) => {
+        isRefreshing = false;
+        authService.clearTokens();
+        router.navigate(['/login']);
+        return throwError(() => refreshErr);
+      })
+    );
   } else {
     // If a refresh is already in progress, wait for the new access token
     return refreshTokenSubject.pipe(

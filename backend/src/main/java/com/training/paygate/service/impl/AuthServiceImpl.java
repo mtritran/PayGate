@@ -76,11 +76,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        if (!jwtTokenProvider.isTokenValid(request.refreshToken())) {
+        String token = request != null ? request.refreshToken() : null;
+        return refreshToken(token);
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshTokenStr) {
+        if (refreshTokenStr == null || !jwtTokenProvider.isTokenValid(refreshTokenStr)) {
             throw new BadRequestException("Invalid refresh token");
         }
 
-        String username = jwtTokenProvider.extractUsername(request.refreshToken());
+        String username = jwtTokenProvider.extractUsername(refreshTokenStr);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 

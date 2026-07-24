@@ -88,12 +88,14 @@ public class MerchantController {
         return ApiResponse.success("Merchant updated successfully", merchantService.update(id, request));
     }
 
+    @PutMapping("/{id}/approve")
     @PatchMapping("/{id}/approve")
     @Operation(summary = "Approve pending merchant", description = "Approves a pending merchant request and provisions a merchant wallet account.")
     public ApiResponse<MerchantResponse> approve(@PathVariable Long id) {
         return ApiResponse.success("Merchant approved successfully", merchantService.approveMerchant(id));
     }
 
+    @PutMapping("/{id}/reject")
     @PatchMapping("/{id}/reject")
     @Operation(summary = "Reject pending merchant", description = "Rejects a pending merchant request.")
     public ApiResponse<MerchantResponse> reject(@PathVariable Long id) {
