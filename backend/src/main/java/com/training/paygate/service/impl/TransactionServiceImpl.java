@@ -203,33 +203,23 @@ public class TransactionServiceImpl implements TransactionService {
             balanceCacheService.evictBalance(destIdToEvict);
         }
 
-        // 12. Publish Completed Event to RabbitMQ
+        // 12. Publish Completed Event to RabbitMQ (triggers both WebhookConsumer and NotificationConsumer via RabbitMQ topic routing)
         PaymentCompletedEvent event = new PaymentCompletedEvent(
                 transaction.getTransactionRef(),
                 request.merchantId(),
                 merchantWebhookUrl,
                 transaction.getAmount(),
-                transaction.getStatus().name()
+                transaction.getStatus().name(),
+                user.getEmail(),
+                user.getUsername(),
+                lockedDest.getAccountNumber(),
+                transaction.getDescription()
         );
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
+            log.info("[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
         } catch (Exception e) {
-            log.warn("Could not publish PaymentCompletedEvent to RabbitMQ (this is expected if exchange 'payment.exchange' is not yet configured): {}", e.getMessage());
-        }
-
-        // 13. Send Payment Success Email Notification
-        try {
-            String recipientAccNo = lockedDest.getAccountNumber();
-            emailService.sendPaymentSuccessEmail(
-                    user.getEmail(),
-                    user.getUsername(),
-                    transaction.getTransactionRef(),
-                    transaction.getAmount(),
-                    recipientAccNo,
-                    transaction.getDescription()
-            );
-        } catch (Exception e) {
-            log.warn("Could not send payment success email notification: {}", e.getMessage());
+            log.warn("Could not publish PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
         }
 
         return mapToResponse(transaction);
