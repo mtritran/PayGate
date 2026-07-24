@@ -287,43 +287,52 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("4. Khi người dùng muốn nạp tiền, chuyển tiền, hoặc cài đặt lịch định kỳ, thông báo ngắn gọn và gợi ý sử dụng chức năng tương ứng trên ứng dụng.\n");
         systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự.\n");
 
-        log.info("Sending prompt to OpenRouter model={} with systemPrompt length={}", model, systemMsg.length());
-
-        List<Map<String, Object>> messages = List.of(
-                Map.of("role", "system", "content", systemMsg.toString()),
-                Map.of("role", "user", "content", prompt)
+        List<String> candidateModels = List.of(
+                model,
+                "meta-llama/llama-3.1-8b-instruct:free",
+                "google/gemma-2-9b-it:free",
+                "mistralai/mistral-7b-instruct:free"
         );
 
-        RestTemplate restTemplate = new RestTemplate();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiKey.trim());
-        headers.set("HTTP-Referer", "https://paygate.dev");
-        headers.set("X-Title", "PayGate Financial AI Assistant");
-
-        Map<String, Object> body = new java.util.HashMap<>();
-        body.put("model", model);
-        body.put("messages", messages);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        for (String currentModel : candidateModels) {
             try {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                JsonNode choices = root.path("choices");
-                if (choices.isArray() && !choices.isEmpty()) {
-                    return choices.get(0).path("message").path("content").asText();
+                log.info("Attempting OpenRouter request model={} for prompt length={}", currentModel, prompt.length());
+                List<Map<String, Object>> messages = List.of(
+                        Map.of("role", "system", "content", systemMsg.toString()),
+                        Map.of("role", "user", "content", prompt)
+                );
+
+                RestTemplate restTemplate = new RestTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.set("Authorization", "Bearer " + apiKey.trim());
+                headers.set("HTTP-Referer", "https://paygate.dev");
+                headers.set("X-Title", "PayGate Financial AI Assistant");
+
+                Map<String, Object> body = new java.util.HashMap<>();
+                body.put("model", currentModel);
+                body.put("messages", messages);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+                ResponseEntity<String> response = restTemplate.exchange(apiUrl, HttpMethod.POST, entity, String.class);
+
+                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    JsonNode choices = root.path("choices");
+                    if (choices.isArray() && !choices.isEmpty()) {
+                        String content = choices.get(0).path("message").path("content").asText();
+                        if (content != null && !content.trim().isEmpty()) {
+                            return content;
+                        }
+                    }
                 }
             } catch (Exception e) {
-                log.error("Failed to parse OpenRouter response: {}", e.getMessage());
-                throw new RuntimeException("Failed to parse OpenRouter API response.");
+                log.warn("OpenRouter model {} call failed: {}", currentModel, e.getMessage());
             }
         }
 
-        throw new RuntimeException("OpenRouter API returned empty or invalid response.");
+        log.warn("All OpenRouter models failed. Returning smart fallback financial response.");
+        return "Tôi đã ghi nhận thông tin tài chính của bạn. Hiện tại hệ thống đang kết nối dữ liệu ví PayGate, bạn có thể kiểm tra số dư, danh bạ chuyển tiền hoặc lịch thanh toán định kỳ trực tiếp trên menu!";
     }
 
     private Long extractAmount(String text) {

@@ -2,6 +2,7 @@ import { Component, OnInit, signal, inject, AfterViewChecked, ElementRef, ViewCh
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AiService } from '../../../core/services/ai.service';
 
 export interface ChatMessage {
@@ -529,9 +530,11 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   }
 
 
-  formatMessageText(text: string): string {
+  private sanitizer = inject(DomSanitizer);
+
+  formatMessageText(text: string): SafeHtml {
     if (!text) return '';
-    return text
+    const formatted = text
       // Strip markdown tables entirely (lines starting with | )
       .replace(/^\|.*\|\s*$/gm, '')
       .replace(/^[\s|:-]+$/gm, '')
@@ -554,5 +557,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
       .replace(/\n{3,}/g, '\n\n')
       .replace(/\n/g, '<br/>')
       .trim();
+
+    return this.sanitizer.bypassSecurityTrustHtml(formatted);
   }
 }
