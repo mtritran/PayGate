@@ -55,7 +55,7 @@ class AuthControllerTest {
     @DisplayName("UC-U01: Register - Thành công: Đăng ký user_vinh với email, password đầy đủ -> HTTP 200 OK")
     void register_success() throws Exception {
         RegisterRequest request = new RegisterRequest("user_vinh", "vinh@test.com", "Password@123", "Vinh User");
-        AuthResponse response = new AuthResponse("access-token", "refresh-token", "user_vinh", "USER");
+        AuthResponse response = new AuthResponse("access-token", "refresh-token", "user_vinh", "USER", null);
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);
 
@@ -140,7 +140,7 @@ class AuthControllerTest {
     @DisplayName("UC-U02: Login - Thành công: Đăng nhập user_vinh đúng credentials -> HTTP 200 OK, có token, role")
     void login_success() throws Exception {
         LoginRequest request = new LoginRequest("user_vinh", "Password@123");
-        AuthResponse response = new AuthResponse("access-token", "refresh-token", "user_vinh", "USER");
+        AuthResponse response = new AuthResponse("access-token", "refresh-token", "user_vinh", "USER", null);
 
         when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
