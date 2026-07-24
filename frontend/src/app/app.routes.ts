@@ -48,6 +48,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
       },
       {
+        path: 'recurring-payments',
+        loadComponent: () => import('./features/recurring-payment/recurring-payment-list/recurring-payment-list.component').then(m => m.RecurringPaymentListComponent)
+      },
+      {
+        path: 'recurring-payments/new',
+        loadComponent: () => import('./features/recurring-payment/recurring-payment-form/recurring-payment-form.component').then(m => m.RecurringPaymentFormComponent)
+      },
+      {
         path: 'merchant/register',
         loadComponent: () => import('./features/merchant/merchant-register/merchant-register.component').then(m => m.MerchantRegisterComponent)
       },

@@ -455,6 +455,9 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     const amount: number | undefined = data.suggestedAmount;
     const recipient: string | undefined = data.suggestedRecipient;
 
+    if (action === 'RECURRING') {
+      return { text: '📅 Quản Lý Lịch Định Kỳ & Hóa Đơn', route: '/recurring-payments' };
+    }
     if (action === 'TOPUP') {
       return { text: '💳 Nạp tiền ngay', route: '/top-up' };
     }

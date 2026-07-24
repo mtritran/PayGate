@@ -79,6 +79,7 @@ public class AiServiceImpl implements AiService {
     private String detectAction(String prompt) {
         if (prompt == null) return null;
         String lower = prompt.toLowerCase();
+        if (lower.matches(".*(hóa đơn|hoa don|điện|nước|internet|định kỳ|dinh ky|tự động|tu dong|đặt lịch|dat lich).*")) return "RECURRING";
         if (lower.matches(".*(nạp|nap|top.?up|recharge|deposit|vietqr|nap tien).*")) return "TOPUP";
         if (lower.matches(".*(chuyển|chuyen|transfer|gửi tiền|gui tien|thanh toán|thanh toan|pay|send).*")) return "TRANSFER";
         // Số dư, lịch sử → AI tự trả lời trực tiếp trong chat, không cần redirect
