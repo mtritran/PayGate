@@ -223,6 +223,7 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("2. Khi người dùng hỏi về SỐ DƯ hoặc LỊCH SỬ GIAO DỊCH, BẮT BUỘC phải đọc con số/thông tin thực tế trong phần 'DỮ LIỆU TÀI CHÍNH THỰC TẾ' ở trên để trả lời ngay cho người dùng (Ví dụ: 'Số dư hiện tại của bạn là 500.000 VND'). TUYỆT ĐỐI KHÔNG từ chối hoặc trả lời 'tôi chưa có dữ liệu' hay 'vui lòng mở app'.\n");
         systemMsg.append("3. Tuyệt đối KHÔNG tạo mã QR, link ảnh ngoài, hay bảng biểu phức tạp.\n");
         systemMsg.append("4. Khi người dùng muốn nạp tiền hoặc chuyển tiền, thông báo ngắn gọn và gợi ý thực hiện trên ứng dụng.\n");
+        systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự: 'Xin lỗi, tôi là trợ lý tài chính PayGate và chỉ có thể hỗ trợ các vấn đề về ví điện tử, giao dịch và tài chính cá nhân của bạn.'\n");
 
         log.info("Sending prompt to OpenRouter model={} with systemPrompt length={}", model, systemMsg.length());
 
