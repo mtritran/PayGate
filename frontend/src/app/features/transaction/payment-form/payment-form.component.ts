@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransactionService } from '../../../core/services/transaction.service';
@@ -450,7 +450,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     private transactionService: TransactionService,
     private accountService: AccountService,
     private notification: NotificationService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -458,6 +459,17 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.loadMyBalance();
     this.generateIdempotencyKey();
     this.setupLookupDebounce();
+
+    // AI Pre-fill integration
+    this.route.queryParams.subscribe(params => {
+      if (params['amount']) {
+        this.paymentForm.patchValue({ amount: params['amount'] });
+      }
+      if (params['recipient']) {
+        this.accountNumberInput = params['recipient'];
+        this.onAccountNumberInput(params['recipient']);
+      }
+    });
   }
 
   ngOnDestroy(): void {

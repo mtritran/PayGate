@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
+import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-assistant.component';
 
 @Component({
   selector: 'app-main-layout',
@@ -12,7 +13,8 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     CommonModule,
     RouterModule,
     ButtonComponent,
-    AvatarComponent
+    AvatarComponent,
+    AiAssistantComponent
   ],
   template: `
     <div class="main-layout">
@@ -35,11 +37,11 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
         <nav class="nav-wrapper" aria-label="Main navigation">
           <!-- Wallet Section -->
           <div class="nav-section" *ngIf="!collapsed()">
-            <div class="nav-section-label">Wallet</div>
+            <div class="nav-section-label">Wallet & Payments</div>
           </div>
           <ul class="nav-list" role="list">
             <li class="nav-item">
-              <a class="nav-link" routerLink="/accounts/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" title="Dashboard">
+              <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" title="Dashboard">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
                   <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -50,48 +52,42 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/accounts/me" routerLinkActive="active" title="My Account">
+              <a class="nav-link" routerLink="/transactions/send" routerLinkActive="active" title="Send Money">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 12V7H5a2 2 0 01-2-2V3a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2" />
-                  <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
-                  <path d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
-                </svg>
-                <span class="nav-title" *ngIf="!collapsed()">My Account</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/transactions/history" routerLinkActive="active" title="Transactions">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-                <span class="nav-title" *ngIf="!collapsed()">Transactions</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Payment">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <polyline points="19 12 12 19 5 12" />
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
                 <span class="nav-title" *ngIf="!collapsed()">Send Payment</span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up">
+              <a class="nav-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up & Link Banks">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="16" />
-                  <line x1="8" y1="12" x2="16" y2="12" />
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
-                <span class="nav-title" *ngIf="!collapsed()">Top Up</span>
+                <span class="nav-title" *ngIf="!collapsed()">Top Up Wallet</span>
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/merchant/register" routerLinkActive="active" title="Merchant Partner Registration">
+              <a class="nav-link" routerLink="/transactions/history" routerLinkActive="active" title="History">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">History</span>
+              </a>
+            </li>
+          </ul>
+
+          <!-- Merchant Section -->
+          <div class="nav-section" *ngIf="!collapsed()">
+            <div class="nav-section-label">Merchant & Business</div>
+          </div>
+          <ul class="nav-list" role="list">
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/merchants/register" routerLinkActive="active" title="Merchant Partner">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
                 <span class="nav-title" *ngIf="!collapsed()">Merchant Partner</span>
@@ -224,6 +220,9 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
           <router-outlet></router-outlet>
         </div>
       </main>
+
+      <!-- Global AI Financial Assistant Chatbot Floating Widget -->
+      <pg-ai-assistant />
     </div>
 
     <!-- Overlay for mobile -->
