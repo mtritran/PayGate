@@ -4,16 +4,30 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.paygate.dto.request.AiChatRequest;
 import com.training.paygate.dto.response.AiChatResponse;
+import com.training.paygate.entity.Account;
+import com.training.paygate.entity.Transaction;
+import com.training.paygate.enums.OwnerType;
+import com.training.paygate.enums.TransactionStatus;
+import com.training.paygate.enums.TransactionType;
+import com.training.paygate.repository.AccountRepository;
+import com.training.paygate.repository.TransactionRepository;
+import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.AiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,29 +39,27 @@ public class AiServiceImpl implements AiService {
     @Value("${openrouter.api-key:}")
     private String apiKey;
 
-    @Value("${openrouter.model:meta-llama/llama-3.3-70b-instruct:free}")
+    @Value("${openrouter.model:nvidia/nemotron-3-ultra-550b-a55b:free}")
     private String model;
 
     @Value("${openrouter.api-url:https://openrouter.ai/api/v1/chat/completions}")
     private String apiUrl;
 
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String SYSTEM_PROMPT =
-            "You are PayGate AI Assistant, a professional financial assistant for the PayGate payment gateway platform. " +
-            "Help users with money transfers, balance inquiries, transaction history, VietQR top-ups, and merchant payments. " +
-            "Always respond in polite Vietnamese. Use markdown formatting where appropriate. " +
-            "When the user asks to transfer money (e.g. 'Chuyển 200k cho PAY0000000004'), extract the amount and recipient from the message. " +
-            "Keep responses concise and helpful.";
+    private static final DateTimeFormatter VN_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Override
-    public AiChatResponse processChat(AiChatRequest request) {
+    public AiChatResponse processChat(AiChatRequest request, String username) {
         String prompt = request.getPrompt();
-        log.info("Processing AI Chat prompt via OpenRouter model={}", model);
+        log.info("Processing AI Chat prompt via OpenRouter model={} for user={}", model, username);
 
-        String replyText = callOpenRouterApi(prompt);
+        String financialContext = buildFinancialContext(username);
+        String replyText = callOpenRouterApi(prompt, financialContext);
 
-        // Extract payment info from prompt to offer action button on frontend
         Long suggestedAmount = extractAmount(prompt);
         String suggestedRecipient = extractRecipient(prompt);
 
@@ -59,10 +71,105 @@ public class AiServiceImpl implements AiService {
                 .build();
     }
 
-    private String callOpenRouterApi(String prompt) {
+    /**
+     * Build a rich financial context string from the user's account and recent transactions.
+     * This is injected into the AI system prompt so the AI can answer financial queries accurately.
+     */
+    private String buildFinancialContext(String username) {
+        if (username == null) return "";
+
+        try {
+            // 1. Find the user's account
+            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) return "";
+
+            Long userId = userOpt.get().getId();
+            Optional<Account> accountOpt = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER);
+            if (accountOpt.isEmpty()) return "";
+
+            Account account = accountOpt.get();
+            Long accountId = account.getId();
+
+            // 2. Fetch last 30 transactions (most recent first)
+            List<Transaction> transactions = transactionRepository
+                    .findAllWithFiltersAndOwner(accountId, null, null, null, null, null,
+                            PageRequest.of(0, 30, Sort.by(Sort.Direction.DESC, "createdAt")))
+                    .getContent();
+
+            // 3. Compute statistics
+            BigDecimal totalSent = transactions.stream()
+                    .filter(t -> t.getSourceAccountId().equals(accountId)
+                            && t.getStatus() == TransactionStatus.COMPLETED
+                            && t.getType() != TransactionType.TOPUP)
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalReceived = transactions.stream()
+                    .filter(t -> t.getDestAccountId().equals(accountId)
+                            && t.getStatus() == TransactionStatus.COMPLETED)
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Spending in last 7 days
+            LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+            BigDecimal last7DaysSent = transactions.stream()
+                    .filter(t -> t.getSourceAccountId().equals(accountId)
+                            && t.getStatus() == TransactionStatus.COMPLETED
+                            && t.getType() != TransactionType.TOPUP
+                            && t.getCreatedAt() != null
+                            && t.getCreatedAt().isAfter(sevenDaysAgo))
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // 4. Build context string
+            StringBuilder ctx = new StringBuilder();
+            ctx.append("\n\n--- THONG TIN TAI CHINH CUA NGUOI DUNG ---\n");
+            ctx.append("So tai khoan: ").append(account.getAccountNumber()).append("\n");
+            ctx.append("So du hien tai: ").append(formatVnd(account.getBalance())).append("\n");
+            ctx.append("Tong da gui di (trong 30 GD gan nhat): ").append(formatVnd(totalSent)).append("\n");
+            ctx.append("Tong da nhan (trong 30 GD gan nhat): ").append(formatVnd(totalReceived)).append("\n");
+            ctx.append("Da chi trong 7 ngay qua: ").append(formatVnd(last7DaysSent)).append("\n");
+            ctx.append("So giao dich gan day: ").append(transactions.size()).append("\n");
+
+            if (!transactions.isEmpty()) {
+                ctx.append("\n30 Giao dich gan nhat:\n");
+                for (Transaction t : transactions) {
+                    String direction = t.getSourceAccountId().equals(accountId) ? "GUI" : "NHAN";
+                    String dateStr = t.getCreatedAt() != null ? t.getCreatedAt().format(VN_DATE_FMT) : "N/A";
+                    ctx.append(String.format("  [%s] %s | %s | %s | %s | Ma GD: %s\n",
+                            direction,
+                            formatVnd(t.getAmount()),
+                            t.getType(),
+                            t.getStatus(),
+                            dateStr,
+                            t.getTransactionRef()));
+                }
+            }
+            ctx.append("--- KET THUC THONG TIN TAI CHINH ---\n");
+
+            return ctx.toString();
+
+        } catch (Exception e) {
+            log.warn("Could not build financial context for user={}: {}", username, e.getMessage());
+            return "";
+        }
+    }
+
+    private String formatVnd(BigDecimal amount) {
+        if (amount == null) return "0 VND";
+        return String.format("%,.0f VND", amount);
+    }
+
+    private String callOpenRouterApi(String prompt, String financialContext) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new RuntimeException("OPENROUTER_API_KEY is not configured.");
         }
+
+        String systemPrompt = "Ban la PayGate AI Assistant, tro ly tai chinh thong minh cho nen tang thanh toan PayGate. " +
+                "Giup nguoi dung ve chuyen tien, lich su giao dich, so du, nap tien VietQR va thanh toan. " +
+                "Luon tra loi lich su bang tieng Viet. Su dung dinh dang markdown khi can. " +
+                "Khi nguoi dung hoi ve giao dich hoac tai chinh, hay su dung du lieu thuc te duoi day de tra loi chinh xac." +
+                financialContext;
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -75,8 +182,8 @@ public class AiServiceImpl implements AiService {
         Map<String, Object> body = Map.of(
                 "model", model,
                 "messages", List.of(
-                        Map.of("role", "system", "content", SYSTEM_PROMPT),
-                        Map.of("role", "user",   "content", prompt)
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", prompt)
                 )
         );
 
@@ -106,7 +213,7 @@ public class AiServiceImpl implements AiService {
         if (kMatcher.find()) {
             long num = Long.parseLong(kMatcher.group(1));
             String unit = kMatcher.group(2).toLowerCase();
-            return (unit.startsWith("tr") || unit.startsWith("tr")) && unit.length() > 1 ? num * 1_000_000 : num * 1_000;
+            return (unit.startsWith("tr")) ? num * 1_000_000 : num * 1_000;
         }
         Pattern rawPattern = Pattern.compile("(\\d{4,9})");
         Matcher rawMatcher = rawPattern.matcher(text);

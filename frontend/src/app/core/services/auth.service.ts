@@ -10,6 +10,7 @@ export interface AuthResponse {
   refreshToken?: string;
   username: string;
   role: string;
+  userId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -85,6 +86,12 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
+    localStorage.removeItem('user_id');
+  }
+
+  getUserId(): number | null {
+    const id = localStorage.getItem('user_id');
+    return id ? parseInt(id, 10) : null;
   }
 
   private storeTokens(auth: AuthResponse): void {
@@ -99,6 +106,9 @@ export class AuthService {
     }
     if (auth.role) {
       localStorage.setItem('role', auth.role);
+    }
+    if (auth.userId) {
+      localStorage.setItem('user_id', auth.userId.toString());
     }
   }
 }
