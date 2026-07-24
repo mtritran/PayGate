@@ -520,21 +520,30 @@ import {
     .empty-box h3 { font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0 0 6px 0; }
     .empty-box p { color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0; max-width: 440px; }
 
-    /* Detail Modal */
+    /* Detail & Logs Slide-over Drawer */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.4);
+      background: rgba(15, 23, 42, 0.35);
       backdrop-filter: blur(4px);
       z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; justify-content: flex-end; align-items: stretch;
     }
     .modal-content {
       background: #ffffff;
-      width: 90%; max-width: 620px;
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-      border: 1px solid #e2e8f0;
+      width: 100%; max-width: 540px;
+      height: 100vh;
+      border-radius: 24px 0 0 24px;
+      padding: 32px;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.12);
+      border-left: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
     }
     .modal-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -548,6 +557,12 @@ import {
     }
     .btn-close svg { width: 16px; height: 16px; }
 
+    .modal-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
     .detail-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
