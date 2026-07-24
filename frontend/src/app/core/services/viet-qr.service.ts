@@ -90,7 +90,7 @@ export class VietQrService {
       { name: 'MB Bank', scheme: 'mbmobile://', appStoreUrl: 'https://mbbank.com.vn', bg: '#1d4ed8', color: '#ffffff' },
       { name: 'Vietcombank', scheme: 'vcbdigibank://', appStoreUrl: 'https://vietcombank.com.vn', bg: '#047857', color: '#ffffff' },
       { name: 'Techcombank', scheme: 'tcb://', appStoreUrl: 'https://techcombank.com.vn', bg: '#dc2626', color: '#ffffff' },
-      { name: 'Ví MoMo', scheme: 'momo://', appStoreUrl: 'https://momo.vn', bg: '#db2777', color: '#ffffff' },
+      { name: 'MoMo Wallet', scheme: 'momo://', appStoreUrl: 'https://momo.vn', bg: '#db2777', color: '#ffffff' },
       { name: 'BIDV SmartBanking', scheme: 'bidvsmartbanking://', appStoreUrl: 'https://bidv.com.vn', bg: '#0284c7', color: '#ffffff' }
     ];
   }

@@ -23,7 +23,7 @@ import { TransactionDetailResponse } from '../../../core/models/transaction.mode
   ],
   template: `
     <h2 mat-dialog-title class="dialog-title">
-      <mat-icon color="primary">receipt_long</mat-icon> Chi Tiết Giao Dịch
+      <mat-icon color="primary">receipt_long</mat-icon> Transaction Details
     </h2>
 
     <mat-dialog-content class="dialog-content">
@@ -35,43 +35,43 @@ import { TransactionDetailResponse } from '../../../core/models/transaction.mode
         <!-- Summary Info Grid -->
         <div class="info-grid">
           <div class="info-item">
-            <span class="label">Mã Giao Dịch:</span>
+            <span class="label">Transaction Ref:</span>
             <span class="value font-mono">{{ detail.transactionRef }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Loại Giao Dịch:</span>
+            <span class="label">Transaction Type:</span>
             <span class="value">{{ detail.type }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Số Tiền:</span>
+            <span class="label">Amount:</span>
             <span class="value amount-highlight">{{ detail.amount | currency:'VND':'symbol':'1.0-0' }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Trạng Thái:</span>
+            <span class="label">Status:</span>
             <span class="status-badge" [ngClass]="detail.status.toLowerCase()">{{ detail.status }}</span>
           </div>
           <div class="info-item">
-            <span class="label">TK Nguồn (Source):</span>
+            <span class="label">Source Account:</span>
             <span class="value">#{{ detail.sourceAccountId }}</span>
           </div>
           <div class="info-item">
-            <span class="label">TK Đích (Destination):</span>
+            <span class="label">Destination Account:</span>
             <span class="value">#{{ detail.destAccountId }}</span>
           </div>
           <div class="info-item full">
-            <span class="label">Nội Dung:</span>
-            <span class="value">{{ detail.description || 'Không có' }}</span>
+            <span class="label">Description / Note:</span>
+            <span class="value">{{ detail.description || 'None' }}</span>
           </div>
           <div class="info-item full">
-            <span class="label">Thời Gian Tạo:</span>
+            <span class="label">Created Time:</span>
             <span class="value">{{ detail.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</span>
           </div>
         </div>
 
         <!-- Double-entry Ledger Entries Section -->
         <div class="ledger-section">
-          <h4><mat-icon>menu_book</mat-icon> Bút Toán Sổ Cái Kép (Ledger Entries)</h4>
-          <p class="ledger-subtitle">Hệ thống ghi nhận 2 bút toán đối ứng cân bằng cho mỗi giao dịch:</p>
+          <h4><mat-icon>menu_book</mat-icon> Double-Entry Ledger Entries</h4>
+          <p class="ledger-subtitle">System records balanced double-entry accounting records for each transaction:</p>
 
           <table mat-table [dataSource]="detail.ledgerEntries" class="ledger-table">
             <ng-container matColumnDef="id">
@@ -80,12 +80,12 @@ import { TransactionDetailResponse } from '../../../core/models/transaction.mode
             </ng-container>
 
             <ng-container matColumnDef="accountId">
-              <th mat-header-cell *matHeaderCellDef> ID Tài Khoản </th>
+              <th mat-header-cell *matHeaderCellDef> Account ID </th>
               <td mat-cell *matCellDef="let entry"> #{{ entry.accountId }} </td>
             </ng-container>
 
             <ng-container matColumnDef="entryType">
-              <th mat-header-cell *matHeaderCellDef> Bút Toán </th>
+              <th mat-header-cell *matHeaderCellDef> Entry Type </th>
               <td mat-cell *matCellDef="let entry">
                 <span class="entry-badge" [ngClass]="entry.entryType.toLowerCase()">
                   {{ entry.entryType }}
@@ -94,12 +94,12 @@ import { TransactionDetailResponse } from '../../../core/models/transaction.mode
             </ng-container>
 
             <ng-container matColumnDef="amount">
-              <th mat-header-cell *matHeaderCellDef> Số Tiền </th>
+              <th mat-header-cell *matHeaderCellDef> Amount </th>
               <td mat-cell *matCellDef="let entry"> {{ entry.amount | currency:'VND':'symbol':'1.0-0' }} </td>
             </ng-container>
 
             <ng-container matColumnDef="balanceAfter">
-              <th mat-header-cell *matHeaderCellDef> Số Dư Sau GD </th>
+              <th mat-header-cell *matHeaderCellDef> Balance After </th>
               <td mat-cell *matCellDef="let entry"> <strong>{{ entry.balanceAfter | currency:'VND':'symbol':'1.0-0' }}</strong> </td>
             </ng-container>
 
@@ -111,7 +111,7 @@ import { TransactionDetailResponse } from '../../../core/models/transaction.mode
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close color="primary">Đóng</button>
+      <button mat-button mat-dialog-close color="primary">Close</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -154,7 +154,6 @@ export class TransactionDetailComponent implements OnInit {
   }
 
   private loadDetail(): void {
-    this.loading = true;
     this.transactionService.getTransactionByRef(this.data.ref).subscribe({
       next: (res) => {
         if (res.success && res.data) {

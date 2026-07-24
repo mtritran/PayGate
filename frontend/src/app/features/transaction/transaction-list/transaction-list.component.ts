@@ -416,7 +416,7 @@ export class TransactionListComponent implements OnInit, OnDestroy {
 
   getBankBadge(desc: string, type: string): BankBadge {
     const text = (desc || '').toLowerCase();
-    if (text.includes('mb bank') || text.includes('quân đội')) {
+    if (text.includes('mb bank') || text.includes('quan doi')) {
       return { name: 'MB Bank', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
     }
     if (text.includes('vietcombank') || text.includes('vcb')) {
@@ -429,7 +429,7 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       return { name: 'VPBank', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' };
     }
     if (text.includes('momo')) {
-      return { name: 'Ví MoMo', bg: '#fdf2f8', color: '#db2777', border: '#fbcfe8' };
+      return { name: 'MoMo Wallet', bg: '#fdf2f8', color: '#db2777', border: '#fbcfe8' };
     }
     if (text.includes('zalopay') || text.includes('zalo')) {
       return { name: 'ZaloPay', bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' };

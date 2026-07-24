@@ -447,7 +447,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        const errMsg = err.error?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin hoặc thử lại sau.';
+        const errMsg = err.error?.message || 'Registration failed. Please check your details and try again.';
         this.submitError.set(errMsg);
         this.notification.error(errMsg);
       }

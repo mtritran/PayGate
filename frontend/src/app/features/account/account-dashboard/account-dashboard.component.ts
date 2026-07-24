@@ -43,7 +43,7 @@ interface DailyVolumePoint {
             <span class="pulse-indicator"></span>
             <span class="badge-text">PayGate Live Console</span>
           </div>
-          <h2>Welcome back, {{ getDisplayName() }} 👋</h2>
+          <h2>Welcome back, {{ getDisplayName() }}</h2>
           <p class="welcome-subtitle">Here is your real-time payment volume, wallet balance, and ledger activity.</p>
         </div>
 
@@ -645,7 +645,7 @@ export class AccountDashboardComponent implements OnInit {
     private transactionService: TransactionService,
     private authService: AuthService,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -653,7 +653,7 @@ export class AccountDashboardComponent implements OnInit {
 
   getBankBadge(desc: string, type: string) {
     const text = (desc || '').toLowerCase();
-    if (text.includes('mb bank') || text.includes('quân đội')) {
+    if (text.includes('mb bank') || text.includes('quan doi')) {
       return { name: 'MB Bank', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
     }
     if (text.includes('vietcombank') || text.includes('vcb')) {
@@ -740,7 +740,7 @@ export class AccountDashboardComponent implements OnInit {
 
   private computeRealtimeChartData(txns: TransactionResponse[]): void {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
+
     // Group transactions by day
     const dayMap = new Map<string, number>();
     days.forEach(d => dayMap.set(d, 0));

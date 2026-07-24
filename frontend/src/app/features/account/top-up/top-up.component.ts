@@ -322,7 +322,7 @@ export interface AvailableBankOption {
               <div class="vqr-details-box">
                 <div class="detail-card">
                   <span class="d-lbl">BENEFICIARY BANK</span>
-                  <span class="d-val font-bold">MB Bank (Quân Đội)</span>
+                  <span class="d-val font-bold">MB Bank</span>
                 </div>
                 <div class="detail-card">
                   <span class="d-lbl">ACCOUNT NUMBER</span>
@@ -389,7 +389,7 @@ export interface AvailableBankOption {
           <form [formGroup]="linkForm" (ngSubmit)="submitLinkBank()" class="modal-form">
             <!-- Dropdown / Navdown Select Menu for Bank Selection -->
             <div class="form-group">
-              <label class="input-label required">Select Bank / E-Wallet (Danh sách ngân hàng)</label>
+              <label class="input-label required">Select Bank / E-Wallet</label>
               <div class="select-wrapper">
                 <select
                   class="custom-select modal-select font-bold"
@@ -410,7 +410,7 @@ export interface AvailableBankOption {
 
             <!-- Card / Account Number - Must be Entered by User -->
             <div class="form-group">
-              <label class="input-label required">Account Number / Card Number (Số thẻ / tài khoản do bạn nhập)</label>
+              <label class="input-label required">Account Number / Card Number</label>
               <input
                 type="text"
                 class="modal-input font-mono font-bold"
@@ -424,7 +424,7 @@ export interface AvailableBankOption {
 
             <!-- Account Holder Name -->
             <div class="form-group">
-              <label class="input-label required">Account Holder Name (Tên chủ tài khoản)</label>
+              <label class="input-label required">Account Holder Name</label>
               <input
                 type="text"
                 class="modal-input"
@@ -1110,7 +1110,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
       this.timerSeconds--;
       if (this.timerSeconds <= 0) {
         this.closeVietQrModal();
-        this.notification.warning('Mã VietQR đã hết hạn. Vui lòng tạo lại mã mới.');
+        this.notification.warning('VietQR code has expired. Please generate a new code.');
       }
     }, 1000);
   }
@@ -1143,7 +1143,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
       amount: amount,
       type: 'TOPUP',
       status: 'COMPLETED',
-      description: methodId === 'vietqr' ? 'Nạp tiền VietQR Instant Scan' : 'Wallet Top Up via Linked Bank',
+      description: methodId === 'vietqr' ? 'VietQR Instant Scan Top Up' : 'Wallet Top Up via Linked Bank',
       createdAt: new Date().toISOString()
     };
     txns.unshift(newTxn);
@@ -1165,7 +1165,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
     this.accountService.refreshAccountState();
     this.submitting = false;
     this.closeVietQrModal();
-    this.notification.success(`Nạp thành công ${amount.toLocaleString('vi-VN')} VND vào ví PayGate!`);
+    this.notification.success(`Successfully topped up ${amount.toLocaleString()} VND into PayGate wallet!`);
     this.router.navigate(['/accounts/dashboard']);
   }
 
@@ -1195,7 +1195,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
         if (res.success && res.data) {
           const newBank = res.data as any;
           this.selectedBankId = newBank.id;
-          this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
+          this.notification.success(`Successfully linked ${newBank.bankName} account!`);
           this.closeLinkModal();
         }
       },
@@ -1212,7 +1212,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
         this.linkedBanks.unshift(newBank);
         this.saveLinkedBanks();
         this.selectedBankId = newBank.id;
-        this.notification.success(`Liên kết thành công tài khoản ${newBank.bankName}!`);
+        this.notification.success(`Successfully linked ${newBank.bankName} account!`);
         this.closeLinkModal();
       }
     });
@@ -1264,7 +1264,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
     this.linkedBanks = defaults;
     this.saveLinkedBanks();
     this.selectedBankId = defaults[0].id;
-    this.notification.success('Đã khôi phục danh sách ngân hàng liên kết sẵn.');
+    this.notification.success('Restored default linked banks list.');
   }
 
   unlinkBank(id: string, event: Event): void {
@@ -1279,7 +1279,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
         if (this.selectedBankId === id) {
           this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
         }
-        this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
+        this.notification.info(`Unlinked account ${bank.bankName}.`);
       },
       error: () => {
         this.linkedBanks = this.linkedBanks.filter(b => b.id !== id);
@@ -1287,7 +1287,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
         if (this.selectedBankId === id) {
           this.selectedBankId = this.linkedBanks.length > 0 ? this.linkedBanks[0].id : '';
         }
-        this.notification.info(`Đã hủy liên kết tài khoản ${bank.bankName}.`);
+        this.notification.info(`Unlinked account ${bank.bankName}.`);
       }
     });
   }
@@ -1301,12 +1301,12 @@ export class TopUpComponent implements OnInit, OnDestroy {
     }
 
     if (!this.currentSelectedBank) {
-      this.notification.error('Vui lòng chọn ngân hàng nguồn để nạp tiền.');
+      this.notification.error('Please select a source bank to top up.');
       return;
     }
 
     if (this.isCurrentBankInsufficient()) {
-      this.notification.error(`Số dư ngân hàng ${this.currentSelectedBank.bankName} không đủ.`);
+      this.notification.error(`Insufficient balance in ${this.currentSelectedBank.bankName}.`);
       return;
     }
 

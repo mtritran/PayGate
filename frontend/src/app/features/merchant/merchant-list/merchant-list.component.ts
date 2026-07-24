@@ -19,7 +19,7 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
           <div>
             <div class="header-tag">ENTERPRISE MERCHANT PROVISIONING</div>
             <h2>Enterprise Merchant Review & Approval</h2>
-            <p class="header-subtitle">Review business registration requests, verify Tax Codes (MST), and approve enterprise partners.</p>
+            <p class="header-subtitle">Review business registration requests, verify Tax Codes , and approve enterprise partners.</p>
           </div>
 
           <div class="header-actions">
@@ -72,12 +72,12 @@ import { MerchantFormComponent } from '../merchant-form/merchant-form.component'
               <thead>
                 <tr>
                   <th>ENTERPRISE NAME</th>
-                  <th>TAX CODE (MST)</th>
+                  <th>TAX CODE </th>
                   <th>REPRESENTATIVE & PHONE</th>
                   <th>MERCHANT CODE</th>
                   <th>WEBHOOK URL</th>
                   <th>STATUS</th>
-                  <th>QUICK LIST (HIỂN THỊ SẴN)</th>
+                  <th>QUICK LIST FEATURED</th>
                   <th class="text-right">ADMIN ACTIONS</th>
                 </tr>
               </thead>
@@ -364,7 +364,7 @@ export class MerchantListComponent implements OnInit {
   constructor(
     private merchantService: MerchantService,
     private notification: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadMerchants();
@@ -475,9 +475,9 @@ export class MerchantListComponent implements OnInit {
     m.isFeatured = !m.isFeatured;
     this.updateLocalMerchantState(m);
     if (m.isFeatured) {
-      this.notification.success(`Doanh nghiệp ${m.merchantName} đã được bật hiển thị sẵn trên danh sách Quick List.`);
+      this.notification.success(`Merchant ${m.merchantName} enabled in Quick List.`);
     } else {
-      this.notification.info(`Doanh nghiệp ${m.merchantName} yêu cầu người dùng nhập đúng Mã Số Thuế MST.`);
+      this.notification.info(`Merchant ${m.merchantName} requires Tax Code lookup.`);
     }
   }
 
@@ -488,31 +488,31 @@ export class MerchantListComponent implements OnInit {
         m.active = true;
         m.accountNumber = m.accountNumber || `PAY9900${m.id.toString().padStart(4, '0')}`;
         this.updateLocalMerchantState(m);
-        this.notification.success(`Đã phê duyệt doanh nghiệp ${m.merchantName}! Mã số thuế ${m.taxCode || '0101234567'} đã kích hoạt nhận tiền.`);
+        this.notification.success(`Approved Merchant ${m.merchantName}! Tax Code ${m.taxCode || '0101234567'} activated for payments.`);
       },
       error: () => {
         m.status = 'ACTIVE';
         m.active = true;
         m.accountNumber = m.accountNumber || `PAY9900${m.id.toString().padStart(4, '0')}`;
         this.updateLocalMerchantState(m);
-        this.notification.success(`Đã phê duyệt doanh nghiệp ${m.merchantName}! Mã số thuế ${m.taxCode || '0101234567'} đã kích hoạt nhận tiền.`);
+        this.notification.success(`Approved Merchant ${m.merchantName}! Tax Code ${m.taxCode || '0101234567'} activated for payments.`);
       }
     });
   }
 
   rejectMerchant(m: any): void {
-    this.merchantService.rejectMerchant(m.id, 'Chưa đủ điều kiện pháp lý').subscribe({
+    this.merchantService.rejectMerchant(m.id, 'Insufficient legal verification documents').subscribe({
       next: () => {
         m.status = 'REJECTED';
         m.active = false;
         this.updateLocalMerchantState(m);
-        this.notification.info(`Đã từ chối đơn đăng ký doanh nghiệp ${m.merchantName}.`);
+        this.notification.info(`Rejected registration request for Merchant ${m.merchantName}.`);
       },
       error: () => {
         m.status = 'REJECTED';
         m.active = false;
         this.updateLocalMerchantState(m);
-        this.notification.info(`Đã từ chối đơn đăng ký doanh nghiệp ${m.merchantName}.`);
+        this.notification.info(`Rejected registration request for Merchant ${m.merchantName}.`);
       }
     });
   }

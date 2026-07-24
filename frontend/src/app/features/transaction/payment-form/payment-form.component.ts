@@ -6,10 +6,8 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { AccountService } from '../../../core/services/account.service';
-import { MerchantService } from '../../../core/services/merchant.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AccountLookupResponse } from '../../../core/models/account.model';
-import { Merchant } from '../../../core/models/merchant.model';
 
 @Component({
   selector: 'app-payment-form',
@@ -27,9 +25,9 @@ import { Merchant } from '../../../core/models/merchant.model';
       <div class="paygate-form-page fade-in-up">
         <!-- Form Header -->
         <div class="form-header-group">
-          <div class="header-tag">PAYGATE SECURE EXPRESS TRANSFER</div>
+          <div class="header-tag">PAYGATE EXPRESS TRANSFER</div>
           <h2>Send Payment</h2>
-          <p class="subtitle">Bank-grade encrypted transfers backed by double-entry ledger & idempotency protection.</p>
+          <p class="subtitle">Secure money transfer to any User or Merchant account using double-entry ledger & idempotency protection.</p>
         </div>
 
         <!-- Main Form Glass Card -->
@@ -47,162 +45,59 @@ import { Merchant } from '../../../core/models/merchant.model';
             <strong class="balance-amount">{{ myBalance | currency:'VND':'symbol':'1.0-0' }}</strong>
           </div>
 
-          <!-- 2-Tab Navigation Switcher -->
-          <div class="tab-switcher">
-            <button
-              type="button"
-              class="tab-btn"
-              [class.active]="activeTab === 'USER'"
-              (click)="switchTab('USER')"
-            >
-              <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <span>Personal Transfer (Cá nhân)</span>
-            </button>
-
-            <button
-              type="button"
-              class="tab-btn"
-              [class.active]="activeTab === 'MERCHANT'"
-              (click)="switchTab('MERCHANT')"
-            >
-              <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-              <span>Merchant Payment (Doanh nghiệp)</span>
-            </button>
-          </div>
-
           <!-- Custom Clean Payment Form -->
           <form [formGroup]="paymentForm" (ngSubmit)="openConfirmation()" class="custom-form">
             
-            <!-- TAB 1: PERSONAL TRANSFER (Strict Banking Security) -->
-            <div *ngIf="activeTab === 'USER'" class="tab-content fade-in-up">
-              <div class="form-group">
-                <label class="form-label required">Recipient Phone Number (10 digits) OR Account Number</label>
-                <div class="input-wrapper">
-                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  <input
-                    type="text"
-                    class="form-input font-mono"
-                    placeholder="e.g. 0988123456 or PAY0000000004"
-                    [(ngModel)]="lookupQuery"
-                    [ngModelOptions]="{standalone: true}"
-                    (input)="onLookupInput($event)"
-                    maxlength="30"
-                  >
-                </div>
-              </div>
-
-              <!-- Live Resolution Card -->
-              <div *ngIf="lookingUp" class="lookup-card loading-card">
-                <div class="spinner-sm"></div>
-                <span>Verifying recipient account in real-time...</span>
-              </div>
-
-              <div *ngIf="!lookingUp && recipientLookup" class="lookup-card success-card">
-                <div class="verified-badge">VERIFIED RECIPIENT</div>
-                <div class="recipient-details">
-                  <strong class="recipient-name">{{ recipientLookup.ownerName }}</strong>
-                  <span class="recipient-meta font-mono">Account #{{ recipientLookup.accountNumber }} | Phone: {{ recipientLookup.phoneNumber || 'Verified' }}</span>
-                </div>
-              </div>
-
-              <div *ngIf="!lookingUp && lookupError && lookupQuery.length >= 10" class="lookup-card error-card">
-                [Notice] {{ lookupError }}
+            <!-- Recipient Account Number Field -->
+            <div class="form-group">
+              <label class="form-label required">Recipient Account Number</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <input
+                  type="text"
+                  class="form-input"
+                  placeholder="Enter account number (e.g. ACC10001)..."
+                  [(ngModel)]="accountNumberInput"
+                  [ngModelOptions]="{standalone: true}"
+                  (input)="onInputChanged($event)"
+                  (blur)="onInputBlur()"
+                  (keyup.enter)="onInputBlur()"
+                >
               </div>
             </div>
 
-            <!-- TAB 2: MERCHANT PAYMENT (Featured Major Enterprise VS Small Enterprise Tax Code Search) -->
-            <div *ngIf="activeTab === 'MERCHANT'" class="tab-content fade-in-up">
-              <!-- Sub-mode Selector: Featured Major Enterprise VS Manual Tax Code Search -->
-              <div class="merchant-mode-pills mb-12">
-                <button
-                  type="button"
-                  class="sub-pill-btn"
-                  [class.active]="merchantSubMode === 'FEATURED'"
-                  (click)="setMerchantSubMode('FEATURED')">
-                  Featured Major Enterprise (Chọn sẵn)
-                </button>
-                <button
-                  type="button"
-                  class="sub-pill-btn"
-                  [class.active]="merchantSubMode === 'TAX_CODE_SEARCH'"
-                  (click)="setMerchantSubMode('TAX_CODE_SEARCH')">
-                  Small Enterprise (Tra cứu MST)
-                </button>
-              </div>
+            <!-- Live Recipient Resolution Card (Visible ONLY when user finishes inputting) -->
+            <div *ngIf="lookingUp" class="lookup-card loading-card">
+              <div class="spinner-sm"></div>
+              <span>Verifying account number...</span>
+            </div>
 
-              <!-- MODE A: FEATURED MAJOR ENTERPRISES LIST (ADMIN TICKED SHOW) -->
-              <div *ngIf="merchantSubMode === 'FEATURED'" class="form-group">
-                <label class="form-label required">Select Major Enterprise Partner</label>
-                <div class="select-wrapper">
-                  <select
-                    class="custom-select"
-                    [(ngModel)]="selectedFeaturedMerchantId"
-                    [ngModelOptions]="{standalone: true}"
-                    (change)="onFeaturedMerchantSelect()"
-                  >
-                    <option [ngValue]="null">-- Select a Featured Enterprise --</option>
-                    <option *ngFor="let m of featuredMerchants" [ngValue]="m.id">
-                      {{ m.merchantName }} (MST: {{ m.taxCode || '0101234567' }})
-                    </option>
-                  </select>
-                  <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-                <span class="input-hint">List of major enterprise partners pre-approved and featured by Admin.</span>
+            <div *ngIf="!lookingUp && recipientLookup" class="lookup-card success-card">
+              <div class="verified-badge">
+                <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">🏪 MERCHANT ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'USER'">👤 PERSONAL ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">⚡ SYSTEM ACCOUNT</span>
               </div>
+              <div class="recipient-details">
+                <strong class="recipient-name">{{ recipientLookup.ownerName }}</strong>
+              </div>
+            </div>
 
-              <!-- MODE B: MANUAL EXACT TAX CODE LOOKUP (FOR SMALL ENTERPRISES) -->
-              <div *ngIf="merchantSubMode === 'TAX_CODE_SEARCH'" class="form-group">
-                <label class="form-label required">Enterprise Tax Code (Mã số thuế MST) OR Merchant Code</label>
-                <div class="input-wrapper">
-                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  </svg>
-                  <input
-                    type="text"
-                    class="form-input font-mono"
-                    placeholder="Enter 10-digit Tax Code (e.g. 0109998881) or Merchant Code"
-                    [(ngModel)]="merchantTaxQuery"
-                    [ngModelOptions]="{standalone: true}"
-                    (input)="onMerchantTaxInput($event)"
-                  >
-                </div>
-              </div>
-
-              <!-- Selected Merchant Info Card -->
-              <div *ngIf="selectedMerchant" class="lookup-card merchant-info-card">
-                <div class="verified-badge">
-                  {{ selectedMerchant.isFeatured ? 'FEATURED MAJOR ENTERPRISE' : 'VERIFIED SMALL ENTERPRISE' }}
-                </div>
-                <div class="recipient-details">
-                  <strong class="recipient-name">{{ selectedMerchant.merchantName }}</strong>
-                  <span class="recipient-meta font-mono">Tax Code (MST): {{ selectedMerchant.taxCode || '0101234567' }} | Code: {{ selectedMerchant.merchantCode }}</span>
-                  <span class="recipient-sub font-mono">Wallet Account: {{ selectedMerchant.accountNumber || 'PAY990000001' }}</span>
-                </div>
-              </div>
-
-              <div *ngIf="merchantSubMode === 'TAX_CODE_SEARCH' && merchantLookupError && merchantTaxQuery.length >= 6" class="lookup-card error-card">
-                [Notice] {{ merchantLookupError }}
-              </div>
+            <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
+              ❌ {{ lookupError }}
             </div>
 
             <!-- Amount Field -->
             <div class="form-group">
-              <label class="form-label required">Amount (VND)</label>
+              <label class="form-label required">Payment Amount (VND)</label>
               <div class="input-wrapper">
                 <span class="currency-prefix">₫</span>
                 <input
                   type="number"
-                  class="form-input has-prefix font-bold"
+                  class="form-input has-prefix"
                   formControlName="amount"
                   placeholder="Enter amount (e.g. 100,000)"
                   min="1000"
@@ -245,7 +140,7 @@ import { Merchant } from '../../../core/models/merchant.model';
                 </svg>
                 <input
                   type="text"
-                  class="form-input font-mono readonly-input"
+                  class="form-input readonly-input"
                   formControlName="idempotencyKey"
                   readonly
                 >
@@ -265,7 +160,7 @@ import { Merchant } from '../../../core/models/merchant.model';
               <button
                 type="submit"
                 class="btn-emerald-submit"
-                [disabled]="paymentForm.invalid || !hasValidRecipient() || submitting"
+                [disabled]="paymentForm.invalid || !recipientLookup || submitting"
               >
                 <span>Review Payment ↗</span>
               </button>
@@ -298,19 +193,19 @@ import { Merchant } from '../../../core/models/merchant.model';
           <div class="receipt-box">
             <div class="receipt-row">
               <span class="receipt-label">Recipient Name</span>
-              <strong class="receipt-val font-large">{{ getRecipientDisplayName() }}</strong>
+              <strong class="receipt-val font-large">{{ recipientLookup?.ownerName }}</strong>
             </div>
             <div class="receipt-row">
-              <span class="receipt-label">Destination Account</span>
-              <strong class="receipt-val font-mono">{{ getRecipientAccountNum() }}</strong>
+              <span class="receipt-label">Destination Account Number</span>
+              <strong class="receipt-val">{{ recipientLookup?.accountNumber }}</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label">Transfer Amount</span>
               <strong class="receipt-val text-emerald">{{ paymentForm.value.amount | currency:'VND':'symbol':'1.0-0' }}</strong>
             </div>
-            <div class="receipt-row" *ngIf="paymentForm.value.merchantId">
-              <span class="receipt-label">Enterprise Partner</span>
-              <strong class="receipt-val">MST: {{ selectedMerchant?.taxCode || '0101234567' }} - {{ selectedMerchant?.merchantName }}</strong>
+            <div class="receipt-row" *ngIf="recipientLookup?.merchantId">
+              <span class="receipt-label">Merchant Reference ID</span>
+              <strong class="receipt-val">#{{ recipientLookup?.merchantId }}</strong>
             </div>
             <div class="receipt-row">
               <span class="receipt-label">Payment Note</span>
@@ -321,7 +216,7 @@ import { Merchant } from '../../../core/models/merchant.model';
 
             <div class="key-box">
               <span class="key-title">Idempotency Key Signature:</span>
-              <code class="key-string font-mono">{{ paymentForm.value.idempotencyKey }}</code>
+              <code class="key-string">{{ paymentForm.value.idempotencyKey }}</code>
             </div>
           </div>
 
@@ -355,11 +250,16 @@ import { Merchant } from '../../../core/models/merchant.model';
       to { transform: rotate(360deg); }
     }
 
+    .paygate-form-wrapper,
+    .paygate-form-wrapper * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
     .paygate-form-wrapper { position: relative; width: 100%; }
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     .modal-fade-in { animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 620px; margin: 0 auto; width: 100%; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
+    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 580px; margin: 0 auto; width: 100%; color: #0f172a; }
     
     .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
     .form-header-group h2 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px 0; letter-spacing: -0.02em; }
@@ -368,44 +268,13 @@ import { Merchant } from '../../../core/models/merchant.model';
     .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04); }
     
     /* Balance Strip */
-    .balance-strip { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 1px solid #a7f3d0; }
+    .balance-strip { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid #a7f3d0; }
     .balance-strip-left { display: flex; align-items: center; gap: 8px; font-weight: 600; }
     .wallet-icon { width: 18px; height: 18px; color: #059669; }
     .balance-amount { font-size: 1.1rem; font-weight: 800; color: #059669; }
 
-    /* Tab Switcher */
-    .tab-switcher { display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-    .tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; border: none; background: transparent; border-radius: 8px; font-size: 0.825rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
-    .tab-btn.active { background: #ffffff; color: #059669; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .tab-icon { width: 16px; height: 16px; }
-
-    /* Merchant Sub-Mode Selector Pills */
-    .merchant-mode-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .sub-pill-btn { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 10px; padding: 10px; font-size: 0.75rem; font-weight: 800; color: #475569; cursor: pointer; transition: all 0.15s; }
-    .sub-pill-btn:hover { background: #ffffff; border-color: #059669; }
-    .sub-pill-btn.active { background: #ecfdf5; border-color: #059669; color: #047857; box-shadow: 0 0 0 2px #059669; }
-
-    /* Select Wrapper */
-    .select-wrapper { position: relative; width: 100%; }
-    .custom-select {
-      width: 100%;
-      height: 44px;
-      padding: 0 36px 0 14px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: #0f172a;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      outline: none;
-      appearance: none;
-      cursor: pointer;
-    }
-    .select-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
-    
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
-    .tab-content { display: flex; flex-direction: column; gap: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     
     .form-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
@@ -413,7 +282,7 @@ import { Merchant } from '../../../core/models/merchant.model';
     
     .input-wrapper { position: relative; display: flex; align-items: center; }
     .input-icon { position: absolute; left: 12px; width: 18px; height: 18px; color: #94a3b8; pointer-events: none; }
-    .currency-prefix { position: absolute; left: 14px; font-weight: 800; color: #059669; font-size: 1.1rem; pointer-events: none; }
+    .currency-prefix { position: absolute; left: 14px; font-weight: 700; color: #059669; font-size: 1.05rem; pointer-events: none; }
     
     .form-input {
       width: 100%;
@@ -432,24 +301,17 @@ import { Merchant } from '../../../core/models/merchant.model';
     .form-input.has-prefix { padding-left: 36px; }
     .form-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
     .form-input.readonly-input { background-color: #f1f5f9; color: #475569; padding-right: 44px; }
-    .font-mono { font-family: monospace; }
-    .font-bold { font-weight: 800; }
-
-    .security-hint-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 10px; font-size: 0.775rem; color: #64748b; line-height: 1.4; }
-    .security-hint-box code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #0f172a; }
 
     /* Lookup Card */
     .lookup-card { padding: 14px 16px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
     .loading-card { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; flex-direction: row; align-items: center; gap: 10px; }
     .spinner-sm { width: 16px; height: 16px; border: 2px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.7s linear infinite; }
     
-    .success-card, .merchant-info-card { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+    .success-card { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
     .error-card { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; font-weight: 600; }
     
     .verified-badge { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; color: #059669; }
-    .recipient-name { font-size: 1.05rem; font-weight: 800; color: #065f46; }
-    .recipient-meta { font-size: 0.78rem; color: #047857; }
-    .recipient-sub { font-size: 0.75rem; color: #059669; margin-top: 2px; }
+    .recipient-name { font-size: 1.15rem; font-weight: 800; color: #065f46; margin-top: 2px; }
 
     .btn-refresh-key { position: absolute; right: 8px; width: 30px; height: 30px; border: none; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #059669; border: 1px solid #e2e8f0; }
     .btn-refresh-key:hover { background-color: #ecfdf5; }
@@ -484,7 +346,7 @@ import { Merchant } from '../../../core/models/merchant.model';
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       width: 100vw; height: 100vh;
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(10px);
       display: flex; justify-content: center; align-items: center;
       z-index: 99999; padding: 20px; box-sizing: border-box;
@@ -492,49 +354,48 @@ import { Merchant } from '../../../core/models/merchant.model';
 
     .confirm-modal-box {
       background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.9);
-      border-radius: 28px; max-width: 560px; width: 100%; padding: 38px 42px;
-      box-shadow: 0 30px 80px -15px rgba(15, 23, 42, 0.35);
-      font-family: 'Inter', system-ui, sans-serif;
+      border-radius: 20px; max-width: 480px; width: 100%; padding: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
     }
     
-    .modal-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #f1f5f9; position: relative; }
-    .modal-icon-badge { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
-    .modal-icon-badge svg { width: 26px; height: 26px; }
+    .modal-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 22px; position: relative; }
+    .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
+    .modal-icon-badge svg { width: 24px; height: 24px; }
     
     .modal-header-text { flex: 1; }
-    .modal-tag { font-size: 0.72rem; font-weight: 800; color: #059669; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
-    .modal-header h3 { margin: 0 0 4px 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
-    .modal-desc { margin: 0; font-size: 0.875rem; color: #64748b; }
+    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    .modal-header h3 { margin: 0 0 2px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .modal-desc { margin: 0; font-size: 0.825rem; color: #64748b; }
     
-    .btn-close { background: #f1f5f9; border: none; font-size: 1rem; color: #64748b; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-    .btn-close:hover { color: #0f172a; background-color: #e2e8f0; }
+    .btn-close { background: transparent; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; }
+    .btn-close:hover { color: #0f172a; background-color: #f1f5f9; }
 
     /* Receipt Card */
-    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
-    .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
-    .receipt-label { color: #64748b; font-weight: 600; }
+    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
+    .receipt-label { color: #64748b; font-weight: 500; }
     .receipt-val { color: #0f172a; font-weight: 700; }
-    .font-large { font-size: 1.05rem; color: #059669; }
-    .text-emerald { color: #059669; font-weight: 800; font-size: 1.25rem; }
+    .font-large { font-size: 1rem; color: #059669; }
+    .text-emerald { color: #059669; font-weight: 800; font-size: 1.15rem; }
 
-    .receipt-divider { height: 1px; border-top: 1px dashed #cbd5e1; margin: 6px 0; }
+    .receipt-divider { height: 1px; border-top: 1px dashed #cbd5e1; margin: 4px 0; }
 
-    .key-box { display: flex; flex-direction: column; gap: 6px; }
-    .key-title { font-size: 0.75rem; color: #64748b; font-weight: 700; letter-spacing: 0.04em; }
-    .key-string { font-family: monospace; font-size: 0.8rem; font-weight: 700; color: #059669; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid #e2e8f0; word-break: break-all; }
+    .key-box { display: flex; flex-direction: column; gap: 4px; }
+    .key-title { font-size: 0.72rem; color: #64748b; font-weight: 700; letter-spacing: 0.03em; }
+    .key-string { font-size: 0.78rem; font-weight: 700; color: #059669; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; word-break: break-all; }
 
     /* Actions Bar */
-    .modal-actions-bar { display: grid; grid-template-columns: 1fr 1.6fr; gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+    .modal-actions-bar { display: flex; gap: 12px; align-items: center; }
     
     .btn-edit-outline {
-      height: 48px; padding: 0 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 12px; font-weight: 700; font-size: 0.9rem; color: #475569; cursor: pointer; transition: all 0.15s;
+      height: 44px; padding: 0 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 10px; font-weight: 600; font-size: 0.875rem; color: #475569; cursor: pointer; transition: all 0.15s;
     }
     .btn-edit-outline:hover:not(:disabled) { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
 
     .btn-confirm-emerald {
-      height: 48px; border: none; border-radius: 12px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: all 0.2s;
+      flex: 1; height: 44px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); transition: all 0.2s;
     }
-    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45); }
+    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
     .btn-confirm-emerald:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     
     .spinner-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -543,33 +404,23 @@ import { Merchant } from '../../../core/models/merchant.model';
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {
   paymentForm!: FormGroup;
-  activeTab: 'USER' | 'MERCHANT' = 'USER';
-  merchantSubMode: 'FEATURED' | 'TAX_CODE_SEARCH' = 'FEATURED';
   myBalance = 0;
   submitting = false;
   showConfirmModal = false;
 
-  // Real-time strict lookup state for USER tab
-  lookupQuery = '';
+  // Account Number input & Real-time lookup state
+  accountNumberInput = '';
   lookingUp = false;
   recipientLookup: AccountLookupResponse | null = null;
   lookupError: string | null = null;
+  
   private lookupSubject = new Subject<string>();
   private lookupSub!: Subscription;
-
-  // Merchant state for MERCHANT tab
-  allActiveMerchants: any[] = [];
-  featuredMerchants: any[] = [];
-  selectedFeaturedMerchantId: number | null = null;
-  merchantTaxQuery = '';
-  selectedMerchant: any = null;
-  merchantLookupError: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private transactionService: TransactionService,
     private accountService: AccountService,
-    private merchantService: MerchantService,
     private notification: NotificationService,
     private router: Router
   ) {}
@@ -579,7 +430,6 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.loadMyBalance();
     this.generateIdempotencyKey();
     this.setupLookupDebounce();
-    this.loadActiveMerchants();
   }
 
   ngOnDestroy(): void {
@@ -588,37 +438,12 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  switchTab(tab: 'USER' | 'MERCHANT'): void {
-    this.activeTab = tab;
-    this.recipientLookup = null;
-    this.selectedMerchant = null;
-    this.selectedFeaturedMerchantId = null;
-    this.lookupQuery = '';
-    this.merchantTaxQuery = '';
-    this.lookupError = null;
-    this.merchantLookupError = null;
-
-    this.paymentForm.patchValue({
-      destAccountId: '',
-      merchantId: null
-    });
-  }
-
-  setMerchantSubMode(mode: 'FEATURED' | 'TAX_CODE_SEARCH'): void {
-    this.merchantSubMode = mode;
-    this.selectedMerchant = null;
-    this.selectedFeaturedMerchantId = null;
-    this.merchantTaxQuery = '';
-    this.merchantLookupError = null;
-    this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
-  }
-
   private initForm(): void {
     this.paymentForm = this.fb.group({
       destAccountId: ['', [Validators.required]],
       amount: ['', [Validators.required, Validators.min(1000)]],
       merchantId: [null],
-      description: ['Thanh toán dịch vụ PayGate'],
+      description: ['PayGate Express Payment'],
       idempotencyKey: ['', [Validators.required]]
     });
   }
@@ -633,68 +458,35 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadActiveMerchants(): void {
-    this.merchantService.getActiveMerchants().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          this.allActiveMerchants = res.data;
-          this.filterFeaturedMerchants();
-        }
-      },
-      error: () => {
-        const saved = localStorage.getItem('paygate_mock_merchants_list');
-        if (saved) {
-          const list = JSON.parse(saved);
-          this.allActiveMerchants = list.filter((m: any) => m.status === 'ACTIVE' || m.active === true);
-          this.filterFeaturedMerchants();
-        }
-      }
-    });
-  }
-
-  private filterFeaturedMerchants(): void {
-    this.featuredMerchants = this.allActiveMerchants.filter(m => m.isFeatured === true || m.isFeatured === undefined);
-  }
-
-  onFeaturedMerchantSelect(): void {
-    if (!this.selectedFeaturedMerchantId) {
-      this.selectedMerchant = null;
-      this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
-      return;
-    }
-    const found = this.allActiveMerchants.find(m => m.id === this.selectedFeaturedMerchantId);
-    if (found) {
-      this.selectedMerchant = found;
-      this.paymentForm.patchValue({
-        destAccountId: found.accountId || found.id || 100,
-        merchantId: found.id
-      });
-    }
-  }
-
   private setupLookupDebounce(): void {
     this.lookupSub = this.lookupSubject.pipe(
-      debounceTime(300),
+      debounceTime(400),
       distinctUntilChanged()
     ).subscribe(query => {
       this.performAccountLookup(query);
     });
   }
 
-  onLookupInput(event: Event): void {
-    const val = (event.target as HTMLInputElement).value.trim();
-    this.lookupQuery = val;
+  onInputChanged(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    // Reset state when user clears or alters input
+    this.recipientLookup = null;
+    this.lookupError = null;
+    this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
 
-    if (!val || val.length < 10) {
+    if (val && val.trim().length >= 3) {
+      this.lookingUp = true;
+      this.lookupSubject.next(val.trim());
+    } else {
       this.lookingUp = false;
-      this.recipientLookup = null;
-      this.lookupError = null;
-      this.paymentForm.patchValue({ destAccountId: '' });
-      return;
     }
+  }
 
-    this.lookingUp = true;
-    this.lookupSubject.next(val);
+  onInputBlur(): void {
+    if (this.accountNumberInput && this.accountNumberInput.trim().length >= 2) {
+      this.lookingUp = true;
+      this.performAccountLookup(this.accountNumberInput.trim());
+    }
   }
 
   private performAccountLookup(query: string): void {
@@ -706,94 +498,29 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
           this.lookupError = null;
           this.paymentForm.patchValue({
             destAccountId: res.data.accountId,
-            merchantId: res.data.ownerType === 'MERCHANT' ? res.data.accountId : null
+            merchantId: res.data.merchantId || null
           });
-        } else {
-          this.lookingUp = false;
-          this.recipientLookup = null;
-          this.lookupError = 'Không tìm thấy tài khoản với SĐT / STK chính xác này.';
-          this.paymentForm.patchValue({ destAccountId: '' });
         }
       },
       error: (err) => {
         this.lookingUp = false;
         this.recipientLookup = null;
-        this.lookupError = err.error?.message || 'Không tìm thấy tài khoản với SĐT / STK chính xác này.';
-        this.paymentForm.patchValue({ destAccountId: '' });
+        this.lookupError = err.error?.message || `Account number "${query}" not found in system.`;
+        this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
       }
     });
   }
 
-  onMerchantTaxInput(event: Event): void {
-    const q = (event.target as HTMLInputElement).value.trim().toLowerCase();
-    this.merchantTaxQuery = q;
-
-    if (!q || q.length < 6) {
-      this.selectedMerchant = null;
-      this.merchantLookupError = null;
-      this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
-      return;
-    }
-
-    // Lookup from Admin-Approved active merchants list by exact Tax Code (MST) or Code
-    const found = this.allActiveMerchants.find(m => 
-      (m.taxCode && m.taxCode.toLowerCase() === q) || 
-      (m.merchantCode && m.merchantCode.toLowerCase() === q)
-    );
-
-    if (found) {
-      this.selectedMerchant = found;
-      this.merchantLookupError = null;
-      this.paymentForm.patchValue({
-        destAccountId: found.accountId || found.id || 100,
-        merchantId: found.id
-      });
-    } else {
-      this.selectedMerchant = null;
-      this.merchantLookupError = `Mã số thuế (MST) hoặc Mã doanh nghiệp "${q}" không tồn tại hoặc chưa được Admin phê duyệt.`;
-      this.paymentForm.patchValue({ destAccountId: '', merchantId: null });
-    }
-  }
-
   generateIdempotencyKey(): void {
-    const randomHex = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const key = `IDEM-${randomHex}-${Date.now()}`;
-    this.paymentForm.patchValue({ idempotencyKey: key });
-  }
-
-  hasValidRecipient(): boolean {
-    if (this.activeTab === 'USER') {
-      return !!this.recipientLookup;
-    }
-    return !!this.selectedMerchant;
-  }
-
-  getRecipientDisplayName(): string {
-    if (this.activeTab === 'USER') {
-      return this.recipientLookup?.ownerName || 'Unknown Recipient';
-    }
-    return this.selectedMerchant?.merchantName || 'Unknown Enterprise';
-  }
-
-  getRecipientAccountNum(): string {
-    if (this.activeTab === 'USER') {
-      return this.recipientLookup?.accountNumber || '';
-    }
-    return this.selectedMerchant?.accountNumber || `PAY9900000${this.selectedMerchant?.id || 1}`;
+    const uuid = 'IDEM-' + Math.random().toString(36).substring(2, 9).toUpperCase() + '-' + Date.now();
+    this.paymentForm.patchValue({ idempotencyKey: uuid });
   }
 
   openConfirmation(): void {
-    if (this.paymentForm.invalid || !this.hasValidRecipient()) {
-      this.notification.error('Vui lòng chọn hoặc nhập đúng SĐT/STK/MST doanh nghiệp.');
+    if (this.paymentForm.invalid || !this.recipientLookup) {
+      this.paymentForm.markAllAsTouched();
       return;
     }
-
-    const amount = Number(this.paymentForm.value.amount);
-    if (amount > this.myBalance) {
-      this.notification.error('Số dư ví không đủ để thực hiện giao dịch này.');
-      return;
-    }
-
     this.showConfirmModal = true;
   }
 
@@ -803,44 +530,20 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
 
   executePayment(): void {
     this.submitting = true;
-    const req = this.paymentForm.value;
-
-    this.transactionService.sendPayment(req).subscribe({
+    this.transactionService.processPayment(this.paymentForm.value).subscribe({
       next: (res) => {
         this.submitting = false;
         this.showConfirmModal = false;
-        if (res.success) {
-          this.notification.success('Giao dịch chuyển tiền thành công!');
+        if (res.success && res.data) {
+          this.notification.success(`Payment completed successfully! Ref: ${res.data.transactionRef}`);
           this.router.navigate(['/transactions/history']);
         }
       },
-      error: () => {
-        // Guaranteed local mock fallback for continuous testing
+      error: (err) => {
         this.submitting = false;
         this.showConfirmModal = false;
-
-        const currentBal = Number(localStorage.getItem('paygate_wallet_balance')) || this.myBalance;
-        const newBal = Math.max(0, currentBal - req.amount);
-        localStorage.setItem('paygate_wallet_balance', newBal.toString());
-
-        const savedTxns = localStorage.getItem('paygate_mock_user_transactions');
-        let txns = savedTxns ? JSON.parse(savedTxns) : [];
-        txns.unshift({
-          id: Date.now(),
-          transactionRef: 'TXN-' + Date.now(),
-          sourceAccountId: 1,
-          destAccountId: req.destAccountId,
-          amount: req.amount,
-          type: 'PAYMENT',
-          status: 'COMPLETED',
-          description: req.description || `Transfer to ${this.getRecipientDisplayName()}`,
-          createdAt: new Date().toISOString()
-        });
-        localStorage.setItem('paygate_mock_user_transactions', JSON.stringify(txns));
-
-        this.accountService.refreshAccountState();
-        this.notification.success('Giao dịch chuyển tiền thành công!');
-        this.router.navigate(['/transactions/history']);
+        const msg = err.error?.message || 'Payment failed!';
+        this.notification.error(msg);
       }
     });
   }

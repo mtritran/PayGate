@@ -1,9 +1,7 @@
-import { Component, input, output, signal, effect, inject, HostListener, computed } from '@angular/core';
+import { Component, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { filter, map } from 'rxjs/operators';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 
@@ -13,7 +11,6 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
   imports: [
     CommonModule,
     RouterModule,
-    ThemeToggleComponent,
     ButtonComponent,
     AvatarComponent
   ],
@@ -23,7 +20,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       <aside class="sidenav" [class.sidenav-collapsed]="collapsed()">
         <!-- Brand Header -->
         <div class="brand-header">
-          <div class="brand-logo">
+          <div class="brand-logo" (click)="collapsed() && toggleCollapse()" [title]="collapsed() ? 'Expand sidebar' : ''">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
@@ -100,6 +97,18 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
                 <span class="nav-title" *ngIf="!collapsed()">Merchant Partner</span>
               </a>
             </li>
+            <!-- Collapse/Expand Sidebar Toggle directly below Merchant Partner -->
+            <li class="nav-item">
+              <button type="button" class="nav-link nav-collapse-btn" (click)="toggleCollapse()" [title]="collapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!collapsed()">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="collapsed()">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Collapse Sidebar</span>
+              </button>
+            </li>
           </ul>
 
           <!-- Admin Section (only for ADMIN role) -->
@@ -157,124 +166,58 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
           </ul>
         </nav>
 
-        <!-- Collapse Toggle -->
-        <button class="collapse-toggle" (click)="toggleCollapse()" aria-label="Toggle sidebar" aria-expanded="!collapsed()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!collapsed()">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="collapsed()">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
+        <!-- Sidebar Profile Footer -->
+        <div class="sidebar-profile-footer">
+          <!-- Expanded Profile View -->
+          <div *ngIf="!collapsed()" class="profile-expanded">
+            <div class="profile-user-card">
+              <pg-avatar
+                [name]="getDisplayName()"
+                size="sm"
+                class="profile-avatar"
+              ></pg-avatar>
+              <span class="profile-name">{{ getDisplayName() }}</span>
+            </div>
+            
+            <button class="btn-sidebar-logout" (click)="logout()" title="Logout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
+
+          <!-- Collapsed Profile View -->
+          <div *ngIf="collapsed()" class="profile-collapsed">
+            <pg-avatar
+              [name]="getDisplayName()"
+              size="sm"
+              class="profile-avatar-sm"
+              [title]="getDisplayName()"
+            ></pg-avatar>
+            <button class="btn-sidebar-logout-sm" (click)="logout()" title="Logout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </aside>
 
       <!-- Main Content Container -->
       <main class="main-content" [class.main-content-expanded]="collapsed()">
-        <!-- Top Header Navigation Bar -->
-        <header class="top-header">
-          <!-- Left Section: Breadcrumb & Mobile Menu Button -->
-          <div class="header-left">
-            <button class="mobile-toggle-btn" *ngIf="isMobile()" (click)="toggleCollapse()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-
-            <div class="header-breadcrumb">
-              <div class="breadcrumb-icon-wrapper">
-                <svg class="breadcrumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
-              </div>
-              <span class="breadcrumb-brand">PayGate Console</span>
-            </div>
-          </div>
-
-          <!-- Right Section: Action Controls & User Profile Dropdown -->
-          <div class="header-right">
-            <!-- Search Bar Input -->
-            <div class="header-search-box">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input type="text" placeholder="Search transactions..." class="search-input" />
-            </div>
-
-            <!-- Notifications Icon Button -->
-            <button class="icon-btn" title="Notifications">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 01-3.46 0" />
-              </svg>
-              <span class="notif-dot"></span>
-            </button>
-
-            <!-- Theme Toggle Component -->
-            <div class="theme-wrapper">
-              <pg-theme-toggle class="theme-toggle" />
-            </div>
-
-            <!-- Vertical Divider -->
-            <div class="header-divider"></div>
-
-            <!-- User Profile Menu Pill -->
-            <div class="header-user-menu" (click)="toggleUserDropdown($event)">
-              <pg-avatar
-                [name]="getDisplayName()"
-                size="sm"
-                class="user-avatar"
-              ></pg-avatar>
-
-              <div class="user-info">
-                <span class="user-name">{{ getDisplayName() }}</span>
-                <span class="user-role-badge" [class.admin-role]="isAdmin()">{{ authService.getRole() || 'USER' }}</span>
-              </div>
-
-              <svg class="dropdown-chevron" [class.rotated]="showUserDropdown()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-
-              <!-- User Dropdown Menu -->
-              <div class="user-dropdown" *ngIf="showUserDropdown()" (click)="$event.stopPropagation()">
-                <div class="dropdown-header">
-                  <span class="dropdown-name">{{ authService.getUsername() || 'user@paygate.dev' }}</span>
-                  <span class="dropdown-role">Role: {{ authService.getRole() || 'USER' }}</span>
-                </div>
-                <hr class="dropdown-divider" />
-                <a class="dropdown-item" routerLink="/accounts/me" (click)="showUserDropdown.set(false)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>My Account</span>
-                </a>
-                <a class="dropdown-item" routerLink="/transactions/history" (click)="showUserDropdown.set(false)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                    <line x1="12" y1="22.08" x2="12" y2="12" />
-                  </svg>
-                  <span>Transaction History</span>
-                </a>
-                <hr class="dropdown-divider" />
-                <button class="dropdown-item dropdown-item-danger" (click)="logout()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+        <!-- Mobile Floating Menu Toggle (Visible ONLY on Mobile) -->
+        <button class="mobile-toggle-btn" *ngIf="isMobile()" (click)="toggleCollapse()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
         <!-- Page Content Body -->
         <div class="content-body">
@@ -291,7 +234,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       display: flex;
       min-height: 100vh;
       background-color: var(--color-bg-primary);
-      font-family: var(--font-family-sans);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       transition: margin-left var(--transition-normal);
     }
 
@@ -326,10 +269,16 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
     .brand-header {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      padding: var(--space-4) var(--space-4);
+      gap: 12px;
+      padding: 16px 16px;
       border-bottom: 1px solid var(--color-border-primary);
-      min-height: var(--header-height);
+      min-height: 64px;
+      box-sizing: border-box;
+    }
+
+    .sidenav-collapsed .brand-header {
+      padding: 16px 0;
+      justify-content: center;
     }
 
     .brand-logo {
@@ -354,6 +303,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      flex: 1;
     }
 
     .brand-title {
@@ -409,6 +359,16 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       text-decoration: none;
       transition: all var(--transition-fast);
       white-space: nowrap;
+      width: 100%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .sidenav-collapsed .nav-link {
+      justify-content: center;
+      padding: var(--space-2) 0;
     }
 
     .nav-link:hover {
@@ -450,36 +410,103 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       text-overflow: ellipsis;
     }
 
-    /* Collapse Toggle */
-    .collapse-toggle {
-      position: absolute;
-      bottom: var(--space-4);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 32px;
-      height: 32px;
+    .nav-collapse-btn {
+      margin-top: 4px;
+      border-top: 1px dashed var(--color-border-primary);
+      border-radius: 0;
+      padding-top: 8px;
+    }
+
+    /* Sidebar Profile Footer */
+    .sidebar-profile-footer {
+      border-top: 1px solid var(--color-border-primary);
+      padding: 14px 12px;
+      background-color: var(--color-bg-secondary);
+    }
+
+    .profile-expanded {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .profile-user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: var(--color-bg-tertiary);
+    }
+
+    .profile-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .btn-sidebar-logout {
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: var(--color-bg-tertiary);
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-full);
-      color: var(--color-text-tertiary);
+      gap: 8px;
+      height: 36px;
+      width: 100%;
+      border: 1px solid #fee2e2;
+      background-color: #fef2f2;
+      color: #ef4444;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all var(--transition-fast);
+      transition: all 0.15s;
     }
 
-    .collapse-toggle:hover {
-      background-color: var(--color-bg-hover);
-      color: var(--color-text-primary);
+    .btn-sidebar-logout:hover {
+      background-color: #fee2e2;
+      color: #dc2626;
     }
 
-    .collapse-toggle svg {
+    .btn-sidebar-logout svg {
       width: 16px;
       height: 16px;
     }
 
-    /* Main Content */
+    /* Collapsed Profile View */
+    .profile-collapsed {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-sidebar-logout-sm {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #fee2e2;
+      background-color: #fef2f2;
+      color: #ef4444;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-sidebar-logout-sm:hover {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+
+    .btn-sidebar-logout-sm svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    /* Main Content Area */
     .main-content {
       flex: 1;
       margin-left: var(--sidebar-width);
@@ -493,326 +520,29 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       margin-left: var(--sidebar-width-collapsed);
     }
 
-    /* Top Header Bar */
-    .top-header {
-      height: var(--header-height);
-      background-color: #ffffff;
-      border-bottom: 1px solid var(--color-border-primary);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 var(--space-6);
-      position: sticky;
-      top: 0;
-      z-index: var(--z-sticky);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-    }
-
-    .dark .top-header {
-      background-color: var(--color-bg-secondary);
-    }
-
-    /* Header Left Section */
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-
     .mobile-toggle-btn {
-      background: none;
-      border: none;
-      color: var(--color-text-secondary);
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 9999;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       cursor: pointer;
-      padding: var(--space-1);
-      display: flex;
-      align-items: center;
     }
 
     .mobile-toggle-btn svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    .header-breadcrumb {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-
-    .breadcrumb-icon-wrapper {
-      width: 28px;
-      height: 28px;
-      border-radius: var(--radius-sm);
-      background-color: #ecfdf5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .breadcrumb-icon {
-      width: 16px;
-      height: 16px;
-      color: #059669;
-    }
-
-    .breadcrumb-brand {
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-    }
-
-    /* Header Right Section */
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-    }
-
-    /* Search Box */
-    .header-search-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background-color: #f8fafc;
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-full);
-      padding: 6px 14px;
-      width: 220px;
-      transition: all var(--transition-fast);
-    }
-
-    .dark .header-search-box {
-      background-color: var(--color-bg-tertiary);
-    }
-
-    .header-search-box:focus-within {
-      border-color: #059669;
-      background-color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
-    }
-
-    .search-icon {
-      width: 16px;
-      height: 16px;
-      color: var(--color-text-tertiary);
-      flex-shrink: 0;
-    }
-
-    .search-input {
-      border: none;
-      background: none;
-      outline: none;
-      font-size: 0.8rem;
-      color: var(--color-text-primary);
-      width: 100%;
-    }
-
-    .search-input::placeholder {
-      color: var(--color-text-tertiary);
-    }
-
-    /* Icon Buttons (Notifications, Theme Toggle) */
-    .icon-btn {
-      position: relative;
-      background: none;
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--color-text-secondary);
-      cursor: pointer;
-      transition: background-color var(--transition-fast);
-    }
-
-    .icon-btn:hover {
-      background-color: var(--color-bg-hover);
-      color: var(--color-text-primary);
-    }
-
-    .icon-btn svg {
       width: 20px;
       height: 20px;
-    }
-
-    .notif-dot {
-      position: absolute;
-      top: 7px;
-      right: 7px;
-      width: 8px;
-      height: 8px;
-      background-color: #ef4444;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
-    }
-
-    .theme-wrapper {
-      display: flex;
-      align-items: center;
-    }
-
-    .header-divider {
-      width: 1px;
-      height: 24px;
-      background-color: var(--color-border-primary);
-    }
-
-    /* User Profile Pill */
-    .header-user-menu {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      padding: 4px 10px 4px 6px;
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-full);
-      background-color: #ffffff;
-      transition: all var(--transition-fast);
-      position: relative;
-      user-select: none;
-    }
-
-    .dark .header-user-menu {
-      background-color: var(--color-bg-tertiary);
-    }
-
-    .header-user-menu:hover {
-      background-color: var(--color-bg-hover);
-      border-color: var(--color-border-secondary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .user-avatar {
-      flex-shrink: 0;
-    }
-
-    .user-info {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .user-name {
-      font-size: 0.8rem;
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      line-height: 1.1;
-    }
-
-    .user-role-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-
-    .user-role-badge.admin-role {
-      color: #059669;
-    }
-
-    .dropdown-chevron {
-      width: 16px;
-      height: 16px;
-      color: var(--color-text-tertiary);
-      transition: transform var(--transition-fast);
-    }
-
-    .dropdown-chevron.rotated {
-      transform: rotate(180deg);
-    }
-
-    /* User Dropdown */
-    .user-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      min-width: 220px;
-      background-color: var(--color-bg-secondary);
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      padding: var(--space-2);
-      z-index: var(--z-dropdown);
-      animation: slideInDown var(--transition-fast) ease-out;
-    }
-
-    @keyframes slideInDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .dropdown-header {
-      padding: var(--space-2) var(--space-3) var(--space-3);
-    }
-
-    .dropdown-name {
-      display: block;
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      font-size: var(--font-size-sm);
-    }
-
-    .dropdown-role {
-      display: block;
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
-      margin-top: var(--space-1);
-    }
-
-    .dropdown-divider {
-      height: 1px;
-      background-color: var(--color-border-primary);
-      border: none;
-      margin: var(--space-2) 0;
-    }
-
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      width: 100%;
-      padding: var(--space-2) var(--space-3);
-      font-size: var(--font-size-sm);
-      color: var(--color-text-primary);
-      background: none;
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      text-align: left;
-      text-decoration: none;
-      transition: background-color var(--transition-fast);
-    }
-
-    .dropdown-item:hover {
-      background-color: var(--color-bg-hover);
-    }
-
-    .dropdown-item svg {
-      width: 18px;
-      height: 18px;
-      color: var(--color-text-tertiary);
-    }
-
-    .dropdown-item-danger {
-      color: var(--color-error-500);
-    }
-
-    .dropdown-item-danger:hover {
-      background-color: var(--color-error-50);
-    }
-
-    .dark .dropdown-item-danger:hover {
-      background-color: var(--color-error-900);
     }
 
     /* Content Body */
     .content-body {
       flex: 1;
-      padding: 36px 48px;
+      padding: 32px 40px;
       max-width: 1440px;
       width: 100%;
       margin: 0 auto;
@@ -841,27 +571,11 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
       .main-content-expanded {
         margin-left: 0;
       }
-
-      .collapse-toggle {
-        display: none;
-      }
-
-      .header-search-box {
-        display: none;
-      }
     }
 
     @media (max-width: 768px) {
-      .top-header {
-        padding: 0 var(--space-4);
-      }
-
-      .header-breadcrumb {
-        display: none;
-      }
-
       .content-body {
-        padding: var(--space-4);
+        padding: 20px 16px;
       }
     }
   `]
@@ -869,7 +583,6 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
 export class MainLayoutComponent {
   authService = inject(AuthService);
   collapsed = signal(false);
-  showUserDropdown = signal(false);
   isMobile = signal(false);
 
   isAdmin = computed(() => this.authService.getRole() === 'ADMIN' || this.authService.getRole() === 'ROLE_ADMIN');
@@ -898,11 +611,6 @@ export class MainLayoutComponent {
     this.collapsed.update(v => !v);
   }
 
-  toggleUserDropdown(event: MouseEvent): void {
-    event.stopPropagation();
-    this.showUserDropdown.update(v => !v);
-  }
-
   closeOnMobile(): void {
     if (this.isMobile()) {
       this.collapsed.set(true);
@@ -911,14 +619,5 @@ export class MainLayoutComponent {
 
   logout(): void {
     this.authService.logout();
-    this.showUserDropdown.set(false);
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.header-user-menu')) {
-      this.showUserDropdown.set(false);
-    }
   }
 }

@@ -116,7 +116,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
       amount: amount,
       type: 'TOPUP',
       status: 'COMPLETED',
-      description: body.paymentMethodId === 'vietqr' ? 'Nạp tiền VietQR Instant Scan' : 'Wallet Top Up via Linked Bank',
+      description: body.paymentMethodId === 'vietqr' ? 'VietQR Instant Scan Top Up' : 'Wallet Top Up via Linked Bank',
       createdAt: new Date().toISOString()
     };
     txns.unshift(newTxn);
@@ -178,7 +178,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         status: 201,
         body: {
           success: true,
-          message: 'Liên kết ngân hàng thành công',
+          message: 'Bank account linked successfully',
           data: newBank
         }
       })).pipe(delay(200));
@@ -194,7 +194,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         status: 200,
         body: {
           success: true,
-          message: 'Đã hủy liên kết ngân hàng thành công'
+          message: 'Bank account unlinked successfully'
         }
       })).pipe(delay(150));
     }
