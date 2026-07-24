@@ -467,7 +467,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       }
       if (params['recipient']) {
         this.accountNumberInput = params['recipient'];
-        this.onAccountNumberInput(params['recipient']);
+        this.lookingUp = true;
+        this.lookupSubject.next(params['recipient']);
       }
     });
   }
