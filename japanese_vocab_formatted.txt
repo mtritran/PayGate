@@ -1,0 +1,448 @@
+一生 = いっせい = Một đời
+生涯 = しょうがい = Sinh nhai, sự nghiệp
+平等 = へいとう = Bình đẳng
+人類 = じんるい = Nhân loại
+親類 = しんるい = Họ hàng
+親族 = しんぞく = Họ hàng
+仲 = なか = Quan hệ
+長女 = ちょうじょ = Trưởng nữ
+三男 = さんなん = Con trai thứ 3
+三女 = さんじょ = Con gái thứ 3
+次男 = じなん = Con trai thứ
+次女 = じじょ = Con gái thứ
+末っ子 = すえっこ = Con út
+大事 = だいじ = Việc đại sự, quan trọng
+従業員 = じゅうぎょういん = Công nhân, người làm thuê
+腕がいい = うでがいい = Tay nghề tốt
+双生児 = そうせいじ = Sinh đôi
+兄弟 = きょうだい = Anh em
+分かれる = わかれる = Phân chia
+進歩 = しんぽ = Tiến bộ
+伸びる = のびる = Cao hơn, phát triển hơn
+未来 = みらい = Tương lai (xa)
+希望 = きぼう = Hi vọng
+解決 = かいけつ = Giải quyết
+問題 = もんだい = Vấn đề
+短所 = たんしょ = Sở đoạn, điểm yếu
+性格 = せいかく = Tính cách
+教育 = きょういく = Giáo dục
+伸ばす = のばす = Làm cao lên, phát triển lên
+左利き = ひだりきき = Thuận tay trái
+優雅 = ゆうが = Dịu dàng
+模倣 = もほう = Sự mô phỏng
+平均 = へいきん = Trung bình
+一人暮らし = ひとりぐらし = Sống một mình
+最近 = さいきん = Gần đây
+育児 = いくじ = Chăm sóc trẻ
+お年寄り = おとしより = Người cao tuổi
+共稼ぎ = ともかせぎ = Cùng nhau kiếm tiền
+欠勤 = けっきん = Nghỉ phép
+退勤 = たいきん = Ra về = checkout
+経済 = けいざい = Kinh tế
+玄関 = げんかん = Cửa ra vào
+しわ = しわ = Nếp Nhăn
+お年を取る = おとしをとる = Về già, tuổi già
+面接 = めんせつ = Phỏng vấn
+お礼 = おれい = Lễ, cảm ơn
+お辞儀 = おじぎ = Cúi chào
+認め = みとめ = Thừa nhận
+豊富 = ほうふ = Phong phú
+信用する = しんようする = Tin tưởng
+褒める = ほめる = Khen
+叱る = しかる = Mắng
+意思/意志 = いし = Ý chí
+理性 = りせい = Lý tính, lý trí
+拾う = ひろう = Nhặt
+結ぶ = むすぶ = Buộc
+縛る = しばる = Buộc
+通す = とおす = Xuyên qua
+糸 = いと = Sợi chỉ
+蓋 = ふた = Cái nắp
+抜く = ぬく = Cậy, tháo
+日当たりが良い = ひあたりがいい = Có ánh sáng mặt trời chiếu vào
+日当たりが悪い = ひあたりがわるい = Không có ánh sáng mặt trời chiếu vào
+昨夜 = さくや = Đêm qua
+応募 = おうぼ = Ứng tuyển
+釣りをする = つりをする = Câu cá
+営業 = えいぎょう = Doanh nghiệp, kinh doanh
+週末 = しゅうまつ = Cuối tuần
+土日 = どにち = Thứ 7, cuối tuần
+休日 = きゅうじつ = Ngày nghỉ
+祭日 = さいじつ = Ngày lễ
+祝日 = しゅくじつ = Ngày lễ
+順番 = じゅんばん = Thứ tự
+過去 = かこ = Quá khứ
+病人 = びょうにん = Người ốm
+列車 = れっしゃ = Xe điện
+貯める = ためる = Để dành tiền
+景品 = けいひん = Quà kèm giảm giá、Phần thưởng
+有料 = ゆうりょう = Sự trả phí
+試供品 = しきょうひん = Hàng dùng thử, sản phẩm dùng thử
+経営 = けいえい = Kinh doanh
+喫茶店 = きっさてん = Quán giải khát, cửa hàng cafe
+追求 = ついきゅう = Theo đuổi
+損失 = そんしつ = Tổn thất、lỗ
+損害 = そんがい = Tổn hại
+不利益 = ふりえき = Không có lợi ích
+黒字 = くろじ = Lãi
+宣伝 = せんでん = Tuyên truyền
+計算 = けいさん = Tính toán
+会計 = かいけい = Tính toán
+補償 = ほしょう = Bồi thường、Bồi hoàn
+賠償 = ばいしょう = Bồi thường
+倒産 = とうさん = Phá sản
+被災者 = ひさいしゃ = Nạn nhân
+平和 = へいわ = Hòa bình
+甘やか = あまやか = Ngọt ngào
+虐める = いじめる = Bị bắt nạt
+泣く = なく = Khóc
+床 = ゆか = Nền nhà
+種 = たね = Giống
+畑 = はたけ = Ruộng
+測る/量る/計る = はかる = Đo
+測定する = そくていする = Đo lường
+測量する = そくりょうする = Đo lường, thăm dò, khảo sát
+計測する = けいそくする = Đo lường
+運勢 = うんせい = Vận may
+胸 = むね = Ngực
+骨折 = こっせつ = Gãy xương
+骨 = ほね = Xương cốt, xương xẩu
+死亡 = しぼう = Tử vong, chết
+診察する = しんさつする = Chẩn đoán, khám bệnh
+勤務する = きんむする = Làm việc
+学費 = がくひ = Học phí
+失業率 = しつぎょうりつ = Tỉ lệ thất nghiệp
+磁石 = じしゃく = Nam châm
+離れる = はなれる = Tách ra
+沈没 = ちんぼつ = Sự chìm xuống
+電灯 = でんとう = Điện quang, đèn điện
+下げる/提げる = さげる = Giảm bớt, hạ
+転げる = ころげる = Lăn
+塀 = へい = Tường, rào
+散乱 = さんらん = Vứt lung tung
+解ける/とける = ほどける = Mở ra, có thể giải quyết
+解く/とく = ほどく = Cởi、giải quyết
+��る = ちる = Tàn, rụng
+手足 = てあし = Tay chân
+争う = あらそう = Đánh nhau, tranh chấp
+戦争する = せんそうする = Chiến tranh
+闘争する = とうそうする = Đấu tranh
+領土 = りょうど = Lãnh thổ
+取り扱う = とりあつかう = Thao tác, bán
+関係する = かんけいする = Quan hệ
+立つ/発つ = たつ = Khởi hành
+出発する = しゅっぱつする = Khởi hành
+議長 = ぎちょう = Chủ tịch
+不明 = ふめい = Bất tỉnh, bất minh
+寄付金 = きふきん = Đóng góp
+幸い = さいわい = Hạnh phúc
+幸福 = こうふく = Hạnh phúc
+幼稚 = ようち = Ấu trĩ, non nớt
+未熟 = みじゅく = Chưa có kinh nghiệm, chưa chín chắn
+心強い = こころづよい = Vững tâm, khích lệ
+哀れ = あわれ = Tội nghiệp
+可愛らしい = かわいらしい = Đáng yêu, dễ thương
+気の毒 = きのどく = Đáng tiếc, chia buồn, đáng thương
+豊か = ゆたか = Giàu có, phong phú
+借金 = しゃっきん = Món nợ, khoản nợ
+仕方ない = しかたない = Không có cách nào khác
+嵐 = あらし = Dông bão
+煩わしい = わずらわしい = Phiền phức
+諄い = くどい = Dài dòng, lắm lời
+あっさりした = あっさりした = Đơn giản, cởi mở
+煙たい = けむたい = Ngột ngạt
+邪魔 = じゃま = Vướng víu
+煩い = うるさい = Ồn ào
+平穏 = へいおん = Bình yên, bình tĩnh, yên bình
+穏やか = おだやか = Điềm đạm, yên ả, ôn hòa
+怒る = おこる = Tức giận
+慌しい = あわただしい = Vội vã, cuống cuồng
+傷つける = きずつける = Tổn thương
+馬鹿馬鹿しい = ばかばかしい = Buồn cười, ngu ngốc
+出鱈目 = でたらめ = Bừa, linh tinh
+いい加減 = いいかげん = Vô trách nhiệm, quá đáng
+格好 = かっこう = Ngoại hình, vẻ bề ngoài
+きちんとした = きちんとした = Gọn gàng, ngăn nắp
+図々しい = ずうずうしい = Vô liêm sỉ, trơ trẽn
+殺す = ころす = Giết
+緩やか = ゆるやか = Lỏng lẻo, nhẹ nhàng, chậm rãi, thoải mái
+乗り越える = のりこえる = Vượt qua
+窮屈 = きゅうくつ = Khó khăn, gò bó, không linh hoạt
+粗い/荒い = あらい = Bạo lực, cục cằn
+激しい = はげしい = Mãnh liệt
+強引 = ごういん = Cưỡng bức
+勝手 = かって = Tự do
+言動 = げんどう = Nói và làm
+強気 = つよき = Mạnh bạo
+勝気 = かちき = Mạnh bạo
+弱気/気弱 = よわき/きよわ = Rụt rè, nhút nhát
+頑固 = がんこ = Ngoan cố, bướng bỉnh, cứng đầu
+強情 = ごうじょう = Ngoan cố, bướng bỉnh, cứng đầu
+過剰 = かじょう = Vượt quá, nhiều
+重大 = じゅうだい = Nghiêm trọng, trọng đại
+深刻 = しんこく = Nghiêm trọng
+猛暑 = もうしょ = Nóng bức dữ dội
+気楽 = きらく = Thoải mái, nhẹ nhõm
+安易 = あんい = Dễ dàng, dễ dãi
+神経を抜いた = しんけいをぬいた = Ảnh hưởng đến thần kinh
+関心 = かんしん = Quan tâm
+投げる = なげる = Ném
+労働 = ろうどう = Lao động
+被害 = ひがい = Thiệt hại
+恵む = めぐむ = Thuận hòa, ban cho
+草 = くさ = Cỏ
+家畜 = かちく = Gia súc
+退場 = たいじょう = Rời khỏi vũ đài
+支援 = しえん = Chi viện
+回答/解答 = かいとう = Trả lời
+逆様 = さかさま = Ngược lại, đảo lộn
+あべこべ = あべこべ = Ngược lại
+左右 = さゆう = Trái Phải
+余所 = よそ = Nơi khác
+他 = ほか = (người) khác
+境界 = きょうかい = Biên giới, ngăn cách
+国境 = こっきょう = Biên giới, ngăn cách
+特殊 = とくしゅ = Đặc biệt, đặc thù
+責任 = せきにん = Trách nhiệm
+諺 = ことわざ = Tục ngữ
+教訓 = きょうくん = Giáo huấn
+切掛 = きっかけ = Động lực
+契機 = けいき = Nhân tiện, cơ hội, bắt đầu
+立派 = りっぱ = Quý báu
+利用 = りよう = Sử dụng
+延ばす = のばす = Gia hạn, kéo dài
+電波 = でんぱ = Sóng điện
+選挙 = せんきょ = Bầu cử
+市長 = しちょう = Thị trưởng
+落選 = らくせん = Không được bầu
+配布/配付 = はいふ = Phân phát
+反則 = はんそく = Phạm lỗi
+長年 = ながねん = Nhiều năm
+路上 = ろじょう = Trên đường
+分裂 = ぶんれつ = Sự phân liệt, rạn nứt
+拡張 = かくちょう = Sự khuếch đại, sự khuếch trương
+解散 = かいさん = Giải tán
+分散 = ぶんさん = Phân tán
+停電 = ていでん = Mất điện
+向上 = こうじょう = Nâng cao
+規定 = きてい = Quy định
+驚く = おどろく = Kinh ngạc
+闘志 = とうし = Ý chí chiến đấu
+湧き上がる/沸き上がる = わきあがる = Sôi lên, tăng lên
+筋肉 = きんにく = Cơ bắp
+歓声 = かんせい = Tiếng hoan hô
+出来上がる = できあがる = Hoàn thành (xong thức ăn)
+鍛える = きたえる = Dạy dỗ, rèn luyện
+借り出す = かりだす = Mượn
+駆ける = かける = Chạy nhanh, phi nước đại, tiến triển nhanh
+見込む = みこむ = Dự kiến
+羊 = ひつじ = Con cừu
+囲い = かこい = Chuồng, hàng rào
+師匠 = ししょう = Sư phụ, thầy dạy nghề
+根気 = こんき = Kiên nhẫn
+暴力 = ぼうりょく = Bạo lực
+仲直りする = なかなおりする = Hòa giải
+互い = たがい = Lẫn nhau, song phương
+人質 = ひとじち = Con tin; người tù
+逃走する = とうそうする = Đào tẩu, bỏ chạy
+完了 = かんりょう = Sự hoàn thành, sự kết thúc
+食糧/食料 = しょくりょう = Đồ ăn, thực phẩm
+自給率 = じきゅうりつ = Tỷ lệ tự cung tự cấp
+ぶどう = ぶどう = Quả nho
+屑 = くず = Vụn rác
+小麦 = こむぎ = Lúa mì
+所持 = しょじ = Sở hữu
+制作/製作 = せいさく = Sản xuất
+天然 = てんねん = Thiên nhiên
+役目 = やくめ = Vai trò
+交代/交替 = こうたい = Thay phiên, thay đổi
+笛 = ふえ = Cái sáo, cái còi
+予想 = よそう = Dự đoán
+外見 = がいけん = Ngoại hình, vẻ bề ngoài
+肩書き = かたがき = Chức vụ
+推量 = すいりょう = Sự phỏng đoán, sự ước lượng
+物質 = ぶっしつ = Vật chất
+効果 = こうか = Hiệu quả
+継続 = けいぞく = Sự tiếp tục, sự liên tục
+下降 = かこう = Rơi xuống; tụt xuống
+支障 = ししょう = Chướng ngại, khó khăn
+組合 = くみあい = Tập đoàn
+待遇 = たいぐう = Đãi ngộ
+不一致 = ふいっち = Không nhất trí
+湖 = みずうみ = Hồ
+浸かる = つかる = Ngập, ngâm
+浸ける = つける = Làm ngập, ngâm
+追求する = ついきゅうする = Theo đuổi
+追究する = ついきゅうする = Truy cứu
+振り返す = ふりかえす = Xác nhận lại
+文章 = ぶんしょう = Văn chương
+削除する = さくじょする = Gạch bỏ, xóa bỏ
+削減する = さくげんする = Sự cắt giảm
+搾る = しぼる = Vắt, bóp
+絞る = しぼる = Vắt, bóp
+搾り取る = しぼりとる = Vắt, bóp, nghĩa bóng: bóc lột
+通り掛かる = とおりかかる = Tình cờ đi ngang qua
+補足する = ほそくする = Thêm, bổ sung
+助ける = たすける = Giúp đỡ
+仕舞う = しまう = Cất đi, đưa vào
+怠る = おこたる = Bỏ bê; sao nhãng
+失せる = うせる = Biến đi, biến mất
+逃す = のがす = Bỏ lỡ
+掴む = つかむ = Nắm bắt
+得る = える = Thu được, lĩnh hội, lí giải
+引き起こす = ひきおこす = Dẫn đến, gây ra
+引っくり返る = ひっくりかえる = Đảo ngược, ngã
+滑る（ずれる） = ずれる = Trượt khỏi, lệch khỏi
+茹でる = ゆでる = Luộc
+揚げる = あげる = Rán
+炒める = いためる = Xào, rán giòn
+蒸す = むす = Hấp
+煮る = にる = N��u, ninh
+炊く = たく = Thổi cơm, nấu cơm
+認可する = にんかする = Phê duyệt
+許可する = きょかする = Sự cho phép
+認定する = にんていする = Thừa nhận, chứng nhận
+再検討する = さいけんとうする = Sự xem xét lại
+成る = なる = Trở thành, trở nên
+蕾 = つぼみ = Nụ hoa
+頬 = ほお = Má
+沿う = そう = Men theo, dọc theo, theo đó, theo
+眩しい = まぶしい = Chói
+目覚め = めざめ = Tỉnh dậy, mở mắt
+偏る/片寄る = かたよる = Dồn về 1 phía, không cân bằng
+鎮まる/静まる = しずまる = Lắng xuống, dịu đi, yên tĩnh đi
+鎮める/静める = しずめる = Yên tĩnh
+長引き = ながびく = Kéo dài
+整える/調える = ととのえる = Chuẩn bị sẵn sàng
+覆る = くつがえる = bị lật ngược
+覆す = くつがえす = Lật ngược
+複雑 = ふくざつ = Phức Tạp
+簡単 = かんたん = Đơn giản
+純粋 = じゅんすい = Thuần túy, trong sáng
+不純 = ふじゅん = Không thuần khiết, ko trong sáng
+透明 = とうめい = Trong suốt, trong vắt
+爽やか = さわやか = Tươi, sảng khoái
+爽快 = そうかい = Sảng khoái
+素直 = すなお = Dễ bảo, ngoan ngoãn
+頑固 = がんこ = Ngoan cố, bướng bỉnh, cứng đầu
+反抗的 = はんこうてき = Tính phản kháng
+率直 = そっちょく = Trực tính, thẳng thắn
+誠実 = せいじつ = Thành thật
+不誠実 = ふせいじつ = Không thành thật
+謙虚 = けんきょ = Khiêm tốn, khiêm nhường
+賢明 = けんめい = Thông minh
+慎重 = しんちょう = Thận trọng
+注意深い = ちゅういぶかい = Cẩn thận
+軽率 = けいそつ = Khinh Suất
+穏やか = おだやか = Yên lặng, trầm
+真剣 = しんけん = Nghiêm túc, nghiêm chỉnh
+正式 = せいしき = Chính thức, sang trọng
+略式 = りゃくしき = Đã rút gọn, đơn giản
+主 = おも = Chính, chủ yếu
+貴重 = きちょう = Quý giá, quý trọng
+偉大 = いだい = Vĩ đại
+独特 = どくとく = Sự đặc trưng, đặc biệt
+独自 = どくじ = Độc đáo, đặc biệt
+特有 = とくゆう = Tiêu biểu, mang tính đại diện
+固有 = こゆう = Cái vốn có, truyền thống
+特殊 = とくしゅ = Đặc thù, đặc trưng
+普遍 = ふへん = Phổ biến
+奇妙 = きみょう = Kì diệu, lạ lùng
+妙 = みょう = Lạ, kì, tò mò
+不審 = ふしん = Nghi ngờ, đáng nghi
+異常 = いじょう = Bất thường
+正常 = せいじょう = Thông thường
+高度 = こうど = Độ chính xác cao
+新た = あらた = Sự tươi; sự mới
+合理的 = ごうりてき = Tính hợp lý
+不合理 = ふごうり = Không hợp lý
+非合理的 = ひごうりてき = Phi lý
+器用 = きよう = Khéo léo
+不器用 = ぶきよう = Không khéo léo
+手軽 = てがる = Nhẹ nhàng, đơn giản
+手ごろ = てごろ = Hợp lý, vừa tầm tay
+贅沢 = ぜいたく = Xa hoa, lãng phí
+豪華 = ごうか = Sang trọng, cao cấp
+高級 = こうきゅう = Cao cấp
+上等 = じょうとう = Thượng đẳng
+上品 = じょうひん = Thượng phẩm
+下品 = げひん = Hạ Phẩm
+品がある = ひんがある = Hàng hóa có phẩm chất cao
+適度 = てきど = Mức độ vừa phải, thích hợp
+快適 = かいてき = Dễ chịu, sảng khoái
+気持ちいい = きもちいい = Dễ chịu, hài lòng
+順調 = じゅんちょう = Thuận lợi (tiến triển)
+好調 = こうちょう = Thuận lợi (tiến triển)
+活発 = かっぱつ = Hoạt bát
+的確 = てきかく = Sự đích xác
+不的確 = ふてきかく = Không đích xác
+確実 = かくじつ = Sự xác thực
+不確実 = ふかくじつ = Không xác thực
+明らか = あきらか = Rõ ràng
+明白 = めいはく = Minh bạch, rõ ràng
+明確 = めいかく = Rõ ràng
+曖昧 = あいまい = Mơ hồ, không rõ ràng
+具体的 = ぐたいてき = Cụ thể
+抽象的 = ちゅうしょうてき = Tính Trừu Tượng
+平等 = びょうどう = Bình đẳng
+不平等 = ふびょうどう = Không bình đẳng
+公平 = こうへい = Công bằng
+不公平 = ふこうへい = Không công bằng
+振り = ふり = Giả vờ
+標準語 = ひょうじゅんご = Tiếng tiêu chuẩn
+共通語 = きょうつうご = Ngôn ngữ chung
+重要視 = じゅうようし = Xem trọng, coi trọng
+軽視 = けいし = Coi thường, coi nhẹ
+手直し = てなおし = Sửa
+排水 = はいすい = Nước thải
+凸凹 = でこぼこ = Lồi lõm, ổ gà
+目撃 = もくげき = Mục kích, người chứng kiến
+指導 = しどう = Chỉ đạo
+領域 = りょういき = Lĩnh vực
+使い道 = つかいみち = Cách sử dụng
+手当て = てあて = Điều trị, sự chuẩn bị, phụ cấp, trợ cấp
+治療 = ちりょう = Trị liệu
+仮面 = かめん = Mặt nạ, sự nguy trang
+説(原子説) = せつ（げんしせつ） = Thuyết (thuyết nguyên tử)
+湯取り = ゆとり = Thừa, dư ra
+保障 = ほしょう = Bảo hành, Sự bảo đảm
+指名する = しめいする = Sự nêu tên, sự chỉ định
+濯ぐ = すすぐ/ゆすぐ = Súc, rửa, giũ
+言及する = げんきゅうする = Sự nhắc đến, sự đề cập đến
+肩 = かた = Bờ vai
+描写する = びょうしゃする = Vẽ, miêu tả
+逸れる = それる = Trượt, lỡ, hướng lệch đi
+凝視する = ぎょうしする = Nhìn chằm chằm, nhìn xăm xoi
+直視する = ちょくしする = Nhìn thẳng, nhìn chằm chằm
+訪問する = ほうもんする = Đến, thăm
+来る = きたる/くる = Đến
+啜る = すする = Hớp, húp
+追及する = ついきゅうする = Sự điều tra
+重用する = ちょうようする = Trọng dụng
+登用する = とうようする = Phân công, bổ nhiệm
+任用する = にんようする = Bổ nhiệm, chỉ định
+使用する = しようする = Sử dụng
+収まる = おさまる = Bình tĩnh; bình thường; lặng (gió)
+納まる = おさまる = Ngừng, kiềm chế
+治まる = おさまる = Ngừng; yên
+収める = おさめる = Tiếp thu; thu vào; nhận
+納める = おさめる = Đóng, nộp (thuế...)
+治める = おさめる = Cai quản, cai trị
+納入する = のうにゅうする = Thu nạp, giao nộp
+統治する = とうちする = Thống trị
+沿う = そう = Chạy dài; dọc theo
+添う = そう = Cùng với
+略する = りゃくする = Lược bớt, tóm tắt, viết tắt
+侵害する = しんがいする = Xâm hại, xâm chiếm
+脅迫する = きょうはくする = Bắt nạt, đe dọa
+妨害する = ぼうがいする = Ngăn chặn
+否定する = ひていする = Phủ nhận, bác bỏ
+応える = こたえる = Đáp lại, đối ứng
+頂く = いただく = Nhận; xin nhận (Khiêm nhường ngữ của 食べる/飲む/もらう）
+戴く = いただく =
+到達する = とうたつする = Đạt đến
+遂げる = とげる = Đạt đến
+勝る = まさる = Vượt trội hơn, áp đảo hơn
+所属する = しょぞくする = Thuộc về
+草臥れる = くたびれる = Mệt, chán
+躊躇する = ちゅうちょする = E dè

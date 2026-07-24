@@ -1,11 +1,21 @@
-html, body {
-  height: 100%;
-  margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-}
+// ==========================================================================
+// PayGate - Main Styles Entry Point
+// ==========================================================================
 
+// Design System Variables & Base Modules (Sass @use MUST be at top)
+@use './styles/_variables' as *;
+@use './styles/_base' as *;
+@use './styles/_components' as *;
+
+// Import Angular Material Prebuilt Theme (Required for CDK Overlay / MatDialog layout & positioning)
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+// Legacy compatibility classes
 .container {
-  padding: 24px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
 }
 
 .full-width {
@@ -16,16 +26,112 @@ html, body {
   flex: 1 1 auto;
 }
 
-.error-message {
-  color: #f44336;
-  font-size: 12px;
-  margin-top: 4px;
+/* ==========================================================================
+   CDK Overlay & MatDialog Layout Fixes (Centers modals in viewport)
+   ========================================================================== */
+.cdk-overlay-container {
+  position: fixed !important;
+  z-index: 1000 !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  pointer-events: none !important;
 }
 
+.cdk-overlay-backdrop {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0;
+
+  &.cdk-overlay-backdrop-showing {
+    opacity: 1;
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(4px);
+  }
+}
+
+.cdk-global-overlay-wrapper {
+  display: flex !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+.cdk-overlay-pane {
+  position: relative !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  margin: auto !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 24px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  padding: 24px !important;
+  background: #ffffff !important;
+}
+
+// Material Snackbar overrides
 .mat-mdc-snack-bar-container.success-snackbar .mdc-snackbar__surface {
-  background-color: #4caf50;
+  background-color: var(--color-success-500);
 }
 
 .mat-mdc-snack-bar-container.error-snackbar .mdc-snackbar__surface {
-  background-color: #f44336;
+  background-color: var(--color-error-500);
+}
+
+// Global focus styles for Material components
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch {
+  border-color: var(--color-primary-500) !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__trailing,
+.mat-mdc-form-field.mat-form-field-invalid.mat-focused .mdc-notched-outline__notch {
+  border-color: var(--color-error-500) !important;
+}
+
+// Input colors for Material form fields
+.mat-mdc-form-field .mdc-text-field__input {
+  color: var(--color-text-primary) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--color-text-tertiary) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--color-primary-500) !important;
+}
+
+.mat-mdc-form-field .mdc-line-ripple::after {
+  background-color: var(--color-primary-500) !important;
+}
+
+// Material button overrides to match design system
+.mat-mdc-raised-button.mat-primary {
+  --mdc-protected-background-color: var(--color-primary-600) !important;
+}
+
+.mat-mdc-raised-button.mat-primary:hover {
+  --mdc-protected-background-color: var(--color-primary-700) !important;
 }

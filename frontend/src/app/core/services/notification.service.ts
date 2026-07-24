@@ -23,6 +23,14 @@ export class NotificationService {
     });
   }
 
+  warning(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
+  }
+
   info(message: string): void {
     this.snackBar.open(message, 'Close', {
       duration: 3000,

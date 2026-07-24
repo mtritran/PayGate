@@ -2,6 +2,7 @@ package com.training.paygate.service.impl;
 
 import com.training.paygate.cache.BalanceCacheService;
 import com.training.paygate.dto.response.AccountResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
@@ -17,12 +18,17 @@ import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.AccountMapper;
+import com.training.paygate.dto.response.AccountLookupResponse;
+import com.training.paygate.entity.Merchant;
+import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,55 +36,58 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-    private final AccountRepository accountRepository;
-    private final UserRepository userRepository;
-    private final TransactionRepository transactionRepository;
-    private final LedgerEntryRepository ledgerEntryRepository;
-    private final BalanceCacheService balanceCacheService;
-    private final AccountMapper accountMapper;
+        private final AccountRepository accountRepository;
+        private final UserRepository userRepository;
+        private final MerchantRepository merchantRepository;
+        private final TransactionRepository transactionRepository;
+        private final LedgerEntryRepository ledgerEntryRepository;
+        private final BalanceCacheService balanceCacheService;
+        private final AccountMapper accountMapper;
 
-    @Override
-    @Transactional
-    public AccountResponse createAccount(Long ownerId, OwnerType ownerType) {
-        if (accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType).isPresent()) {
-            throw new DuplicateResourceException("Account", "ownerId", ownerId);
+        @Override
+        @Transactional
+        public AccountResponse createAccount(Long ownerId, OwnerType ownerType) {
+                if (accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType).isPresent()) {
+                        throw new DuplicateResourceException("Account", "ownerId", ownerId);
+                }
+
+                Account account = Account.builder()
+                                .ownerId(ownerId)
+                                .ownerType(ownerType)
+                                .balance(BigDecimal.ZERO)
+                                .currency("VND")
+                                .status(AccountStatus.ACTIVE)
+                                .accountNumber("TMP-" + UUID.randomUUID().toString().substring(0, 10))
+                                .build();
+
+                Account saved = accountRepository.save(account);
+                saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                saved = accountRepository.save(saved);
+
+                return accountMapper.toResponse(saved);
         }
 
-        Account account = Account.builder()
-                .ownerId(ownerId)
-                .ownerType(ownerType)
-                .balance(BigDecimal.ZERO)
-                .currency("VND")
-                .status(AccountStatus.ACTIVE)
-                .accountNumber("TEMP-" + ownerId + "-" + System.nanoTime())
-                .build();
+        @Override
+        @Transactional(readOnly = true)
+        public AccountResponse getBalance(Long accountId) {
+                Account account = accountRepository.findById(accountId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+                return accountMapper.toResponse(account);
+        }
 
-        Account saved = accountRepository.save(account);
-        saved.setAccountNumber(String.format("AC%08d", saved.getId()));
-        saved = accountRepository.save(saved);
-
-        return accountMapper.toResponse(saved);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getBalance(Long accountId) {
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
-        return accountMapper.toResponse(account);
-    }
-
-    @Override
+          @Override
     @Transactional(readOnly = true)
     public AccountResponse getByOwnerIdAndType(Long ownerId, OwnerType ownerType) {
         Account account = accountRepository.findByOwnerIdAndOwnerType(ownerId, ownerType)
-                .orElseThrow(() -> new ResourceNotFoundException("Account for owner ID: " + ownerId + ", type: " + ownerType + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account for owner ID: " + ownerId
+                        + ", type: " + ownerType + " not found"));
         return accountMapper.toResponse(account);
     }
 
@@ -88,21 +97,24 @@ public class AccountServiceImpl implements AccountService {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Topup amount must be positive");
         }
+        if (amount.compareTo(BigDecimal.valueOf(1_000_000_000)) > 0) {
+            throw new BadRequestException("Topup amount cannot exceed 1,000,000,000 VND per transaction");
+        }
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        // Get or Create SYSTEM account
+        // Get or Create SYSTEM account (Đã rút ngắn còn 19 ký tự để tránh lỗi DB VARCHAR(20))
         Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseGet(() -> {
                     Account acc = Account.builder()
                             .ownerId(0L)
                             .ownerType(OwnerType.SYSTEM)
-                            .accountNumber("SYS00000000000000001")
-                            .balance(BigDecimal.valueOf(1_000_000_000_000.00)) // huge initial balance
+                            .accountNumber("SYS0000000000000001")
+                            .balance(BigDecimal.valueOf(99_000_000_000.00)) // initial balance within DECIMAL(15,2)
                             .currency("VND")
                             .status(AccountStatus.ACTIVE)
                             .build();
-                    return accountRepository.save(acc);
+                    return accountRepository.saveAndFlush(acc);
                 });
 
         // Lock accounts in ascending ID order to prevent deadlock
@@ -116,6 +128,10 @@ public class AccountServiceImpl implements AccountService {
 
         Account lockedSystem = firstLocked.getId().equals(systemAccount.getId()) ? firstLocked : secondLocked;
         Account lockedUser = firstLocked.getId().equals(userAccount.getId()) ? firstLocked : secondLocked;
+
+        if (lockedUser.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("User account is not active");
+        }
 
         // Update balances
         lockedSystem.setBalance(lockedSystem.getBalance().subtract(amount));
@@ -181,16 +197,17 @@ public class AccountServiceImpl implements AccountService {
                 transaction.getCreatedAt()
         );
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public AccountResponse getAccountByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
-        Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Account for user " + username + " not found"));
-        return accountMapper.toResponse(account);
-    }
+        @Override
+        @Transactional(readOnly = true)
+        public AccountResponse getAccountByUsername(String username) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found with username: " + username));
+                Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Account for user " + username + " not found"));
+                return accountMapper.toResponse(account);
+        }
 
     @Override
     @Transactional(readOnly = true)
@@ -206,5 +223,87 @@ public class AccountServiceImpl implements AccountService {
         }
 
         return accountMapper.toResponse(account);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+            throw new AccessDeniedException("You do not have permission to access this account's history");
+        }
+
+        return transactionRepository.findAllWithFiltersAndOwner(accountId, null, null, null, null, null, pageable)
+                .map(t -> new TransactionResponse(
+                        t.getTransactionRef(),
+                        t.getStatus().name(),
+                        t.getAmount(),
+                        t.getSourceAccountId(),
+                        t.getDestAccountId(),
+                        t.getType().name(),
+                        t.getDescription(),
+                        t.getCreatedAt()
+                ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AccountLookupResponse lookupAccount(String query) {
+        if (query == null || query.isBlank()) {
+            throw new BadRequestException("Lookup query cannot be empty");
+        }
+
+        String cleaned = query.trim();
+        Optional<Account> accountOpt = accountRepository.findByAccountNumber(cleaned);
+
+        // Try numeric ID if not found by account number
+        if (accountOpt.isEmpty()) {
+            try {
+                Long accountId = Long.parseLong(cleaned);
+                accountOpt = accountRepository.findById(accountId);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // Try username if still not found
+        if (accountOpt.isEmpty()) {
+            Optional<User> userOpt = userRepository.findByUsername(cleaned);
+            if (userOpt.isPresent()) {
+                accountOpt = accountRepository.findByOwnerIdAndOwnerType(userOpt.get().getId(), OwnerType.USER);
+            }
+        }
+
+        Account account = accountOpt.orElseThrow(() ->
+                new ResourceNotFoundException("Tài khoản nhận tiền không tồn tại với thông tin: " + query));
+
+        Long merchantId = null;
+        String ownerName = "Tài khoản PayGate";
+        if (account.getOwnerType() == OwnerType.USER) {
+            ownerName = userRepository.findById(account.getOwnerId())
+                    .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
+                    .orElse("Khách hàng PayGate");
+        } else if (account.getOwnerType() == OwnerType.MERCHANT) {
+            Optional<Merchant> mOpt = merchantRepository.findById(account.getOwnerId());
+            if (mOpt.isPresent()) {
+                Merchant m = mOpt.get();
+                ownerName = m.getMerchantName();
+                merchantId = m.getId();
+            } else {
+                ownerName = "Doanh nghiệp Merchant";
+            }
+        }
+
+        return new AccountLookupResponse(
+                account.getId(),
+                account.getAccountNumber(),
+                ownerName,
+                account.getOwnerType(),
+                account.getStatus(),
+                merchantId
+        );
     }
 }

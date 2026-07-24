@@ -1,0 +1,287 @@
+/* ==========================================================================
+   PayGate Design System - Design Tokens (CSS Custom Properties)
+   ========================================================================== */
+
+:root {
+  /* --------------------------------------------------------------------------
+     Color Primitives - Semantic naming, not component-specific
+     Base palette: Emerald (primary), Slate (neutral), Amber (warning), Rose (error), Blue (info)
+     -------------------------------------------------------------------------- */
+
+  /* Primary - Emerald (brand color) */
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+  --color-primary-950: #022c22;
+
+  /* Neutral - Slate */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* Success - Emerald (same as primary) */
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+
+  /* Warning - Amber */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+
+  /* Error - Rose */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+
+  /* Info - Blue */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* Purple - for Admin accents */
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-500: #a855f7;
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7e22ce;
+
+  /* Indigo - for Admin accents */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+
+  /* --------------------------------------------------------------------------
+     Semantic Color Aliases - Used by components
+     These map to primitives above but can be overridden per theme
+     -------------------------------------------------------------------------- */
+
+  /* Light Theme (Default) */
+  --color-bg-primary: var(--color-neutral-50);
+  --color-bg-secondary: var(--color-neutral-100);
+  --color-bg-tertiary: var(--color-neutral-200);
+  --color-bg-inverse: var(--color-neutral-900);
+  --color-bg-brand: var(--color-primary-600);
+  --color-bg-brand-hover: var(--color-primary-700);
+  --color-bg-brand-light: var(--color-primary-50);
+  --color-bg-success-light: var(--color-success-50);
+  --color-bg-warning-light: var(--color-warning-50);
+  --color-bg-error-light: var(--color-error-50);
+  --color-bg-info-light: var(--color-info-50);
+
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-inverse: var(--color-neutral-50);
+  --color-text-brand: var(--color-primary-600);
+  --color-text-success: var(--color-success-700);
+  --color-text-warning: var(--color-warning-700);
+  --color-text-error: var(--color-error-700);
+
+  --color-border-primary: var(--color-neutral-200);
+  --color-border-secondary: var(--color-neutral-300);
+  --color-border-focus: var(--color-primary-500);
+  --color-border-error: var(--color-error-500);
+
+  --color-shadow-sm: rgba(15, 23, 42, 0.04);
+  --color-shadow-md: rgba(15, 23, 42, 0.08);
+  --color-shadow-lg: rgba(15, 23, 42, 0.12);
+  --color-shadow-brand: rgba(5, 150, 105, 0.25);
+
+  /* --------------------------------------------------------------------------
+     Spacing Scale (4px base)
+     -------------------------------------------------------------------------- */
+  --space-0: 0;
+  --space-1: 4px;   /* 0.25rem */
+  --space-2: 8px;   /* 0.5rem */
+  --space-3: 12px;  /* 0.75rem */
+  --space-4: 16px;  /* 1rem */
+  --space-5: 20px;  /* 1.25rem */
+  --space-6: 24px;  /* 1.5rem */
+  --space-8: 32px;  /* 2rem */
+  --space-10: 40px; /* 2.5rem */
+  --space-12: 48px; /* 3rem */
+  --space-16: 64px; /* 4rem */
+
+  /* --------------------------------------------------------------------------
+     Border Radius
+     -------------------------------------------------------------------------- */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* --------------------------------------------------------------------------
+     Typography
+     -------------------------------------------------------------------------- */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  --font-size-xs: 0.7rem;    /* 11.2px */
+  --font-size-sm: 0.8125rem; /* 13px */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-lg: 1rem;      /* 16px */
+  --font-size-xl: 1.125rem;  /* 18px */
+  --font-size-2xl: 1.25rem;  /* 20px */
+  --font-size-3xl: 1.5rem;   /* 24px */
+  --font-size-4xl: 1.875rem; /* 30px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* --------------------------------------------------------------------------
+     Shadows
+     -------------------------------------------------------------------------- */
+  --shadow-sm: 0 1px 2px 0 var(--color-shadow-sm);
+  --shadow-md: 0 4px 6px -1px var(--color-shadow-md), 0 2px 4px -2px var(--color-shadow-md);
+  --shadow-lg: 0 10px 15px -3px var(--color-shadow-lg), 0 4px 6px -4px var(--color-shadow-lg);
+  --shadow-xl: 0 20px 25px -5px var(--color-shadow-lg), 0 8px 10px -6px var(--color-shadow-lg);
+  --shadow-brand: 0 4px 14px 0 var(--color-shadow-brand);
+
+  /* --------------------------------------------------------------------------
+     Transitions
+     -------------------------------------------------------------------------- */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* --------------------------------------------------------------------------
+     Z-Index Scale
+     -------------------------------------------------------------------------- */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+
+  /* --------------------------------------------------------------------------
+     Breakpoints (for reference in JS/media queries)
+     -------------------------------------------------------------------------- */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
+  /* --------------------------------------------------------------------------
+     Component-Specific Tokens
+     -------------------------------------------------------------------------- */
+  --input-height: 42px;
+  --input-height-sm: 36px;
+  --input-height-lg: 48px;
+  --button-height: 42px;
+  --button-height-sm: 36px;
+  --button-height-lg: 48px;
+
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 72px;
+  --header-height: 56px;
+
+  /* --------------------------------------------------------------------------
+     Focus Ring
+     -------------------------------------------------------------------------- */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--color-primary-500);
+}
+
+/* ==========================================================================
+   Dark Theme Override
+   Applied via .dark class on html/body or [data-theme="dark"]
+   ========================================================================== */
+
+.dark,
+[data-theme="dark"] {
+  --color-bg-primary: var(--color-neutral-950);
+  --color-bg-secondary: var(--color-neutral-900);
+  --color-bg-tertiary: var(--color-neutral-800);
+  --color-bg-inverse: var(--color-neutral-50);
+  --color-bg-brand: var(--color-primary-500);
+  --color-bg-brand-hover: var(--color-primary-400);
+  --color-bg-brand-light: var(--color-primary-900);
+  --color-bg-success-light: var(--color-success-900);
+  --color-bg-warning-light: var(--color-warning-900);
+  --color-bg-error-light: var(--color-error-900);
+  --color-bg-info-light: var(--color-info-900);
+
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-inverse: var(--color-neutral-900);
+  --color-text-brand: var(--color-primary-400);
+  --color-text-success: var(--color-success-400);
+  --color-text-warning: var(--color-warning-400);
+  --color-text-error: var(--color-error-400);
+
+  --color-border-primary: var(--color-neutral-700);
+  --color-border-secondary: var(--color-neutral-600);
+  --color-border-focus: var(--color-primary-400);
+  --color-border-error: var(--color-error-400);
+
+  --color-shadow-sm: rgba(0, 0, 0, 0.3);
+  --color-shadow-md: rgba(0, 0, 0, 0.4);
+  --color-shadow-lg: rgba(0, 0, 0, 0.5);
+  --color-shadow-brand: rgba(16, 185, 129, 0.3);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+  }
+}
+
+/* ==========================================================================
+   High Contrast Mode
+   ========================================================================== */
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-border-primary: var(--color-text-primary);
+    --color-border-secondary: var(--color-text-secondary);
+    --focus-ring-width: 3px;
+  }
+}

@@ -32,3 +32,8 @@
 # Agent Customizations
 .agents/
 skills-lock.json
+
+# Environment / Secret Credentials
+.env
+*.env
+.env.local

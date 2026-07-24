@@ -36,4 +36,9 @@ public class Merchant extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private com.training.paygate.enums.MerchantStatus status = com.training.paygate.enums.MerchantStatus.ACTIVE;
 }

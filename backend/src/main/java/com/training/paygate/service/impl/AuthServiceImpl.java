@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(user.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
-        return new AuthResponse(accessToken, refreshToken, user.getUsername(), user.getRole().name());
+        return new AuthResponse(accessToken, refreshToken, user.getUsername(), user.getRole().name(), user.getId());
     }
 
     @Override
@@ -71,22 +71,28 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtTokenProvider.generateAccessToken(username);
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
 
-        return new AuthResponse(accessToken, refreshToken, username, user.getRole().name());
+        return new AuthResponse(accessToken, refreshToken, username, user.getRole().name(), user.getId());
     }
 
     @Override
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        if (!jwtTokenProvider.isTokenValid(request.refreshToken())) {
+        String token = request != null ? request.refreshToken() : null;
+        return refreshToken(token);
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshTokenStr) {
+        if (refreshTokenStr == null || !jwtTokenProvider.isTokenValid(refreshTokenStr)) {
             throw new BadRequestException("Invalid refresh token");
         }
 
-        String username = jwtTokenProvider.extractUsername(request.refreshToken());
+        String username = jwtTokenProvider.extractUsername(refreshTokenStr);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
         String accessToken = jwtTokenProvider.generateAccessToken(username);
         String refreshToken = jwtTokenProvider.generateRefreshToken(username);
 
-        return new AuthResponse(accessToken, refreshToken, username, user.getRole().name());
+        return new AuthResponse(accessToken, refreshToken, username, user.getRole().name(), user.getId());
     }
 }

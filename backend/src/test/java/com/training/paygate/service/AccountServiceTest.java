@@ -2,6 +2,7 @@ package com.training.paygate.service;
 
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionResponse;
+import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
 import com.training.paygate.entity.Transaction;
@@ -201,6 +202,49 @@ class AccountServiceTest {
     }
 
     @Test
+    void topUp_exceedsLimit_throwsBadRequestException() {
+        // Given
+        BigDecimal hugeAmount = BigDecimal.valueOf(2_000_000_000); // 2 billion > 1 billion limit
+
+        // When & Then
+        assertThatThrownBy(() -> accountService.topUp(12L, hugeAmount, "Huge topup"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Topup amount cannot exceed");
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void topUp_userAccountNotActive_throwsBadRequestException() {
+        // Given
+        Long accountId = 12L;
+        BigDecimal amount = BigDecimal.valueOf(500);
+
+        Account userAccount = Account.builder()
+                .id(accountId)
+                .balance(BigDecimal.valueOf(1000))
+                .status(AccountStatus.FROZEN) // Inactive account
+                .build();
+
+        Account systemAccount = Account.builder()
+                .id(99L)
+                .ownerId(0L)
+                .ownerType(OwnerType.SYSTEM)
+                .balance(BigDecimal.valueOf(10000000))
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+        when(accountRepository.findByIdForUpdate(12L)).thenReturn(Optional.of(userAccount));
+        when(accountRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(systemAccount));
+
+        // When & Then
+        assertThatThrownBy(() -> accountService.topUp(accountId, amount, "Topup frozen account"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("User account is not active");
+    }
+
+    @Test
     void getAccountByUsername_success() {
         // Given
         String username = "user1";
@@ -274,5 +318,27 @@ class AccountServiceTest {
 
         // Then
         assertThat(result.balance()).isEqualTo(BigDecimal.valueOf(100));
+    }
+
+    @Test
+    void getAccountHistory_success() {
+        // Given
+        String username = "user1";
+        User user = User.builder().username(username).role(Role.USER).build();
+        user.setId(5L);
+        Account account = Account.builder().ownerId(5L).ownerType(OwnerType.USER).build();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<Transaction> page = new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList());
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(accountRepository.findById(12L)).thenReturn(Optional.of(account));
+        when(transactionRepository.findAllWithFiltersAndOwner(12L, null, null, null, null, null, pageable)).thenReturn(page);
+
+        // When
+        org.springframework.data.domain.Page<TransactionResponse> result = accountService.getAccountHistory(12L, username, pageable);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
     }
 }
