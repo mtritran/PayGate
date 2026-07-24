@@ -26,6 +26,7 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.service.EmailService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final BalanceCacheService balanceCacheService;
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
+    private final EmailService emailService;
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -213,6 +215,21 @@ public class TransactionServiceImpl implements TransactionService {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
         } catch (Exception e) {
             log.warn("Could not publish PaymentCompletedEvent to RabbitMQ (this is expected if exchange 'payment.exchange' is not yet configured): {}", e.getMessage());
+        }
+
+        // 13. Send Payment Success Email Notification
+        try {
+            String recipientAccNo = lockedDest.getAccountNumber();
+            emailService.sendPaymentSuccessEmail(
+                    user.getEmail(),
+                    user.getUsername(),
+                    transaction.getTransactionRef(),
+                    transaction.getAmount(),
+                    recipientAccNo,
+                    transaction.getDescription()
+            );
+        } catch (Exception e) {
+            log.warn("Could not send payment success email notification: {}", e.getMessage());
         }
 
         return mapToResponse(transaction);

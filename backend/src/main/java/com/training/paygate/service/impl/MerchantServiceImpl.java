@@ -14,20 +14,26 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.service.AccountService;
 import com.training.paygate.service.MerchantService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.training.paygate.entity.User;
+import com.training.paygate.repository.UserRepository;
+import com.training.paygate.service.EmailService;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MerchantServiceImpl implements MerchantService {
 
     private final MerchantRepository merchantRepository;
+    private final UserRepository userRepository;
     private final MerchantMapper merchantMapper;
     private final AccountService accountService;
+    private final EmailService emailService;
 
     @Override
     @Transactional(readOnly = true)
@@ -129,6 +135,9 @@ public class MerchantServiceImpl implements MerchantService {
             accountService.createAccount(updatedMerchant.getId(), OwnerType.MERCHANT);
         } catch (Exception ignored) {}
 
+        // Send Email Notification to User
+        sendMerchantReviewEmail(updatedMerchant, true);
+
         return merchantMapper.toResponse(updatedMerchant);
     }
 
@@ -140,7 +149,30 @@ public class MerchantServiceImpl implements MerchantService {
 
         merchant.setActive(false);
         merchant.setStatus(MerchantStatus.REJECTED);
-        return merchantMapper.toResponse(merchantRepository.save(merchant));
+        Merchant updatedMerchant = merchantRepository.save(merchant);
+
+        // Send Email Notification to User
+        sendMerchantReviewEmail(updatedMerchant, false);
+
+        return merchantMapper.toResponse(updatedMerchant);
+    }
+
+    private void sendMerchantReviewEmail(Merchant merchant, boolean isApproved) {
+        try {
+            if (merchant.getUserId() != null) {
+                User user = userRepository.findById(merchant.getUserId()).orElse(null);
+                if (user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                    emailService.sendMerchantApprovalEmail(
+                            user.getEmail(),
+                            merchant.getMerchantName(),
+                            merchant.getMerchantCode(),
+                            isApproved
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not send merchant approval/rejection email: {}", e.getMessage());
+        }
     }
 
     @Override
