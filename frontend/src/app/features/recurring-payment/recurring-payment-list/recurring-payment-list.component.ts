@@ -231,6 +231,9 @@ import {
 
             <!-- Modal Action Buttons -->
             <div class="modal-actions">
+              <button class="btn-modal btn-run" (click)="executeNow(d)">
+                <span>Thực Hiện Ngay</span>
+              </button>
               <button
                 *ngIf="d.status === 'ACTIVE'"
                 class="btn-modal btn-pause"
@@ -577,6 +580,8 @@ import {
       background: #ffffff;
       color: #334155;
     }
+    .btn-modal.btn-run { background: #059669; color: #ffffff; border-color: #059669; }
+    .btn-modal.btn-run:hover { background: #047857; }
     .btn-modal.btn-pause { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     .btn-modal.btn-resume { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
     .btn-modal.btn-log { background: #f1f5f9; color: #0f172a; }
@@ -603,6 +608,21 @@ export class RecurringPaymentListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  executeNow(item: RecurringPaymentResponse): void {
+    this.service.executeNow(item.id).subscribe({
+      next: (res) => {
+        alert('Đã thực hiện giao dịch thanh toán thành công!');
+        this.loadData();
+        if (this.selectedItemForDetail()) {
+          this.selectedItemForDetail.set(res.data);
+        }
+      },
+      error: (err) => {
+        alert(err?.error?.message || 'Không thể thực hiện giao dịch. Vui lòng kiểm tra số dư ví.');
+      }
+    });
   }
 
   loadData(): void {

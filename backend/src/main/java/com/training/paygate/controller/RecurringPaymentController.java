@@ -76,4 +76,13 @@ public class RecurringPaymentController {
         List<RecurringPaymentLogResponse> logs = recurringPaymentService.getLogs(id, principal.getName());
         return ResponseEntity.ok(ApiResponse.success("Fetched execution logs successfully", logs));
     }
+
+    @PostMapping("/{id}/execute-now")
+    @Operation(summary = "Manually trigger immediate execution of a recurring payment schedule")
+    public ResponseEntity<ApiResponse<RecurringPaymentResponse>> executeNow(
+            @PathVariable Long id,
+            Principal principal) {
+        RecurringPaymentResponse response = recurringPaymentService.executeNow(id, principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Triggered payment execution successfully", response));
+    }
 }

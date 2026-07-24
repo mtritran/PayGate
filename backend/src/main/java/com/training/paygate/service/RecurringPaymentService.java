@@ -15,4 +15,5 @@ public interface RecurringPaymentService {
     void delete(Long id, String currentUsername);
     List<RecurringPaymentLogResponse> getLogs(Long id, String currentUsername);
     void executeDuePayments();
+    RecurringPaymentResponse executeNow(Long id, String currentUsername);
 }

@@ -80,4 +80,8 @@ export class RecurringPaymentService {
   getLogs(id: number): Observable<ApiResponse<RecurringPaymentLogResponse[]>> {
     return this.http.get<ApiResponse<RecurringPaymentLogResponse[]>>(`${this.apiUrl}/${id}/logs`);
   }
+
+  executeNow(id: number): Observable<ApiResponse<RecurringPaymentResponse>> {
+    return this.http.post<ApiResponse<RecurringPaymentResponse>>(`${this.apiUrl}/${id}/execute-now`, {});
+  }
 }

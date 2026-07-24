@@ -52,7 +52,8 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
         }
 
         LocalDateTime start = request.startDate() != null ? request.startDate() : LocalDateTime.now();
-        LocalDateTime nextRun = calculateNextRun(start, request.frequency());
+        // Set initial nextRunAt to start time so worker picks it up as soon as due
+        LocalDateTime nextRun = start;
 
         RecurringPayment rp = RecurringPayment.builder()
                 .userId(user.getId())
@@ -164,6 +165,23 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                         l.getExecutedAt()
                 ))
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public RecurringPaymentResponse executeNow(Long id, String currentUsername) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
+
+        RecurringPayment rp = recurringPaymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recurring Payment schedule", id));
+
+        if (!rp.getUserId().equals(user.getId())) {
+            throw new BadRequestException("Access denied");
+        }
+
+        executeSinglePayment(rp, LocalDateTime.now());
+        return mapToResponse(recurringPaymentRepository.findById(id).orElse(rp));
     }
 
     @Override
