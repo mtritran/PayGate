@@ -623,8 +623,15 @@ interface DailyVolumePoint {
     .empty-icon { font-size: 32px; width: 32px; height: 32px; color: #cbd5e1; }
 
     @media (max-width: 1024px) {
-      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-      .middle-grid { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .middle-grid { grid-template-columns: 1fr; gap: 24px; }
+    }
+
+    @media (max-width: 640px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+      .content-card { padding: 20px 16px; border-radius: 18px; }
+      .wallet-card-actions { grid-template-columns: 1fr; }
+      .dashboard-header h2 { font-size: 1.65rem; }
     }
   `]
 })

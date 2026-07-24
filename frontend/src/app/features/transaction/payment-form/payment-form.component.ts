@@ -539,6 +539,34 @@ import { Merchant } from '../../../core/models/merchant.model';
     
     .spinner-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+    /* RESPONSIVE MEDIA QUERIES FOR MEDIUM & SMALL SCREENS */
+    @media (max-width: 1024px) {
+      .payment-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .form-card {
+        padding: 24px 20px;
+        border-radius: 20px;
+      }
+      .confirm-modal-box {
+        max-width: 94vw;
+        padding: 24px 20px;
+        border-radius: 20px;
+      }
+      .modal-actions-bar {
+        grid-template-columns: 1fr;
+      }
+      .quick-enterprises-grid {
+        grid-template-columns: 1fr;
+      }
+      .sub-tab-selector {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {

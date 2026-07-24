@@ -842,16 +842,82 @@ export interface AvailableBankOption {
     .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 16px; height: 52px; font-size: 1.05rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: transform 0.15s; }
     .btn-confirm-vqr:hover { transform: translateY(-2px); }
 
-    @media (max-width: 768px) {
-      .vietqr-modal-card { max-width: 95vw; }
-      .modal-body-vqr { grid-template-columns: 1fr; }
-      .modal-footer-vqr { grid-template-columns: 1fr; }
+    /* FULL RESPONSIVE MEDIA QUERIES FOR MEDIUM & SMALL SCREENS */
+    @media (max-width: 1100px) {
+      .topup-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+      .method-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .preset-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .spacious-modal {
+        max-width: 90vw;
+      }
     }
 
-    @media (max-width: 680px) {
-      .spacious-modal { padding: 28px 24px; }
-      .modal-body-vqr { grid-template-columns: 1fr; }
-      .modal-footer-vqr { grid-template-columns: 1fr; }
+    @media (max-width: 768px) {
+      .content-card {
+        padding: 24px 20px;
+        border-radius: 20px;
+      }
+      .page-header h2 {
+        font-size: 1.65rem;
+      }
+      .balance-display {
+        font-size: 1.85rem;
+      }
+      .method-grid {
+        grid-template-columns: 1fr;
+      }
+      .preset-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .spacious-modal {
+        padding: 28px 20px;
+        max-width: 94vw;
+        border-radius: 22px;
+      }
+      .vietqr-modal-card {
+        max-width: 95vw;
+        border-radius: 22px;
+      }
+      .vqr-banner-header {
+        padding: 18px 20px;
+      }
+      .vqr-content-wrapper {
+        padding: 20px;
+      }
+      .modal-body-vqr {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .qr-image-wrapper {
+        width: 190px;
+        height: 190px;
+      }
+      .modal-footer-vqr {
+        grid-template-columns: 1fr;
+        padding: 16px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .preset-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+      .metallic-visa-card {
+        padding: 22px;
+      }
+      .card-num {
+        font-size: 1.15rem;
+      }
     }
   `]
 })
