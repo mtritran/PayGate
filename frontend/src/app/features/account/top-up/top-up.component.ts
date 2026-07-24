@@ -842,7 +842,7 @@ export interface AvailableBankOption {
     .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 16px; height: 52px; font-size: 1.05rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: transform 0.15s; }
     .btn-confirm-vqr:hover { transform: translateY(-2px); }
 
-    /* FULL RESPONSIVE MEDIA QUERIES FOR MEDIUM & SMALL SCREENS */
+    /* FULL RESPONSIVE MEDIA QUERIES FOR MEDIUM & SMALL SCREENS (INCLUDING IPHONE SE 375PX) */
     @media (max-width: 1100px) {
       .topup-grid {
         grid-template-columns: 1fr;
@@ -906,17 +906,186 @@ export interface AvailableBankOption {
     }
 
     @media (max-width: 480px) {
+      .modal-overlay {
+        padding: 8px;
+      }
+      .content-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+      }
+      .page-header h2 {
+        font-size: 1.45rem;
+      }
+      .subtitle {
+        font-size: 0.875rem;
+      }
+      .metallic-visa-card {
+        padding: 18px 14px;
+        border-radius: 16px;
+      }
+      .paygate-brand {
+        font-size: 1.1rem;
+      }
+      .visa-tag {
+        font-size: 0.75rem;
+        padding: 2px 7px;
+      }
+      .emv-chip {
+        width: 42px;
+        height: 30px;
+      }
+      .card-num {
+        font-size: 1.05rem;
+        letter-spacing: 0.02em;
+      }
+      .card-holder-name, .expiry-date {
+        font-size: 0.85rem;
+      }
+      .wallet-balance-box {
+        padding: 16px 14px;
+        border-radius: 16px;
+      }
+      .balance-display {
+        font-size: 1.6rem;
+        word-break: break-all;
+      }
       .preset-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .preset-btn {
+        padding: 10px 0;
+        font-size: 0.825rem;
+        border-radius: 10px;
+      }
+      .custom-amount-input {
+        height: 48px;
+        font-size: 1.05rem;
+        padding: 0 14px 0 36px;
+      }
+      .currency-prefix {
+        font-size: 1.15rem;
+        left: 14px;
+      }
+      .mode-selector-bar {
+        padding: 3px;
+        gap: 4px;
+      }
+      .mode-tab-btn {
+        font-size: 0.775rem;
+        height: 40px;
+        gap: 4px;
+      }
+
+      /* iPhone SE 375px Specific Modal Formatting */
+      .spacious-modal {
+        padding: 20px 14px;
+        max-width: 98vw;
+        width: 98vw;
+        border-radius: 18px;
+        box-sizing: border-box;
+      }
+      .modal-header {
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+      }
+      .modal-header h3 {
+        font-size: 1.15rem;
+      }
+      .btn-close-modal {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+      .modal-form {
+        gap: 16px;
+      }
+      .input-label {
+        font-size: 0.8rem;
+      }
+      .modal-input {
+        height: 44px;
+        font-size: 0.85rem;
+        padding: 0 12px;
+        border-radius: 10px;
+      }
+      .custom-select.modal-select {
+        height: 44px;
+        font-size: 0.825rem;
+        padding: 0 30px 0 10px;
+        border-radius: 10px;
       }
       .modal-actions {
         grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 14px;
       }
-      .metallic-visa-card {
-        padding: 22px;
+      .btn-cancel, .btn-confirm-link {
+        height: 44px;
+        font-size: 0.875rem;
+        border-radius: 10px;
       }
-      .card-num {
-        font-size: 1.15rem;
+
+      /* VietQR Modal on iPhone SE */
+      .vietqr-modal-card {
+        max-width: 98vw;
+        width: 98vw;
+        max-height: 94vh;
+        border-radius: 18px;
+      }
+      .vqr-banner-header {
+        padding: 14px 16px;
+      }
+      .vqr-title-group h3 {
+        font-size: 1.2rem;
+      }
+      .vqr-content-wrapper {
+        padding: 14px 12px;
+        gap: 14px;
+      }
+      .qr-display-box {
+        padding: 12px;
+        border-radius: 16px;
+      }
+      .qr-image-wrapper {
+        width: 160px;
+        height: 160px;
+        padding: 6px;
+      }
+      .detail-card {
+        padding: 10px 12px;
+        border-radius: 12px;
+      }
+      .amount-val {
+        font-size: 1.25rem;
+      }
+      .acc-num {
+        font-size: 1.05rem;
+      }
+      .text-note {
+        font-size: 0.85rem;
+      }
+      .vqr-deep-links-bar {
+        padding: 12px 14px;
+        border-radius: 14px;
+      }
+      .apps-grid {
+        gap: 6px;
+      }
+      .app-link-pill {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+      }
+      .modal-footer-vqr {
+        padding: 12px 14px;
+        gap: 8px;
+      }
+      .btn-confirm-vqr, .btn-cancel-modal {
+        height: 44px;
+        font-size: 0.875rem;
+        border-radius: 12px;
       }
     }
   `]
