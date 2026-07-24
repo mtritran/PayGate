@@ -198,14 +198,28 @@ public class AccountServiceImpl implements AccountService {
         );
     }
         @Override
-        @Transactional(readOnly = true)
+        @Transactional
         public AccountResponse getAccountByUsername(String username) {
-                User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found with username: " + username));
+                User user = userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                                .orElseGet(() -> userRepository.findByUsername(username)
+                                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                                "User not found with username: " + username)));
+
                 Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Account for user " + username + " not found"));
+                                .orElseGet(() -> {
+                                        Account newAcc = Account.builder()
+                                                        .ownerId(user.getId())
+                                                        .ownerType(OwnerType.USER)
+                                                        .balance(BigDecimal.ZERO)
+                                                        .currency("VND")
+                                                        .status(AccountStatus.ACTIVE)
+                                                        .accountNumber("TMP-" + UUID.randomUUID().toString().substring(0, 10))
+                                                        .build();
+                                        Account saved = accountRepository.save(newAcc);
+                                        saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                                        return accountRepository.save(saved);
+                                });
+
                 return accountMapper.toResponse(account);
         }
 
