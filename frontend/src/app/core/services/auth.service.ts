@@ -16,7 +16,10 @@ export interface AuthResponse {
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    // Purge any legacy refresh_token from localStorage upon app initialization
+    localStorage.removeItem('refresh_token');
+  }
 
   login(credentials: { username: string; password: string }): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiUrl}/login`, credentials, { withCredentials: true }).pipe(
@@ -79,11 +82,15 @@ export class AuthService {
 
   clearTokens(): void {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
   }
 
   private storeTokens(auth: AuthResponse): void {
+    // Ensure refresh_token is NEVER stored in localStorage
+    localStorage.removeItem('refresh_token');
+
     if (auth.accessToken) {
       localStorage.setItem('access_token', auth.accessToken);
     }

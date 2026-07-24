@@ -25,7 +25,6 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         success: true,
         data: {
           accessToken: 'mock-jwt-access-token-vinh-antigravity-2026',
-          refreshToken: 'mock-jwt-refresh-token-vinh-antigravity-2026',
           username: 'vinh.nguyen@paygate.com',
           role: 'ADMIN'
         }
@@ -41,7 +40,6 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         success: true,
         data: {
           accessToken: 'mock-jwt-access-token-refreshed-' + Date.now(),
-          refreshToken: 'mock-jwt-refresh-token-refreshed-' + Date.now(),
           username: localStorage.getItem('username') || 'vinh.nguyen@paygate.com',
           role: localStorage.getItem('role') || 'ADMIN'
         }
