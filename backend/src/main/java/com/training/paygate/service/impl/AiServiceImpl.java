@@ -94,8 +94,11 @@ public class AiServiceImpl implements AiService {
         if (username == null) return "";
 
         try {
-            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsername(username);
-            if (userOpt.isEmpty()) return "";
+            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsernameIgnoreCase(username);
+            if (userOpt.isEmpty()) {
+                log.warn("User not found by username={}", username);
+                return "";
+            }
 
             Long userId = userOpt.get().getId();
             String fullName = userOpt.get().getFullName();
@@ -164,10 +167,12 @@ public class AiServiceImpl implements AiService {
                 ctx.append("\nChưa có giao dịch nào.\n");
             }
 
-            return ctx.toString();
+            String result = ctx.toString();
+            log.info("Built financial context for user={}:\n{}", username, result);
+            return result;
 
         } catch (Exception e) {
-            log.warn("Could not build financial context for user={}: {}", username, e.getMessage());
+            log.warn("Could not build financial context for user={}: {}", username, e.getMessage(), e);
             return "";
         }
     }
@@ -204,24 +209,27 @@ public class AiServiceImpl implements AiService {
             throw new RuntimeException("OPENROUTER_API_KEY is not configured.");
         }
 
-        // System message: rules only
-        String systemMsg = "Bạn là PayGate AI Assistant — trợ lý tài chính thông minh cho nền tảng thanh toán PayGate.\n" +
-                "QUY TẮC:\n" +
-                "- Trả lời bằng tiếng Việt có dấu đầy đủ, ngắn gọn 2-3 câu.\n" +
-                "- KHÔNG tạo mã QR, bảng biểu, link ngoài, hay số tài khoản ngân hàng thật.\n" +
-                "- Khi hỏi về số dư hay lịch sử: hãy đọc DỮ LIỆU THẬT mà bạn đã nhận được và trả lời con số cụ thể.\n" +
-                "- Khi người dùng muốn nạp tiền/chuyển tiền: thông báo ngắn gọn, nút thực hiện sẽ xuất hiện tự động.";
-
-        // Build messages list
-        java.util.List<Map<String, Object>> messages = new java.util.ArrayList<>();
-        messages.add(Map.of("role", "system", "content", systemMsg));
-
-        // If we have financial data, add it as an "assistant" context message
-        if (financialContext != null && !financialContext.isEmpty()) {
-            messages.add(Map.of("role", "assistant", "content", financialContext));
+        StringBuilder systemMsg = new StringBuilder();
+        systemMsg.append("Bạn là PayGate AI Assistant — trợ lý tài chính thông minh của hệ thống thanh toán PayGate.\n\n");
+        systemMsg.append("=== DỮ LIỆU TÀI CHÍNH THỰC TẾ HỆ THỐNG ĐÃ TRUY XUẤT CHO NGUỜI DÙNG ===\n");
+        if (financialContext != null && !financialContext.trim().isEmpty()) {
+            systemMsg.append(financialContext);
+        } else {
+            systemMsg.append("Chưa tìm thấy dữ liệu tài khoản cho người dùng này.\n");
         }
+        systemMsg.append("======================================================================\n\n");
+        systemMsg.append("QUY TẮC PHẢN HỒI BẮT BUỘC:\n");
+        systemMsg.append("1. Trả lời bằng tiếng Việt có dấu đầy đủ, ngắn gọn (2-3 câu).\n");
+        systemMsg.append("2. Khi người dùng hỏi về SỐ DƯ hoặc LỊCH SỬ GIAO DỊCH, BẮT BUỘC phải đọc con số/thông tin thực tế trong phần 'DỮ LIỆU TÀI CHÍNH THỰC TẾ' ở trên để trả lời ngay cho người dùng (Ví dụ: 'Số dư hiện tại của bạn là 500.000 VND'). TUYỆT ĐỐI KHÔNG từ chối hoặc trả lời 'tôi chưa có dữ liệu' hay 'vui lòng mở app'.\n");
+        systemMsg.append("3. Tuyệt đối KHÔNG tạo mã QR, link ảnh ngoài, hay bảng biểu phức tạp.\n");
+        systemMsg.append("4. Khi người dùng muốn nạp tiền hoặc chuyển tiền, thông báo ngắn gọn và gợi ý thực hiện trên ứng dụng.\n");
 
-        messages.add(Map.of("role", "user", "content", prompt));
+        log.info("Sending prompt to OpenRouter model={} with systemPrompt length={}", model, systemMsg.length());
+
+        java.util.List<Map<String, Object>> messages = List.of(
+                Map.of("role", "system", "content", systemMsg.toString()),
+                Map.of("role", "user", "content", prompt)
+        );
 
         RestTemplate restTemplate = new RestTemplate();
 
