@@ -456,17 +456,17 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     const recipient: string | undefined = data.suggestedRecipient;
 
     if (action === 'RECURRING') {
-      return { text: '📅 Quản Lý Lịch Định Kỳ & Hóa Đơn', route: '/recurring-payments' };
+      return { text: 'Quản Lý Lịch Định Kỳ & Hóa Đơn', route: '/recurring-payments' };
     }
     if (action === 'TOPUP') {
-      return { text: '💳 Nạp tiền ngay', route: '/top-up' };
+      return { text: 'Nạp tiền ngay', route: '/top-up' };
     }
     if (action === 'TRANSFER' || (!action && (amount || recipient))) {
       const formattedAmt = amount
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
         : '';
       return {
-        text: formattedAmt ? `💸 Chuyển ngay ${formattedAmt}` : '💸 Mở form chuyển tiền',
+        text: formattedAmt ? `Chuyển ngay ${formattedAmt}` : 'Mở form chuyển tiền',
         route: '/transactions/send',
         queryParams: { amount, recipient }
       };

@@ -283,7 +283,7 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("QUY TẮC PHẢN HỒI BẮT BUỘC:\n");
         systemMsg.append("1. Trả lời bằng tiếng Việt có dấu đầy đủ, lịch sự, thân thiện, ngắn gọn (2-4 câu).\n");
         systemMsg.append("2. Khi người dùng hỏi về SỐ DƯ, LỊCH SỬ GIAO DỊCH, NGÂN HÀNG LIÊN KẾT, hoặc LỊCH ĐỊNH KỲ / HÓA ĐƠN, BẮT BUỘC phải đọc con số và thông tin thực tế từ phần 'DỮ LIỆU TÀI CHÍNH THỰC TẾ' ở trên để trả lời trực tiếp cho người dùng. TUYỆT ĐỐI KHÔNG từ chối hoặc trả lời 'tôi chưa có dữ liệu' hay 'vui lòng mở app'.\n");
-        systemMsg.append("3. Tuyệt đối KHÔNG tạo mã QR, link ảnh ngoài, hay bảng biểu phức tạp.\n");
+        systemMsg.append("3. Tuyệt đối KHÔNG sử dụng biểu tượng emoji, KHÔNG tạo mã QR, link ảnh ngoài, hay bảng biểu phức tạp. Trả lời bằng văn bản chuẩn doanh nghiệp.\n");
         systemMsg.append("4. Khi người dùng muốn nạp tiền, chuyển tiền, hoặc cài đặt lịch định kỳ, thông báo ngắn gọn và gợi ý sử dụng chức năng tương ứng trên ứng dụng.\n");
         systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự.\n");
 
