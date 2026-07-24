@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.paygate.dto.request.AiChatRequest;
 import com.training.paygate.dto.response.AiChatResponse;
 import com.training.paygate.entity.Account;
+import com.training.paygate.entity.LinkedBank;
+import com.training.paygate.entity.RecurringPayment;
 import com.training.paygate.entity.Transaction;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
-import com.training.paygate.repository.AccountRepository;
-import com.training.paygate.repository.TransactionRepository;
-import com.training.paygate.repository.UserRepository;
+import com.training.paygate.repository.*;
 import com.training.paygate.service.AiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +48,8 @@ public class AiServiceImpl implements AiService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final LinkedBankRepository linkedBankRepository;
+    private final RecurringPaymentRepository recurringPaymentRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final DateTimeFormatter VN_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -82,14 +84,11 @@ public class AiServiceImpl implements AiService {
         if (lower.matches(".*(hóa đơn|hoa don|điện|nước|internet|định kỳ|dinh ky|tự động|tu dong|đặt lịch|dat lich).*")) return "RECURRING";
         if (lower.matches(".*(nạp|nap|top.?up|recharge|deposit|vietqr|nap tien).*")) return "TOPUP";
         if (lower.matches(".*(chuyển|chuyen|transfer|gửi tiền|gui tien|thanh toán|thanh toan|pay|send).*")) return "TRANSFER";
-        // Số dư, lịch sử → AI tự trả lời trực tiếp trong chat, không cần redirect
         return null;
     }
 
     /**
-     * Build a rich financial context string from the user's account and recent transactions.
-     * Build a rich financial context string from the user's account and recent transactions.
-     * This is injected into the AI prompt as the assistant's known data.
+     * Build deep financial & system context for the logged in user.
      */
     private String buildFinancialContext(String username) {
         if (username == null) return "";
@@ -103,13 +102,16 @@ public class AiServiceImpl implements AiService {
 
             Long userId = userOpt.get().getId();
             String fullName = userOpt.get().getFullName();
+            String email = userOpt.get().getEmail();
+            String role = userOpt.get().getRole().name();
+
             Optional<Account> accountOpt = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER);
             if (accountOpt.isEmpty()) return "";
 
             Account account = accountOpt.get();
             Long accountId = account.getId();
 
-            // Fetch last 20 transactions
+            // 1. Fetch recent transactions
             List<Transaction> transactions = transactionRepository
                     .findAllWithFiltersAndOwner(accountId, null, null, null, null, null,
                             PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt")))
@@ -139,19 +141,55 @@ public class AiServiceImpl implements AiService {
                     .map(Transaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // Build clear Vietnamese context
-            StringBuilder ctx = new StringBuilder();
-            ctx.append("Tôi đã truy xuất thành công dữ liệu tài chính thực tế từ hệ thống PayGate:\n\n");
-            ctx.append("👤 Chủ tài khoản: ").append(fullName != null ? fullName : username).append("\n");
-            ctx.append("🏦 Số tài khoản PayGate: ").append(account.getAccountNumber()).append("\n");
-            ctx.append("💰 Số dư hiện tại: ").append(formatVnd(account.getBalance())).append("\n");
-            ctx.append("📊 Tổng đã chuyển đi (20 GD gần nhất, hoàn thành): ").append(formatVnd(totalSent)).append("\n");
-            ctx.append("📥 Tổng đã nhận (20 GD gần nhất, hoàn thành): ").append(formatVnd(totalReceived)).append("\n");
-            ctx.append("📅 Đã chi trong 7 ngày qua: ").append(formatVnd(last7DaysSent)).append("\n");
-            ctx.append("📋 Số giao dịch gần đây: ").append(transactions.size()).append(" giao dịch\n");
+            // 2. Fetch linked banks
+            List<LinkedBank> linkedBanks = linkedBankRepository.findByUserIdAndStatus(userId, "ACTIVE");
 
+            // 3. Fetch recurring payments & bills
+            List<RecurringPayment> recurringPayments = recurringPaymentRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+            // Build deep context string
+            StringBuilder ctx = new StringBuilder();
+            ctx.append("THÔNG TIN TÀI KHOẢN & TÀI CHÍNH THỰC TẾ TRÊN PAYGATE:\n");
+            ctx.append("👤 Chủ tài khoản: ").append(fullName != null ? fullName : username).append(" (Username: ").append(username).append(", Email: ").append(email).append(", Vai trò: ").append(role).append(")\n");
+            ctx.append("🏦 Số tài khoản PayGate: ").append(account.getAccountNumber()).append("\n");
+            ctx.append("💰 Số dư khả dụng hiện tại: ").append(formatVnd(account.getBalance())).append("\n");
+            ctx.append("📊 Tổng đã chuyển đi (20 GD gần nhất): ").append(formatVnd(totalSent)).append("\n");
+            ctx.append("📥 Tổng đã nhận (20 GD gần nhất): ").append(formatVnd(totalReceived)).append("\n");
+            ctx.append("📅 Đã chi trong 7 ngày qua: ").append(formatVnd(last7DaysSent)).append("\n\n");
+
+            // Linked Banks Section
+            ctx.append("🏦 TÀI KHOẢN NGÂN HÀNG ĐÃ LIÊN KẾT (").append(linkedBanks.size()).append(" ngân hàng):\n");
+            if (linkedBanks.isEmpty()) {
+                ctx.append("   - Chưa liên kết ngân hàng nào.\n");
+            } else {
+                for (LinkedBank lb : linkedBanks) {
+                    ctx.append(String.format("   - %s | Số TK: %s | Chủ TK: %s | Trạng thái: %s\n",
+                            lb.getBankName(), maskAccountNumber(lb.getAccountNumber()), lb.getAccountHolder(), lb.getStatus()));
+                }
+            }
+            ctx.append("\n");
+
+            // Recurring Payments Section
+            ctx.append("📅 LỊCH ĐỊNH KỲ & HÓA ĐƠN TỰ ĐỘNG (").append(recurringPayments.size()).append(" lịch):\n");
+            if (recurringPayments.isEmpty()) {
+                ctx.append("   - Chưa thiết lập lịch định kỳ hoặc hóa đơn tự động nào.\n");
+            } else {
+                for (RecurringPayment rp : recurringPayments) {
+                    String nextRun = rp.getNextRunAt() != null ? rp.getNextRunAt().format(VN_DATE_FMT) : "N/A";
+                    ctx.append(String.format("   - [%s] %s | Số tiền: %s | Chu kỳ: %s | Lần chạy tiếp: %s | Trạng thái: %s\n",
+                            rp.getCategory(),
+                            rp.getBillCode() != null ? "Mã HĐ: " + rp.getBillCode() : (rp.getDescription() != null ? rp.getDescription() : "Chuyển tiền"),
+                            formatVnd(rp.getAmount()),
+                            rp.getFrequency(),
+                            nextRun,
+                            rp.getStatus()));
+                }
+            }
+            ctx.append("\n");
+
+            // Transactions Section
             if (!transactions.isEmpty()) {
-                ctx.append("\nDanh sách ").append(transactions.size()).append(" giao dịch gần nhất:\n");
+                ctx.append("📋 DANH SÁCH 20 GIAO DỊCH GẦN NHẤT:\n");
                 int idx = 1;
                 for (Transaction t : transactions) {
                     String direction = t.getSourceAccountId().equals(accountId) ? "Gửi đi" : "Nhận về";
@@ -165,11 +203,19 @@ public class AiServiceImpl implements AiService {
                     }
                 }
             } else {
-                ctx.append("\nChưa có giao dịch nào.\n");
+                ctx.append("📋 GIAO DỊCH: Chưa có lịch sử giao dịch nào.\n");
             }
 
+            // System Capabilities Reference
+            ctx.append("\n💡 TÍNH NĂNG & QUY TRÌNH HỆ THỐNG PAYGATE:\n");
+            ctx.append("1. Nạp tiền VietQR: Quét mã VietQR động từ cổng thanh toán để nạp tiền tức thì vào ví PayGate.\n");
+            ctx.append("2. Chuyển tiền: Chuyển tiền nội bộ giữa các tài khoản PayGate theo ID hoặc Số tài khoản AC000...\n");
+            ctx.append("3. Lịch định kỳ & Hóa đơn: Tự động chuyển tiền hoặc đóng tiền Điện (EVN), Nước, Internet hàng ngày/tuần/tháng.\n");
+            ctx.append("4. Liên kết ngân hàng: Liên kết tài khoản Vietcombank, MBBank, BIDV, Techcombank, Agribank, VPBank để rút/nạp nhanh.\n");
+            ctx.append("5. Cổng Merchant & Ledger: Đã kích hoạt cơ chế Sổ cái kép (Double-Entry Ledger) và Webhook retry thương mại.\n");
+
             String result = ctx.toString();
-            log.info("Built financial context for user={}:\n{}", username, result);
+            log.info("Built deep financial context for user={}:\n{}", username, result);
             return result;
 
         } catch (Exception e) {
@@ -178,13 +224,18 @@ public class AiServiceImpl implements AiService {
         }
     }
 
+    private String maskAccountNumber(String accNum) {
+        if (accNum == null || accNum.length() <= 4) return "****";
+        return "****" + accNum.substring(accNum.length() - 4);
+    }
+
     private String translateType(TransactionType type) {
-        if (type == null) return "Kh\u00f4ng x\u00e1c \u0111\u1ecbnh";
+        if (type == null) return "Không xác định";
         return switch (type) {
-            case PAYMENT -> "Thanh to\u00e1n";
-            case TOPUP -> "N\u1ea1p ti\u1ec1n";
-            case REFUND -> "Ho\u00e0n ti\u1ec1n";
-            case WITHDRAW -> "R\u00fat ti\u1ec1n";
+            case PAYMENT -> "Thanh toán";
+            case TOPUP -> "Nạp tiền";
+            case REFUND -> "Hoàn tiền";
+            case WITHDRAW -> "Rút tiền";
         };
     }
 
@@ -199,7 +250,6 @@ public class AiServiceImpl implements AiService {
         };
     }
 
-
     private String formatVnd(BigDecimal amount) {
         if (amount == null) return "0 VND";
         return String.format("%,.0f VND", amount);
@@ -212,7 +262,7 @@ public class AiServiceImpl implements AiService {
 
         StringBuilder systemMsg = new StringBuilder();
         systemMsg.append("Bạn là PayGate AI Assistant — trợ lý tài chính thông minh của hệ thống thanh toán PayGate.\n\n");
-        systemMsg.append("=== DỮ LIỆU TÀI CHÍNH THỰC TẾ HỆ THỐNG ĐÃ TRUY XUẤT CHO NGUỜI DÙNG ===\n");
+        systemMsg.append("=== DỮ LIỆU TÀI CHÍNH THỰC TẾ & HỆ THỐNG DÀNH CHO NGUỜI DÙNG ===\n");
         if (financialContext != null && !financialContext.trim().isEmpty()) {
             systemMsg.append(financialContext);
         } else {
@@ -220,15 +270,15 @@ public class AiServiceImpl implements AiService {
         }
         systemMsg.append("======================================================================\n\n");
         systemMsg.append("QUY TẮC PHẢN HỒI BẮT BUỘC:\n");
-        systemMsg.append("1. Trả lời bằng tiếng Việt có dấu đầy đủ, ngắn gọn (2-3 câu).\n");
-        systemMsg.append("2. Khi người dùng hỏi về SỐ DƯ hoặc LỊCH SỬ GIAO DỊCH, BẮT BUỘC phải đọc con số/thông tin thực tế trong phần 'DỮ LIỆU TÀI CHÍNH THỰC TẾ' ở trên để trả lời ngay cho người dùng (Ví dụ: 'Số dư hiện tại của bạn là 500.000 VND'). TUYỆT ĐỐI KHÔNG từ chối hoặc trả lời 'tôi chưa có dữ liệu' hay 'vui lòng mở app'.\n");
+        systemMsg.append("1. Trả lời bằng tiếng Việt có dấu đầy đủ, lịch sự, thân thiện, ngắn gọn (2-4 câu).\n");
+        systemMsg.append("2. Khi người dùng hỏi về SỐ DƯ, LỊCH SỬ GIAO DỊCH, NGÂN HÀNG LIÊN KẾT, hoặc LỊCH ĐỊNH KỲ / HÓA ĐƠN, BẮT BUỘC phải đọc con số và thông tin thực tế từ phần 'DỮ LIỆU TÀI CHÍNH THỰC TẾ' ở trên để trả lời trực tiếp cho người dùng. TUYỆT ĐỐI KHÔNG từ chối hoặc trả lời 'tôi chưa có dữ liệu' hay 'vui lòng mở app'.\n");
         systemMsg.append("3. Tuyệt đối KHÔNG tạo mã QR, link ảnh ngoài, hay bảng biểu phức tạp.\n");
-        systemMsg.append("4. Khi người dùng muốn nạp tiền hoặc chuyển tiền, thông báo ngắn gọn và gợi ý thực hiện trên ứng dụng.\n");
-        systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự: 'Xin lỗi, tôi là trợ lý tài chính PayGate và chỉ có thể hỗ trợ các vấn đề về ví điện tử, giao dịch và tài chính cá nhân của bạn.'\n");
+        systemMsg.append("4. Khi người dùng muốn nạp tiền, chuyển tiền, hoặc cài đặt lịch định kỳ, thông báo ngắn gọn và gợi ý sử dụng chức năng tương ứng trên ứng dụng.\n");
+        systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự.\n");
 
         log.info("Sending prompt to OpenRouter model={} with systemPrompt length={}", model, systemMsg.length());
 
-        java.util.List<Map<String, Object>> messages = List.of(
+        List<Map<String, Object>> messages = List.of(
                 Map.of("role", "system", "content", systemMsg.toString()),
                 Map.of("role", "user", "content", prompt)
         );
