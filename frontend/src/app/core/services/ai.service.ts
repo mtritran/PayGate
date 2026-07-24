@@ -17,7 +17,7 @@ export interface AiChatResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AiService {
-  private apiUrl = `${environment.apiUrl}/v1/ai`;
+  private apiUrl = `${environment.apiUrl}/ai`;
 
   constructor(private http: HttpClient) {}
 

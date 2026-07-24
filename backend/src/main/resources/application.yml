@@ -59,7 +59,7 @@ jwt:
 
 openrouter:
   api-key: ${OPENROUTER_API_KEY:}
-  model: ${OPENROUTER_MODEL:nvidia/llama-3.1-nemotron-ultra-253b-v1:free}
+  model: ${OPENROUTER_MODEL:nvidia/nemotron-3-ultra-550b-a55b:free}
   api-url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1/chat/completions}
 
 server:
