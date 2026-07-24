@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { AccountService } from '../../../core/services/account.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { BeneficiaryService, BeneficiaryResponse } from '../../../core/services/beneficiary.service';
 import { AccountLookupResponse } from '../../../core/models/account.model';
 
 @Component({
@@ -48,6 +49,26 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
           <!-- Custom Clean Payment Form -->
           <form [formGroup]="paymentForm" (ngSubmit)="openConfirmation()" class="custom-form">
             
+            <!-- Saved Beneficiaries Quick Contact Selector -->
+            <div class="form-group" *ngIf="beneficiaries.length > 0">
+              <label class="form-label">DANH BẠ NGƯỜI NHẬN NHANH</label>
+              <div class="beneficiaries-chips-bar">
+                <button
+                  type="button"
+                  *ngFor="let b of beneficiaries"
+                  class="beneficiary-chip"
+                  [class.active]="accountNumberInput === b.accountNumber"
+                  (click)="selectBeneficiary(b)"
+                >
+                  <span class="chip-avatar">{{ getInitials(b.accountHolderName) }}</span>
+                  <div class="chip-info">
+                    <span class="chip-name">{{ b.nickName || b.accountHolderName }}</span>
+                    <span class="chip-acc font-mono">{{ b.accountNumber }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <!-- Recipient Account Number Field -->
             <div class="form-group">
               <label class="form-label required">Recipient Account Number</label>
@@ -276,6 +297,26 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .beneficiaries-chips-bar {
+      display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
+    }
+    .beneficiaries-chips-bar::-webkit-scrollbar { display: none; }
+    .beneficiary-chip {
+      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;
+      cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+    }
+    .beneficiary-chip:hover { border-color: #059669; background: #ecfdf5; }
+    .beneficiary-chip.active { border-color: #059669; background: #059669; color: #fff; }
+    .chip-avatar {
+      width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0;
+      color: #334155; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    }
+    .beneficiary-chip.active .chip-avatar { background: #047857; color: #fff; }
+    .chip-info { display: flex; flex-direction: column; text-align: left; }
+    .chip-name { font-size: 0.78rem; font-weight: 700; line-height: 1.2; }
+    .chip-acc { font-size: 0.68rem; opacity: 0.85; }
     
     .form-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
     .form-label.required::after { content: ' *'; color: #ef4444; }
@@ -445,10 +486,13 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   private lookupSubject = new Subject<string>();
   private lookupSub!: Subscription;
 
+  beneficiaries: BeneficiaryResponse[] = [];
+
   constructor(
     private fb: FormBuilder,
     private transactionService: TransactionService,
     private accountService: AccountService,
+    private beneficiaryService: BeneficiaryService,
     private notification: NotificationService,
     private router: Router,
     private route: ActivatedRoute
@@ -457,6 +501,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.loadMyBalance();
+    this.loadBeneficiaries();
     this.generateIdempotencyKey();
     this.setupLookupDebounce();
 
@@ -471,6 +516,31 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
         this.lookupSubject.next(params['recipient']);
       }
     });
+  }
+
+  loadBeneficiaries(): void {
+    this.beneficiaryService.getMyBeneficiaries().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.beneficiaries = res.data;
+        }
+      }
+    });
+  }
+
+  selectBeneficiary(b: BeneficiaryResponse): void {
+    this.accountNumberInput = b.accountNumber;
+    this.lookingUp = true;
+    this.lookupSubject.next(b.accountNumber);
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'PG';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   }
 
   ngOnDestroy(): void {

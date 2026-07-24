@@ -58,6 +58,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
     private final EmailService emailService;
+    private final com.training.paygate.service.BeneficiaryService beneficiaryService;
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -220,6 +221,23 @@ public class TransactionServiceImpl implements TransactionService {
             log.info("[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
         } catch (Exception e) {
             log.warn("Could not publish PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
+        }
+
+        // Auto-save beneficiary contact if transferring to a user account
+        try {
+            if (lockedDest.getOwnerType() == OwnerType.USER) {
+                User destUser = userRepository.findById(lockedDest.getOwnerId()).orElse(null);
+                if (destUser != null) {
+                    beneficiaryService.autoSaveBeneficiary(
+                            user.getId(),
+                            lockedDest.getAccountNumber(),
+                            destUser.getFullName() != null ? destUser.getFullName() : destUser.getUsername(),
+                            destUser.getId()
+                    );
+                }
+            }
+        } catch (Exception be) {
+            log.warn("Auto save beneficiary failed: {}", be.getMessage());
         }
 
         return mapToResponse(transaction);
