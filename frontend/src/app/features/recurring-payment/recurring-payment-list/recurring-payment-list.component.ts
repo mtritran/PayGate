@@ -390,6 +390,7 @@ import {
       font-weight: 800;
       letter-spacing: 0.04em;
       border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
     }
     .pg-table td {
       padding: 16px 20px;
@@ -397,6 +398,7 @@ import {
       font-size: 0.9rem;
       vertical-align: middle;
       color: #334155;
+      white-space: nowrap;
     }
     .pg-table tbody tr:last-child td { border-bottom: none; }
     .pg-table tbody tr:hover { background-color: #fafafa; }
@@ -406,11 +408,12 @@ import {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 8px;
       font-weight: 700;
       font-size: 0.82rem;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
     .cat-icon { display: flex; align-items: center; justify-content: center; }
     .cat-icon svg { width: 14px; height: 14px; }
@@ -418,21 +421,24 @@ import {
     .category-badge.electricity { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     .category-badge.water { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
     .category-badge.internet { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
-    .desc-sub { display: block; font-size: 0.78rem; color: #64748b; margin-top: 4px; }
+    .desc-sub { display: block; font-size: 0.78rem; color: #64748b; margin-top: 4px; white-space: normal; max-width: 200px; }
 
     /* Account / Bill Info */
     .account-info, .bill-info { display: flex; flex-direction: column; gap: 2px; }
-    .info-label { font-size: 0.68rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-    .info-val { font-size: 0.85rem; font-weight: 700; color: #0f172a; }
+    .info-label { font-size: 0.68rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; white-space: nowrap; }
+    .info-val { font-size: 0.85rem; font-weight: 700; color: #0f172a; white-space: nowrap; }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
     /* Amount */
-    .amount-val { font-size: 0.95rem; font-weight: 800; color: #0f172a; font-family: ui-monospace, monospace; }
+    .amount-val { font-size: 0.95rem; font-weight: 800; color: #0f172a; font-family: ui-monospace, monospace; white-space: nowrap; }
 
     /* Frequency Tag */
     .freq-tag {
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
       background: #f1f5f9;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 6px;
       font-weight: 600;
       font-size: 0.78rem;
@@ -442,20 +448,21 @@ import {
 
     /* Time Col */
     .time-col { display: flex; flex-direction: column; gap: 2px; }
-    .next-time { font-size: 0.85rem; font-weight: 700; color: #1e293b; }
-    .last-time { font-size: 0.75rem; color: #94a3b8; }
+    .next-time { font-size: 0.85rem; font-weight: 700; color: #1e293b; white-space: nowrap; }
+    .last-time { font-size: 0.75rem; color: #94a3b8; white-space: nowrap; }
 
     /* Status Badge */
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-weight: 700;
       font-size: 0.78rem;
+      white-space: nowrap;
     }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .status-badge.active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
     .status-badge.active .status-dot { background: #059669; }
     .status-badge.paused { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
@@ -467,26 +474,27 @@ import {
 
     /* Action Buttons */
     .text-right { text-align: right; }
-    .action-buttons { display: flex; gap: 6px; justify-content: flex-end; }
+    .action-buttons { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: nowrap; }
     .btn-action {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
+      gap: 6px;
+      padding: 7px 14px;
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
-      color: #475569;
-      font-size: 0.78rem;
+      color: #334155;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
+      white-space: nowrap;
       transition: all 0.15s ease;
     }
-    .btn-action svg { width: 13px; height: 13px; }
+    .btn-action svg { width: 14px; height: 14px; flex-shrink: 0; }
     .btn-pause:hover { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     .btn-resume:hover { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
     .btn-log:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
-    .btn-delete { padding: 6px 9px; }
+    .btn-delete { padding: 7px 10px; }
     .btn-delete:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
     /* Empty Box */
