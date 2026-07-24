@@ -416,25 +416,13 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
         const reply = data.reply || 'Dịch vụ AI không trả về phản hồi.';
         const model = data.modelUsed;
 
-        let actionBtn: any = undefined;
-        if (data.suggestedAmount || data.suggestedRecipient) {
-          const formattedAmt = data.suggestedAmount
-            ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.suggestedAmount)
-            : '';
-          actionBtn = {
-            text: formattedAmt ? `Chuyển ngay ${formattedAmt}` : 'Mở form chuyển tiền',
-            route: '/transactions/send',
-            queryParams: { amount: data.suggestedAmount, recipient: data.suggestedRecipient }
-          };
-        }
-
         const aiMsg: ChatMessage = {
           id: Date.now().toString(),
           sender: 'ai',
           text: reply,
           modelUsed: model,
           timestamp: new Date(),
-          actionButton: actionBtn
+          actionButton: this.resolveActionButton(data)
         };
 
         this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
@@ -460,12 +448,58 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.router.navigate([actionBtn.route], { queryParams: actionBtn.queryParams });
   }
 
+  /** Map backend action + suggestedAmount/recipient to an action button */
+  private resolveActionButton(data: any): ChatMessage['actionButton'] | undefined {
+    const action: string | undefined = data.action;
+    const amount: number | undefined = data.suggestedAmount;
+    const recipient: string | undefined = data.suggestedRecipient;
+
+    if (action === 'TOPUP') {
+      return { text: '💳 Nạp tiền ngay', route: '/top-up' };
+    }
+    if (action === 'TRANSFER' || amount || recipient) {
+      const formattedAmt = amount
+        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+        : '';
+      return {
+        text: formattedAmt ? `💸 Chuyển ngay ${formattedAmt}` : '💸 Mở form chuyển tiền',
+        route: '/transactions/send',
+        queryParams: { amount, recipient }
+      };
+    }
+    if (action === 'VIEW_TRANSACTIONS') {
+      return { text: '📋 Xem lịch sử giao dịch', route: '/transactions' };
+    }
+    if (action === 'VIEW_BALANCE') {
+      return { text: '💰 Xem số dư tài khoản', route: '/accounts/dashboard' };
+    }
+    return undefined;
+  }
+
   formatMessageText(text: string): string {
     if (!text) return '';
     return text
+      // Strip markdown tables entirely (lines starting with | )
+      .replace(/^\|.*\|\s*$/gm, '')
+      .replace(/^[\s|:-]+$/gm, '')
+      // Strip markdown images ![...](...)
+      .replace(/!\[([^\]]*?)\]\([^)]*?\)/g, '')
+      // Strip any URL that looks like a QR/image link
+      .replace(/https?:\/\/[^\s)>"]+\.(jpg|jpeg|png|gif|svg|webp|qr)[^\s)>"]*\?[^\s)>"]+/gi, '')
+      // Strip markdown links [text](url) → just keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Strip large code blocks (```...```)
+      .replace(/```[\s\S]*?```/g, '')
+      // Bold & italic
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:0.85em">$1</code>')
-      .replace(/\n/g, '<br/>');
+      // Inline code (small snippets only)
+      .replace(/`([^`]{1,60})`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:0.85em">$1</code>')
+      // Remaining backtick blocks
+      .replace(/`[^`]*`/g, '')
+      // Newlines
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n/g, '<br/>')
+      .trim();
   }
 }

@@ -14,4 +14,6 @@ public class AiChatResponse {
     private String modelUsed;
     private Long suggestedAmount;
     private String suggestedRecipient;
+    /** Optional action: "TOPUP", "TRANSFER", "VIEW_TRANSACTIONS", "VIEW_BALANCE" */
+    private String action;
 }

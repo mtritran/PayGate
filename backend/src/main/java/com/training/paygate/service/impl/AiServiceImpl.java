@@ -62,13 +62,28 @@ public class AiServiceImpl implements AiService {
 
         Long suggestedAmount = extractAmount(prompt);
         String suggestedRecipient = extractRecipient(prompt);
+        String action = detectAction(prompt);
 
         return AiChatResponse.builder()
                 .reply(replyText)
                 .modelUsed(model)
                 .suggestedAmount(suggestedAmount)
                 .suggestedRecipient(suggestedRecipient)
+                .action(action)
                 .build();
+    }
+
+    /**
+     * Detect user intent to determine which action button to show on frontend.
+     */
+    private String detectAction(String prompt) {
+        if (prompt == null) return null;
+        String lower = prompt.toLowerCase();
+        if (lower.matches(".*(nạp|nap|top.?up|recharge|deposit|vietqr).*")) return "TOPUP";
+        if (lower.matches(".*(chuyển|chuyen|transfer|gửi tiền|gui tien|thanh toán|pay).*")) return "TRANSFER";
+        if (lower.matches(".*(lịch sử|lich su|history|giao dịch|giao dich|transaction).*")) return "VIEW_TRANSACTIONS";
+        if (lower.matches(".*(số dư|so du|balance|bao nhiêu tiền|con bao nhieu).*")) return "VIEW_BALANCE";
+        return null;
     }
 
     /**
@@ -165,11 +180,16 @@ public class AiServiceImpl implements AiService {
             throw new RuntimeException("OPENROUTER_API_KEY is not configured.");
         }
 
-        String systemPrompt = "Ban la PayGate AI Assistant, tro ly tai chinh thong minh cho nen tang thanh toan PayGate. " +
-                "Giup nguoi dung ve chuyen tien, lich su giao dich, so du, nap tien VietQR va thanh toan. " +
-                "Luon tra loi lich su bang tieng Viet. Su dung dinh dang markdown khi can. " +
-                "Khi nguoi dung hoi ve giao dich hoac tai chinh, hay su dung du lieu thuc te duoi day de tra loi chinh xac." +
+        String systemPrompt = "Ban la PayGate AI Assistant - tro ly tai chinh ngan gon, chinh xac.\n\n" +
+                "QUY TAC BAT BUOC (vi pham se bi tu choi):\n" +
+                "- Chi tra loi bang van ban thuan tuy (plain text) ngan gon, toi da 3-4 cau.\n" +
+                "- TUYET DOI KHONG tao: ma QR, hinh anh, bang bieu (table), code block dai, link ngoai, so tai khoan ngan hang that.\n" +
+                "- KHONG goi y chuyen khoan qua ngan hang ben ngoai.\n" +
+                "- Neu nguoi dung muon nap tien / chuyen tien / xem giao dich: chi noi ngan '(ten chuc nang) co the thuc hien tai trang (ten trang)' - frontend se tu hien nut redirect.\n" +
+                "- Neu hoi ve so du / lich su: tra loi truc tiep tu du lieu tai chinh ben duoi.\n" +
+                "- Tra loi bang tieng Viet, lich su, than thien.\n" +
                 financialContext;
+
 
         RestTemplate restTemplate = new RestTemplate();
 

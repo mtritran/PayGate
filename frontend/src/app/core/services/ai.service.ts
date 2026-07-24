@@ -13,6 +13,7 @@ export interface AiChatResponse {
   modelUsed: string;
   suggestedAmount?: number;
   suggestedRecipient?: string;
+  action?: string; // 'TOPUP' | 'TRANSFER' | 'VIEW_TRANSACTIONS' | 'VIEW_BALANCE'
 }
 
 @Injectable({ providedIn: 'root' })
