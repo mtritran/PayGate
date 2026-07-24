@@ -41,7 +41,7 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
           </div>
           <ul class="nav-list" role="list">
             <li class="nav-item">
-              <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" title="Dashboard">
+              <a class="nav-link" routerLink="/accounts/dashboard" routerLinkActive="active" title="Dashboard">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
                   <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -52,7 +52,7 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/transactions/send" routerLinkActive="active" title="Send Money">
+              <a class="nav-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Money">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -85,7 +85,7 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
           </div>
           <ul class="nav-list" role="list">
             <li class="nav-item">
-              <a class="nav-link" routerLink="/merchants/register" routerLinkActive="active" title="Merchant Partner">
+              <a class="nav-link" routerLink="/merchant/register" routerLinkActive="active" title="Merchant Partner">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />

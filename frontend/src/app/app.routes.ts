@@ -8,11 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      },
+      { path: '', redirectTo: 'accounts/dashboard', pathMatch: 'full' },
+      { path: 'dashboard', redirectTo: 'accounts/dashboard', pathMatch: 'full' },
+      { path: 'transactions/send', redirectTo: 'transactions/pay', pathMatch: 'full' },
+      { path: 'merchants/register', redirectTo: 'merchant/register', pathMatch: 'full' },
       {
         path: 'users',
         canActivate: [adminGuard],
