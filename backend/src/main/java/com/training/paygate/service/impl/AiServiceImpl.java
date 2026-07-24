@@ -288,9 +288,10 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("5. Nếu câu hỏi KHÔNG liên quan đến tài chính, ví điện tử, giao dịch, hoặc hệ thống PayGate, từ chối lịch sự.\n");
 
         List<String> candidateModels = List.of(
+                "google/gemma-2-9b-it:free",
+                "google/gemma-2-27b-it:free",
                 model,
                 "meta-llama/llama-3.1-8b-instruct:free",
-                "google/gemma-2-9b-it:free",
                 "mistralai/mistral-7b-instruct:free"
         );
 

@@ -25,6 +25,7 @@ import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -185,7 +186,6 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
     }
 
     @Override
-    @Transactional
     public void executeDuePayments() {
         LocalDateTime now = LocalDateTime.now();
         List<RecurringPayment> duePayments = recurringPaymentRepository.findDuePayments(RecurringStatus.ACTIVE, now);
@@ -195,11 +195,16 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
         log.info("Found {} due recurring payments to execute", duePayments.size());
 
         for (RecurringPayment rp : duePayments) {
-            executeSinglePayment(rp, now);
+            try {
+                executeSinglePayment(rp, now);
+            } catch (Exception e) {
+                log.error("Unhandled error processing recurring payment ID={}: {}", rp.getId(), e.getMessage());
+            }
         }
     }
 
-    private void executeSinglePayment(RecurringPayment rp, LocalDateTime now) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void executeSinglePayment(RecurringPayment rp, LocalDateTime now) {
         User user = userRepository.findById(rp.getUserId()).orElse(null);
         if (user == null) {
             log.warn("User ID={} not found for recurring payment ID={}", rp.getUserId(), rp.getId());
@@ -209,9 +214,10 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
         String idempotencyKey = "REC-" + rp.getId() + "-" + System.currentTimeMillis();
 
         try {
+            Account userSourceAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER).orElse(null);
+
             Long targetDestId = rp.getDestAccountId();
             if (rp.getType() == RecurringType.BILL_PAYMENT || targetDestId == null) {
-                // Determine system merchant/admin account or bill provider account
                 Account systemAdminAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)
                         .orElse(null);
                 if (systemAdminAccount != null) {
@@ -219,6 +225,11 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                 } else {
                     targetDestId = 1L;
                 }
+            }
+
+            // Ensure source and destination accounts are not identical
+            if (userSourceAccount != null && userSourceAccount.getId().equals(targetDestId)) {
+                targetDestId = userSourceAccount.getId().equals(1L) ? 2L : 1L;
             }
 
             PaymentRequest request = new PaymentRequest(
