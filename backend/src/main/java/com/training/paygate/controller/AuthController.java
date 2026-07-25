@@ -5,6 +5,7 @@ import com.training.paygate.dto.request.LoginRequest;
 import com.training.paygate.dto.request.RefreshTokenRequest;
 import com.training.paygate.dto.request.RegisterRequest;
 import com.training.paygate.dto.response.AuthResponse;
+import com.training.paygate.dto.response.UserResponse;
 import com.training.paygate.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -42,16 +43,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new user", description = "Creates a new user account with default ROLE_USER and generates JWT tokens.")
+    @Operation(summary = "Register a new user", description = "Creates a new user account with default ROLE_USER.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Registration successful"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or invalid request payload"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Username or email already exists")
     })
-    public ApiResponse<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        AuthResponse auth = authService.register(request);
-        setRefreshTokenCookie(response, auth.refreshToken(), REFRESH_TOKEN_DURATION_SECONDS);
-        return ApiResponse.success("Registration successful", auth);
+    public ApiResponse<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+        UserResponse user = authService.register(request);
+        return ApiResponse.success("Registration successful", user);
     }
 
     @PostMapping("/login")
@@ -81,7 +81,7 @@ public class AuthController {
                 ? refreshTokenFromCookie
                 : (request != null ? request.refreshToken() : null);
 
-        AuthResponse auth = authService.refreshToken(tokenToUse);
+        AuthResponse auth = authService.refreshToken(new RefreshTokenRequest(tokenToUse));
         setRefreshTokenCookie(response, auth.refreshToken(), REFRESH_TOKEN_DURATION_SECONDS);
         return ApiResponse.success("Token refreshed", auth);
     }

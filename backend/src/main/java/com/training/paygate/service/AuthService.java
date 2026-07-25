@@ -4,14 +4,13 @@ import com.training.paygate.dto.request.LoginRequest;
 import com.training.paygate.dto.request.RefreshTokenRequest;
 import com.training.paygate.dto.request.RegisterRequest;
 import com.training.paygate.dto.response.AuthResponse;
+import com.training.paygate.dto.response.UserResponse;
 
 public interface AuthService {
 
-    AuthResponse register(RegisterRequest request);
+    UserResponse register(RegisterRequest request);
 
     AuthResponse login(LoginRequest request);
 
     AuthResponse refreshToken(RefreshTokenRequest request);
-
-    AuthResponse refreshToken(String refreshTokenStr);
 }
