@@ -11,6 +11,7 @@ import {
   SavedBillResponse,
   MockCustomerCode
 } from '../../../core/services/bill.service';
+import { ApiResponse } from '../../../core/models/api-response.model';
 import { NotificationService } from '../../../core/services/notification.service';
 
 type BillTypeMeta = {
@@ -358,7 +359,7 @@ export class BillPayComponent implements OnInit {
     this.lookupError.set(null);
     this.suggestedCodes.set([]);
     this.bill.getMockCustomerCodes(p.code).subscribe({
-      next: r => this.suggestedCodes.set(r.data ?? []),
+      next: (r: ApiResponse<MockCustomerCode[]>) => this.suggestedCodes.set(r.data ?? []),
       error: () => this.suggestedCodes.set([])
     });
   }

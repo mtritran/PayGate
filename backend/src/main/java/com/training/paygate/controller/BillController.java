@@ -1,16 +1,18 @@
 package com.training.paygate.controller;
 
 import com.training.paygate.common.ApiResponse;
+import com.training.paygate.dto.request.CreateBillSubscriptionRequest;
 import com.training.paygate.dto.request.CreateSavedBillRequest;
 import com.training.paygate.dto.request.LookupBillRequest;
 import com.training.paygate.dto.request.PayBillRequest;
 import com.training.paygate.dto.response.BillLookupResponse;
 import com.training.paygate.dto.response.BillPayResponse;
 import com.training.paygate.dto.response.BillProviderResponse;
+import com.training.paygate.dto.response.BillSubscriptionResponse;
 import com.training.paygate.dto.response.SavedBillResponse;
 import com.training.paygate.enums.BillType;
-import com.training.paygate.service.BillProviderMockService;
 import com.training.paygate.service.BillService;
+import com.training.paygate.service.BillSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,7 +20,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +39,7 @@ import java.util.List;
 public class BillController {
 
     private final BillService billService;
-    private final BillProviderMockService billProviderMockService;
+    private final BillSubscriptionService billSubscriptionService;
 
     @GetMapping("/providers")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -77,22 +81,42 @@ public class BillController {
                 .body(ApiResponse.success("Saved bill created", response));
     }
 
-    @GetMapping("/mock/list")
+    @PostMapping("/subscriptions")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    @Operation(summary = "List mock customer codes for a provider (demo / suggested codes)")
-    public ApiResponse<List<java.util.Map<String, Object>>> mockList(@RequestParam String providerCode) {
-        List<java.util.Map<String, Object>> data = billProviderMockService.listByProvider(providerCode).stream()
-                .map(m -> {
-                    java.util.Map<String, Object> row = new java.util.HashMap<>();
-                    row.put("customerCode", m.getCustomerCode());
-                    row.put("customerName", m.getCustomerName());
-                    row.put("address", m.getAddress());
-                    row.put("amount", m.getAmount());
-                    row.put("period", m.getPeriod());
-                    row.put("type", m.getType().name());
-                    return row;
-                })
-                .toList();
-        return ApiResponse.success("Mock customer codes", data);
+    @Operation(summary = "Register a new bill subscription with a provider (calls provider gateway)")
+    public ResponseEntity<ApiResponse<BillSubscriptionResponse>> subscribe(
+            @Valid @RequestBody CreateBillSubscriptionRequest request,
+            Principal principal
+    ) {
+        BillSubscriptionResponse response = billSubscriptionService.create(request, principal.getName());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Subscription created", response));
     }
+
+    @GetMapping("/subscriptions")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "List my bill subscriptions")
+    public ApiResponse<List<BillSubscriptionResponse>> mySubscriptions(Principal principal) {
+        return ApiResponse.success("My subscriptions", billSubscriptionService.listMine(principal.getName()));
+    }
+
+    @GetMapping("/my-codes")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "List my customer codes registered with a given provider")
+    public ApiResponse<List<BillSubscriptionResponse>> myCodes(
+            @RequestParam String providerCode,
+            Principal principal
+    ) {
+        return ApiResponse.success("My codes",
+                billSubscriptionService.listMineByProvider(principal.getName(), providerCode));
+    }
+
+    @DeleteMapping("/subscriptions/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "Cancel a bill subscription")
+    public ApiResponse<Void> cancelSubscription(@PathVariable Long id, Principal principal) {
+        billSubscriptionService.cancel(id, principal.getName());
+        return ApiResponse.success("Subscription cancelled", null);
+    }
+
 }

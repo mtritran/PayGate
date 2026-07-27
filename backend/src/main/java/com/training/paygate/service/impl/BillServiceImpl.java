@@ -37,7 +37,8 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.SavedBillRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
-import com.training.paygate.service.BillProviderMockService;
+import com.training.paygate.integration.provider.BillProviderClient;
+import com.training.paygate.integration.provider.ProviderBillDto;
 import com.training.paygate.service.BillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,7 @@ public class BillServiceImpl implements BillService {
     private final TransactionRepository transactionRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final BalanceCacheService balanceCacheService;
-    private final BillProviderMockService billProviderMockService;
+    private final BillProviderClient billProviderClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,25 +90,27 @@ public class BillServiceImpl implements BillService {
         Bill bill = billRepository.findFirstByProviderIdAndCustomerCodeAndStatusOrderByIdDesc(
                         provider.getId(), request.customerCode(), BillStatus.UNPAID)
                 .orElseGet(() -> {
-                    // Fallback: goi API mock cua nha cung cap de tra cuu, sau do tao bill UNPAID
-                    return billProviderMockService.lookup(provider.getCode(), request.customerCode())
-                            .map(mock -> {
-                                Bill created = Bill.builder()
-                                        .providerId(provider.getId())
-                                        .customerCode(mock.getCustomerCode())
-                                        .customerName(mock.getCustomerName())
-                                        .address(mock.getAddress())
-                                        .amount(mock.getAmount())
-                                        .period(mock.getPeriod())
-                                        .status(BillStatus.UNPAID)
-                                        .build();
-                                Bill saved = billRepository.save(created);
-                                log.info("Created bill #{} from provider mock lookup: {} / {}",
-                                        saved.getId(), provider.getCode(), mock.getCustomerCode());
-                                return saved;
-                            })
+                    ProviderBillDto pb = billProviderClient.currentBill(request.customerCode())
                             .orElseThrow(() -> new BillNotFoundException(
                                     "Bill not found with customer code: " + request.customerCode()));
+                    if (!provider.getCode().equalsIgnoreCase(pb.providerCode())) {
+                        throw new BillNotFoundException(
+                                "Customer code " + request.customerCode() + " belongs to provider " + pb.providerCode()
+                                        + ", not " + provider.getCode());
+                    }
+                    Bill created = Bill.builder()
+                            .providerId(provider.getId())
+                            .customerCode(pb.customerCode())
+                            .customerName(pb.customerName())
+                            .address(pb.address())
+                            .amount(pb.amount())
+                            .period(pb.period())
+                            .status(BillStatus.UNPAID)
+                            .build();
+                    Bill saved = billRepository.save(created);
+                    log.info("Created bill #{} from provider gateway lookup: {} / {}",
+                            saved.getId(), provider.getCode(), pb.customerCode());
+                    return saved;
                 });
 
         return new BillLookupResponse(
