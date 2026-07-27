@@ -214,7 +214,9 @@ public class TransactionServiceImpl implements TransactionService {
                 user.getEmail(),
                 user.getUsername(),
                 lockedDest.getAccountNumber(),
-                transaction.getDescription()
+                transaction.getDescription(),
+                transaction.getType(),
+                user.getId()
         );
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);

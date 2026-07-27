@@ -4,5 +4,10 @@ public enum TransactionType {
     PAYMENT,
     REFUND,
     TOPUP,
-    WITHDRAW
+    WITHDRAW,
+    BILL_PAYMENT,
+    LOAN_REPAYMENT,
+    LOAN_DISBURSEMENT,
+    VAULT_DEPOSIT,
+    VAULT_WITHDRAW
 }

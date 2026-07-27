@@ -1,10 +1,12 @@
 package com.training.paygate.dto.response;
 
 import com.training.paygate.enums.VoucherApplicableType;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Builder
 public record VoucherResponse(
         Long id,
         String code,
@@ -16,6 +18,5 @@ public record VoucherResponse(
         Integer totalQuantity,
         Integer remainingQty,
         LocalDateTime expiresAt,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime createdAt
 ) {}
