@@ -57,8 +57,15 @@ public class TransactionServiceImpl implements TransactionService {
     private final BalanceCacheService balanceCacheService;
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
-    private final EmailService emailService;
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
+
+    @Override
+    @Transactional
+    public TransactionResponse processPayment(PaymentRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        return processPayment(request, user.getUsername());
+    }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -82,17 +89,20 @@ public class TransactionServiceImpl implements TransactionService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
         Account sourceAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Source account not found for user: " + currentUsername));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Source account not found for user: " + currentUsername));
 
         // 3. Look up destination account
         Account destAccount = accountRepository.findById(request.destAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException("Destination account not found with ID: " + request.destAccountId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Destination account not found with ID: " + request.destAccountId()));
 
         if (sourceAccount.getId().equals(destAccount.getId())) {
             throw new BadRequestException("Source and destination accounts must be different");
         }
 
-        // 4. Verify merchant active status if merchantId is provided or destination is merchant
+        // 4. Verify merchant active status if merchantId is provided or destination is
+        // merchant
         String merchantWebhookUrl = null;
         if (request.merchantId() != null) {
             Merchant merchant = merchantRepository.findById(request.merchantId())
@@ -123,7 +133,8 @@ public class TransactionServiceImpl implements TransactionService {
         Account lockedSource = firstLocked.getId().equals(sourceAccount.getId()) ? firstLocked : secondLocked;
         Account lockedDest = firstLocked.getId().equals(destAccount.getId()) ? firstLocked : secondLocked;
 
-        // 5.1 Re-check idempotency key AFTER acquiring locks to prevent concurrent duplicate payments
+        // 5.1 Re-check idempotency key AFTER acquiring locks to prevent concurrent
+        // duplicate payments
         Transaction concurrentTx = transactionRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null);
         if (concurrentTx != null) {
             idempotencyCacheService.set(request.idempotencyKey(), concurrentTx.getTransactionRef());
@@ -140,7 +151,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         // 6. Validate balance
         if (lockedSource.getBalance().compareTo(request.amount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in account: " + lockedSource.getAccountNumber());
+            throw new InsufficientBalanceException(
+                    "Insufficient balance in account: " + lockedSource.getAccountNumber());
         }
 
         // 7. Update balances
@@ -204,7 +216,8 @@ public class TransactionServiceImpl implements TransactionService {
             balanceCacheService.evictBalance(destIdToEvict);
         }
 
-        // 12. Publish Completed Event to RabbitMQ (triggers both WebhookConsumer and NotificationConsumer via RabbitMQ topic routing)
+        // 12. Publish Completed Event to RabbitMQ (triggers both WebhookConsumer and
+        // NotificationConsumer via RabbitMQ topic routing)
         PaymentCompletedEvent event = new PaymentCompletedEvent(
                 transaction.getTransactionRef(),
                 request.merchantId(),
@@ -216,11 +229,11 @@ public class TransactionServiceImpl implements TransactionService {
                 lockedDest.getAccountNumber(),
                 transaction.getDescription(),
                 transaction.getType(),
-                user.getId()
-        );
+                user.getId());
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
-            log.info("[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
+            log.info(
+                    "[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
         } catch (Exception e) {
             log.warn("Could not publish PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
         }
@@ -234,8 +247,7 @@ public class TransactionServiceImpl implements TransactionService {
                             user.getId(),
                             lockedDest.getAccountNumber(),
                             destUser.getFullName() != null ? destUser.getFullName() : destUser.getUsername(),
-                            destUser.getId()
-                    );
+                            destUser.getId());
                 }
             }
         } catch (Exception be) {
@@ -257,7 +269,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (user.getRole() != Role.ADMIN) {
             Account userAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
                     .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
-            if (!tx.getSourceAccountId().equals(userAccount.getId()) && !tx.getDestAccountId().equals(userAccount.getId())) {
+            if (!tx.getSourceAccountId().equals(userAccount.getId())
+                    && !tx.getDestAccountId().equals(userAccount.getId())) {
                 throw new AccessDeniedException("You do not have permission to view this transaction");
             }
         }
@@ -271,8 +284,7 @@ public class TransactionServiceImpl implements TransactionService {
                         le.getEntryType().name(),
                         le.getAmount(),
                         le.getBalanceAfter(),
-                        le.getCreatedAt()
-                ))
+                        le.getCreatedAt()))
                 .collect(Collectors.toList());
 
         return new TransactionDetailResponse(
@@ -284,8 +296,7 @@ public class TransactionServiceImpl implements TransactionService {
                 tx.getType().name(),
                 tx.getDescription(),
                 tx.getCreatedAt(),
-                ledgerEntries
-        );
+                ledgerEntries);
     }
 
     @Override
@@ -297,18 +308,18 @@ public class TransactionServiceImpl implements TransactionService {
             Long sourceAccountId,
             Long destAccountId,
             Long merchantId,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         return transactionRepository.findAllWithFiltersAndOwner(
-                ownerAccountId, type, status, sourceAccountId, destAccountId, merchantId, pageable
-        ).map(this::mapToResponse);
+                ownerAccountId, type, status, sourceAccountId, destAccountId, merchantId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public TransactionResponse refund(String originalRef, String currentUsername) {
         Transaction originalTx = transactionRepository.findByTransactionRef(originalRef)
-                .orElseThrow(() -> new ResourceNotFoundException("Original transaction not found with reference: " + originalRef));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Original transaction not found with reference: " + originalRef));
 
         if (originalTx.getType() != TransactionType.PAYMENT || originalTx.getStatus() != TransactionStatus.COMPLETED) {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " is not in COMPLETED state");
@@ -327,7 +338,8 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         // Lock accounts in ascending ID order to prevent deadlock
-        // Note: For refund, source is original destination (Merchant), destination is original source (User)
+        // Note: For refund, source is original destination (Merchant), destination is
+        // original source (User)
         Long firstId = Math.min(originalTx.getSourceAccountId(), originalTx.getDestAccountId());
         Long secondId = Math.max(originalTx.getSourceAccountId(), originalTx.getDestAccountId());
 
@@ -336,7 +348,8 @@ public class TransactionServiceImpl implements TransactionService {
         Account secondLocked = accountRepository.findByIdForUpdate(secondId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
 
-        // Concurrency guard: Re-check if already refunded AFTER acquiring locks to prevent race condition
+        // Concurrency guard: Re-check if already refunded AFTER acquiring locks to
+        // prevent race condition
         if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
@@ -347,7 +360,8 @@ public class TransactionServiceImpl implements TransactionService {
         Account lockedMerchant = firstLocked.getId().equals(originalTx.getDestAccountId()) ? firstLocked : secondLocked;
 
         if (lockedMerchant.getBalance().compareTo(originalTx.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in merchant account to perform refund: " + lockedMerchant.getAccountNumber());
+            throw new InsufficientBalanceException(
+                    "Insufficient balance in merchant account to perform refund: " + lockedMerchant.getAccountNumber());
         }
 
         // Update balances
@@ -420,8 +434,7 @@ public class TransactionServiceImpl implements TransactionService {
                 refundTx.getMerchantId(),
                 merchantWebhookUrl,
                 refundTx.getAmount(),
-                refundTx.getStatus().name()
-        );
+                refundTx.getStatus().name());
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
         } catch (Exception e) {
@@ -440,7 +453,6 @@ public class TransactionServiceImpl implements TransactionService {
                 tx.getDestAccountId(),
                 tx.getType().name(),
                 tx.getDescription(),
-                tx.getCreatedAt()
-        );
+                tx.getCreatedAt());
     }
 }
