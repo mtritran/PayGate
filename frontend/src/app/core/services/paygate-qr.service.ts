@@ -83,11 +83,22 @@ export class PaygateQrService {
   }
 
   /**
-   * Generates a high-definition PayGate Internal QR Image URL
+   * Generates high-definition PayGate Internal QR Image URL using QuickChart CDN + Fallback
    */
   generateQrImageUrl(accountNumber: string, accountName: string, amount: number = 0, note: string = ''): string {
     const payload = this.encodePayload(accountNumber, accountName, amount, note);
     const encodedPayload = encodeURIComponent(payload);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodedPayload}&color=059669&bgcolor=ffffff&margin=1`;
+    
+    // QuickChart API is fast, CDN hosted by Cloudflare, highly available
+    return `https://quickchart.io/qr?text=${encodedPayload}&size=340&ecLevel=H&margin=1`;
+  }
+
+  /**
+   * Fallback QR Generator URL in case main CDN fails
+   */
+  getFallbackQrImageUrl(accountNumber: string, accountName: string, amount: number = 0, note: string = ''): string {
+    const payload = this.encodePayload(accountNumber, accountName, amount, note);
+    const encodedPayload = encodeURIComponent(payload);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=340x340&data=${encodedPayload}&color=059669&bgcolor=ffffff&margin=1`;
   }
 }

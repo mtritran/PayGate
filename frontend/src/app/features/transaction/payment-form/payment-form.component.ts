@@ -345,7 +345,7 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
               </div>
 
               <div class="my-qr-img-frame">
-                <img [src]="myQrImageUrl" alt="My PayGate QR Code" class="my-qr-img" />
+                <img [src]="myQrImageUrl" (error)="onQrImageError($event)" alt="My PayGate QR Code" class="my-qr-img" />
               </div>
 
               <div class="my-acc-badge">
@@ -818,6 +818,18 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       this.myQrCustomAmount,
       this.myQrCustomNote
     );
+  }
+
+  onQrImageError(event: any): void {
+    const fallbackUrl = this.paygateQrService.getFallbackQrImageUrl(
+      this.myAccountNumber,
+      this.myAccountName,
+      this.myQrCustomAmount,
+      this.myQrCustomNote
+    );
+    if (this.myQrImageUrl !== fallbackUrl) {
+      this.myQrImageUrl = fallbackUrl;
+    }
   }
 
   copyText(text: string, label: string): void {
