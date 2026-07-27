@@ -30,6 +30,7 @@ export class PaygateQrService {
     if (note && note.trim()) {
       url += `&note=${encodeURIComponent(note.trim())}`;
     }
+    url += `&accept=1`;
     return url;
   }
 

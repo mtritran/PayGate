@@ -27,13 +27,115 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
       <div class="paygate-form-page fade-in-up">
         <!-- Form Header -->
         <div class="form-header-group">
-          <div class="header-tag">PAYGATE EXPRESS TRANSFER</div>
-          <h2>Send Payment</h2>
-          <p class="subtitle">Secure money transfer to any User or Merchant account using double-entry ledger & idempotency protection.</p>
+          <div class="header-tag">{{ acceptMode ? 'PAYGATE QUICK ACCEPT' : (activeTab === 'receive' ? 'PAYGATE QUICK RECEIVE' : 'PAYGATE EXPRESS TRANSFER') }}</div>
+          <h2>{{ acceptMode ? 'Xác nhận chuyển tiền' : (activeTab === 'receive' ? 'Nhận tiền qua Mã QR' : 'Send Payment') }}</h2>
+          <p class="subtitle" *ngIf="!acceptMode && activeTab === 'send'">Secure money transfer to any User or Merchant account using double-entry ledger & idempotency protection.</p>
+          <p class="subtitle" *ngIf="!acceptMode && activeTab === 'receive'">Chia sẻ mã QR bên dưới. Người khác quét bằng Camera điện thoại sẽ mở thẳng trang chuyển tiền cho bạn.</p>
+          <p class="subtitle" *ngIf="acceptMode">Người nhận đã tạo yêu cầu chuyển tiền. Kiểm tra thông tin và bấm Accept để chuyển ngay.</p>
+        </div>
+
+        <!-- Tab Switcher: Send vs Receive (hidden in accept mode) -->
+        <div class="tab-switcher" *ngIf="!acceptMode">
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'send'" (click)="switchTab('send')">
+            <span class="tab-icon">📤</span>
+            <span class="tab-label-block">
+              <strong>Gửi tiền đi</strong>
+              <small>Chuyển tới tài khoản khác</small>
+            </span>
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'receive'" (click)="switchTab('receive')">
+            <span class="tab-icon">📥</span>
+            <span class="tab-label-block">
+              <strong>Nhận qua QR</strong>
+              <small>Tạo mã cho người khác quét</small>
+            </span>
+          </button>
+        </div>
+
+        <!-- ACCEPT MODE — 1-Click Confirm Card -->
+        <div class="content-card accept-card" *ngIf="acceptMode">
+          <!-- Balance Strip -->
+          <div class="balance-strip">
+            <div class="balance-strip-left">
+              <svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
+              </svg>
+              <span class="balance-label">Số dư khả dụng:</span>
+            </div>
+            <strong class="balance-amount">{{ myBalance | currency:'VND':'symbol':'1.0-0' }}</strong>
+          </div>
+
+          <!-- Loading receiver -->
+          <div *ngIf="lookingUp" class="accept-loading">
+            <div class="spinner-sm"></div>
+            <span>Đang xác minh người nhận...</span>
+          </div>
+
+          <!-- Receiver resolved OK -->
+          <ng-container *ngIf="!lookingUp && recipientLookup">
+            <div class="accept-receiver">
+              <div class="accept-avatar">{{ getInitials(recipientLookup.ownerName) }}</div>
+              <div class="accept-receiver-info">
+                <span class="verified-badge">
+                  <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">🏪 MERCHANT</span>
+                  <span *ngIf="recipientLookup.ownerType === 'USER'">👤 PERSONAL</span>
+                  <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">⚡ SYSTEM</span>
+                </span>
+                <strong class="accept-receiver-name">{{ recipientLookup.ownerName }}</strong>
+                <span class="accept-receiver-acc font-mono">{{ recipientLookup.accountNumber }}</span>
+              </div>
+            </div>
+
+            <div class="accept-amount-block">
+              <span class="accept-amount-label">Số tiền chuyển</span>
+              <strong class="accept-amount-value">{{ paymentForm.value.amount | currency:'VND':'symbol':'1.0-0' }}</strong>
+            </div>
+
+            <div class="accept-note-row" *ngIf="paymentForm.value.description">
+              <span class="accept-note-label">Lời nhắn:</span>
+              <span class="accept-note-val">{{ paymentForm.value.description }}</span>
+            </div>
+
+            <div class="accept-warning" *ngIf="isSelfTransfer">
+              ⚠️ Không thể chuyển tiền cho chính bạn. Đây là tài khoản của bạn.
+            </div>
+
+            <div class="accept-warning" *ngIf="!isSelfTransfer && (!paymentForm.value.amount || paymentForm.value.amount < 1000)">
+              ⚠️ Số tiền không hợp lệ (tối thiểu 1,000 VND).
+            </div>
+
+            <div class="accept-actions">
+              <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" [disabled]="submitting">
+                Chỉnh sửa
+              </button>
+              <button
+                type="button"
+                class="btn-emerald-submit btn-accept-large"
+                (click)="acceptAndPay()"
+                [disabled]="!canAcceptPay"
+              >
+                <span *ngIf="!submitting">✓ Accept & Pay Now</span>
+                <span *ngIf="submitting" class="spinner-wrapper">
+                  <span class="btn-spinner"></span>
+                  Đang xử lý...
+                </span>
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Receiver lookup failed -->
+          <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
+            ❌ {{ lookupError }}
+            <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" style="margin-top: 12px; display: inline-block;">
+              Về form nhập tay
+            </button>
+          </div>
         </div>
 
         <!-- Main Form Glass Card -->
-        <div class="content-card form-card">
+        <div class="content-card form-card" *ngIf="!acceptMode && activeTab === 'send'">
           <!-- Balance Strip Banner -->
           <div class="balance-strip">
             <div class="balance-strip-left">
@@ -192,32 +294,82 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           </form>
         </div>
 
-        <!-- My PayGate QR Card (Inline, below form) -->
-        <div class="my-qr-inline-card" *ngIf="myAccountNumber">
-          <div class="qr-card-left">
-            <div class="qr-brand-row">
-              <span class="qr-brand-name">PayGate <i>Wallet</i></span>
-              <span class="qr-verified-pill">VERIFIED</span>
-            </div>
-            <div class="qr-img-wrap">
-              <img [src]="myQrImageUrl" (error)="onQrImgError($event)" alt="My PayGate QR" class="qr-inline-img" />
-            </div>
-            <div class="qr-acc-info">
-              <span class="qr-acc-name">{{ myAccountName }}</span>
-              <span class="qr-acc-number">{{ myAccountNumber }}</span>
+        <!-- RECEIVE TAB — My PayGate QR (large, primary content) -->
+        <div class="content-card receive-card" *ngIf="myAccountNumber && !acceptMode && activeTab === 'receive'">
+          <div class="receive-header-row">
+            <div>
+              <div class="receive-title-tag">
+                <span class="qr-verified-pill">VERIFIED</span>
+                <span class="receive-brand-name">PayGate <i>Wallet</i></span>
+              </div>
+              <h3 class="receive-title">Mã QR nhận tiền của bạn</h3>
+              <p class="receive-desc">Người khác quét mã bằng Camera điện thoại sẽ mở thẳng trang chuyển tiền cho bạn.</p>
             </div>
           </div>
-          <div class="qr-card-right">
-            <div class="qr-info-head">Mã QR nhận tiền của bạn</div>
-            <p class="qr-info-desc">Người khác quét mã này bằng Camera điện thoại hoặc bất kỳ App ngân hàng nào sẽ được điều hướng thẳng đến trang chuyển tiền cho bạn.</p>
-            <div class="qr-live-badge" *ngIf="myQrCustomAmount > 0">
-              <span class="dot-live"></span>
-              Mã QR đang yêu cầu: <strong>{{ myQrCustomAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+
+          <div class="receive-body">
+            <!-- Big QR Image -->
+            <div class="receive-qr-wrap">
+              <img [src]="myQrImageUrl" (error)="onQrImgError($event)" alt="My PayGate QR" class="receive-qr-img" />
+              <div class="receive-qr-owner">
+                <strong class="qr-acc-name">{{ myAccountName || 'PayGate User' }}</strong>
+                <span class="qr-acc-number font-mono">{{ myAccountNumber }}</span>
+              </div>
             </div>
-            <div class="qr-step-list">
-              <div class="qr-step"><span class="step-num">1</span><span>Nhập số tiền & lời nhắn ở Form bên trên</span></div>
-              <div class="qr-step"><span class="step-num">2</span><span>Mã QR cập nhật tự động theo số tiền</span></div>
-              <div class="qr-step"><span class="step-num">3</span><span>Chia sẻ mã QR cho người cần chuyển tiền</span></div>
+
+            <!-- Config + Actions -->
+            <div class="receive-config">
+              <div class="form-group">
+                <label class="form-label">SỐ TIỀN YÊU CẦU (VND) — TÙY CHỌN</label>
+                <input
+                  type="number"
+                  min="0"
+                  class="custom-input"
+                  placeholder="Để trống nếu chưa xác định (VD: 100000)"
+                  [(ngModel)]="myQrCustomAmount"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="updateMyQr()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">LỜI NHẮN (TÙY CHỌN)</label>
+                <input
+                  type="text"
+                  maxlength="120"
+                  class="custom-input"
+                  placeholder="VD: Tiền cà phê, Tiền cơm..."
+                  [(ngModel)]="myQrCustomNote"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="updateMyQr()"
+                />
+              </div>
+
+              <div class="qr-live-badge" *ngIf="myQrCustomAmount > 0">
+                <span class="dot-live"></span>
+                Đang yêu cầu: <strong>{{ myQrCustomAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+
+              <div class="receive-link-row">
+                <input type="text" readonly class="receive-link-input font-mono" [value]="getMyPaymentLink()" />
+                <button type="button" class="btn-copy" (click)="copyPaymentLink()">
+                  <span *ngIf="!linkCopied">📋 Copy</span>
+                  <span *ngIf="linkCopied">✓ Đã copy</span>
+                </button>
+              </div>
+
+              <div class="receive-actions">
+                <button type="button" class="btn-share" (click)="sharePaymentLink()">
+                  🔗 Chia sẻ link
+                </button>
+                <button type="button" class="btn-download" (click)="downloadQr()">
+                  ⬇️ Tải QR về máy
+                </button>
+              </div>
+
+              <div class="receive-note">
+                💡 Người nhận mở link/quét QR → thấy trang xác nhận với thông tin đã điền → bấm <strong>1 nút Accept</strong> là chuyển xong.
+              </div>
             </div>
           </div>
         </div>
@@ -615,6 +767,63 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .qr-step-list { display: flex; flex-direction: column; gap: 8px; }
     .qr-step { display: flex; align-items: flex-start; gap: 10px; font-size: 0.83rem; color: #475569; }
     .step-num { width: 22px; height: 22px; border-radius: 50%; background: #059669; color: #fff; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+    /* Accept Mode (one-click QR flow) */
+    .accept-card { padding: 24px 22px; display: flex; flex-direction: column; gap: 18px; }
+    .accept-loading { display: flex; align-items: center; gap: 10px; padding: 18px; justify-content: center; color: #475569; font-weight: 600; }
+    .accept-receiver { display: flex; align-items: center; gap: 14px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border: 1px solid #a7f3d0; border-radius: 14px; }
+    .accept-avatar { width: 52px; height: 52px; border-radius: 50%; background: #059669; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; flex-shrink: 0; }
+    .accept-receiver-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+    .accept-receiver-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+    .accept-receiver-acc { font-size: 0.85rem; color: #059669; font-weight: 700; }
+    .accept-amount-block { text-align: center; padding: 22px 16px; background: #fff; border: 2px dashed #10b981; border-radius: 14px; }
+    .accept-amount-label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+    .accept-amount-value { font-size: 2.1rem; font-weight: 900; color: #047857; letter-spacing: -0.02em; }
+    .accept-note-row { display: flex; gap: 8px; font-size: 0.9rem; padding: 10px 14px; background: #f8fafc; border-radius: 10px; }
+    .accept-note-label { color: #64748b; font-weight: 600; }
+    .accept-note-val { color: #0f172a; font-weight: 600; }
+    .accept-warning { padding: 12px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #b91c1c; font-size: 0.88rem; font-weight: 600; }
+    .accept-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 4px; }
+    .btn-accept-large { font-size: 1rem; padding: 14px 28px; flex: 1; }
+
+    /* Tab Switcher */
+    .tab-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 14px; }
+    .tab-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: transparent; border: 1px solid transparent; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.18s ease; color: #475569; }
+    .tab-btn:hover { background: #ffffff; }
+    .tab-btn.active { background: #ffffff; border-color: #a7f3d0; box-shadow: 0 4px 12px -3px rgba(5,150,105,0.18); color: #0f172a; }
+    .tab-btn.active .tab-icon { transform: scale(1.1); }
+    .tab-icon { font-size: 1.5rem; line-height: 1; }
+    .tab-label-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .tab-label-block strong { font-size: 0.9rem; font-weight: 800; color: inherit; }
+    .tab-label-block small { font-size: 0.72rem; color: #94a3b8; }
+    .tab-btn.active .tab-label-block small { color: #059669; font-weight: 600; }
+
+    /* Receive Tab Card */
+    .receive-card { padding: 26px 24px; display: flex; flex-direction: column; gap: 20px; }
+    .receive-header-row { display: flex; align-items: flex-start; gap: 12px; }
+    .receive-title-tag { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .receive-brand-name { font-size: 0.85rem; font-weight: 900; color: #059669; }
+    .receive-brand-name i { font-style: italic; color: #1d4ed8; }
+    .receive-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; }
+    .receive-desc { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.55; }
+    .receive-body { display: grid; grid-template-columns: 240px 1fr; gap: 22px; align-items: flex-start; }
+    @media (max-width: 620px) { .receive-body { grid-template-columns: 1fr; } }
+    .receive-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border: 2px solid #a7f3d0; border-radius: 16px; }
+    .receive-qr-img { width: 200px; height: 200px; object-fit: contain; background: #fff; border-radius: 10px; padding: 6px; }
+    .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .receive-qr-owner .qr-acc-name { font-size: 0.88rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .receive-qr-owner .qr-acc-number { font-size: 0.9rem; font-weight: 900; color: #059669; }
+    .receive-config { display: flex; flex-direction: column; gap: 14px; }
+    .receive-link-row { display: flex; align-items: stretch; gap: 8px; }
+    .receive-link-input { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #334155; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; }
+    .receive-link-input:focus { outline: none; border-color: #059669; background: #fff; }
+    .btn-copy { padding: 10px 16px; background: #059669; color: #fff; border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: background 0.18s; white-space: nowrap; }
+    .btn-copy:hover { background: #047857; }
+    .receive-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-share, .btn-download { padding: 11px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.83rem; font-weight: 700; color: #0f172a; cursor: pointer; transition: all 0.18s; }
+    .btn-share:hover, .btn-download:hover { border-color: #059669; background: #ecfdf5; color: #059669; }
+    .receive-note { font-size: 0.8rem; color: #475569; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 12px; line-height: 1.55; }
+    .receive-note strong { color: #059669; }
   `]
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {
@@ -638,7 +847,16 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   myAccountNumber = '';
   myAccountName = '';
   myQrCustomAmount = 0;
+  myQrCustomNote = '';
   myQrImageUrl = '';
+
+  // Accept Mode (QR one-click payment)
+  acceptMode = false;
+  acceptError: string | null = null;
+
+  // Tab switcher: 'send' shows the form, 'receive' shows the QR card for others to scan
+  activeTab: 'send' | 'receive' = 'send';
+  linkCopied = false;
 
   constructor(
     private fb: FormBuilder,
@@ -681,7 +899,10 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
         filled = true;
       }
 
-      if (filled) {
+      // Accept mode: render one-click confirm UI instead of full form
+      this.acceptMode = params['accept'] === '1' || params['accept'] === 'true';
+
+      if (filled && !this.acceptMode) {
         this.notification.success('✨ Đã tự động điền thông tin thanh toán từ Mã QR!');
       }
     });
@@ -714,21 +935,98 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateMyQr(): void {
+  updateMyQr(): void {
     if (!this.myAccountNumber) return;
-    const note = this.paymentForm.get('description')?.value || '';
+    const note = this.activeTab === 'receive'
+      ? (this.myQrCustomNote || '')
+      : (this.paymentForm.get('description')?.value || '');
     this.myQrImageUrl = this.paygateQrService.generateQrImageUrl(
       this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, note
     );
   }
 
   onQrImgError(event: any): void {
+    const note = this.activeTab === 'receive' ? (this.myQrCustomNote || '') : '';
     const fallback = this.paygateQrService.getFallbackQrImageUrl(
-      this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, ''
+      this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, note
     );
     if (this.myQrImageUrl !== fallback) {
       this.myQrImageUrl = fallback;
     }
+  }
+
+  switchTab(tab: 'send' | 'receive'): void {
+    this.activeTab = tab;
+    this.linkCopied = false;
+    if (tab === 'receive') {
+      this.myQrCustomAmount = 0;
+      this.updateMyQr();
+    }
+  }
+
+  getMyPaymentLink(): string {
+    if (!this.myAccountNumber) return '';
+    return this.paygateQrService.generatePayGatePaymentLink(
+      this.myAccountNumber, this.myQrCustomAmount, this.myQrCustomNote || ''
+    );
+  }
+
+  copyPaymentLink(): void {
+    const link = this.getMyPaymentLink();
+    if (!link) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(() => {
+        this.linkCopied = true;
+        this.notification.success('✓ Đã copy link vào clipboard');
+        setTimeout(() => this.linkCopied = false, 2500);
+      }).catch(() => this.fallbackCopy(link));
+    } else {
+      this.fallbackCopy(link);
+    }
+  }
+
+  private fallbackCopy(text: string): void {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.linkCopied = true;
+      this.notification.success('✓ Đã copy link');
+      setTimeout(() => this.linkCopied = false, 2500);
+    } catch {
+      this.notification.error('Không thể copy. Hãy copy thủ công.');
+    }
+    document.body.removeChild(ta);
+  }
+
+  sharePaymentLink(): void {
+    const link = this.getMyPaymentLink();
+    if (!link) return;
+    const title = `Chuyển tiền cho ${this.myAccountName || this.myAccountNumber}`;
+    const text = this.myQrCustomAmount > 0
+      ? `Gửi ${this.myQrCustomAmount.toLocaleString('vi-VN')} VND qua PayGate`
+      : `Chuyển tiền qua PayGate`;
+    if ((navigator as any).share) {
+      (navigator as any).share({ title, text, url: link }).catch(() => {});
+    } else {
+      this.copyPaymentLink();
+    }
+  }
+
+  downloadQr(): void {
+    if (!this.myQrImageUrl) return;
+    const a = document.createElement('a');
+    a.href = this.myQrImageUrl;
+    a.download = `paygate-qr-${this.myAccountNumber}.png`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   loadBeneficiaries(): void {
@@ -829,6 +1127,36 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   generateIdempotencyKey(): void {
     const uuid = 'IDEM-' + Math.random().toString(36).substring(2, 9).toUpperCase() + '-' + Date.now();
     this.paymentForm.patchValue({ idempotencyKey: uuid });
+  }
+
+  get isSelfTransfer(): boolean {
+    return !!(this.recipientLookup && this.myAccountNumber
+      && this.recipientLookup.accountNumber?.toUpperCase() === this.myAccountNumber.toUpperCase());
+  }
+
+  get canAcceptPay(): boolean {
+    return this.paymentForm.valid
+      && !!this.recipientLookup
+      && !this.lookingUp
+      && !this.submitting
+      && !this.isSelfTransfer;
+  }
+
+  exitAcceptMode(): void {
+    this.acceptMode = false;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { accept: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  acceptAndPay(): void {
+    if (!this.canAcceptPay) {
+      this.paymentForm.markAllAsTouched();
+      return;
+    }
+    this.executePayment();
   }
 
   openConfirmation(): void {
