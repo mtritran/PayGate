@@ -71,16 +71,13 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
               </div>
             </div>
 
-            <!-- Recipient Account Number Field with PayGate Wallet QR Buttons -->
+            <!-- Recipient Account Number Field with PayGate Wallet QR Button -->
             <div class="form-group">
               <div class="form-label-row">
                 <label class="form-label required">Recipient Account Number (Số tài khoản nhận)</label>
                 <div class="qr-action-buttons">
-                  <button type="button" class="btn-qr-chip pulse-emerald" (click)="openQrScanModal()">
-                    📷 Quét / Dán Mã QR PayGate
-                  </button>
                   <button type="button" class="btn-qr-chip btn-qr-my" (click)="openMyQrModal()">
-                    📱 Mã QR Ví Của Tôi
+                    Mã QR Ví Của Tôi
                   </button>
                 </div>
               </div>
@@ -270,61 +267,6 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
         </div>
       </div>
 
-      <!-- PAYGATE INTERNAL QR SCANNER & PARSER MODAL -->
-      <div class="modal-overlay" *ngIf="showQrScanModal">
-        <div class="paygate-qr-modal modal-fade-in">
-          <div class="modal-header-vqr">
-            <div class="modal-title-group">
-              <span class="modal-badge-pill">PAYGATE WALLET QR SCANNER</span>
-              <h3>Quét / Dán Mã QR Ví PayGate</h3>
-            </div>
-            <button type="button" class="btn-close-light" (click)="closeQrScanModal()">✕</button>
-          </div>
-
-          <div class="modal-body-pad">
-            <p class="modal-hint-text">Dán chuỗi mã QR Ví PayGate hoặc chọn tài khoản mẫu bên dưới để nạp/chuyển tiền tức thì MoMo-style:</p>
-
-            <!-- Textarea for QR payload string -->
-            <div class="form-group mb-16">
-              <label class="form-label font-bold">Dán Chuỗi Mã QR PayGate Hoặc Số Tài Khoản:</label>
-              <textarea
-                class="qr-textarea font-mono"
-                rows="3"
-                [(ngModel)]="qrPayloadInput"
-                placeholder="Ví dụ: PAYGATE:TRANSFER:AC00000005:100000:Tien%20ca%20phe..."
-              ></textarea>
-            </div>
-
-            <!-- Quick Sample PayGate QR Preset Chips -->
-            <div class="sample-qr-section">
-              <span class="sample-title">CHỌN MÃ QR MẪU CỦA TÀI KHOẢN KHÁC TRONG HỆ THỐNG:</span>
-              <div class="sample-grid">
-                <button
-                  type="button"
-                  *ngFor="let sample of sampleQrOptions"
-                  class="sample-qr-card"
-                  (click)="applySampleQr(sample)"
-                >
-                  <div class="sample-avatar font-mono">QR</div>
-                  <div class="sample-detail">
-                    <strong class="s-name">{{ sample.name }}</strong>
-                    <span class="s-acc font-mono">{{ sample.acc }} ({{ sample.amount | currency:'VND':'symbol':'1.0-0' }})</span>
-                    <span class="s-note">{{ sample.note }}</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer-pad">
-            <button type="button" class="btn-cancel-light" (click)="closeQrScanModal()">Hủy</button>
-            <button type="button" class="btn-submit-emerald" (click)="processQrPayload()">
-              ✓ Giải Mã QR & Tự Động Điền ➔
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- MY PAYGATE PERSONAL QR CODE MODAL -->
       <div class="modal-overlay" *ngIf="showMyQrModal">
         <div class="paygate-qr-modal modal-fade-in wide-qr-modal">
@@ -378,15 +320,6 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
                   placeholder="e.g. Tiền cà phê, Tiền ăn trưa..."
                   (input)="updateMyQrImage()"
                 />
-              </div>
-
-              <div class="copy-actions-group mt-16">
-                <button type="button" class="btn-copy-chip-full" (click)="copyText(myAccountNumber, 'Số tài khoản PayGate')">
-                  📋 Sao Chép Số Tài Khoản PayGate
-                </button>
-                <button type="button" class="btn-copy-chip-full btn-outline" (click)="copyText(myQrPayloadString, 'Chuỗi Mã QR PayGate')">
-                  🔗 Sao Chép Chuỗi Mã QR
-                </button>
               </div>
             </div>
           </div>
