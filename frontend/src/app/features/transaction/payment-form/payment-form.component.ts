@@ -844,15 +844,31 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.generateIdempotencyKey();
     this.setupLookupDebounce();
 
-    // AI Pre-fill integration
+    // QR Code / URL Pre-fill integration
     this.route.queryParams.subscribe(params => {
+      let filled = false;
       if (params['amount']) {
-        this.paymentForm.patchValue({ amount: params['amount'] });
+        const amt = Number(params['amount']);
+        if (!isNaN(amt) && amt > 0) {
+          this.paymentForm.patchValue({ amount: amt });
+          filled = true;
+        }
       }
-      if (params['recipient']) {
-        this.accountNumberInput = params['recipient'];
+      if (params['note'] || params['description']) {
+        const note = params['note'] || params['description'];
+        this.paymentForm.patchValue({ description: note });
+        filled = true;
+      }
+      if (params['recipient'] || params['acc'] || params['to']) {
+        const acc = (params['recipient'] || params['acc'] || params['to']).toUpperCase();
+        this.accountNumberInput = acc;
         this.lookingUp = true;
-        this.lookupSubject.next(params['recipient']);
+        this.lookupSubject.next(acc);
+        filled = true;
+      }
+
+      if (filled) {
+        this.notification.success('✨ Đã tự động điền thông tin thanh toán từ Mã QR!');
       }
     });
   }
