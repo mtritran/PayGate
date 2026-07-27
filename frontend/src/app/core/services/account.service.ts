@@ -34,6 +34,10 @@ export class AccountService {
   private accountSubject = new BehaviorSubject<AccountResponse | null>(null);
   public account$ = this.accountSubject.asObservable();
 
+  getCurrentAccount(): AccountResponse | null {
+    return this.accountSubject.value;
+  }
+
   private linkedBanksSubject = new BehaviorSubject<LinkedBankResponseDTO[]>([]);
   public linkedBanks$ = this.linkedBanksSubject.asObservable();
 

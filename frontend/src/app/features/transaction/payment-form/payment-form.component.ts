@@ -8,6 +8,8 @@ import { TransactionService } from '../../../core/services/transaction.service';
 import { AccountService } from '../../../core/services/account.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { BeneficiaryService, BeneficiaryResponse } from '../../../core/services/beneficiary.service';
+import { PaygateQrService } from '../../../core/services/paygate-qr.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { AccountLookupResponse } from '../../../core/models/account.model';
 
 @Component({
@@ -69,9 +71,20 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
               </div>
             </div>
 
-            <!-- Recipient Account Number Field -->
+            <!-- Recipient Account Number Field with PayGate Wallet QR Buttons -->
             <div class="form-group">
-              <label class="form-label required">Recipient Account Number</label>
+              <div class="form-label-row">
+                <label class="form-label required">Recipient Account Number (Số tài khoản nhận)</label>
+                <div class="qr-action-buttons">
+                  <button type="button" class="btn-qr-chip pulse-emerald" (click)="openQrScanModal()">
+                    📷 Quét / Dán Mã QR PayGate
+                  </button>
+                  <button type="button" class="btn-qr-chip btn-qr-my" (click)="openMyQrModal()">
+                    📱 Mã QR Ví Của Tôi
+                  </button>
+                </div>
+              </div>
+
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -80,7 +93,7 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
                 <input
                   type="text"
                   class="form-input"
-                  placeholder="Enter account number (e.g. ACC10001)..."
+                  placeholder="Enter account number (e.g. AC00000005)..."
                   [(ngModel)]="accountNumberInput"
                   [ngModelOptions]="{standalone: true}"
                   (input)="onInputChanged($event)"
@@ -256,6 +269,133 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
           </div>
         </div>
       </div>
+
+      <!-- PAYGATE INTERNAL QR SCANNER & PARSER MODAL -->
+      <div class="modal-overlay" *ngIf="showQrScanModal">
+        <div class="paygate-qr-modal modal-fade-in">
+          <div class="modal-header-vqr">
+            <div class="modal-title-group">
+              <span class="modal-badge-pill">PAYGATE WALLET QR SCANNER</span>
+              <h3>Quét / Dán Mã QR Ví PayGate</h3>
+            </div>
+            <button type="button" class="btn-close-light" (click)="closeQrScanModal()">✕</button>
+          </div>
+
+          <div class="modal-body-pad">
+            <p class="modal-hint-text">Dán chuỗi mã QR Ví PayGate hoặc chọn tài khoản mẫu bên dưới để nạp/chuyển tiền tức thì MoMo-style:</p>
+
+            <!-- Textarea for QR payload string -->
+            <div class="form-group mb-16">
+              <label class="form-label font-bold">Dán Chuỗi Mã QR PayGate Hoặc Số Tài Khoản:</label>
+              <textarea
+                class="qr-textarea font-mono"
+                rows="3"
+                [(ngModel)]="qrPayloadInput"
+                placeholder="Ví dụ: PAYGATE:TRANSFER:AC00000005:100000:Tien%20ca%20phe..."
+              ></textarea>
+            </div>
+
+            <!-- Quick Sample PayGate QR Preset Chips -->
+            <div class="sample-qr-section">
+              <span class="sample-title">CHỌN MÃ QR MẪU CỦA TÀI KHOẢN KHÁC TRONG HỆ THỐNG:</span>
+              <div class="sample-grid">
+                <button
+                  type="button"
+                  *ngFor="let sample of sampleQrOptions"
+                  class="sample-qr-card"
+                  (click)="applySampleQr(sample)"
+                >
+                  <div class="sample-avatar font-mono">QR</div>
+                  <div class="sample-detail">
+                    <strong class="s-name">{{ sample.name }}</strong>
+                    <span class="s-acc font-mono">{{ sample.acc }} ({{ sample.amount | currency:'VND':'symbol':'1.0-0' }})</span>
+                    <span class="s-note">{{ sample.note }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer-pad">
+            <button type="button" class="btn-cancel-light" (click)="closeQrScanModal()">Hủy</button>
+            <button type="button" class="btn-submit-emerald" (click)="processQrPayload()">
+              ✓ Giải Mã QR & Tự Động Điền ➔
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY PAYGATE PERSONAL QR CODE MODAL -->
+      <div class="modal-overlay" *ngIf="showMyQrModal">
+        <div class="paygate-qr-modal modal-fade-in wide-qr-modal">
+          <div class="modal-header-vqr bg-gradient-emerald">
+            <div class="modal-title-group">
+              <span class="modal-badge-pill">PAYGATE WALLET QR RECEIVER</span>
+              <h3>Mã QR Nhận Tiền Ví PayGate Của Tôi</h3>
+            </div>
+            <button type="button" class="btn-close-light" (click)="closeMyQrModal()">✕</button>
+          </div>
+
+          <div class="modal-body-pad grid-qr-layout">
+            <!-- Left: QR Code display -->
+            <div class="my-qr-display-box">
+              <div class="paygate-brand-banner">
+                <span class="pg-logo-bold">PayGate <i>Wallet</i></span>
+                <span class="pg-verified">VERIFIED USER</span>
+              </div>
+
+              <div class="my-qr-img-frame">
+                <img [src]="myQrImageUrl" alt="My PayGate QR Code" class="my-qr-img" />
+              </div>
+
+              <div class="my-acc-badge">
+                <span class="acc-title">{{ myAccountName }}</span>
+                <span class="acc-code font-mono">{{ myAccountNumber }}</span>
+              </div>
+            </div>
+
+            <!-- Right: Dynamic Amount & Config -->
+            <div class="my-qr-config-box">
+              <div class="card-title-sm">TẠO MÃ QR NHẬN TIỀN THEO SỐ TIỀN:</div>
+
+              <div class="form-group mt-8">
+                <label class="field-lbl font-bold">Số Tiền Muốn Nhận (VND)</label>
+                <input
+                  type="number"
+                  class="modal-input-sm font-mono"
+                  [(ngModel)]="myQrCustomAmount"
+                  placeholder="Nhập số tiền (e.g. 50000)..."
+                  (input)="updateMyQrImage()"
+                />
+              </div>
+
+              <div class="form-group mt-8">
+                <label class="field-lbl font-bold">Nội Dung Nhận Tiền / Lời Nhắn</label>
+                <input
+                  type="text"
+                  class="modal-input-sm"
+                  [(ngModel)]="myQrCustomNote"
+                  placeholder="e.g. Tiền cà phê, Tiền ăn trưa..."
+                  (input)="updateMyQrImage()"
+                />
+              </div>
+
+              <div class="copy-actions-group mt-16">
+                <button type="button" class="btn-copy-chip-full" (click)="copyText(myAccountNumber, 'Số tài khoản PayGate')">
+                  📋 Sao Chép Số Tài Khoản PayGate
+                </button>
+                <button type="button" class="btn-copy-chip-full btn-outline" (click)="copyText(myQrPayloadString, 'Chuỗi Mã QR PayGate')">
+                  🔗 Sao Chép Chuỗi Mã QR
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer-pad">
+            <button type="button" class="btn-cancel-light" (click)="closeMyQrModal()">Đóng</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -297,6 +437,100 @@ import { AccountLookupResponse } from '../../../core/models/account.model';
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    /* Form Label Row with QR Action Buttons */
+    .form-label-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .qr-action-buttons { display: flex; gap: 6px; }
+    .btn-qr-chip {
+      background: #ecfdf5; border: 1px solid #059669; color: #047857;
+      font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 10px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-qr-chip:hover { background: #059669; color: #ffffff; }
+    .btn-qr-my { background: #eff6ff; border-color: #1d4ed8; color: #1e40af; }
+    .btn-qr-my:hover { background: #1d4ed8; color: #ffffff; }
+
+    /* Modals for QR Transfer */
+    .paygate-qr-modal {
+      background: #ffffff; border-radius: 24px; width: 100%; max-width: 520px;
+      overflow: hidden; box-shadow: 0 25px 70px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2);
+    }
+    .wide-qr-modal { max-width: 680px; }
+
+    .modal-header-vqr {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      padding: 20px 24px; color: #ffffff; display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-badge-pill {
+      font-size: 0.7rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px;
+      letter-spacing: 0.05em; display: inline-block; margin-bottom: 4px;
+    }
+    .modal-title-group h3 { margin: 0; font-size: 1.35rem; font-weight: 800; color: #ffffff; }
+    .btn-close-light { background: rgba(255,255,255,0.15); border: none; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; }
+    .btn-close-light:hover { background: rgba(255,255,255,0.3); }
+
+    .modal-body-pad { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .modal-hint-text { font-size: 0.85rem; color: #475569; margin: 0; }
+    .qr-textarea {
+      width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 14px;
+      font-size: 0.82rem; color: #0f172a; outline: none; background: #f8fafc; resize: none; box-sizing: border-box;
+    }
+    .qr-textarea:focus { border-color: #059669; background: #ffffff; }
+
+    .sample-qr-section { display: flex; flex-direction: column; gap: 8px; }
+    .sample-title { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; }
+    .sample-grid { display: flex; flex-direction: column; gap: 8px; }
+    .sample-qr-card {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+      cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;
+    }
+    .sample-qr-card:hover { border-color: #059669; background: #ecfdf5; }
+    .sample-avatar {
+      width: 38px; height: 38px; border-radius: 10px; background: #059669; color: #ffffff;
+      font-size: 0.78rem; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .sample-detail { display: flex; flex-direction: column; gap: 2px; }
+    .s-name { font-size: 0.85rem; color: #0f172a; }
+    .s-acc { font-size: 0.75rem; color: #059669; font-weight: 700; }
+    .s-note { font-size: 0.72rem; color: #64748b; }
+
+    .modal-footer-pad {
+      padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0;
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+    .btn-cancel-light { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 8px 18px; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; }
+    .btn-submit-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 12px; padding: 8px 20px; font-size: 0.88rem; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 3px 10px rgba(5,150,105,0.3); }
+
+    /* Layout My QR Modal */
+    .grid-qr-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+    .my-qr-display-box {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+    }
+    .paygate-brand-banner { display: flex; flex-direction: column; align-items: center; }
+    .pg-logo-bold { font-size: 1.1rem; font-weight: 900; color: #059669; }
+    .pg-logo-bold i { font-style: italic; color: #1d4ed8; }
+    .pg-verified { font-size: 0.65rem; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; }
+
+    .my-qr-img-frame { width: 170px; height: 170px; background: #ffffff; border: 2px solid #a7f3d0; border-radius: 16px; padding: 6px; box-shadow: 0 6px 18px rgba(5,150,105,0.15); }
+    .my-qr-img { width: 100%; height: 100%; object-fit: contain; }
+    .my-acc-badge { display: flex; flex-direction: column; gap: 2px; }
+    .acc-title { font-size: 0.85rem; font-weight: 800; color: #0f172a; }
+    .acc-code { font-size: 0.95rem; font-weight: 900; color: #059669; }
+
+    .my-qr-config-box { display: flex; flex-direction: column; gap: 10px; }
+    .modal-input-sm { width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 0.85rem; color: #0f172a; outline: none; background: #f8fafc; box-sizing: border-box; }
+    .modal-input-sm:focus { border-color: #059669; background: #ffffff; }
+
+    .copy-actions-group { display: flex; flex-direction: column; gap: 8px; }
+    .btn-copy-chip-full {
+      width: 100%; height: 38px; background: #059669; color: #ffffff; border: none; border-radius: 10px;
+      font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-copy-chip-full:hover { background: #047857; }
+    .btn-copy-chip-full.btn-outline { background: #ffffff; border: 1px solid #059669; color: #059669; }
+    .btn-copy-chip-full.btn-outline:hover { background: #ecfdf5; }
 
     .beneficiaries-chips-bar {
       display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
@@ -488,15 +722,108 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
 
   beneficiaries: BeneficiaryResponse[] = [];
 
+  // PayGate QR Transfer Scanner & My QR state
+  showQrScanModal = false;
+  showMyQrModal = false;
+  qrPayloadInput = '';
+  myAccountNumber = '';
+  myAccountName = '';
+  myQrImageUrl = '';
+  myQrCustomAmount = 0;
+  myQrCustomNote = '';
+  myQrPayloadString = '';
+
+  sampleQrOptions = [
+    { name: 'TRẦN VIỆT TRINH (Ví cá nhân)', acc: 'AC00000005', amount: 100000, note: 'Chuyển tiền ăn trưa' },
+    { name: 'PAYGATE CENTRAL ADMIN', acc: 'AC00000001', amount: 50000, note: 'Thanh toán dịch vụ PayGate' },
+    { name: 'CỬA HÀNG MERCHANT DEMO', acc: 'AC00000002', amount: 200000, note: 'Thanh toán đơn hàng #1088' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private transactionService: TransactionService,
     private accountService: AccountService,
     private beneficiaryService: BeneficiaryService,
+    private paygateQrService: PaygateQrService,
+    private authService: AuthService,
     private notification: NotificationService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
+
+  openQrScanModal(): void {
+    this.showQrScanModal = true;
+    this.qrPayloadInput = '';
+  }
+
+  closeQrScanModal(): void {
+    this.showQrScanModal = false;
+  }
+
+  applySampleQr(option: any): void {
+    this.qrPayloadInput = this.paygateQrService.encodePayload(option.acc, option.name, option.amount, option.note);
+    this.processQrPayload();
+  }
+
+  processQrPayload(): void {
+    if (!this.qrPayloadInput.trim()) {
+      this.notification.warning('Vui lòng nhập hoặc dán mã QR PayGate!');
+      return;
+    }
+
+    const parsed = this.paygateQrService.parsePayload(this.qrPayloadInput);
+    if (!parsed || !parsed.accountNumber) {
+      this.notification.error('Mã QR không hợp lệ hoặc không phải định dạng Mã QR Ví PayGate!');
+      return;
+    }
+
+    this.accountNumberInput = parsed.accountNumber;
+    this.lookingUp = true;
+    this.lookupSubject.next(parsed.accountNumber);
+
+    if (parsed.amount && parsed.amount > 0) {
+      this.paymentForm.patchValue({ amount: parsed.amount });
+    }
+
+    if (parsed.note) {
+      this.paymentForm.patchValue({ description: parsed.note });
+    }
+
+    this.closeQrScanModal();
+    this.notification.success(`Đã quét & tự động điền mã QR Ví PayGate cho tài khoản ${parsed.accountNumber}!`);
+  }
+
+  openMyQrModal(): void {
+    this.myAccountNumber = this.accountService.getCurrentAccount()?.accountNumber || 'AC00000001';
+    const user = this.authService.getUsername() || 'PAYGATE USER';
+    this.myAccountName = user.split('@')[0].toUpperCase();
+    this.updateMyQrImage();
+    this.showMyQrModal = true;
+  }
+
+  closeMyQrModal(): void {
+    this.showMyQrModal = false;
+  }
+
+  updateMyQrImage(): void {
+    this.myQrImageUrl = this.paygateQrService.generateQrImageUrl(
+      this.myAccountNumber,
+      this.myAccountName,
+      this.myQrCustomAmount,
+      this.myQrCustomNote
+    );
+    this.myQrPayloadString = this.paygateQrService.encodePayload(
+      this.myAccountNumber,
+      this.myAccountName,
+      this.myQrCustomAmount,
+      this.myQrCustomNote
+    );
+  }
+
+  copyText(text: string, label: string): void {
+    navigator.clipboard.writeText(text);
+    this.notification.success(`Sao chép thành công ${label}: ${text}`);
+  }
 
   ngOnInit(): void {
     this.initForm();
