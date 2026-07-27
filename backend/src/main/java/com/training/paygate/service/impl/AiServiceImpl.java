@@ -247,6 +247,7 @@ public class AiServiceImpl implements AiService {
             case TOPUP -> "Nạp tiền";
             case REFUND -> "Hoàn tiền";
             case WITHDRAW -> "Rút tiền";
+            case BILL_PAYMENT -> "Thanh toán hóa đơn";
         };
     }
 

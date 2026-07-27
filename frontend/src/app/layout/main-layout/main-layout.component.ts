@@ -99,6 +99,26 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
                 <span class="nav-title" *ngIf="!collapsed()">Lịch Định Kỳ & Hóa Đơn</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/bills/pay" routerLinkActive="active" title="Thanh Toán Hóa Đơn">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Thanh Toán Hóa Đơn</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/bills/saved" routerLinkActive="active" title="Hóa Đơn Đã Lưu">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Hóa Đơn Đã Lưu</span>
+              </a>
+            </li>
           </ul>
 
           <!-- Merchant Section -->
