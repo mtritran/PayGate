@@ -88,4 +88,18 @@ export class BillService {
   createSaved(req: CreateSavedBillRequest): Observable<ApiResponse<SavedBillResponse>> {
     return this.http.post<ApiResponse<SavedBillResponse>>(`${this.apiUrl}/saved`, req);
   }
+
+  getMockCustomerCodes(providerCode: string): Observable<ApiResponse<MockCustomerCode[]>> {
+    const params = new HttpParams().set('providerCode', providerCode);
+    return this.http.get<ApiResponse<MockCustomerCode[]>>(`${this.apiUrl}/mock/list`, { params });
+  }
+}
+
+export interface MockCustomerCode {
+  customerCode: string;
+  customerName: string;
+  address: string;
+  amount: number;
+  period: string;
+  type: BillType;
 }

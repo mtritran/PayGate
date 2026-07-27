@@ -37,6 +37,7 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.SavedBillRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.service.BillProviderMockService;
 import com.training.paygate.service.BillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,7 @@ public class BillServiceImpl implements BillService {
     private final TransactionRepository transactionRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final BalanceCacheService balanceCacheService;
+    private final BillProviderMockService billProviderMockService;
 
     @Override
     @Transactional(readOnly = true)
@@ -79,15 +81,34 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BillLookupResponse lookup(LookupBillRequest request) {
         BillProvider provider = billProviderRepository.findByCode(request.providerCode())
                 .orElseThrow(() -> new BillNotFoundException("Provider not found with code: " + request.providerCode()));
 
         Bill bill = billRepository.findFirstByProviderIdAndCustomerCodeAndStatusOrderByIdDesc(
                         provider.getId(), request.customerCode(), BillStatus.UNPAID)
-                .orElseThrow(() -> new BillNotFoundException(
-                        "Bill not found with customer code: " + request.customerCode()));
+                .orElseGet(() -> {
+                    // Fallback: goi API mock cua nha cung cap de tra cuu, sau do tao bill UNPAID
+                    return billProviderMockService.lookup(provider.getCode(), request.customerCode())
+                            .map(mock -> {
+                                Bill created = Bill.builder()
+                                        .providerId(provider.getId())
+                                        .customerCode(mock.getCustomerCode())
+                                        .customerName(mock.getCustomerName())
+                                        .address(mock.getAddress())
+                                        .amount(mock.getAmount())
+                                        .period(mock.getPeriod())
+                                        .status(BillStatus.UNPAID)
+                                        .build();
+                                Bill saved = billRepository.save(created);
+                                log.info("Created bill #{} from provider mock lookup: {} / {}",
+                                        saved.getId(), provider.getCode(), mock.getCustomerCode());
+                                return saved;
+                            })
+                            .orElseThrow(() -> new BillNotFoundException(
+                                    "Bill not found with customer code: " + request.customerCode()));
+                });
 
         return new BillLookupResponse(
                 bill.getId(),

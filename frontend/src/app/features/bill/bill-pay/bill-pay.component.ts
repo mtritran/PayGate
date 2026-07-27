@@ -8,7 +8,8 @@ import {
   BillProviderResponse,
   BillLookupResponse,
   BillPayResponse,
-  SavedBillResponse
+  SavedBillResponse,
+  MockCustomerCode
 } from '../../../core/services/bill.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
@@ -101,6 +102,21 @@ type BillTypeMeta = {
         </div>
         <div class="hint" *ngIf="lookupError()">
           {{ lookupError() }}
+        </div>
+
+        <div class="suggested" *ngIf="suggestedCodes().length > 0">
+          <div class="suggested-title">Mã khách hàng gợi ý (demo · mock provider)</div>
+          <div class="suggested-list">
+            <button
+              *ngFor="let s of suggestedCodes()"
+              type="button"
+              class="suggested-chip"
+              (click)="pickSuggested(s.customerCode)"
+              [title]="s.customerName + ' — ' + s.address">
+              <span class="sc-code">{{ s.customerCode }}</span>
+              <span class="sc-amount">{{ s.amount | currency:'VND':'symbol':'1.0-0' }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -231,6 +247,18 @@ type BillTypeMeta = {
     }
     .input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
     .hint { margin-top: 10px; color: #b91c1c; font-size: 13px; }
+    .suggested { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e5e7eb; }
+    .suggested-title { font-size: 12px; color: #6b7280; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.4px; }
+    .suggested-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .suggested-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #f0fdf4; border: 1px dashed #86efac; color: #065f46;
+      padding: 6px 12px; border-radius: 20px; cursor: pointer;
+      font-size: 12px; transition: 0.15s;
+    }
+    .suggested-chip:hover { background: #dcfce7; border-style: solid; border-color: #10b981; }
+    .sc-code { font-family: 'SF Mono', monospace; font-weight: 600; letter-spacing: 0.6px; }
+    .sc-amount { color: #059669; font-weight: 700; }
     .empty-note { color: #6b7280; font-style: italic; padding: 8px 0; }
     .btn {
       padding: 10px 20px; font-weight: 600; border-radius: 8px;
@@ -287,6 +315,7 @@ export class BillPayComponent implements OnInit {
   providers = signal<BillProviderResponse[]>([]);
   loadingProviders = signal(false);
   selectedProvider = signal<BillProviderResponse | null>(null);
+  suggestedCodes = signal<MockCustomerCode[]>([]);
 
   customerCode = '';
   looking = signal(false);
@@ -327,6 +356,16 @@ export class BillPayComponent implements OnInit {
     this.lookedUp.set(null);
     this.paid.set(null);
     this.lookupError.set(null);
+    this.suggestedCodes.set([]);
+    this.bill.getMockCustomerCodes(p.code).subscribe({
+      next: r => this.suggestedCodes.set(r.data ?? []),
+      error: () => this.suggestedCodes.set([])
+    });
+  }
+
+  pickSuggested(code: string): void {
+    this.customerCode = code;
+    this.onLookup();
   }
 
   onLookup(): void {
@@ -393,6 +432,7 @@ export class BillPayComponent implements OnInit {
     this.selectedType.set(null);
     this.selectedProvider.set(null);
     this.providers.set([]);
+    this.suggestedCodes.set([]);
     this.customerCode = '';
     this.lookedUp.set(null);
     this.paid.set(null);

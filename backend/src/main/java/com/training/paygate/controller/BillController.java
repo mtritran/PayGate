@@ -9,6 +9,7 @@ import com.training.paygate.dto.response.BillPayResponse;
 import com.training.paygate.dto.response.BillProviderResponse;
 import com.training.paygate.dto.response.SavedBillResponse;
 import com.training.paygate.enums.BillType;
+import com.training.paygate.service.BillProviderMockService;
 import com.training.paygate.service.BillService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +35,7 @@ import java.util.List;
 public class BillController {
 
     private final BillService billService;
+    private final BillProviderMockService billProviderMockService;
 
     @GetMapping("/providers")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -73,5 +75,24 @@ public class BillController {
         SavedBillResponse response = billService.saveBill(request, principal.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Saved bill created", response));
+    }
+
+    @GetMapping("/mock/list")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "List mock customer codes for a provider (demo / suggested codes)")
+    public ApiResponse<List<java.util.Map<String, Object>>> mockList(@RequestParam String providerCode) {
+        List<java.util.Map<String, Object>> data = billProviderMockService.listByProvider(providerCode).stream()
+                .map(m -> {
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    row.put("customerCode", m.getCustomerCode());
+                    row.put("customerName", m.getCustomerName());
+                    row.put("address", m.getAddress());
+                    row.put("amount", m.getAmount());
+                    row.put("period", m.getPeriod());
+                    row.put("type", m.getType().name());
+                    return row;
+                })
+                .toList();
+        return ApiResponse.success("Mock customer codes", data);
     }
 }
