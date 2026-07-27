@@ -1,11 +1,11 @@
 import { Component, OnInit, signal, inject, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccountService, LinkedBankResponseDTO } from '../../../core/services/account.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { VietQrService, BankDeepLink } from '../../../core/services/viet-qr.service';
+import { VietQrService, BankDeepLink, BankInfo } from '../../../core/services/viet-qr.service';
 import { AccountResponse } from '../../../core/models/account.model';
 
 export interface LinkedBankSource {
@@ -38,6 +38,7 @@ export interface AvailableBankOption {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     CurrencyPipe
   ],
   template: `
@@ -246,13 +247,82 @@ export interface AvailableBankOption {
                 </div>
               </div>
 
-              <!-- MODE 2: VIETQR INSTANT TRANSFER BANNER -->
+              <!-- MODE 2: VIETQR REAL BANK TRANSFER GATEWAY GENERATOR -->
               <div class="vietqr-info-box" *ngIf="topUpMode() === 'VIETQR'">
                 <div class="vietqr-badge-header">
-                  <span class="vqr-logo">VietQR <i>EMVCo</i></span>
-                  <span class="vqr-tag">NAPAS 247 INSTANT</span>
+                  <div class="vqr-logo-group">
+                    <span class="vqr-logo">VietQR <i>EMVCo</i></span>
+                    <span class="vqr-tag">NAPAS 24/7 GATEWAY</span>
+                  </div>
+                  <button type="button" class="btn-toggle-receiver" (click)="toggleCustomReceiver()">
+                    <span *ngIf="!showCustomReceiverCard">⚙ Tùy Chỉnh Ngân Hàng Nhận (Payment Generator)</span>
+                    <span *ngIf="showCustomReceiverCard">✓ Dùng Mặc Định PayGate System</span>
+                  </button>
                 </div>
-                <p class="vqr-desc">Scan dynamic QR code using any Mobile Banking app (MB Bank, Vietcombank, Techcombank, MoMo, etc.) for instant zero-fee wallet deposit.</p>
+
+                <!-- Default PayGate Receiver Summary Bar -->
+                <div class="receiver-summary-bar" *ngIf="!showCustomReceiverCard">
+                  <div class="rec-bank-logo">
+                    <img [src]="getSelectedBankInfo().logo" [alt]="getSelectedBankInfo().shortName" class="b-logo-img" />
+                    <div>
+                      <strong class="b-name">{{ getSelectedBankInfo().shortName }} - {{ getSelectedBankInfo().name }}</strong>
+                      <span class="b-sub">Hệ thống Cổng Thanh Toán PayGate Central</span>
+                    </div>
+                  </div>
+                  <div class="rec-acc-info">
+                    <span class="acc-no font-mono">{{ selectedAccountNumber }}</span>
+                    <span class="acc-holder">{{ selectedAccountHolder }}</span>
+                  </div>
+                </div>
+
+                <!-- Custom Receiver Bank Config Card -->
+                <div class="custom-receiver-card fade-in-up" *ngIf="showCustomReceiverCard">
+                  <div class="card-title-sm">Cấu Hình Ngân Hàng Thụ Hưởng (Bank Receiver Config)</div>
+                  
+                  <div class="grid-2-col">
+                    <!-- Bank Selection -->
+                    <div class="form-field-group">
+                      <label class="field-lbl">Ngân Hàng Thụ Hưởng (Select Bank)</label>
+                      <select
+                        class="form-select-bank"
+                        [(ngModel)]="selectedBankCode"
+                        [ngModelOptions]="{standalone: true}"
+                        (change)="onBankCodeChange(selectedBankCode)">
+                        <option *ngFor="let b of availableBanks" [value]="b.code">
+                          {{ b.shortName }} - {{ b.name }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Account Number -->
+                    <div class="form-field-group">
+                      <label class="field-lbl">Số Tài Khoản Nhận (Account Number)</label>
+                      <input
+                        type="text"
+                        class="form-input-compact font-mono"
+                        [(ngModel)]="selectedAccountNumber"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="Nhập số tài khoản..."
+                        (input)="updateVietQrCode()"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Account Holder Name -->
+                  <div class="form-field-group mt-10">
+                    <label class="field-lbl">Tên Chủ Tài Khoản (Account Holder Name)</label>
+                    <input
+                      type="text"
+                      class="form-input-compact"
+                      [(ngModel)]="selectedAccountHolder"
+                      [ngModelOptions]="{standalone: true}"
+                      placeholder="e.g. PAYGATE GATEWAY SYSTEM"
+                      (input)="updateVietQrCode()"
+                    />
+                  </div>
+                </div>
+
+                <p class="vqr-desc">Quét mã VietQR bằng bất kỳ ứng dụng ngân hàng di động nào (Vietcombank, MB Bank, Techcombank, BIDV, MoMo...) để nạp tiền hoặc chuyển tiền tức thì 24/7.</p>
               </div>
 
               <!-- Submit Action Button -->
@@ -272,7 +342,7 @@ export interface AvailableBankOption {
                       Top up {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} via {{ currentSelectedBank?.bankName || 'Bank' }} ↗
                     </span>
                     <span *ngIf="topUpMode() === 'VIETQR'">
-                      Generate VietQR Code for {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} ↗
+                      Generate VietQR Transfer Code for {{ currentAmount | currency:'VND':'symbol':'1.0-0' }} ↗
                     </span>
                   </span>
                   <span *ngIf="submitting" class="btn-content">
@@ -294,9 +364,9 @@ export interface AvailableBankOption {
             <div class="vqr-title-group">
               <div class="vqr-badge-pill">
                 <span class="dot-live"></span>
-                <span>VIETQR NAPAS 24/7</span>
+                <span>VIETQR NAPAS 24/7 GATEWAY</span>
               </div>
-              <h3>Scan QR Code to Top Up</h3>
+              <h3>Scan VietQR Code to Complete Transfer</h3>
             </div>
             <button type="button" class="btn-close-modal-light" (click)="closeVietQrModal()">✕</button>
           </div>
@@ -306,45 +376,65 @@ export interface AvailableBankOption {
             <div class="modal-body-vqr">
               <!-- Left Column: Compact High-Res QR Image -->
               <div class="qr-display-box">
+                <!-- Template Switcher Pills -->
+                <div class="qr-template-selector">
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact2'" (click)="selectTemplate('compact2')">Mẫu Chuẩn</button>
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact'" (click)="selectTemplate('compact')">Nhỏ Gọn</button>
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'qr_only'" (click)="selectTemplate('qr_only')">Mã QR</button>
+                </div>
+
                 <div class="qr-image-wrapper">
                   <img [src]="vietQrImageUrl" alt="VietQR Code" class="vqr-img" />
                 </div>
+                
                 <div class="qr-timer-pill">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  <span>Expires in: <strong>{{ formattedTimer }}</strong></span>
+                  <span>Mã hiệu lực trong: <strong>{{ formattedTimer }}</strong></span>
                 </div>
               </div>
 
               <!-- Right Column: Transfer Info List -->
               <div class="vqr-details-box">
                 <div class="detail-card">
-                  <span class="d-lbl">BENEFICIARY BANK</span>
-                  <span class="d-val font-bold">MB Bank</span>
-                </div>
-                <div class="detail-card">
-                  <span class="d-lbl">ACCOUNT NUMBER</span>
-                  <div class="d-val-copy">
-                    <span class="font-mono acc-num">8888999988</span>
-                    <button type="button" class="btn-copy-chip" (click)="copyText('8888999988', 'Account Number')">Copy</button>
+                  <span class="d-lbl">NGÂN HÀNG THỤ HƯỞNG</span>
+                  <div class="bank-head-val">
+                    <img [src]="getSelectedBankInfo().logo" [alt]="getSelectedBankInfo().shortName" class="b-mini-logo" />
+                    <span class="d-val font-bold">{{ getSelectedBankInfo().name }} ({{ getSelectedBankInfo().shortName }})</span>
                   </div>
                 </div>
                 <div class="detail-card">
-                  <span class="d-lbl">ACCOUNT HOLDER</span>
-                  <span class="d-val font-bold">PAYGATE GATEWAY SYSTEM</span>
+                  <span class="d-lbl">SỐ TÀI KHOẢN NHẬN</span>
+                  <div class="d-val-copy">
+                    <span class="font-mono acc-num">{{ selectedAccountNumber }}</span>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(selectedAccountNumber, 'Số tài khoản')">Sao chép</button>
+                  </div>
                 </div>
                 <div class="detail-card">
-                  <span class="d-lbl">AMOUNT</span>
+                  <span class="d-lbl">TÊN CHỦ TÀI KHOẢN</span>
+                  <span class="d-val font-bold">{{ selectedAccountHolder }}</span>
+                </div>
+                <div class="detail-card">
+                  <span class="d-lbl">SỐ TIỀN CHUYỂN</span>
                   <span class="d-val amount-val">{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</span>
                 </div>
                 <div class="detail-card highlight-note">
-                  <span class="d-lbl">TRANSFER NOTE (EXACT MATCH)</span>
+                  <span class="d-lbl">NỘI DUNG CHUYỂN TIỀN (BẮT BUỘC CHÍNH XÁC)</span>
                   <div class="d-val-copy">
                     <span class="font-mono text-note">{{ currentTransferNote }}</span>
-                    <button type="button" class="btn-copy-chip" (click)="copyText(currentTransferNote, 'Transfer Note')">Copy</button>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(currentTransferNote, 'Nội dung chuyển')">Sao chép</button>
                   </div>
+                </div>
+
+                <!-- Copy EMVCo Payload String Box -->
+                <div class="emvco-box">
+                  <div class="emvco-head">
+                    <span class="emvco-lbl">MÃ CHUỖI EMVCo VIETQR STRING</span>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(emvCoPayload, 'Chuỗi EMVCo VietQR')">Sao chép chuỗi QR</button>
+                  </div>
+                  <code class="emvco-string">{{ emvCoPayload }}</code>
                 </div>
               </div>
             </div>
@@ -561,13 +651,66 @@ export interface AvailableBankOption {
     .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .empty-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; }
 
-    /* VietQR Info Box */
-    .vietqr-info-box { background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%); border: 1px solid #bfdbfe; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
-    .vietqr-badge-header { display: flex; align-items: center; justify-content: space-between; }
+    /* VietQR Info Box & Real Generator */
+    .vietqr-info-box { background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%); border: 1px solid #bfdbfe; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .vietqr-badge-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .vqr-logo-group { display: flex; align-items: center; gap: 8px; }
     .vqr-logo { font-size: 1.1rem; font-weight: 900; color: #1d4ed8; }
     .vqr-logo i { font-style: italic; color: #059669; }
     .vqr-tag { font-size: 0.72rem; font-weight: 800; background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 10px; }
     .vqr-desc { font-size: 0.85rem; color: #334155; margin: 0; line-height: 1.5; }
+
+    .btn-toggle-receiver {
+      background: #ffffff; border: 1px solid #1d4ed8; color: #1d4ed8;
+      font-size: 0.78rem; font-weight: 800; padding: 6px 14px; border-radius: 12px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-toggle-receiver:hover { background: #1d4ed8; color: #ffffff; }
+
+    .receiver-summary-bar {
+      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px;
+      padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+      margin-top: 4px;
+    }
+    .rec-bank-logo { display: flex; align-items: center; gap: 12px; }
+    .b-logo-img { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .b-name { font-size: 0.9rem; color: #0f172a; display: block; }
+    .b-sub { font-size: 0.75rem; color: #64748b; }
+    .rec-acc-info { display: flex; flex-direction: column; text-align: right; }
+    .acc-no { font-size: 1rem; font-weight: 800; color: #047857; }
+    .acc-holder { font-size: 0.78rem; font-weight: 700; color: #475569; }
+
+    .custom-receiver-card {
+      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 16px;
+      padding: 18px; display: flex; flex-direction: column; gap: 12px; margin-top: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .card-title-sm { font-size: 0.8rem; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; }
+    .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field-group { display: flex; flex-direction: column; gap: 4px; }
+    .field-lbl { font-size: 0.75rem; font-weight: 700; color: #475569; }
+    .form-select-bank {
+      width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 10px;
+      padding: 0 10px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc;
+    }
+    .form-input-compact {
+      width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 10px;
+      padding: 0 12px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc; box-sizing: border-box;
+    }
+    .form-input-compact:focus, .form-select-bank:focus { border-color: #1d4ed8; background: #ffffff; }
+
+    /* Modal Template Selector & EMVCo Payload Box */
+    .qr-template-selector { display: flex; gap: 6px; background: #e2e8f0; padding: 4px; border-radius: 12px; width: 100%; }
+    .btn-tpl { flex: 1; border: none; background: transparent; padding: 6px 0; font-size: 0.78rem; font-weight: 800; color: #475569; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .btn-tpl.active { background: #ffffff; color: #047857; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+    .bank-head-val { display: flex; align-items: center; gap: 8px; }
+    .b-mini-logo { width: 24px; height: 24px; object-fit: contain; }
+
+    .emvco-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .emvco-head { display: flex; justify-content: space-between; align-items: center; }
+    .emvco-lbl { font-size: 0.68rem; font-weight: 800; color: #64748b; }
+    .emvco-string { font-size: 0.72rem; font-family: ui-monospace, monospace; color: #0f172a; word-break: break-all; max-height: 48px; overflow-y: auto; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
 
     .btn-emerald-submit { width: 100%; height: 56px; border: none; border-radius: 16px; color: #ffffff; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); }
     .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45); }
@@ -1127,7 +1270,15 @@ export class TopUpComponent implements OnInit, OnDestroy {
     { code: 'ZALO', name: 'ZaloPay E-Wallet', shortName: 'ZaloPay', iconType: 'MOMO' }
   ];
 
-  // VietQR Specific Variables
+  // VietQR Generator Variables
+  availableBanks: BankInfo[] = [];
+  selectedBankCode = 'MB';
+  selectedAccountNumber = '8888999988';
+  selectedAccountHolder = 'PAYGATE GATEWAY SYSTEM';
+  selectedTemplate: 'compact2' | 'compact' | 'qr_only' = 'compact2';
+  showCustomReceiverCard = false;
+  emvCoPayload = '';
+
   vietQrImageUrl = '';
   currentTransferNote = '';
   timerSeconds = 300; // 5 minutes
@@ -1146,6 +1297,7 @@ export class TopUpComponent implements OnInit, OnDestroy {
     this.initForm();
     this.initLinkForm();
     this.bankingApps = this.vietQrService.getMobileBankingApps();
+    this.availableBanks = this.vietQrService.getBanks();
 
     this.accountService.account$.subscribe(acc => {
       if (acc) {
@@ -1322,13 +1474,60 @@ export class TopUpComponent implements OnInit, OnDestroy {
     this.showLinkModal = false;
   }
 
+  toggleCustomReceiver(): void {
+    this.showCustomReceiverCard = !this.showCustomReceiverCard;
+  }
+
+  onBankCodeChange(code: string): void {
+    this.selectedBankCode = code;
+    this.updateVietQrCode();
+  }
+
+  selectTemplate(tpl: 'compact2' | 'compact' | 'qr_only'): void {
+    this.selectedTemplate = tpl;
+    this.updateVietQrCode();
+  }
+
+  getSelectedBankInfo(): BankInfo {
+    return this.vietQrService.getBankByCode(this.selectedBankCode) || this.availableBanks[0];
+  }
+
+  updateVietQrCode(): void {
+    const amount = this.currentAmount;
+    const user = this.authService.getUsername() || 'user';
+    if (!this.currentTransferNote) {
+      const txRef = 'VQR' + Math.floor(100000 + Math.random() * 900000);
+      this.currentTransferNote = `PAYGATE TOPUP ${user.split('@')[0].toUpperCase()} ${txRef}`;
+    }
+
+    const bank = this.vietQrService.getBankByCode(this.selectedBankCode);
+    const bankBin = bank ? bank.bin : '970422';
+
+    this.vietQrImageUrl = this.vietQrService.generateQrImageUrl(
+      amount,
+      this.currentTransferNote,
+      this.selectedBankCode,
+      this.selectedAccountNumber,
+      this.selectedAccountHolder,
+      this.selectedTemplate
+    );
+
+    this.emvCoPayload = this.vietQrService.generateEMVCoPayload({
+      bankBin,
+      accountNumber: this.selectedAccountNumber,
+      accountHolder: this.selectedAccountHolder,
+      amount,
+      transferNote: this.currentTransferNote
+    });
+  }
+
   openVietQrModal(): void {
     const amount = this.currentAmount;
     const user = this.authService.getUsername() || 'user';
     const txRef = 'VQR' + Math.floor(100000 + Math.random() * 900000);
     this.currentTransferNote = `PAYGATE TOPUP ${user.split('@')[0].toUpperCase()} ${txRef}`;
 
-    this.vietQrImageUrl = this.vietQrService.generateQrImageUrl(amount, this.currentTransferNote);
+    this.updateVietQrCode();
     this.showVietQrModal = true;
     this.startTimer();
   }
