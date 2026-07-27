@@ -1,6 +1,7 @@
 package com.training.paygate.service.impl;
 
 import com.training.paygate.dto.request.CreateBillSubscriptionRequest;
+import com.training.paygate.dto.response.BillLookupResponse;
 import com.training.paygate.dto.response.BillSubscriptionResponse;
 import com.training.paygate.entity.Bill;
 import com.training.paygate.entity.BillProvider;
@@ -48,36 +49,59 @@ public class BillSubscriptionServiceImpl implements BillSubscriptionService {
         BillProvider provider = billProviderRepository.findByCode(request.providerCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Provider not found with code: " + request.providerCode()));
 
-        ProviderCustomerDto registered;
-        try {
-            registered = billProviderClient.register(new ProviderRegisterRequest(
-                    provider.getCode(),
-                    request.customerName(),
-                    request.address(),
-                    request.cycleAmount()
-            ));
-        } catch (RuntimeException e) {
-            log.error("Provider register failed for user {}: {}", currentUsername, e.getMessage());
-            throw new BadRequestException("Provider gateway unavailable, please try again later");
-        }
-        if (registered == null || registered.customerCode() == null) {
-            throw new BadRequestException("Provider gateway returned empty response");
+        ProviderCustomerDto customerDto;
+
+        boolean isLinkExisting = request.customerCode() != null && !request.customerCode().isBlank();
+
+        if (isLinkExisting) {
+            // LINK_EXISTING mode: verify the customerCode exists in provider gateway
+            customerDto = billProviderClient.findCustomer(request.customerCode())
+                    .orElseThrow(() -> new BadRequestException(
+                            "Customer code '" + request.customerCode() + "' not found in provider " + request.providerCode() +
+                            ". Please check your code or register a new account."));
+        } else {
+            // REGISTER_NEW mode: create a new customer in provider gateway
+            if (request.customerName() == null || request.customerName().isBlank()) {
+                throw new BadRequestException("customerName is required when registering a new account");
+            }
+            if (request.address() == null || request.address().isBlank()) {
+                throw new BadRequestException("address is required when registering a new account");
+            }
+            if (request.cycleAmount() == null) {
+                throw new BadRequestException("cycleAmount is required when registering a new account");
+            }
+            try {
+                customerDto = billProviderClient.register(new ProviderRegisterRequest(
+                        provider.getCode(),
+                        request.customerName(),
+                        request.address(),
+                        request.cycleAmount()
+                ));
+            } catch (RuntimeException e) {
+                log.error("Provider register failed for user {}: {}", currentUsername, e.getMessage());
+                throw new BadRequestException("Provider gateway unavailable, please try again later");
+            }
+            if (customerDto == null || customerDto.customerCode() == null) {
+                throw new BadRequestException("Provider gateway returned empty response");
+            }
         }
 
+        // Check for duplicate subscription
         if (subscriptionRepository.existsByUserIdAndProviderIdAndCustomerCode(
-                user.getId(), provider.getId(), registered.customerCode())) {
+                user.getId(), provider.getId(), customerDto.customerCode())) {
             throw new DuplicateResourceException(
-                    "Subscription already exists for provider " + provider.getCode() + " / " + registered.customerCode());
+                    "You already have a linked account for provider " + provider.getCode() +
+                    " with code " + customerDto.customerCode());
         }
 
         LocalDateTime now = LocalDateTime.now();
         BillSubscription sub = BillSubscription.builder()
                 .userId(user.getId())
                 .providerId(provider.getId())
-                .customerCode(registered.customerCode())
-                .customerName(registered.customerName())
-                .address(registered.address())
-                .cycleAmount(registered.cycleAmount())
+                .customerCode(customerDto.customerCode())
+                .customerName(customerDto.customerName())
+                .address(customerDto.address())
+                .cycleAmount(customerDto.cycleAmount())
                 .frequency(request.frequency())
                 .status(BillSubscriptionStatus.ACTIVE)
                 .nextBillAt(request.frequency().advance(now))
@@ -85,7 +109,8 @@ public class BillSubscriptionServiceImpl implements BillSubscriptionService {
                 .build();
         sub = subscriptionRepository.save(sub);
 
-        ProviderBillDto firstBill = billProviderClient.currentBill(registered.customerCode()).orElse(null);
+        // Immediately fetch the current bill from provider
+        ProviderBillDto firstBill = billProviderClient.currentBill(customerDto.customerCode()).orElse(null);
         if (firstBill != null) {
             Bill bill = Bill.builder()
                     .providerId(provider.getId())
@@ -97,10 +122,11 @@ public class BillSubscriptionServiceImpl implements BillSubscriptionService {
                     .status(BillStatus.UNPAID)
                     .build();
             billRepository.save(bill);
-            log.info("Subscription #{} created + first bill generated (provider {}, customer {}, amount {})",
-                    sub.getId(), provider.getCode(), registered.customerCode(), firstBill.amount());
+            log.info("Subscription #{} created ({}) + first bill fetched (provider={}, customer={}, amount={})",
+                    sub.getId(), isLinkExisting ? "LINK_EXISTING" : "REGISTER_NEW",
+                    provider.getCode(), customerDto.customerCode(), firstBill.amount());
         } else {
-            log.warn("Subscription #{} created but provider did not return a current bill", sub.getId());
+            log.warn("Subscription #{} created but provider returned no current bill", sub.getId());
         }
 
         return toResponse(sub, provider);
@@ -127,6 +153,61 @@ public class BillSubscriptionServiceImpl implements BillSubscriptionService {
                         user.getId(), provider.getId(), BillSubscriptionStatus.ACTIVE).stream()
                 .map(s -> toResponse(s, provider))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BillLookupResponse> getBillsForSubscription(Long subscriptionId, String currentUsername) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
+        BillSubscription sub = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription", subscriptionId));
+        if (!sub.getUserId().equals(user.getId())) {
+            throw new BadRequestException("Subscription does not belong to current user");
+        }
+        BillProvider provider = billProviderRepository.findById(sub.getProviderId())
+                .orElseThrow(() -> new ResourceNotFoundException("BillProvider", sub.getProviderId()));
+
+        return billRepository.findByProviderIdAndCustomerCodeOrderByCreatedAtDesc(
+                        sub.getProviderId(), sub.getCustomerCode()).stream()
+                .map(b -> toBillLookupResponse(b, provider))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public BillLookupResponse refreshCurrentBill(Long subscriptionId, String currentUsername) {
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
+        BillSubscription sub = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription", subscriptionId));
+        if (!sub.getUserId().equals(user.getId())) {
+            throw new BadRequestException("Subscription does not belong to current user");
+        }
+        BillProvider provider = billProviderRepository.findById(sub.getProviderId())
+                .orElseThrow(() -> new ResourceNotFoundException("BillProvider", sub.getProviderId()));
+
+        ProviderBillDto providerBill = billProviderClient.currentBill(sub.getCustomerCode())
+                .orElseThrow(() -> new BadRequestException("Provider returned no current bill for customer " + sub.getCustomerCode()));
+
+        // Upsert: check if this period's bill already exists
+        Bill bill = billRepository.findFirstByProviderIdAndCustomerCodeAndStatusOrderByIdDesc(
+                        sub.getProviderId(), sub.getCustomerCode(), BillStatus.UNPAID)
+                .filter(b -> b.getPeriod().equals(providerBill.period()))
+                .orElseGet(() -> {
+                    Bill newBill = Bill.builder()
+                            .providerId(provider.getId())
+                            .customerCode(providerBill.customerCode())
+                            .customerName(providerBill.customerName())
+                            .address(providerBill.address())
+                            .amount(providerBill.amount())
+                            .period(providerBill.period())
+                            .status(BillStatus.UNPAID)
+                            .build();
+                    return billRepository.save(newBill);
+                });
+
+        return toBillLookupResponse(bill, provider);
     }
 
     @Override
@@ -204,6 +285,20 @@ public class BillSubscriptionServiceImpl implements BillSubscriptionService {
                 sub.getNextBillAt(),
                 sub.getLastBillAt(),
                 sub.getCreatedAt()
+        );
+    }
+
+    private BillLookupResponse toBillLookupResponse(Bill b, BillProvider provider) {
+        return new BillLookupResponse(
+                b.getId(),
+                provider.getCode(),
+                provider.getName(),
+                b.getCustomerCode(),
+                b.getCustomerName(),
+                b.getAddress(),
+                b.getPeriod(),
+                b.getAmount(),
+                b.getStatus().name()
         );
     }
 }

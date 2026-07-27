@@ -111,6 +111,24 @@ public class BillController {
                 billSubscriptionService.listMineByProvider(principal.getName(), providerCode));
     }
 
+    @GetMapping("/subscriptions/{id}/bills")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "Get bill history for a specific subscription")
+    public ApiResponse<List<BillLookupResponse>> billsForSubscription(
+            @PathVariable Long id, Principal principal) {
+        return ApiResponse.success("Bills for subscription",
+                billSubscriptionService.getBillsForSubscription(id, principal.getName()));
+    }
+
+    @PostMapping("/subscriptions/{id}/refresh-bill")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @Operation(summary = "Refresh current bill from provider for a subscription")
+    public ApiResponse<BillLookupResponse> refreshBill(
+            @PathVariable Long id, Principal principal) {
+        return ApiResponse.success("Current bill refreshed",
+                billSubscriptionService.refreshCurrentBill(id, principal.getName()));
+    }
+
     @DeleteMapping("/subscriptions/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @Operation(summary = "Cancel a bill subscription")
