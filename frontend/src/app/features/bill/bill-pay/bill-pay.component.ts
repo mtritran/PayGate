@@ -157,6 +157,13 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
       <!-- Bills list -->
       <div class="bills-list" *ngIf="!loadingBills() && subBills().length > 0">
+
+        <!-- Pay error banner -->
+        <div class="pay-error-banner" *ngIf="payError()">
+          <span>⚠️ {{ payError() }}</span>
+          <a routerLink="/topup" class="topup-link">Nạp tiền ngay →</a>
+        </div>
+
         <div *ngFor="let bill of subBills()" class="bill-card" [class.unpaid]="bill.status === 'UNPAID'" [class.paid]="bill.status === 'PAID'">
           <div class="bill-card-left">
             <div class="bill-period">{{ bill.period }}</div>
@@ -396,6 +403,17 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     .receipt-rows span { color: #047857; }
     .receipt-rows b { color: #064e3b; font-weight: 700; }
 
+    /* Pay error banner */
+    .pay-error-banner {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+      background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 10px;
+      padding: 12px 16px; margin-bottom: 12px; font-size: 14px; color: #b91c1c;
+    }
+    .topup-link {
+      color: #059669; font-weight: 700; text-decoration: none; white-space: nowrap;
+    }
+    .topup-link:hover { text-decoration: underline; }
+
     /* Loading / Empty */
     .loading-state { display: flex; align-items: center; gap: 12px; padding: 32px; color: #6b7280; }
     .spinner {
@@ -523,6 +541,7 @@ export class BillPayComponent implements OnInit {
   refreshing = signal(false);
   payingBillId = signal<number | null>(null);
   lastPaid = signal<BillPayResponse | null>(null);
+  payError = signal<string | null>(null);
 
   // Link modal
   showLinkModal = signal(false);
@@ -611,6 +630,7 @@ export class BillPayComponent implements OnInit {
   payBill(bill: BillLookupResponse): void {
     this.payingBillId.set(bill.billId);
     this.lastPaid.set(null);
+    this.payError.set(null);
     this.bill.pay({ billId: bill.billId }).subscribe({
       next: res => {
         this.payingBillId.set(null);
@@ -621,7 +641,9 @@ export class BillPayComponent implements OnInit {
       },
       error: e => {
         this.payingBillId.set(null);
-        this.notify.error(e?.error?.message || 'Thanh toán thất bại');
+        const msg = e?.error?.message || e?.message || 'Thanh toán thất bại';
+        this.payError.set(msg);
+        this.notify.error(msg);
       }
     });
   }
