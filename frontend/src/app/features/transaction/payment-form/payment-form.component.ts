@@ -653,8 +653,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadMyBalance();
-    this.loadMyQrInfo();
+    this.loadMyAccountInfo(); // Single call for balance + QR
     this.loadBeneficiaries();
     this.generateIdempotencyKey();
     this.setupLookupDebounce();
@@ -693,18 +692,21 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadMyQrInfo(): void {
+  private loadMyAccountInfo(): void {
     this.accountService.getAccountMe().subscribe({
       next: (res) => {
         if (res.success && res.data) {
+          this.myBalance = res.data.balance;
           this.myAccountNumber = res.data.accountNumber || '';
-          // Lookup own account to get owner name
+          // Show QR immediately with account number
+          this.updateMyQr();
+          // Fetch owner name then regenerate QR with name
           this.accountService.lookupAccount(this.myAccountNumber).subscribe({
             next: (lookupRes) => {
               if (lookupRes.success && lookupRes.data) {
                 this.myAccountName = lookupRes.data.ownerName || '';
+                this.updateMyQr();
               }
-              this.updateMyQr();
             }
           });
         }
@@ -770,15 +772,6 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadMyBalance(): void {
-    this.accountService.getAccountMe().subscribe({
-      next: (res) => {
-        if (res.success && res.data) {
-          this.myBalance = res.data.balance;
-        }
-      }
-    });
-  }
 
   private setupLookupDebounce(): void {
     this.lookupSub = this.lookupSubject.pipe(
