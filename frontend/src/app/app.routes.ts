@@ -44,6 +44,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
       },
       {
+        path: 'transactions/transfer',
+        loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
+      },
+      {
         path: 'transactions/history',
         loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
       },

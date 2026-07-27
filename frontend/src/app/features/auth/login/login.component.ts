@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { InputComponent } from '../../../shared/components';
@@ -364,6 +364,8 @@ export class LoginComponent {
     return '';
   });
 
+  private route = inject(ActivatedRoute);
+
   fillDemoUser(): void {
     this.form.patchValue({
       username: 'user',
@@ -396,7 +398,8 @@ export class LoginComponent {
         this.loading.set(false);
         if (res.success) {
           this.notification.success('Login successful');
-          this.router.navigate(['/accounts/dashboard']);
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/accounts/dashboard';
+          this.router.navigateByUrl(returnUrl);
         } else {
           this.submitError.set(res.message || 'Login failed');
         }
