@@ -1,5 +1,6 @@
 package com.training.paygate.security;
 
+import com.training.paygate.cache.RefreshTokenCacheService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
+    private final RefreshTokenCacheService refreshTokenCacheService;
 
     @Override
     protected void doFilterInternal(
@@ -32,7 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = extractJwtFromRequest(request);
 
-        if (StringUtils.hasText(jwt) && jwtTokenProvider.isTokenValid(jwt)) {
+        if (StringUtils.hasText(jwt) 
+                && !refreshTokenCacheService.isAccessTokenBlacklisted(jwt) 
+                && jwtTokenProvider.isTokenValid(jwt)
+                && jwtTokenProvider.isAccessToken(jwt)) {
+
             String username = jwtTokenProvider.extractUsername(jwt);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 

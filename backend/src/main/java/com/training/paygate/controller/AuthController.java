@@ -10,6 +10,7 @@ import com.training.paygate.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -87,9 +88,20 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Logout user", description = "Clears HttpOnly refresh token cookie on server.")
-    public ApiResponse<Void> logout(HttpServletResponse response) {
+    @Operation(summary = "Logout user", description = "Invalidates access token in Redis blacklist and clears refresh token cookie.")
+    public ApiResponse<Void> logout(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @CookieValue(name = "refreshToken", required = false) String refreshTokenFromCookie) {
+
+        String authHeader = request.getHeader("Authorization");
+        String accessToken = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7)
+                : null;
+
+        authService.logout(accessToken, refreshTokenFromCookie);
         setRefreshTokenCookie(response, "", 0);
+
         return ApiResponse.success("Logged out successfully", null);
     }
 }

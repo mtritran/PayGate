@@ -85,7 +85,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshTokenStr = request != null ? request.refreshToken() : null;
-        if (refreshTokenStr == null || !jwtTokenProvider.isTokenValid(refreshTokenStr)) {
+        if (refreshTokenStr == null 
+                || !jwtTokenProvider.isTokenValid(refreshTokenStr) 
+                || !jwtTokenProvider.isRefreshToken(refreshTokenStr)) {
             throw new BadRequestException("Invalid refresh token");
         }
 
@@ -106,5 +108,26 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenCacheService.saveRefreshToken(username, newRefreshToken, refreshTokenExpiration);
 
         return new AuthResponse(newAccessToken, newRefreshToken, username, user.getRole().name(), user.getId());
+    }
+
+    @Override
+    public void logout(String accessToken, String refreshTokenStr) {
+        // 1. Blacklist Access Token nếu hợp lệ
+        if (accessToken != null && jwtTokenProvider.isTokenValid(accessToken)) {
+            long remainingMs = jwtTokenProvider.getRemainingExpirationMs(accessToken);
+            refreshTokenCacheService.blacklistAccessToken(accessToken, remainingMs);
+        }
+
+        // 2. Thu hồi Refresh Token khỏi Redis
+        String username = null;
+        if (accessToken != null && jwtTokenProvider.isTokenValid(accessToken)) {
+            username = jwtTokenProvider.extractUsername(accessToken);
+        } else if (refreshTokenStr != null && jwtTokenProvider.isTokenValid(refreshTokenStr)) {
+            username = jwtTokenProvider.extractUsername(refreshTokenStr);
+        }
+
+        if (username != null) {
+            refreshTokenCacheService.deleteRefreshToken(username);
+        }
     }
 }

@@ -12,6 +12,7 @@ public class RefreshTokenCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String CACHE_PREFIX = "auth:refresh_token:";
+    private static final String BLACKLIST_PREFIX = "auth:blacklist:";
 
     public void saveRefreshToken(String username, String refreshToken, long expirationMs) {
         String key = CACHE_PREFIX + username;
@@ -35,5 +36,20 @@ public class RefreshTokenCacheService {
     public void deleteRefreshToken(String username) {
         String key = CACHE_PREFIX + username;
         redisTemplate.delete(key);
+    }
+
+    public void blacklistAccessToken(String accessToken, long remainingMs) {
+        if (accessToken != null && remainingMs > 0) {
+            String key = BLACKLIST_PREFIX + accessToken;
+            redisTemplate.opsForValue().set(key, "logout", remainingMs, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    public boolean isAccessTokenBlacklisted(String accessToken) {
+        if (accessToken == null) {
+            return false;
+        }
+        String key = BLACKLIST_PREFIX + accessToken;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 }
