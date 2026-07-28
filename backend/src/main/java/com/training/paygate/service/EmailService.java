@@ -37,4 +37,14 @@ public interface EmailService {
             byte[] pdfBytes,
             String attachmentFileName
     );
+
+    /**
+     * Send 6-digit OTP verification email to user.
+     */
+    void sendOtpEmail(
+            String recipientEmail,
+            String recipientName,
+            String otpCode,
+            String actionName
+    );
 }

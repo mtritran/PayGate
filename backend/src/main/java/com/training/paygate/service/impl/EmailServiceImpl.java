@@ -360,6 +360,87 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
+    @Override
+    @Async
+    public void sendOtpEmail(
+            String recipientEmail,
+            String recipientName,
+            String otpCode,
+            String actionName
+    ) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Cannot send OTP email: recipientEmail is empty");
+            return;
+        }
+
+        String actionTitle = actionName != null && !actionName.isBlank() ? actionName : "Xác thực giao dịch";
+        String subject = String.format("[PayGate] Mã Xác Thực OTP (%s) - %s", otpCode, actionTitle);
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+                <meta charset="UTF-8">
+                <title>Mã Xác Thực OTP</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="max-width: 540px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 60%%, #4338ca 100%%); padding: 32px 36px; text-align: center;">
+                                        <div style="display: inline-block; background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 10px; margin-bottom: 10px;">
+                                            <span style="color: #c7d2fe; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">PAYGATE SECURITY AUTHENTICATION</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0;">Mã Xác Thực OTP Giao Dịch</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 32px 36px; color: #0f172a;">
+                                        <p style="font-size: 15px; color: #334155; margin-top: 0;">Xin chào <strong>%s</strong>,</p>
+                                        <p style="font-size: 14px; color: #475569; line-height: 1.6;">Bạn vừa yêu cầu mã xác thực OTP cho thao tác: <strong style="color: #4f46e5;">%s</strong>.</p>
+
+                                        <!-- OTP Display Card -->
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background: linear-gradient(135deg, #e0e7ff 0%%, #eef2ff 100%%); border: 2px dashed #818cf8; border-radius: 20px; margin: 24px 0; padding: 24px; text-align: center;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 12px; font-weight: 800; color: #4338ca; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px;">Mã OTP 6 Chữ Số Của Bạn</span>
+                                                    <span style="font-size: 38px; font-weight: 900; color: #3730a3; letter-spacing: 0.25em; font-family: monospace;">%s</span>
+                                                    <span style="font-size: 12px; color: #6366f1; display: block; margin-top: 8px; font-weight: 600;">⏱️ Hiệu lực trong 5 phút</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="font-size: 13px; color: #64748b; margin-bottom: 8px;">Thời gian yêu cầu: <strong>%s</strong></p>
+
+                                        <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 14px 16px; color: #be123c; font-size: 13px; line-height: 1.5; margin-top: 20px;">
+                                            🚨 <strong>Cảnh báo bảo mật:</strong> KHÔNG chia sẻ mã OTP này cho bất kỳ ai, kể cả nhân viên ngân hàng hay hỗ trợ PayGate.
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 36px; text-align: center;">
+                                        <p style="font-size: 11px; color: #94a3b8; margin: 0;">&copy; 2026 PayGate Security System. Automated OTP Email Dispatcher.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """,
+            recipientName != null ? recipientName : recipientEmail,
+            actionTitle,
+            otpCode,
+            timestamp
+        );
+
+        sendMimeEmail(recipientEmail, subject, htmlContent);
+    }
+
     private void sendMimeEmail(String to, String subject, String htmlContent) {
         log.info("[EMAIL NOTIFICATION] Sending email to: '{}' | Subject: '{}'", to, subject);
         try {
