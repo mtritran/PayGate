@@ -25,6 +25,7 @@ import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
+import com.training.paygate.repository.VaultRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -50,6 +51,7 @@ public class AccountServiceImpl implements AccountService {
         private final LedgerEntryRepository ledgerEntryRepository;
         private final BalanceCacheService balanceCacheService;
         private final AccountMapper accountMapper;
+        private final VaultRepository vaultRepository;
 
         @Override
         @Transactional
@@ -233,7 +235,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+        if (user.getRole() != Role.ADMIN && !canAccessAccount(user, account)) {
             throw new AccessDeniedException("You do not have permission to access this account's balance");
         }
 
@@ -250,7 +252,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+        if (user.getRole() != Role.ADMIN && !canAccessAccount(user, account)) {
             throw new AccessDeniedException("You do not have permission to access this account's history");
         }
 
@@ -296,6 +298,10 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountOpt.orElseThrow(() ->
                 new ResourceNotFoundException("PayGate account not found for: " + query));
 
+        if (account.getOwnerType() == OwnerType.VAULT) {
+            throw new ResourceNotFoundException("PayGate account not found for: " + query);
+        }
+
         Long merchantId = null;
         String ownerName = "PayGate Account";
         if (account.getOwnerType() == OwnerType.USER) {
@@ -321,5 +327,17 @@ public class AccountServiceImpl implements AccountService {
                 account.getStatus(),
                 merchantId
         );
+    }
+
+    private boolean canAccessAccount(User user, Account account) {
+        if (account.getOwnerType() == OwnerType.USER) {
+            return account.getOwnerId().equals(user.getId());
+        }
+        if (account.getOwnerType() == OwnerType.VAULT) {
+            return vaultRepository.findByAccountId(account.getId())
+                    .map(vault -> vault.getUserId().equals(user.getId()))
+                    .orElse(false);
+        }
+        return false;
     }
 }

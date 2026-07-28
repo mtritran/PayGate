@@ -92,6 +92,16 @@ import { NotificationService } from '../../core/services/notification.service';
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" routerLink="/vaults" routerLinkActive="active" title="Savings Vault">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Savings Vault</span>
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" routerLink="/loans" routerLinkActive="active" title="Vay Tiêu Dùng">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
