@@ -263,6 +263,59 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             </div>
           </div>
 
+          <!-- Full Response Structure Section -->
+          <div class="docs-section mt-28">
+            <h4 class="section-subtitle">📦 Cấu Trúc Response Trả Về (JSON Response)</h4>
+            <pre class="code-box light-code"><code>&#123;
+  "success": true,
+  "message": "Tạo phiên thanh toán thành công",
+  "data": &#123;
+    "token": "CHK_3EF6DF2E73B9469093B97BFD47177875",
+    "paymentUrl": "http://localhost:4200/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875",
+    "expiresAt": "2026-07-28T16:30:00.000"
+  &#125;,
+  "timestamp": "2026-07-28T16:15:00.000"
+&#125;</code></pre>
+          </div>
+
+          <!-- Error Codes Specification Table -->
+          <div class="docs-section mt-28">
+            <h4 class="section-subtitle">⚠️ Bảng Mã Lỗi Thường Gặp & Cách Xử Lý (Error Handling)</h4>
+            <div class="table-responsive">
+              <table class="docs-table">
+                <thead>
+                  <tr>
+                    <th>Mã Lỗi / Error Message</th>
+                    <th>Nguyên nhân gốc</th>
+                    <th>Giải pháp khắc phục</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>API Key của Merchant không hợp lệ</code></td>
+                    <td>Nhập sai apiKey hoặc chưa tạo Merchant.</td>
+                    <td>Vào tab API Keys để copy đúng apiKey.</td>
+                  </tr>
+                  <tr>
+                    <td><code>Tài khoản Merchant hiện đang bị khóa</code></td>
+                    <td>Merchant chưa được Admin phê duyệt.</td>
+                    <td>Liên hệ Admin PayGate để duyệt tài khoản.</td>
+                  </tr>
+                  <tr>
+                    <td><code>Số tiền thanh toán tối thiểu là 1,000 VND</code></td>
+                    <td>Giá trị amount &lt; 1000.</td>
+                    <td>Truyền giá trị amount &gt;= 1000 VND.</td>
+                  </tr>
+                  <tr>
+                    <td><code>Phiên thanh toán đã hết hạn</code></td>
+                    <td>Quá 15 phút chưa hoàn tất thanh toán.</td>
+                    <td>Tạo lại đơn thanh toán mới cho khách.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <!-- Code Snippets Selector -->
           <div class="code-snippets-section mt-28">
             <div class="code-header">
