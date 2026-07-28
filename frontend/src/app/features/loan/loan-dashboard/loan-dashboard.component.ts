@@ -123,7 +123,26 @@ import { NotificationService } from '../../../core/services/notification.service
               <span class="reason-label">Lý do vay:</span> {{ loan.reason }}
             </div>
 
-            <div class="card-actions">
+            <!-- Offer Acceptance Banner & PDF Actions if status === OFFERED -->
+            <div class="offered-banner" *ngIf="loan.status === 'OFFERED'">
+              <div class="offered-title">🎉 Đơn vay của bạn đã được Admin duyệt!</div>
+              <p>Vui lòng xem kỹ file Hợp đồng vay tiêu dùng (PDF 3 trang) bên dưới và nhấn <strong>Ký Hợp Đồng</strong> để hoàn tất giải ngân số tiền <strong>{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</strong> vào Ví PayGate & nhận bản hợp đồng qua Gmail.</p>
+              
+              <div class="offered-btn-group">
+                <button class="btn-pdf-preview" (click)="downloadContractPdf(loan.id)">
+                  📄 Xem Hợp Đồng PDF (3 Trang)
+                </button>
+                <button class="btn-accept-contract" (click)="acceptOffer(loan.id)" [disabled]="accepting()">
+                  <span *ngIf="!accepting()">✍️ Đồng Ý & Ký Hợp Đồng</span>
+                  <span *ngIf="accepting()">Đang xử lý giải ngân...</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card-actions" *ngIf="loan.status !== 'OFFERED'">
+              <button class="btn-pdf-outline" (click)="downloadContractPdf(loan.id)" *ngIf="loan.status === 'ACTIVE' || loan.status === 'PAID_OFF'">
+                📄 Tải Hợp Đồng PDF
+              </button>
               <button class="btn-detail" (click)="viewLoanDetail(loan.id)">
                 Xem lịch trả nợ & Thanh toán →
               </button>
@@ -164,8 +183,8 @@ import { NotificationService } from '../../../core/services/notification.service
             </div>
 
             <!-- Admin action buttons -->
-            <div class="admin-actions" *ngIf="loan.status === 'PENDING'">
-              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Duyệt & Giải Ngân</button>
+            <div class="admin-actions" *ngIf="loan.status === 'PENDING_APPROVAL'">
+              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Duyệt Đề Nghị Vay</button>
               <button class="btn-reject" (click)="rejectLoan(loan.id)">✕ Từ Chối</button>
             </div>
           </div>
@@ -418,6 +437,7 @@ import { NotificationService } from '../../../core/services/notification.service
       padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.03em;
     }
     .status-pending { background: #fef3c7; color: #d97706; }
+    .status-offered { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
     .status-active { background: #dcfce7; color: #15803d; }
     .status-paid { background: #e0f2fe; color: #0369a1; }
     .status-rejected { background: #fee2e2; color: #b91c1c; }
@@ -495,6 +515,32 @@ import { NotificationService } from '../../../core/services/notification.service
     .empty-state { text-align: center; padding: 60px 20px; background: #fff; border-radius: 20px; border: 1.5px dashed #cbd5e1; }
     .empty-icon { width: 80px; height: 80px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
     .btn-primary-apply { padding: 14px 28px; background: #059669; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; margin-top: 16px; }
+    /* Offered Banner & Action Buttons */
+    .offered-banner {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 1.5px solid #fde047; border-radius: 16px; padding: 20px;
+      display: flex; flex-direction: column; gap: 10px; color: #78350f;
+    }
+    .offered-title { font-size: 1.05rem; font-weight: 800; color: #b45309; }
+    .offered-banner p { font-size: 0.88rem; margin: 0; line-height: 1.5; color: #92400e; }
+    .offered-btn-group { display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; margin-top: 6px; }
+    .btn-pdf-preview {
+      padding: 12px 14px; background: #ffffff; color: #1e40af; border: 1.5px solid #93c5fd;
+      border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-pdf-preview:hover { background: #eff6ff; border-color: #3b82f6; }
+    .btn-accept-contract {
+      padding: 12px 16px; background: #059669; color: #ffffff; border: none;
+      border-radius: 12px; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.15s;
+      box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+    }
+    .btn-accept-contract:hover { background: #047857; transform: translateY(-1px); }
+    .btn-pdf-outline {
+      padding: 12px; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;
+      border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-pdf-outline:hover { background: #f1f5f9; border-color: #94a3b8; color: #0f172a; }
+    .card-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
   `]
 })
 export class LoanDashboardComponent implements OnInit {
@@ -505,6 +551,7 @@ export class LoanDashboardComponent implements OnInit {
   loading = signal(true);
   submitting = signal(false);
   repaying = signal(false);
+  accepting = signal(false);
 
   myLoans = signal<LoanResponse[]>([]);
   adminLoans = signal<LoanResponse[]>([]);
@@ -545,7 +592,7 @@ export class LoanDashboardComponent implements OnInit {
   }
 
   activeLoansCount(): number {
-    return this.myLoans().filter(l => l.status === 'ACTIVE' || l.status === 'PENDING').length;
+    return this.myLoans().filter(l => l.status === 'ACTIVE' || l.status === 'PENDING_APPROVAL' || l.status === 'OFFERED').length;
   }
 
   totalRemainingAmount(): number {
@@ -581,12 +628,42 @@ export class LoanDashboardComponent implements OnInit {
       next: (res) => {
         this.submitting.set(false);
         this.showApplyModal.set(false);
-        this.notification.success('Gửi đơn vay thành công!');
+        this.notification.success('Gửi đơn vay thành công! Vui lòng chờ Admin xem xét phê duyệt.');
         this.loadLoans();
       },
       error: (err) => {
         this.submitting.set(false);
         this.notification.error(err?.error?.message || 'Không thể tạo đơn vay');
+      }
+    });
+  }
+
+  downloadContractPdf(loanId: number): void {
+    this.notification.info('Đang tạo tệp Hợp đồng PDF...');
+    this.loanService.downloadContractPdfBlob(loanId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `HopDongVay_PayGate_${loanId}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.notification.error('Không thể tải tệp PDF hợp đồng')
+    });
+  }
+
+  acceptOffer(loanId: number): void {
+    this.accepting.set(true);
+    this.loanService.acceptLoanOffer(loanId).subscribe({
+      next: (res) => {
+        this.accepting.set(false);
+        this.notification.success('Ký hợp đồng thành công! Tiền đã giải ngân vào Ví PayGate và bản sao PDF đã gửi tới Gmail của bạn.');
+        this.loadLoans();
+      },
+      error: (err) => {
+        this.accepting.set(false);
+        this.notification.error(err?.error?.message || 'Không thể chấp nhận hợp đồng');
       }
     });
   }
@@ -620,9 +697,9 @@ export class LoanDashboardComponent implements OnInit {
   }
 
   approveLoan(loanId: number): void {
-    this.loanService.approveLoan(loanId, 'Approved by admin').subscribe({
+    this.loanService.approveLoan(loanId, 'Approved loan offer by Admin').subscribe({
       next: () => {
-        this.notification.success('Phê duyệt & Giải ngân thành công!');
+        this.notification.success('Đã duyệt đề nghị vay! Đơn vay chuyển sang trạng thái chờ User ký hợp đồng.');
         this.loadLoans();
       },
       error: (err) => this.notification.error(err?.error?.message || 'Phê duyệt thất bại')
@@ -641,7 +718,8 @@ export class LoanDashboardComponent implements OnInit {
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'PENDING': return 'status-pending';
+      case 'PENDING_APPROVAL': return 'status-pending';
+      case 'OFFERED': return 'status-offered';
       case 'ACTIVE': return 'status-active';
       case 'PAID_OFF': return 'status-paid';
       case 'REJECTED': return 'status-rejected';
@@ -651,8 +729,9 @@ export class LoanDashboardComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'PENDING': return 'Đang chờ duyệt';
-      case 'ACTIVE': return 'Đang hoạt động';
+      case 'PENDING_APPROVAL': return 'Đang chờ duyệt';
+      case 'OFFERED': return 'Đã duyệt - Chờ ký HĐ';
+      case 'ACTIVE': return 'Đang vay (Hoạt động)';
       case 'PAID_OFF': return 'Đã tất toán';
       case 'REJECTED': return 'Đã từ chối';
       default: return status;

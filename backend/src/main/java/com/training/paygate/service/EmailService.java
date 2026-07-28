@@ -25,4 +25,16 @@ public interface EmailService {
             String merchantCode,
             boolean isApproved
     );
+
+    /**
+     * Send email notification with PDF contract attachment upon loan offer acceptance and disbursement.
+     */
+    void sendLoanContractEmail(
+            String recipientEmail,
+            String recipientName,
+            String loanRef,
+            BigDecimal amount,
+            byte[] pdfBytes,
+            String attachmentFileName
+    );
 }

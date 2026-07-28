@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
 
-export type LoanStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'PAID_OFF';
+export type LoanStatus = 'PENDING_APPROVAL' | 'OFFERED' | 'ACTIVE' | 'PAID_OFF' | 'REJECTED' | 'OVERDUE';
 export type LoanScheduleStatus = 'UNPAID' | 'PAID' | 'OVERDUE';
 export type RepayType = 'PAY_PERIOD' | 'PAY_ALL';
 
@@ -60,6 +60,14 @@ export class LoanService {
 
   getLoanById(id: number): Observable<ApiResponse<LoanResponse>> {
     return this.http.get<ApiResponse<LoanResponse>>(`${this.apiUrl}/loans/${id}`);
+  }
+
+  acceptLoanOffer(id: number): Observable<ApiResponse<LoanResponse>> {
+    return this.http.post<ApiResponse<LoanResponse>>(`${this.apiUrl}/loans/${id}/accept-offer`, {});
+  }
+
+  downloadContractPdfBlob(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/loans/${id}/contract-pdf`, { responseType: 'blob' });
   }
 
   repayLoan(id: number, repayType: RepayType): Observable<ApiResponse<LoanResponse>> {

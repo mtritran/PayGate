@@ -21,5 +21,9 @@ public interface LoanService {
 
     LoanResponse approveLoan(Long loanId, Long adminId, LoanApprovalRequest request);
 
+    LoanResponse acceptLoanOffer(Long userId, Long loanId);
+
+    byte[] generateLoanContractPdf(Long loanId, Long currentUserId, boolean isAdmin);
+
     LoanResponse rejectLoan(Long loanId, Long adminId, LoanApprovalRequest request);
 }

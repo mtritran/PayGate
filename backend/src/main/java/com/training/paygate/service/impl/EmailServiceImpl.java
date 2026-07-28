@@ -253,6 +253,113 @@ public class EmailServiceImpl implements EmailService {
         sendMimeEmail(recipientEmail, subject, htmlContent);
     }
 
+    @Override
+    @Async
+    public void sendLoanContractEmail(
+            String recipientEmail,
+            String recipientName,
+            String loanRef,
+            BigDecimal amount,
+            byte[] pdfBytes,
+            String attachmentFileName
+    ) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Cannot send loan contract email: recipientEmail is empty for loanRef {}", loanRef);
+            return;
+        }
+
+        String formattedAmount = formatVnd(amount);
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        String subject = "[PayGate] Hợp Đồng Vay Tiêu Dùng & Thông Báo Giải Ngân Thành Công - Ref: " + loanRef;
+
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+                <meta charset="UTF-8">
+                <title>Hợp Đồng Vay Tiêu Dùng</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #064e3b 0%%, #047857 60%%, #059669 100%%); padding: 36px 40px; text-align: center;">
+                                        <div style="display: inline-block; background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.25); margin-bottom: 12px;">
+                                            <span style="color: #a7f3d0; font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">PAYGATE CREDIT DIGITAL SERVICES</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0;">Xác Nhận Giải Ngân & Hợp Đồng Vay</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 36px 40px; color: #0f172a;">
+                                        <p style="font-size: 15px; color: #334155;">Xin chào <strong>%s</strong>,</p>
+                                        <p style="font-size: 15px; color: #475569; line-height: 1.6;">Chúc mừng bạn! Hợp đồng vay tiêu dùng của bạn đã được hoàn tất ký kết và tiền vay đã được <strong>giải ngân thành công vào Ví điện tử PayGate</strong> của bạn.</p>
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background: linear-gradient(135deg, #ecfdf5 0%%, #f0fdf4 100%%); border: 1px solid #a7f3d0; border-radius: 18px; margin-bottom: 24px; padding: 24px; text-align: center;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Số tiền giải ngân</span>
+                                                    <span style="font-size: 32px; font-weight: 900; color: #059669;">+%s</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #64748b; font-size: 13px;">Mã hợp đồng:</td>
+                                                <td align="right" style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 800; font-family: monospace;">%s</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #64748b; font-size: 13px;">Thời gian giải ngân:</td>
+                                                <td align="right" style="padding: 8px 0; color: #334155; font-size: 13px; font-weight: 700;">%s</td>
+                                            </tr>
+                                        </table>
+
+                                        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 18px; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                            📎 <strong>Tệp đính kèm:</strong> Bản sao chính thức Hợp đồng vay tiêu dùng chi tiết (file PDF) đã được đính kèm trực tiếp trong email này. Quý khách vui lòng lưu trữ cẩn thận.
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 40px; text-align: center;">
+                                        <p style="font-size: 12px; color: #94a3b8; margin: 0;">&copy; 2026 PayGate Consumer Credit Services. Automated Digital Signing System.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """,
+            recipientName,
+            formattedAmount,
+            loanRef,
+            timestamp
+        );
+
+        log.info("[EMAIL LOAN CONTRACT] Dispatching contract PDF to '{}' for loan '{}'", recipientEmail, loanRef);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail != null && !fromEmail.isBlank() ? fromEmail : "noreply@paygate.dev");
+            helper.setTo(recipientEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            if (pdfBytes != null && pdfBytes.length > 0) {
+                helper.addAttachment(attachmentFileName != null ? attachmentFileName : ("HopDongVay_" + loanRef + ".pdf"), new org.springframework.core.io.ByteArrayResource(pdfBytes));
+            }
+
+            mailSender.send(message);
+            log.info("[EMAIL LOAN CONTRACT SUCCESS] Email with PDF contract successfully sent to '{}'", recipientEmail);
+        } catch (Exception e) {
+            log.warn("[EMAIL LOAN CONTRACT ERROR] Could not send loan contract email to '{}'. Reason: {}", recipientEmail, e.getMessage());
+        }
+    }
+
     private void sendMimeEmail(String to, String subject, String htmlContent) {
         log.info("[EMAIL NOTIFICATION] Sending email to: '{}' | Subject: '{}'", to, subject);
         try {

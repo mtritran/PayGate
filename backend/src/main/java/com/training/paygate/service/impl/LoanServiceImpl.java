@@ -49,6 +49,7 @@ public class LoanServiceImpl implements LoanService {
     private final AccountRepository accountRepository;
     private final com.training.paygate.repository.UserRepository userRepository;
     private final TransactionService transactionService;
+    private final com.training.paygate.service.EmailService emailService;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
 
@@ -130,28 +131,6 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Loan is not in PENDING_APPROVAL status");
         }
 
-        // Get SYSTEM account for disbursement
-        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
-
-        Account userAccount = accountRepository.findById(loan.getAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException("User Account not found", loan.getAccountId()));
-
-        // Perform disbursement: SYSTEM -> USER via processPayment
-        PaymentRequest disbursePaymentReq = new PaymentRequest(
-                "IDEM-DISBURSE-" + loan.getLoanRef(),
-                userAccount.getId(),
-                loan.getAmount(),
-                "Giải ngân khoản vay " + loan.getLoanRef(),
-                null
-        );
-
-        User systemUser = userRepository.findById(systemAccount.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found", systemAccount.getOwnerId()));
-
-        TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq, systemUser.getUsername());
-        log.info("[LOAN] Disbursement payment completed: ref {}", txResponse.transactionRef());
-
         // Generate Loan Schedules
         List<LoanSchedule> schedules = new ArrayList<>();
         LocalDate now = LocalDate.now();
@@ -167,15 +146,102 @@ public class LoanServiceImpl implements LoanService {
         }
         loanScheduleRepository.saveAll(schedules);
 
-        loan.setStatus(LoanStatus.ACTIVE);
+        loan.setStatus(LoanStatus.OFFERED);
         loan.setApprovedBy(adminId);
-        loan.setAdminNote(request != null ? request.adminNote() : "Approved");
-        loan.setDisbursedAt(LocalDateTime.now());
+        loan.setAdminNote(request != null ? request.adminNote() : "Approved loan offer. Waiting for borrower agreement signature.");
 
         Loan saved = loanRepository.save(loan);
-        log.info("[LOAN] Approved & Disbursed loan {} for user {}", loan.getLoanRef(), loan.getUserId());
+        log.info("[LOAN] Admin {} approved offer for loan {}. Status: OFFERED", adminId, loan.getLoanRef());
 
         return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
+    }
+
+    @Override
+    @Transactional
+    public LoanResponse acceptLoanOffer(Long userId, Long loanId) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
+
+        if (!loan.getUserId().equals(userId)) {
+            throw new BadRequestException("Access denied to loan");
+        }
+
+        if (loan.getStatus() != LoanStatus.OFFERED) {
+            throw new BadRequestException("Loan is not in OFFERED status for acceptance");
+        }
+
+        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
+                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
+
+        Account userAccount = accountRepository.findById(loan.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("User Account not found", loan.getAccountId()));
+
+        User borrower = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        // 1. Perform Disbursement Transfer: SYSTEM -> USER
+        PaymentRequest disbursePaymentReq = new PaymentRequest(
+                "IDEM-DISBURSE-" + loan.getLoanRef(),
+                userAccount.getId(),
+                loan.getAmount(),
+                "Giải ngân khoản vay " + loan.getLoanRef(),
+                null
+        );
+
+        User systemUser = userRepository.findById(systemAccount.getOwnerId())
+                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found", systemAccount.getOwnerId()));
+
+        TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq, systemUser.getUsername());
+        log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(), txResponse.transactionRef());
+
+        // 2. Activate Loan
+        loan.setStatus(LoanStatus.ACTIVE);
+        loan.setDisbursedAt(LocalDateTime.now());
+        Loan saved = loanRepository.save(loan);
+
+        // 3. Generate PDF Agreement & Send Email to User's Gmail
+        try {
+            List<LoanSchedule> schedules = loanScheduleRepository.findByLoanIdOrderByPeriodNumberAsc(saved.getId());
+            byte[] pdfBytes = com.training.paygate.util.LoanContractPdfGenerator.generateContractPdf(saved, borrower, schedules);
+            String fileName = "HopDongVay_PayGate_" + saved.getLoanRef() + ".pdf";
+
+            if (borrower.getEmail() != null && !borrower.getEmail().isBlank()) {
+                emailService.sendLoanContractEmail(
+                        borrower.getEmail(),
+                        borrower.getFullName() != null ? borrower.getFullName() : borrower.getUsername(),
+                        saved.getLoanRef(),
+                        saved.getAmount(),
+                        pdfBytes,
+                        fileName
+                );
+            }
+        } catch (Exception e) {
+            log.error("[LOAN CONTRACT PDF] Error generating or emailing PDF contract for loan {}: {}", loan.getLoanRef(), e.getMessage());
+        }
+
+        return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generateLoanContractPdf(Long loanId, Long currentUserId, boolean isAdmin) {
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
+
+        if (!isAdmin && !loan.getUserId().equals(currentUserId)) {
+            throw new BadRequestException("Access denied to loan contract");
+        }
+
+        User user = userRepository.findById(loan.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", loan.getUserId()));
+
+        try {
+            List<LoanSchedule> schedules = loanScheduleRepository.findByLoanIdOrderByPeriodNumberAsc(loanId);
+            return com.training.paygate.util.LoanContractPdfGenerator.generateContractPdf(loan, user, schedules);
+        } catch (Exception e) {
+            log.error("Failed to generate PDF for loan {}: {}", loanId, e.getMessage(), e);
+            throw new BadRequestException("Could not generate loan contract PDF: " + e.getMessage());
+        }
     }
 
     @Override

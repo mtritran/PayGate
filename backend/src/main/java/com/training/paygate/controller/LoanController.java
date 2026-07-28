@@ -70,6 +70,39 @@ public class LoanController {
         return ApiResponse.success(loanService.getLoanById(id, user.getId(), isAdmin));
     }
 
+    @PostMapping("/loans/{id}/accept-offer")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "User chấp nhận đề nghị vay, hoàn tất ký hợp đồng & giải ngân về ví PayGate")
+    public ApiResponse<LoanResponse> acceptLoanOffer(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
+        return ApiResponse.success("Loan offer accepted. Contract signed and funds disbursed successfully!", loanService.acceptLoanOffer(user.getId(), id));
+    }
+
+    @GetMapping("/loans/{id}/contract-pdf")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @Operation(summary = "Tải file Hợp đồng vay tiêu dùng PDF 3 trang chi tiết")
+    public org.springframework.http.ResponseEntity<byte[]> downloadContractPdf(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        byte[] pdfBytes = loanService.generateLoanContractPdf(id, user.getId(), isAdmin);
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("inline", "PayGate_Loan_Contract_" + id + ".pdf");
+
+        return new org.springframework.http.ResponseEntity<>(pdfBytes, headers, org.springframework.http.HttpStatus.OK);
+    }
+
     @PostMapping("/loans/{id}/repay")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Thanh toán khoản vay (trả nợ theo kỳ hoặc tất toán)")
