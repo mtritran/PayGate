@@ -67,8 +67,8 @@ import { ApiResponse } from '../../core/models/api-response.model';
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+      <!-- Navigation Tabs & Admin Action -->
+      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2 flex-wrap gap-2">
         <ul class="nav nav-pills gap-2">
           <li class="nav-item">
             <button class="nav-link fw-semibold" [class.active]="activeTab === 'shop'" (click)="activeTab = 'shop'">
@@ -85,12 +85,15 @@ import { ApiResponse } from '../../core/models/api-response.model';
               📜 Lịch Sử Điểm ({{ pointHistory.length }})
             </button>
           </li>
-          <li class="nav-item" *ngIf="isAdmin">
-            <button class="nav-link fw-semibold bg-danger text-white" [class.active]="activeTab === 'admin'" (click)="activeTab = 'admin'; loadAdminVouchers()">
-              ⚙️ Quản Lý Voucher (Admin)
-            </button>
-          </li>
         </ul>
+
+        <!-- Admin Only Toggle Button -->
+        <button *ngIf="isAdmin" 
+                class="btn fw-bold px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2"
+                [ngClass]="activeTab === 'admin' ? 'btn-dark' : 'btn-outline-dark'"
+                (click)="toggleAdminTab()">
+          <span>⚙️ {{ activeTab === 'admin' ? 'Đóng Quản Lý Admin' : 'Tạo & Quản Lý Voucher (Admin)' }}</span>
+        </button>
       </div>
 
       <!-- Tab 1: Voucher Shop -->
@@ -335,6 +338,15 @@ export class VoucherShopComponent implements OnInit {
     this.loadPoints();
     this.loadShopVouchers();
     this.loadMyVouchers();
+  }
+
+  toggleAdminTab(): void {
+    if (this.activeTab === 'admin') {
+      this.activeTab = 'shop';
+    } else {
+      this.activeTab = 'admin';
+      this.loadAdminVouchers();
+    }
   }
 
   loadPoints(): void {
