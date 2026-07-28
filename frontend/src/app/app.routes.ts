@@ -40,6 +40,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
       },
       {
+        path: 'loans',
+        loadComponent: () => import('./features/loan/loan-dashboard/loan-dashboard.component').then(m => m.LoanDashboardComponent)
+      },
+      {
         path: 'transactions/pay',
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
       },

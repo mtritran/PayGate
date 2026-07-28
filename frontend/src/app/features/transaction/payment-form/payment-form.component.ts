@@ -333,7 +333,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           <div class="receive-body">
             <!-- QR Canvas with logo overlay -->
             <div class="receive-qr-wrap">
-              <canvas #qrCanvas class="receive-qr-canvas" width="280" height="280"></canvas>
+              <canvas #qrCanvas class="receive-qr-canvas" width="300" height="300"></canvas>
               <div class="receive-qr-owner">
                 <strong class="qr-acc-name">{{ myAccountName || 'PayGate User' }}</strong>
                 <span class="qr-acc-number font-mono">{{ myAccountNumber }}</span>
@@ -503,13 +503,13 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     .modal-fade-in { animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    .paygate-form-page { display: flex; flex-direction: column; gap: 24px; max-width: 760px; margin: 0 auto; width: 100%; color: #0f172a; padding: 0 8px; }
+    .paygate-form-page { display: flex; flex-direction: column; gap: 28px; max-width: 1180px; margin: 0 auto; width: 100%; color: #0f172a; padding: 0; }
     
-    .header-tag { font-size: 0.68rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-    .form-header-group h2 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.025em; }
-    .subtitle { font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.6; }
+    .header-tag { font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .form-header-group h2 { font-size: 2rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.025em; }
+    .subtitle { font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.6; }
     
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 36px 40px; box-shadow: 0 8px 32px -8px rgba(0,0,0,0.06), 0 2px 8px -2px rgba(0,0,0,0.03); }
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 44px 52px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.06), 0 2px 10px -2px rgba(0,0,0,0.03); }
     
     /* Balance Strip */
     .balance-strip { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid #a7f3d0; }
@@ -838,24 +838,24 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .tab-btn.active .tab-label-block small { color: #059669; font-weight: 600; }
 
     /* Receive Tab Card */
-    .receive-card { padding: 40px; display: flex; flex-direction: column; gap: 32px; }
+    .receive-card { padding: 44px 52px; display: flex; flex-direction: column; gap: 36px; }
     .receive-header-row { display: flex; align-items: flex-start; gap: 16px; }
     .receive-title-tag { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .qr-verified-pill { font-size: 0.65rem; font-weight: 800; background: linear-gradient(135deg, #dcfce7, #a7f3d0); color: #15803d; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
     .receive-brand-name { font-size: 0.9rem; font-weight: 900; color: #059669; }
     .receive-brand-name i { font-style: italic; color: #1d4ed8; }
-    .receive-title { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.02em; }
-    .receive-desc { font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.65; max-width: 480px; }
-    .receive-body { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: flex-start; }
-    @media (max-width: 680px) { .receive-body { grid-template-columns: 1fr; } }
+    .receive-title { font-size: 1.7rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.02em; }
+    .receive-desc { font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.65; max-width: 600px; }
+    .receive-body { display: grid; grid-template-columns: 360px 1fr; gap: 52px; align-items: flex-start; }
+    @media (max-width: 860px) { .receive-body { grid-template-columns: 1fr; } }
     .receive-qr-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 18px;
-      padding: 24px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      padding: 28px 24px;
       background: linear-gradient(145deg, #ecfdf5 0%, #f0fdfa 60%, #e0f2fe 100%);
       border: 2px solid #a7f3d0; border-radius: 24px;
       box-shadow: 0 12px 40px -8px rgba(5,150,105,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
     }
-    .receive-qr-canvas { width: 280px; height: 280px; border-radius: 16px; background: #fff; display: block; box-shadow: 0 4px 24px -4px rgba(0,0,0,0.12); }
+    .receive-qr-canvas { width: 300px; height: 300px; border-radius: 16px; background: #fff; display: block; box-shadow: 0 6px 28px -4px rgba(0,0,0,0.12); }
     .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .receive-qr-owner .qr-acc-name { font-size: 1rem; font-weight: 800; color: #0f172a; text-align: center; }
     .receive-qr-owner .qr-acc-number { font-size: 1rem; font-weight: 900; color: #059669; font-family: monospace; letter-spacing: 0.04em; }
@@ -1006,7 +1006,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     const ctx = canvasEl.getContext('2d');
     if (!ctx) return;
 
-    const size = 280;
+    const size = 300;
     canvasEl.width = size;
     canvasEl.height = size;
 

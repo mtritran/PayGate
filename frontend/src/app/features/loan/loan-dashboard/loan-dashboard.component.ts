@@ -1,0 +1,661 @@
+import { Component, OnInit, signal, inject } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { LoanService, LoanResponse, LoanScheduleResponse, RepayType } from '../../../core/services/loan.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
+
+@Component({
+  selector: 'app-loan-dashboard',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, CurrencyPipe, DatePipe],
+  template: `
+    <div class="loan-container fade-in">
+      <!-- Top Banner Header -->
+      <div class="loan-header-card">
+        <div class="header-content">
+          <div class="header-badge">PAYGATE CONSUMER CREDIT</div>
+          <h1>Vay Tiêu Dùng & Tín Dụng Nhanh</h1>
+          <p>Duyệt tự động, giải ngân tức thì về Ví PayGate. Lãi suất ưu đãi chỉ từ 1%/tháng (12%/năm).</p>
+        </div>
+        <button class="btn-apply-hero" (click)="openApplyModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Tạo Đơn Vay Mới
+        </button>
+      </div>
+
+      <!-- Quick Summary Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon icon-emerald">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Hạn mức khả dụng</span>
+            <strong class="stat-value">20,000,000 ₫</strong>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Khoản vay đang mở</span>
+            <strong class="stat-value">{{ activeLoansCount() }} khoản</strong>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Tổng dư nợ còn lại</span>
+            <strong class="stat-value text-amber">{{ totalRemainingAmount() | currency:'VND':'symbol':'1.0-0' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Header -->
+      <div class="loan-tab-row">
+        <div class="tab-buttons">
+          <button class="tab-btn" [class.active]="activeTab() === 'my-loans'" (click)="activeTab.set('my-loans')">
+            Khoản Vay Của Tôi ({{ myLoans().length }})
+          </button>
+          <button *ngIf="isAdmin()" class="tab-btn admin-tab" [class.active]="activeTab() === 'admin-loans'" (click)="activeTab.set('admin-loans')">
+            ⚡ Admin Quản Lý Đơn Vay ({{ adminLoans().length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading()" class="loading-box">
+        <span class="spinner-sm"></span> Đang tải dữ liệu khoản vay...
+      </div>
+
+      <!-- MY LOANS LIST -->
+      <div *ngIf="!loading() && activeTab() === 'my-loans'">
+        <div *ngIf="myLoans().length === 0" class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+              <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </div>
+          <h3>Bạn chưa có khoản vay nào</h3>
+          <p>Tạo khoản vay tiêu dùng linh hoạt từ 500,000 ₫ đến 20,000,000 ₫ với lãi suất ưu đãi.</p>
+          <button class="btn-primary-apply" (click)="openApplyModal()">Đăng ký vay ngay</button>
+        </div>
+
+        <div class="loans-grid" *ngIf="myLoans().length > 0">
+          <div *ngFor="let loan of myLoans()" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
+            <div class="card-top">
+              <div>
+                <span class="loan-ref font-mono">{{ loan.loanRef }}</span>
+                <h3 class="loan-amount">{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</h3>
+              </div>
+              <span class="status-badge" [class]="getStatusClass(loan.status)">{{ getStatusLabel(loan.status) }}</span>
+            </div>
+
+            <div class="card-details">
+              <div class="detail-item">
+                <span>Kỳ hạn:</span>
+                <strong>{{ loan.termMonths }} tháng</strong>
+              </div>
+              <div class="detail-item">
+                <span>Trả mỗi kỳ:</span>
+                <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+              <div class="detail-item">
+                <span>Lãi suất:</span>
+                <strong>{{ loan.interestRate }}%/năm</strong>
+              </div>
+              <div class="detail-item">
+                <span>Dư nợ còn lại:</span>
+                <strong class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+            </div>
+
+            <div class="card-reason" *ngIf="loan.reason">
+              <span class="reason-label">Lý do vay:</span> {{ loan.reason }}
+            </div>
+
+            <div class="card-actions">
+              <button class="btn-detail" (click)="viewLoanDetail(loan.id)">
+                Xem lịch trả nợ & Thanh toán →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN LOANS LIST -->
+      <div *ngIf="!loading() && activeTab() === 'admin-loans' && isAdmin()">
+        <div class="loans-grid">
+          <div *ngFor="let loan of adminLoans()" class="loan-card admin-card">
+            <div class="card-top">
+              <div>
+                <span class="loan-ref font-mono">{{ loan.loanRef }}</span>
+                <h3 class="loan-amount">{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</h3>
+              </div>
+              <span class="status-badge" [class]="getStatusClass(loan.status)">{{ getStatusLabel(loan.status) }}</span>
+            </div>
+
+            <div class="card-details">
+              <div class="detail-item">
+                <span>Kỳ hạn:</span> <strong>{{ loan.termMonths }} tháng</strong>
+              </div>
+              <div class="detail-item">
+                <span>Trả hàng tháng:</span> <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+              <div class="detail-item">
+                <span>Tổng phải trả:</span> <strong>{{ loan.totalRepayable | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+              <div class="detail-item">
+                <span>Ngày tạo:</span> <strong>{{ loan.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+            </div>
+
+            <div class="card-reason" *ngIf="loan.reason">
+              <span class="reason-label">Lý do:</span> {{ loan.reason }}
+            </div>
+
+            <!-- Admin action buttons -->
+            <div class="admin-actions" *ngIf="loan.status === 'PENDING'">
+              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Duyệt & Giải Ngân</button>
+              <button class="btn-reject" (click)="rejectLoan(loan.id)">✕ Từ Chối</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPLY LOAN MODAL -->
+      <div *ngIf="showApplyModal()" class="modal-overlay fade-in">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2>Tạo Đơn Đăng Ký Vay Tiêu Dùng</h2>
+            <button class="btn-close" (click)="showApplyModal.set(false)">✕</button>
+          </div>
+
+          <form (ngSubmit)="submitApplyForm()" class="apply-form">
+            <!-- Amount Input -->
+            <div class="form-group">
+              <label class="form-label">SỐ TIỀN CẦN VAY (VND) <span class="required">*</span></label>
+              <input
+                type="number"
+                class="custom-input font-mono"
+                min="500000"
+                max="20000000"
+                step="500000"
+                [(ngModel)]="applyAmount"
+                name="applyAmount"
+                required
+              />
+              <div class="amount-presets">
+                <button type="button" class="preset-btn" (click)="applyAmount = 2000000">2 triệu</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 5000000">5 triệu</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 10000000">10 triệu</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 20000000">20 triệu</button>
+              </div>
+            </div>
+
+            <!-- Term Months -->
+            <div class="form-group">
+              <label class="form-label">KỲ HẠN VAY <span class="required">*</span></label>
+              <div class="term-grid">
+                <button
+                  type="button"
+                  class="term-btn"
+                  [class.active]="applyTermMonths === 3"
+                  (click)="applyTermMonths = 3">3 Tháng</button>
+                <button
+                  type="button"
+                  class="term-btn"
+                  [class.active]="applyTermMonths === 6"
+                  (click)="applyTermMonths = 6">6 Tháng</button>
+                <button
+                  type="button"
+                  class="term-btn"
+                  [class.active]="applyTermMonths === 12"
+                  (click)="applyTermMonths = 12">12 Tháng</button>
+                <button
+                  type="button"
+                  class="term-btn"
+                  [class.active]="applyTermMonths === 24"
+                  (click)="applyTermMonths = 24">24 Tháng</button>
+              </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="form-group">
+              <label class="form-label">LÝ DO VAY (TÙY CHỌN)</label>
+              <input
+                type="text"
+                class="custom-input"
+                placeholder="VD: Mua sắm máy tính, sửa chữa nhà cửa, trả học phí..."
+                [(ngModel)]="applyReason"
+                name="applyReason"
+              />
+            </div>
+
+            <!-- Loan Calculation Summary -->
+            <div class="calc-box">
+              <div class="calc-row">
+                <span>Số tiền gốc:</span>
+                <strong>{{ applyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+              </div>
+              <div class="calc-row">
+                <span>Ước tính trả hàng tháng:</span>
+                <strong class="text-emerald">{{ estimateMonthly() | currency:'VND':'symbol':'1.0-0' }} / tháng</strong>
+              </div>
+              <div class="calc-row">
+                <span>Lãi suất cố định:</span>
+                <span>12%/năm</span>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn-cancel" (click)="showApplyModal.set(false)">Hủy</button>
+              <button type="submit" class="btn-submit-apply" [disabled]="submitting()">
+                <span *ngIf="!submitting()">Gửi Đơn Đăng Ký Vay</span>
+                <span *ngIf="submitting()">Đang xử lý...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- DETAIL & REPAYMENT MODAL -->
+      <div *ngIf="selectedLoan()" class="modal-overlay fade-in">
+        <div class="modal-card wide-modal">
+          <div class="modal-header">
+            <div>
+              <span class="loan-ref font-mono">{{ selectedLoan()?.loanRef }}</span>
+              <h2>Chi Tiết Khoản Vay & Lịch Trả Nợ</h2>
+            </div>
+            <button class="btn-close" (click)="selectedLoan.set(null)">✕</button>
+          </div>
+
+          <div class="modal-body" *ngIf="selectedLoan() as loan">
+            <div class="loan-summary-strip">
+              <div>
+                <small>Tổng dư nợ còn lại</small>
+                <h3 class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</h3>
+              </div>
+              <div>
+                <small>Kỳ hạn</small>
+                <h4>{{ loan.termMonths }} tháng</h4>
+              </div>
+              <div>
+                <small>Trả mỗi kỳ</small>
+                <h4>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</h4>
+              </div>
+            </div>
+
+            <!-- Repayment actions -->
+            <div class="repay-actions-box" *ngIf="loan.status === 'ACTIVE' && loan.remainingAmount > 0">
+              <button class="btn-repay-period" (click)="repayLoan(loan.id, 'PAY_PERIOD')" [disabled]="repaying()">
+                💳 Thanh toán kỳ hiện tại ({{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }})
+              </button>
+              <button class="btn-repay-all" (click)="repayLoan(loan.id, 'PAY_ALL')" [disabled]="repaying()">
+                ✨ Tất toán toàn bộ ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
+              </button>
+            </div>
+
+            <!-- Schedule list -->
+            <h4 class="schedule-title">Lịch Trả Nợ Chi Tiết ({{ loan.schedules?.length || 0 }} kỳ)</h4>
+            <div class="schedule-table-wrap">
+              <table class="schedule-table">
+                <thead>
+                  <tr>
+                    <th>Kỳ</th>
+                    <th>Hạn thanh toán</th>
+                    <th>Gốc</th>
+                    <th>Lãi</th>
+                    <th>Tổng kỳ</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of loan.schedules">
+                    <td class="font-mono">Kỳ {{ s.periodNumber }}</td>
+                    <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ s.principalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                    <td>{{ s.interestAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                    <td class="font-bold">{{ s.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                    <td>
+                      <span class="schedule-badge" [class.schedule-paid]="s.status === 'PAID'" [class.schedule-unpaid]="s.status === 'UNPAID'">
+                        {{ s.status === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .loan-container {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+
+    /* Hero Header */
+    .loan-header-card {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%);
+      color: #ffffff;
+      border-radius: 24px;
+      padding: 36px 44px;
+      display: flex; justify-content: space-between; align-items: center; gap: 24px;
+      box-shadow: 0 12px 36px -8px rgba(4, 120, 87, 0.3);
+    }
+    .header-badge {
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em;
+      color: #a7f3d0; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .loan-header-card h1 { font-size: 1.9rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; }
+    .loan-header-card p { font-size: 0.95rem; color: #d1fae5; margin: 0; max-width: 600px; line-height: 1.6; }
+    .btn-apply-hero {
+      display: flex; align-items: center; gap: 10px;
+      background: #ffffff; color: #047857; border: none; border-radius: 14px;
+      padding: 16px 26px; font-size: 0.95rem; font-weight: 800; cursor: pointer;
+      white-space: nowrap; transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .btn-apply-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); background: #ecfdf5; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 860px) { .stats-grid { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px;
+      padding: 24px; display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 4px 20px -4px rgba(0,0,0,0.04);
+    }
+    .stat-icon {
+      width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .stat-icon svg { width: 26px; height: 26px; }
+    .icon-emerald { background: #ecfdf5; color: #059669; }
+    .icon-blue { background: #eff6ff; color: #2563eb; }
+    .icon-purple { background: #faf5ff; color: #9333ea; }
+    .stat-info { display: flex; flex-direction: column; gap: 4px; }
+    .stat-label { font-size: 0.82rem; color: #64748b; font-weight: 600; }
+    .stat-value { font-size: 1.3rem; font-weight: 800; color: #0f172a; }
+
+    /* Tabs */
+    .loan-tab-row { border-bottom: 2px solid #e2e8f0; padding-bottom: 2px; }
+    .tab-buttons { display: flex; gap: 12px; }
+    .tab-btn {
+      padding: 12px 20px; border: none; background: transparent; font-size: 0.95rem;
+      font-weight: 700; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent;
+      transition: all 0.15s; margin-bottom: -2px;
+    }
+    .tab-btn.active { color: #059669; border-bottom-color: #059669; }
+    .tab-btn.admin-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* Loans Grid */
+    .loans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+    .loan-card {
+      background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px;
+      padding: 28px; display: flex; flex-direction: column; gap: 20px;
+      box-shadow: 0 4px 20px -4px rgba(0,0,0,0.04); transition: all 0.2s;
+    }
+    .loan-card:hover { transform: translateY(-2px); border-color: #a7f3d0; box-shadow: 0 12px 32px -8px rgba(5,150,105,0.12); }
+    .border-active { border-color: #10b981; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .loan-ref { font-size: 0.75rem; color: #64748b; font-weight: 700; }
+    .loan-amount { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 4px 0 0 0; }
+
+    .status-badge {
+      padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.03em;
+    }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-active { background: #dcfce7; color: #15803d; }
+    .status-paid { background: #e0f2fe; color: #0369a1; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; }
+
+    .card-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; padding: 16px; border-radius: 14px; }
+    .detail-item { display: flex; flex-direction: column; gap: 2px; }
+    .detail-item span { font-size: 0.78rem; color: #64748b; }
+    .detail-item strong { font-size: 0.92rem; color: #0f172a; font-weight: 700; }
+
+    .card-reason { font-size: 0.85rem; color: #475569; background: #f1f5f9; padding: 10px 14px; border-radius: 10px; }
+    .reason-label { font-weight: 700; color: #0f172a; }
+
+    .btn-detail {
+      width: 100%; padding: 12px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;
+      border-radius: 12px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-detail:hover { background: #059669; color: #fff; }
+
+    /* Admin actions */
+    .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-approve { padding: 12px; background: #10b981; color: #fff; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .btn-reject { padding: 12px; background: #ef4444; color: #fff; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+      z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-card {
+      background: #fff; border-radius: 24px; width: 100%; max-width: 580px; padding: 36px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+    }
+    .wide-modal { max-width: 760px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .modal-header h2 { font-size: 1.4rem; font-weight: 800; margin: 4px 0 0 0; color: #0f172a; }
+    .btn-close { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: 700; }
+
+    .apply-form { display: flex; flex-direction: column; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-label { font-size: 0.78rem; font-weight: 800; color: #475569; letter-spacing: 0.04em; }
+    .custom-input { padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 1rem; }
+    .custom-input:focus { border-color: #10b981; outline: none; }
+
+    .amount-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .preset-btn { padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .preset-btn:hover { background: #ecfdf5; border-color: #10b981; color: #059669; }
+
+    .term-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .term-btn { padding: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .term-btn.active { background: #ecfdf5; border-color: #10b981; color: #059669; }
+
+    .calc-box { background: #f0fdf4; border: 1.5px solid #a7f3d0; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .calc-row { display: flex; justify-content: space-between; font-size: 0.9rem; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px; }
+    .btn-cancel { padding: 14px 20px; background: #f1f5f9; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .btn-submit-apply { padding: 14px 28px; background: #059669; color: #fff; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
+
+    /* Repay box */
+    .loan-summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 24px; }
+    .repay-actions-box { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+    .btn-repay-period { padding: 16px; background: #059669; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
+    .btn-repay-all { padding: 16px; background: #2563eb; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
+
+    .schedule-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; }
+    .schedule-table-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 14px; }
+    .schedule-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    .schedule-table th { background: #f8fafc; padding: 12px 16px; font-weight: 700; color: #475569; }
+    .schedule-table td { padding: 14px 16px; border-top: 1px solid #e2e8f0; }
+    .schedule-badge { padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .schedule-paid { background: #dcfce7; color: #15803d; }
+    .schedule-unpaid { background: #fef3c7; color: #b45309; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 60px 20px; background: #fff; border-radius: 20px; border: 1.5px dashed #cbd5e1; }
+    .empty-icon { width: 80px; height: 80px; background: #f1f5f9; color: #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .btn-primary-apply { padding: 14px 28px; background: #059669; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; margin-top: 16px; }
+  `]
+})
+export class LoanDashboardComponent implements OnInit {
+  private loanService = inject(LoanService);
+  private authService = inject(AuthService);
+  private notification = inject(NotificationService);
+
+  loading = signal(true);
+  submitting = signal(false);
+  repaying = signal(false);
+
+  myLoans = signal<LoanResponse[]>([]);
+  adminLoans = signal<LoanResponse[]>([]);
+  selectedLoan = signal<LoanResponse | null>(null);
+
+  activeTab = signal<'my-loans' | 'admin-loans'>('my-loans');
+  showApplyModal = signal(false);
+
+  // Apply Form state
+  applyAmount = 5000000;
+  applyTermMonths = 6;
+  applyReason = '';
+
+  isAdmin(): boolean {
+    const role = this.authService.getRole();
+    return role === 'ADMIN' || role === 'ROLE_ADMIN';
+  }
+
+  ngOnInit(): void {
+    this.loadLoans();
+  }
+
+  loadLoans(): void {
+    this.loading.set(true);
+    this.loanService.getMyLoans().subscribe({
+      next: (res) => {
+        this.myLoans.set(res.data?.content ?? []);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+
+    if (this.isAdmin()) {
+      this.loanService.getAllLoansForAdmin().subscribe({
+        next: (res) => this.adminLoans.set(res.data?.content ?? [])
+      });
+    }
+  }
+
+  activeLoansCount(): number {
+    return this.myLoans().filter(l => l.status === 'ACTIVE' || l.status === 'PENDING').length;
+  }
+
+  totalRemainingAmount(): number {
+    return this.myLoans().reduce((sum, l) => sum + (l.remainingAmount || 0), 0);
+  }
+
+  estimateMonthly(): number {
+    if (!this.applyAmount || !this.applyTermMonths) return 0;
+    const rate = 0.12 / 12;
+    const n = this.applyTermMonths;
+    const monthly = (this.applyAmount * rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1);
+    return Math.round(monthly);
+  }
+
+  openApplyModal(): void {
+    this.applyAmount = 5000000;
+    this.applyTermMonths = 6;
+    this.applyReason = '';
+    this.showApplyModal.set(true);
+  }
+
+  submitApplyForm(): void {
+    if (!this.applyAmount || this.applyAmount < 500000) {
+      this.notification.error('Số tiền vay tối thiểu là 500,000 ₫');
+      return;
+    }
+    this.submitting.set(true);
+    this.loanService.applyLoan({
+      amount: this.applyAmount,
+      termMonths: this.applyTermMonths,
+      reason: this.applyReason
+    }).subscribe({
+      next: (res) => {
+        this.submitting.set(false);
+        this.showApplyModal.set(false);
+        this.notification.success('Gửi đơn vay thành công!');
+        this.loadLoans();
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        this.notification.error(err?.error?.message || 'Không thể tạo đơn vay');
+      }
+    });
+  }
+
+  viewLoanDetail(loanId: number): void {
+    this.loanService.getLoanById(loanId).subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.selectedLoan.set(res.data);
+        }
+      }
+    });
+  }
+
+  repayLoan(loanId: number, type: RepayType): void {
+    this.repaying.set(true);
+    this.loanService.repayLoan(loanId, type).subscribe({
+      next: (res) => {
+        this.repaying.set(false);
+        this.notification.success('Thanh toán khoản vay thành công!');
+        if (res.data) {
+          this.selectedLoan.set(res.data);
+        }
+        this.loadLoans();
+      },
+      error: (err) => {
+        this.repaying.set(false);
+        this.notification.error(err?.error?.message || 'Thanh toán khoản vay thất bại');
+      }
+    });
+  }
+
+  approveLoan(loanId: number): void {
+    this.loanService.approveLoan(loanId, 'Approved by admin').subscribe({
+      next: () => {
+        this.notification.success('Phê duyệt & Giải ngân thành công!');
+        this.loadLoans();
+      },
+      error: (err) => this.notification.error(err?.error?.message || 'Phê duyệt thất bại')
+    });
+  }
+
+  rejectLoan(loanId: number): void {
+    this.loanService.rejectLoan(loanId, 'Rejected by admin').subscribe({
+      next: () => {
+        this.notification.success('Đã từ chối đơn vay!');
+        this.loadLoans();
+      },
+      error: (err) => this.notification.error(err?.error?.message || 'Thao tác thất bại')
+    });
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'PENDING': return 'status-pending';
+      case 'ACTIVE': return 'status-active';
+      case 'PAID_OFF': return 'status-paid';
+      case 'REJECTED': return 'status-rejected';
+      default: return '';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'PENDING': return 'Đang chờ duyệt';
+      case 'ACTIVE': return 'Đang hoạt động';
+      case 'PAID_OFF': return 'Đã tất toán';
+      case 'REJECTED': return 'Đã từ chối';
+      default: return status;
+    }
+  }
+}

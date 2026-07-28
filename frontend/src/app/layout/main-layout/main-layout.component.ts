@@ -89,6 +89,14 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" routerLink="/loans" routerLinkActive="active" title="Vay Tiêu Dùng">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Consumer Loans</span>
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" routerLink="/recurring-payments" routerLinkActive="active" title="Recurring & Bills">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
