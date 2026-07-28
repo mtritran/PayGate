@@ -1018,42 +1018,50 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       ctx.drawImage(qrImg, 0, 0, size, size);
 
       // Logo overlay in center
-      const logoSize = 44;
-      const logoX = (size - logoSize) / 2;
-      const logoY = (size - logoSize) / 2;
+      const logoSize = 48;
 
-      // White circle background
+      // Rounded rect white background
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(size / 2, size / 2, logoSize / 2 + 4, 0, Math.PI * 2);
+      ctx.roundRect((size - logoSize - 8) / 2, (size - logoSize - 8) / 2, logoSize + 8, logoSize + 8, 14);
       ctx.fill();
 
-      // PayGate logo: green circle + "P" letter
+      // Emerald rounded rect logo
       ctx.fillStyle = '#059669';
       ctx.beginPath();
-      ctx.arc(size / 2, size / 2, logoSize / 2, 0, Math.PI * 2);
+      ctx.roundRect((size - logoSize) / 2, (size - logoSize) / 2, logoSize, logoSize, 12);
       ctx.fill();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 22px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('P', size / 2, size / 2 + 1);
+      // Draw white Shield Check icon
+      const cx = size / 2;
+      const cy = size / 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Shield outline
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 11);
+      ctx.lineTo(cx + 10, cy - 7);
+      ctx.lineTo(cx + 10, cy + 2);
+      ctx.bezierCurveTo(cx + 10, cy + 9, cx + 5, cy + 14, cx, cy + 16);
+      ctx.bezierCurveTo(cx - 5, cy + 14, cx - 10, cy + 9, cx - 10, cy + 2);
+      ctx.lineTo(cx - 10, cy - 7);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Checkmark inside shield
+      ctx.beginPath();
+      ctx.moveTo(cx - 4, cy + 1);
+      ctx.lineTo(cx - 1, cy + 4);
+      ctx.lineTo(cx + 5, cy - 3);
+      ctx.stroke();
     };
     qrImg.onerror = () => {
-      // If cross-origin fails, fallback: just show "P" logo on blank canvas
       ctx.clearRect(0, 0, size, size);
       ctx.fillStyle = '#f0fdf4';
       ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#059669';
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, 30, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 22px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('P', size / 2, size / 2);
     };
     qrImg.src = qrUrl;
   }
