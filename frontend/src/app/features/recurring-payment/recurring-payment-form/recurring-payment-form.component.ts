@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -9,11 +9,12 @@ import {
   RecurringCategory,
   RecurringFrequency
 } from '../../../core/services/recurring-payment.service';
+import { BillService, BillSubscriptionResponse } from '../../../core/services/bill.service';
 
 @Component({
   selector: 'pg-recurring-payment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, CurrencyPipe],
   template: `
     <div class="form-container fade-in">
       <div class="form-card">
@@ -95,32 +96,39 @@ import {
             />
           </div>
 
-          <!-- Provider & Bill Code (if BILL) -->
-          <div class="form-grid" *ngIf="category !== 'TRANSFER'">
-            <div class="form-group">
-              <label class="form-label">PROVIDER</label>
-              <select class="pg-select" [(ngModel)]="providerCode" name="providerCode">
-                <option value="EVN_HANOI" *ngIf="category === 'ELECTRICITY'">EVN Hanoi</option>
-                <option value="EVN_HCM" *ngIf="category === 'ELECTRICITY'">EVN TP.HCM</option>
-                <option value="EVN_MIENTRUNG" *ngIf="category === 'ELECTRICITY'">EVN Miền Trung</option>
-                <option value="VIWACO" *ngIf="category === 'WATER'">Viwaco Water</option>
-                <option value="SAWACO" *ngIf="category === 'WATER'">Sawaco Water</option>
-                <option value="VNPT" *ngIf="category === 'INTERNET'">VNPT Internet</option>
-                <option value="FPT" *ngIf="category === 'INTERNET'">FPT Telecom</option>
-                <option value="VIETTEL" *ngIf="category === 'INTERNET'">Viettel Internet</option>
-              </select>
+          <!-- Linked Subscriptions Picker (if BILL) -->
+          <div class="form-group" *ngIf="category !== 'TRANSFER'">
+            <label class="form-label">CHỌN DỊCH VỤ ĐÃ LIÊN KẾT <span class="required">*</span></label>
+
+            <!-- Loading state -->
+            <div *ngIf="loadingSubs()" class="subs-loading">
+              <span class="spinner-xs"></span> Đang tải danh sách dịch vụ...
             </div>
 
-            <div class="form-group">
-              <label class="form-label">BILL CODE / CUSTOMER CODE <span class="required">*</span></label>
-              <input
-                type="text"
-                class="pg-input font-mono"
-                placeholder="VD: PA1201009988"
-                [(ngModel)]="billCode"
-                name="billCode"
-                required
-              />
+            <!-- No subscriptions -->
+            <div *ngIf="!loadingSubs() && filteredSubs().length === 0" class="subs-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Chưa có dịch vụ {{ categoryLabel() }} nào được liên kết.
+              <a routerLink="/bills" class="link-to-bills">Đến Quản lý Hóa đơn →</a>
+            </div>
+
+            <!-- Subscriptions list -->
+            <div class="subs-list" *ngIf="!loadingSubs() && filteredSubs().length > 0">
+              <div
+                *ngFor="let sub of filteredSubs()"
+                class="sub-option"
+                [class.selected]="selectedSubId === sub.id"
+                (click)="selectSub(sub)">
+                <div class="sub-option-left">
+                  <div class="sub-option-name">{{ sub.providerName }}</div>
+                  <div class="sub-option-code font-mono">{{ sub.customerCode }}</div>
+                  <div class="sub-option-owner">{{ sub.customerName }}</div>
+                </div>
+                <div class="sub-option-right">
+                  <div class="sub-option-amount">~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/kỳ</div>
+                  <div class="sub-option-freq">{{ freqLabel(sub.frequency) }}</div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -343,30 +351,95 @@ import {
       transform: translateY(-1px);
       box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
     }
+    .subs-loading { display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 13px; padding: 12px 0; }
+    .spinner-xs { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #10b981; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .subs-empty { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #6b7280; font-size: 13px; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
+    .link-to-bills { color: #059669; font-weight: 700; text-decoration: none; margin-left: 4px; }
+    .link-to-bills:hover { text-decoration: underline; }
+    .subs-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .sub-option {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      cursor: pointer; background: #fff; transition: 0.15s; gap: 12px;
+    }
+    .sub-option:hover { border-color: #10b981; background: #f0fdf4; }
+    .sub-option.selected { border-color: #10b981; background: #ecfdf5; }
+    .sub-option-name { font-size: 14px; font-weight: 700; color: #111827; }
+    .sub-option-code { font-size: 12px; font-weight: 700; color: #059669; }
+    .sub-option-owner { font-size: 12px; color: #6b7280; }
+    .sub-option-right { text-align: right; flex-shrink: 0; }
+    .sub-option-amount { font-size: 14px; font-weight: 700; color: #059669; }
+    .sub-option-freq { font-size: 11px; color: #9ca3af; }
   `]
 })
 export class RecurringPaymentFormComponent implements OnInit {
   private service = inject(RecurringPaymentService);
+  private billService = inject(BillService);
   private router = inject(Router);
 
   category: RecurringCategory = 'TRANSFER';
   destAccountId?: number;
-  providerCode = 'EVN_HANOI';
+  providerCode = '';
   billCode = '';
+  selectedSubId: number | null = null;
   amount = 50000;
   frequency: RecurringFrequency = 'DAILY';
   description = '';
 
   isSubmitting = signal<boolean>(false);
   errorMsg = signal<string>('');
+  loadingSubs = signal(false);
 
-  ngOnInit(): void {}
+  allSubscriptions = signal<BillSubscriptionResponse[]>([]);
+
+  filteredSubs = () => {
+    const typeMap: Record<string, string> = {
+      ELECTRICITY: 'ELECTRICITY', WATER: 'WATER', INTERNET: 'INTERNET'
+    };
+    const targetType = typeMap[this.category];
+    if (!targetType) return [];
+    return this.allSubscriptions().filter(s => s.providerType === targetType && s.status === 'ACTIVE');
+  };
+
+  categoryLabel(): string {
+    const map: Record<string, string> = { ELECTRICITY: 'điện', WATER: 'nước', INTERNET: 'internet' };
+    return map[this.category] ?? '';
+  }
+
+  freqLabel(f: string): string {
+    const map: Record<string, string> = { MINUTELY: 'Mỗi phút', DAILY: 'Hàng ngày', WEEKLY: 'Hàng tuần', MONTHLY: 'Hàng tháng' };
+    return map[f] ?? f;
+  }
+
+  ngOnInit(): void {
+    this.loadSubscriptions();
+  }
+
+  private loadSubscriptions(): void {
+    this.loadingSubs.set(true);
+    this.billService.getSubscriptions().subscribe({
+      next: res => {
+        this.allSubscriptions.set(res.data ?? []);
+        this.loadingSubs.set(false);
+      },
+      error: () => this.loadingSubs.set(false)
+    });
+  }
+
+  selectSub(sub: BillSubscriptionResponse): void {
+    this.selectedSubId = sub.id;
+    this.providerCode = sub.providerCode;
+    this.billCode = sub.customerCode;
+    this.amount = sub.cycleAmount || this.amount;
+    this.description = `Tự động thanh toán ${sub.providerName} - ${sub.customerCode}`;
+  }
 
   selectCategory(cat: RecurringCategory): void {
     this.category = cat;
-    if (cat === 'ELECTRICITY') this.providerCode = 'EVN_HANOI';
-    if (cat === 'WATER') this.providerCode = 'VIWACO';
-    if (cat === 'INTERNET') this.providerCode = 'VNPT';
+    this.selectedSubId = null;
+    this.providerCode = '';
+    this.billCode = '';
   }
 
   submitForm(): void {
@@ -375,7 +448,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       return;
     }
     if (this.category !== 'TRANSFER' && !this.billCode) {
-      this.errorMsg.set('Please enter the bill code / customer code.');
+      this.errorMsg.set('Vui lòng chọn dịch vụ đã liên kết từ danh sách trên.');
       return;
     }
     if (!this.amount || this.amount < 1000) {

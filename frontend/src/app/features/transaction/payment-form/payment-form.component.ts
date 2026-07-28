@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { MatIconModule } from '@angular/material/icon';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { AccountService } from '../../../core/services/account.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -20,8 +19,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
-    CurrencyPipe,
-    MatIconModule
+    CurrencyPipe
   ],
   template: `
     <div class="paygate-form-wrapper">
@@ -39,14 +37,21 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
         <!-- Tab Switcher: Send vs Receive (hidden in accept mode) -->
         <div class="tab-switcher" *ngIf="!acceptMode">
           <button type="button" class="tab-btn" [class.active]="activeTab === 'send'" (click)="switchTab('send')">
-            <mat-icon class="tab-icon">send</mat-icon>
+            <!-- Send icon -->
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
             <span class="tab-label-block">
               <strong>Send Money</strong>
               <small>Transfer to another account</small>
             </span>
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'receive'" (click)="switchTab('receive')">
-            <mat-icon class="tab-icon">inbox</mat-icon>
+            <!-- QR/Inbox icon -->
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              <path d="M14 14h3v3m0 4h4m-4-4v4m-7 0h3"/>
+            </svg>
             <span class="tab-label-block">
               <strong>Nhận qua QR</strong>
               <small>Generate QR for others to scan</small>
@@ -81,9 +86,15 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
               <div class="accept-avatar">{{ getInitials(recipientLookup.ownerName) }}</div>
               <div class="accept-receiver-info">
                 <span class="verified-badge">
-                  <span *ngIf="recipientLookup.ownerType === 'MERCHANT'"><mat-icon>store</mat-icon> MERCHANT</span>
-                  <span *ngIf="recipientLookup.ownerType === 'USER'"><mat-icon>person</mat-icon> PERSONAL</span>
-                  <span *ngIf="recipientLookup.ownerType === 'SYSTEM'"><mat-icon>bolt</mat-icon> SYSTEM</span>
+                  <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> MERCHANT
+                  </span>
+                  <span *ngIf="recipientLookup.ownerType === 'USER'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> PERSONAL
+                  </span>
+                  <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> SYSTEM
+                  </span>
                 </span>
                 <strong class="accept-receiver-name">{{ recipientLookup.ownerName }}</strong>
                 <span class="accept-receiver-acc font-mono">{{ recipientLookup.accountNumber }}</span>
@@ -101,11 +112,13 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             </div>
 
             <div class="accept-warning" *ngIf="isSelfTransfer">
-              <mat-icon>warning</mat-icon> Cannot transfer to yourself. This is your own account.
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Cannot transfer to yourself. This is your own account.
             </div>
 
             <div class="accept-warning" *ngIf="!isSelfTransfer && (!paymentForm.value.amount || paymentForm.value.amount < 1000)">
-              <mat-icon>warning</mat-icon> Invalid amount (minimum 1,000 VND).
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Invalid amount (minimum 1,000 VND).
             </div>
 
             <div class="accept-actions">
@@ -129,7 +142,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
           <!-- Receiver lookup failed -->
           <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
-            <mat-icon>close</mat-icon> {{ lookupError }}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            {{ lookupError }}
             <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" style="margin-top: 12px; display: inline-block;">
               Về form nhập tay
             </button>
@@ -204,9 +218,15 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
             <div *ngIf="!lookingUp && recipientLookup" class="lookup-card success-card">
               <div class="verified-badge">
-                <span *ngIf="recipientLookup.ownerType === 'MERCHANT'"><mat-icon>store</mat-icon> MERCHANT ACCOUNT</span>
-                <span *ngIf="recipientLookup.ownerType === 'USER'"><mat-icon>person</mat-icon> PERSONAL ACCOUNT</span>
-                <span *ngIf="recipientLookup.ownerType === 'SYSTEM'"><mat-icon>bolt</mat-icon> SYSTEM ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> MERCHANT ACCOUNT
+                </span>
+                <span *ngIf="recipientLookup.ownerType === 'USER'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> PERSONAL ACCOUNT
+                </span>
+                <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> SYSTEM ACCOUNT
+                </span>
               </div>
               <div class="recipient-details">
                 <strong class="recipient-name">{{ recipientLookup.ownerName }}</strong>
@@ -214,7 +234,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             </div>
 
             <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
-              <mat-icon>close</mat-icon> {{ lookupError }}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              {{ lookupError }}
             </div>
 
             <!-- Amount Field -->
@@ -310,9 +331,9 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           </div>
 
           <div class="receive-body">
-            <!-- Big QR Image -->
+            <!-- QR Canvas with logo overlay -->
             <div class="receive-qr-wrap">
-              <img [src]="myQrImageUrl" (error)="onQrImgError($event)" alt="My PayGate QR" class="receive-qr-img" />
+              <canvas #qrCanvas class="receive-qr-canvas" width="240" height="240"></canvas>
               <div class="receive-qr-owner">
                 <strong class="qr-acc-name">{{ myAccountName || 'PayGate User' }}</strong>
                 <span class="qr-acc-number font-mono">{{ myAccountNumber }}</span>
@@ -355,7 +376,10 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
               <div class="receive-link-row">
                 <input type="text" readonly class="receive-link-input font-mono" [value]="getMyPaymentLink()" />
                 <button type="button" class="btn-copy" (click)="copyPaymentLink()">
-                  <mat-icon *ngIf="!linkCopied">content_copy</mat-icon>
+                  <!-- Copy icon -->
+                  <svg *ngIf="!linkCopied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                  </svg>
                   <span *ngIf="!linkCopied">Copy</span>
                   <span *ngIf="linkCopied">✓ Copied</span>
                 </button>
@@ -363,15 +387,27 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
               <div class="receive-actions">
                 <button type="button" class="btn-share" (click)="sharePaymentLink()">
-                  <mat-icon>share</mat-icon> Chia sẻ link
+                  <!-- Share icon -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg> Chia sẻ link
                 </button>
                 <button type="button" class="btn-download" (click)="downloadQr()">
-                  <mat-icon>download</mat-icon> Download QR
+                  <!-- Download icon -->
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg> Download QR
                 </button>
               </div>
 
               <div class="receive-note">
-                <mat-icon>lightbulb</mat-icon> Recipient opens link/scans QR → sees confirmation page with pre-filled info → presses <strong>1 button Accept</strong> to complete transfer.
+                <!-- Lightbulb icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="flex-shrink:0;color:#d97706">
+                  <path d="M9 21h6m-6-3h6M12 3a6 6 0 016 6c0 2.21-1.19 4.15-3 5.19V17a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2.81C7.19 13.15 6 11.21 6 9a6 6 0 016-6z"/>
+                </svg>
+                Recipient opens link/scans QR → sees confirmation page with pre-filled info → presses <strong>1 button Accept</strong> to complete transfer.
               </div>
             </div>
           </div>
@@ -812,7 +848,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .receive-body { display: grid; grid-template-columns: 240px 1fr; gap: 22px; align-items: flex-start; }
     @media (max-width: 620px) { .receive-body { grid-template-columns: 1fr; } }
     .receive-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border: 2px solid #a7f3d0; border-radius: 16px; }
-    .receive-qr-img { width: 200px; height: 200px; object-fit: contain; background: #fff; border-radius: 10px; padding: 6px; }
+    .receive-qr-canvas { width: 240px; height: 240px; border-radius: 10px; background: #fff; display: block; }
     .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .receive-qr-owner .qr-acc-name { font-size: 0.88rem; font-weight: 800; color: #0f172a; text-align: center; }
     .receive-qr-owner .qr-acc-number { font-size: 0.9rem; font-weight: 900; color: #059669; }
@@ -830,6 +866,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
   `]
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {
+  @ViewChild('qrCanvas') qrCanvasRef!: ElementRef<HTMLCanvasElement>;
+
   paymentForm!: FormGroup;
   myBalance = 0;
   submitting = false;
@@ -946,16 +984,67 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.myQrImageUrl = this.paygateQrService.generateQrImageUrl(
       this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, note
     );
+    // Draw QR on canvas with PayGate logo
+    setTimeout(() => this.drawQrWithLogo(this.myQrImageUrl), 50);
   }
 
-  onQrImgError(event: any): void {
-    const note = this.activeTab === 'receive' ? (this.myQrCustomNote || '') : '';
-    const fallback = this.paygateQrService.getFallbackQrImageUrl(
-      this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, note
-    );
-    if (this.myQrImageUrl !== fallback) {
-      this.myQrImageUrl = fallback;
-    }
+  /** Draw QR image on canvas and overlay PayGate logo in center */
+  private drawQrWithLogo(qrUrl: string): void {
+    const canvasEl = this.qrCanvasRef?.nativeElement;
+    if (!canvasEl) return;
+    const ctx = canvasEl.getContext('2d');
+    if (!ctx) return;
+
+    const size = 240;
+    canvasEl.width = size;
+    canvasEl.height = size;
+
+    const qrImg = new Image();
+    qrImg.crossOrigin = 'anonymous';
+    qrImg.onload = () => {
+      // Draw QR
+      ctx.clearRect(0, 0, size, size);
+      ctx.drawImage(qrImg, 0, 0, size, size);
+
+      // Logo overlay in center
+      const logoSize = 44;
+      const logoX = (size - logoSize) / 2;
+      const logoY = (size - logoSize) / 2;
+
+      // White circle background
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, logoSize / 2 + 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // PayGate logo: green circle + "P" letter
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, logoSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 22px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('P', size / 2, size / 2 + 1);
+    };
+    qrImg.onerror = () => {
+      // If cross-origin fails, fallback: just show "P" logo on blank canvas
+      ctx.clearRect(0, 0, size, size);
+      ctx.fillStyle = '#f0fdf4';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('P', size / 2, size / 2);
+    };
+    qrImg.src = qrUrl;
   }
 
   switchTab(tab: 'send' | 'receive'): void {
@@ -1021,15 +1110,29 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   downloadQr(): void {
-    if (!this.myQrImageUrl) return;
-    const a = document.createElement('a');
-    a.href = this.myQrImageUrl;
-    a.download = `paygate-qr-${this.myAccountNumber}.png`;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const canvasEl = this.qrCanvasRef?.nativeElement;
+    if (canvasEl) {
+      // Download directly from canvas (includes logo)
+      canvasEl.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `paygate-qr-${this.myAccountNumber}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    } else if (this.myQrImageUrl) {
+      const a = document.createElement('a');
+      a.href = this.myQrImageUrl;
+      a.download = `paygate-qr-${this.myAccountNumber}.png`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }
 
   loadBeneficiaries(): void {
