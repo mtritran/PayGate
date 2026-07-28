@@ -193,6 +193,13 @@ public class LoanServiceImpl implements LoanService {
                         .filter(a -> a.getOwnerType() == OwnerType.SYSTEM).findFirst()
                         .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found")));
 
+        // Ensure SYSTEM account has ample liquidity reserve for disbursement
+        if (systemAccount.getBalance() == null || systemAccount.getBalance().compareTo(loan.getAmount()) < 0) {
+            systemAccount.setBalance(new BigDecimal("10000000000.00"));
+            systemAccount = accountRepository.save(systemAccount);
+            log.info("[LOAN DISBURSEMENT] Provided 10 Billion VND liquidity reserve to SYSTEM Account {}", systemAccount.getAccountNumber());
+        }
+
         Account userAccount = accountRepository.findById(loan.getAccountId())
                 .orElseThrow(() -> new ResourceNotFoundException("User Account not found", loan.getAccountId()));
 

@@ -137,10 +137,10 @@ public class LoanContractPdfGenerator {
 
                 // Draw Schedule Table Header
                 cs.setLineWidth(1.0f);
-                cs.setNonStrokingColor(240, 240, 240);
+                cs.setNonStrokingColor(240 / 255.0f, 240 / 255.0f, 240 / 255.0f);
                 cs.addRect(50, y - 20, 495, 22);
                 cs.fill();
-                cs.setNonStrokingColor(0, 0, 0);
+                cs.setNonStrokingColor(0.0f, 0.0f, 0.0f);
 
                 cs.setFont(fontBold, 9);
                 cs.beginText(); cs.newLineAtOffset(60, y - 14); cs.showText("Period"); cs.endText();
@@ -216,37 +216,37 @@ public class LoanContractPdfGenerator {
 
                 // Party A Stamp Box
                 cs.setLineWidth(1.5f);
-                cs.setNonStrokingColor(240, 253, 244);
+                cs.setNonStrokingColor(240 / 255.0f, 253 / 255.0f, 244 / 255.0f);
                 cs.addRect(60, sigY - 25, 170, 50);
                 cs.fill();
-                cs.setStrokingColor(5, 150, 105);
+                cs.setStrokingColor(5 / 255.0f, 150 / 255.0f, 105 / 255.0f);
                 cs.addRect(60, sigY - 25, 170, 50);
                 cs.stroke();
 
                 cs.setFont(fontBold, 9);
-                cs.setNonStrokingColor(4, 120, 87);
+                cs.setNonStrokingColor(4 / 255.0f, 120 / 255.0f, 87 / 255.0f);
                 cs.beginText(); cs.newLineAtOffset(70, sigY + 12); cs.showText("✓ PAYGATE DIGITAL SIGNED"); cs.endText();
                 cs.setFont(fontRegular, 7.5f);
                 cs.beginText(); cs.newLineAtOffset(70, sigY - 2); cs.showText("Timestamp: " + (loan.getDisbursedAt() != null ? loan.getDisbursedAt().format(DATE_FMT) : "PENDING")); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(70, sigY - 14); cs.showText("Certificate ID: PG-CA-998822"); cs.endText();
 
                 // Party B Stamp Box
-                cs.setNonStrokingColor(239, 246, 255);
+                cs.setNonStrokingColor(239 / 255.0f, 246 / 255.0f, 255 / 255.0f);
                 cs.addRect(340, sigY - 25, 170, 50);
                 cs.fill();
-                cs.setStrokingColor(37, 99, 235);
+                cs.setStrokingColor(37 / 255.0f, 99 / 255.0f, 235 / 255.0f);
                 cs.addRect(340, sigY - 25, 170, 50);
                 cs.stroke();
 
                 cs.setFont(fontBold, 9);
-                cs.setNonStrokingColor(29, 78, 216);
+                cs.setNonStrokingColor(29 / 255.0f, 78 / 255.0f, 216 / 255.0f);
                 cs.beginText(); cs.newLineAtOffset(350, sigY + 12); cs.showText("✓ USER E-ACCEPTED & SIGNED"); cs.endText();
                 cs.setFont(fontRegular, 7.5f);
-                cs.beginText(); cs.newLineAtOffset(350, sigY - 2); cs.showText("User: " + user.getUsername()); cs.endText();
+                cs.beginText(); cs.newLineAtOffset(350, sigY - 2); cs.showText("User: " + cleanText(user.getUsername())); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(350, sigY - 14); cs.showText("Status: FULLY DISBURSED"); cs.endText();
 
-                cs.setNonStrokingColor(0, 0, 0);
-                cs.setStrokingColor(0, 0, 0);
+                cs.setNonStrokingColor(0.0f, 0.0f, 0.0f);
+                cs.setStrokingColor(0.0f, 0.0f, 0.0f);
 
                 drawFooter(cs, 3, 3);
             }
