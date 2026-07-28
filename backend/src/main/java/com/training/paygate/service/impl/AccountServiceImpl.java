@@ -226,8 +226,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+        User user = userRepository.findAllByUsernameIgnoreCase(currentUsername).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(currentUsername)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername)));
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
@@ -242,8 +243,9 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+        User user = userRepository.findAllByUsernameIgnoreCase(currentUsername).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(currentUsername)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername)));
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
