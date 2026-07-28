@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
 
@@ -20,6 +20,11 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {
     // Purge any legacy refresh_token from localStorage upon app initialization
     localStorage.removeItem('refresh_token');
+
+    // Automatically attempt silent refresh on app startup if cookie exists
+    if (this.isAuthenticated()) {
+      this.scheduleBackgroundRefresh();
+    }
   }
 
   login(credentials: { username: string; password: string }): Observable<ApiResponse<AuthResponse>> {
@@ -43,7 +48,7 @@ export class AuthService {
   }
 
   /**
-   * Refreshes Access Token on-demand when 401 occurs.
+   * Refreshes Access Token on-demand when 401 occurs or on app init.
    * Browser automatically transmits the HttpOnly Cookie.
    */
   refreshToken(): Observable<ApiResponse<AuthResponse>> {
@@ -56,7 +61,44 @@ export class AuthService {
     );
   }
 
+  /**
+   * Attempts silent refresh on page load / route transition if access_token is missing or expired.
+   */
+  trySilentRefresh(): Observable<boolean> {
+    return this.refreshToken().pipe(
+      tap(() => this.scheduleBackgroundRefresh()),
+      catchError(() => {
+        this.clearTokens();
+        return of(false);
+      }),
+      switchMap((res: any) => of(typeof res === 'object' && res?.success && !!res?.data?.accessToken))
+    );
+  }
+
+  /**
+   * Periodically refreshes access token every 12 minutes (before 15min expiration)
+   */
+  scheduleBackgroundRefresh(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+    // Refresh 3 minutes before access token expires (12 mins = 720000ms)
+    this.refreshTimer = setTimeout(() => {
+      if (this.isAuthenticated()) {
+        this.refreshToken().subscribe({
+          next: () => this.scheduleBackgroundRefresh(),
+          error: () => this.clearTokens()
+        });
+      }
+    }, 12 * 60 * 1000);
+  }
+
+  private refreshTimer: any;
+
   logout(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
     this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).pipe(
       catchError(() => of(null))
     ).subscribe(() => {
