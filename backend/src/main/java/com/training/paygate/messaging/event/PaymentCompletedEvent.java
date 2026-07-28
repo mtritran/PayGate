@@ -1,5 +1,6 @@
 package com.training.paygate.messaging.event;
 
+import com.training.paygate.enums.TransactionType;
 import java.math.BigDecimal;
 
 public record PaymentCompletedEvent(
@@ -11,7 +12,9 @@ public record PaymentCompletedEvent(
         String userEmail,
         String senderUsername,
         String recipientAccountNo,
-        String description
+        String description,
+        TransactionType transactionType,
+        Long userId
 ) {
     public PaymentCompletedEvent(
             String transactionRef,
@@ -20,6 +23,6 @@ public record PaymentCompletedEvent(
             BigDecimal amount,
             String status
     ) {
-        this(transactionRef, merchantId, webhookUrl, amount, status, null, null, null, null);
+        this(transactionRef, merchantId, webhookUrl, amount, status, null, null, null, null, null, null);
     }
 }

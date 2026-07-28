@@ -15,4 +15,8 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     boolean existsByCode(String code);
 
     Page<Voucher> findByRemainingQtyGreaterThanAndExpiresAtAfter(int minQty, LocalDateTime now, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Voucher v SET v.remainingQty = v.remainingQty - 1 WHERE v.id = :id AND v.remainingQty > 0")
+    int decreaseRemainingQty(@org.springframework.data.repository.query.Param("id") Long id);
 }

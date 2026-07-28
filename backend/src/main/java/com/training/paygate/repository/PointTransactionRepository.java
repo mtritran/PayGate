@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface PointTransactionRepository extends JpaRepository<PointTransaction, Long> {
 
+    boolean existsByTransactionRef(String transactionRef);
+
     Page<PointTransaction> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(pt.points), 0) FROM PointTransaction pt WHERE pt.user.id = :userId")
