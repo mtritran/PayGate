@@ -350,7 +350,7 @@ interface DailyVolumePoint {
                       [style.backgroundColor]="getBankBadge(tx.description, tx.type).bg"
                       [style.color]="getBankBadge(tx.description, tx.type).color"
                       [style.borderColor]="getBankBadge(tx.description, tx.type).border">
-                      🏦 {{ getBankBadge(tx.description, tx.type).name }}
+                      <mat-icon>account_balance</mat-icon> {{ getBankBadge(tx.description, tx.type).name }}
                     </span>
                   </td>
                   <td class="font-mono text-muted">PAY000000000{{ tx.destAccountId }}</td>

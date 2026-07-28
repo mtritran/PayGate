@@ -60,6 +60,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/recurring-payment/recurring-payment-form/recurring-payment-form.component').then(m => m.RecurringPaymentFormComponent)
       },
       {
+        path: 'bills/pay',
+        loadComponent: () => import('./features/bill/bill-pay/bill-pay.component').then(m => m.BillPayComponent)
+      },
+      {
+        path: 'bills/saved',
+        loadComponent: () => import('./features/bill/saved-bills/saved-bills.component').then(m => m.SavedBillsComponent)
+      },
+      {
         path: 'merchant/register',
         loadComponent: () => import('./features/merchant/merchant-register/merchant-register.component').then(m => m.MerchantRegisterComponent)
       },

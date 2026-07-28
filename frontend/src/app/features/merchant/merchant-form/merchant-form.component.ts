@@ -38,7 +38,7 @@ import { User, UserService } from '../../users/user.service';
                 type="text"
                 [(ngModel)]="searchUserTerm"
                 [ngModelOptions]="{standalone: true}"
-                placeholder="🔍 Search user by username or email..."
+                placeholder="Search user by username or email..."
                 class="form-input search-input"
               />
               <select formControlName="userId" class="form-select font-mono mt-1">

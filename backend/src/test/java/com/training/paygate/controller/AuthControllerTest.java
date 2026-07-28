@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.paygate.dto.request.LoginRequest;
 import com.training.paygate.dto.request.RegisterRequest;
 import com.training.paygate.dto.response.AuthResponse;
+import com.training.paygate.dto.response.UserResponse;
 import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.security.JwtTokenProvider;
 import com.training.paygate.security.SecurityConfig;
@@ -55,7 +56,7 @@ class AuthControllerTest {
     @DisplayName("UC-U01: Register - Thành công: Đăng ký user_vinh với email, password đầy đủ -> HTTP 200 OK")
     void register_success() throws Exception {
         RegisterRequest request = new RegisterRequest("user_vinh", "vinh@test.com", "Password@123", "Vinh User");
-        AuthResponse response = new AuthResponse("access-token", "refresh-token", "user_vinh", "USER", null);
+        UserResponse response = new UserResponse(1L, "user_vinh", "vinh@test.com", "Vinh User", "USER", true, null);
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);
 

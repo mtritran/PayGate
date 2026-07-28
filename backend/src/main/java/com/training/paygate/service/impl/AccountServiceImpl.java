@@ -103,7 +103,7 @@ public class AccountServiceImpl implements AccountService {
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        // Get or Create SYSTEM account (Đã rút ngắn còn 19 ký tự để tránh lỗi DB VARCHAR(20))
+        // Get or Create SYSTEM account (shortened to 19 chars to fit DB VARCHAR(20))
         Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseGet(() -> {
                     Account acc = Account.builder()
@@ -292,14 +292,14 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account account = accountOpt.orElseThrow(() ->
-                new ResourceNotFoundException("Tài khoản nhận tiền không tồn tại với thông tin: " + query));
+                new ResourceNotFoundException("PayGate account not found for: " + query));
 
         Long merchantId = null;
-        String ownerName = "Tài khoản PayGate";
+        String ownerName = "PayGate Account";
         if (account.getOwnerType() == OwnerType.USER) {
             ownerName = userRepository.findById(account.getOwnerId())
                     .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
-                    .orElse("Khách hàng PayGate");
+                    .orElse("PayGate User");
         } else if (account.getOwnerType() == OwnerType.MERCHANT) {
             Optional<Merchant> mOpt = merchantRepository.findById(account.getOwnerId());
             if (mOpt.isPresent()) {
@@ -307,7 +307,7 @@ public class AccountServiceImpl implements AccountService {
                 ownerName = m.getMerchantName();
                 merchantId = m.getId();
             } else {
-                ownerName = "Doanh nghiệp Merchant";
+                ownerName = "Merchant Business";
             }
         }
 

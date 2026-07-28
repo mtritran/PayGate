@@ -183,7 +183,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
 
         String failureReason = executeSinglePayment(rp, LocalDateTime.now());
         if (failureReason != null) {
-            throw new BadRequestException("Thực hiện thanh toán thất bại: " + failureReason);
+            throw new BadRequestException("Payment execution failed: " + failureReason);
         }
 
         return mapToResponse(recurringPaymentRepository.findById(id).orElse(rp));
@@ -212,7 +212,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
         User user = userRepository.findById(rp.getUserId()).orElse(null);
         if (user == null) {
             log.warn("User ID={} not found for recurring payment ID={}", rp.getUserId(), rp.getId());
-            return "Khởi tạo người dùng thất bại";
+            return "User setup failed";
         }
 
         String idempotencyKey = "REC-" + rp.getId() + "-" + System.currentTimeMillis();
@@ -241,7 +241,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                     idempotencyKey,
                     targetDestId,
                     rp.getAmount(),
-                    "[" + rp.getCategory() + "] " + (rp.getDescription() != null ? rp.getDescription() : "Thanh toán tự động"),
+                    "[" + rp.getCategory() + "] " + (rp.getDescription() != null ? rp.getDescription() : "Auto payment"),
                     null
             );
 
@@ -252,7 +252,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                     .recurringPaymentId(rp.getId())
                     .transactionRef(txRes.transactionRef())
                     .status("SUCCESS")
-                    .message("Thực hiện thành công mã giao dịch: " + txRes.transactionRef())
+                    .message("Transaction successful: " + txRes.transactionRef())
                     .executedAt(now)
                     .build();
             recurringPaymentLogRepository.save(logEntity);
@@ -272,14 +272,14 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
             return null; // Success!
 
         } catch (Exception e) {
-            errorResult = e.getMessage() != null ? e.getMessage() : "Lỗi hệ thống";
+            errorResult = e.getMessage() != null ? e.getMessage() : "System error";
             log.error("Failed to execute recurring payment ID={}: {}", rp.getId(), errorResult);
 
             try {
                 RecurringPaymentLog logEntity = RecurringPaymentLog.builder()
                         .recurringPaymentId(rp.getId())
                         .status("FAILED")
-                        .message("Lỗi thực hiện: " + errorResult)
+                        .message("Execution error: " + errorResult)
                         .executedAt(now)
                         .build();
                 recurringPaymentLogRepository.save(logEntity);

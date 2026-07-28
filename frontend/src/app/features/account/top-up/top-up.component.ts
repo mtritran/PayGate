@@ -255,8 +255,8 @@ export interface AvailableBankOption {
                     <span class="vqr-tag">NAPAS 24/7 GATEWAY</span>
                   </div>
                   <button type="button" class="btn-toggle-receiver" (click)="toggleCustomReceiver()">
-                    <span *ngIf="!showCustomReceiverCard">⚙ Tùy Chỉnh Ngân Hàng Nhận (Payment Generator)</span>
-                    <span *ngIf="showCustomReceiverCard">✓ Dùng Mặc Định PayGate System</span>
+                    <span *ngIf="!showCustomReceiverCard">⚙ Customize Receiving Bank (Payment Generator)</span>
+                    <span *ngIf="showCustomReceiverCard">✓ Using Default PayGate System</span>
                   </button>
                 </div>
 
@@ -266,7 +266,7 @@ export interface AvailableBankOption {
                     <img [src]="getSelectedBankInfo().logo" [alt]="getSelectedBankInfo().shortName" class="b-logo-img" />
                     <div>
                       <strong class="b-name">{{ getSelectedBankInfo().shortName }} - {{ getSelectedBankInfo().name }}</strong>
-                      <span class="b-sub">Hệ thống Cổng Thanh Toán PayGate Central</span>
+                      <span class="b-sub">PayGate Central Payment Gateway System</span>
                     </div>
                   </div>
                   <div class="rec-acc-info">
@@ -277,12 +277,12 @@ export interface AvailableBankOption {
 
                 <!-- Custom Receiver Bank Config Card -->
                 <div class="custom-receiver-card fade-in-up" *ngIf="showCustomReceiverCard">
-                  <div class="card-title-sm">Cấu Hình Ngân Hàng Thụ Hưởng (Bank Receiver Config)</div>
+                  <div class="card-title-sm">Receiving Bank Configuration (Bank Receiver Config)</div>
                   
                   <div class="grid-2-col">
                     <!-- Bank Selection -->
                     <div class="form-field-group">
-                      <label class="field-lbl">Ngân Hàng Thụ Hưởng (Select Bank)</label>
+                      <label class="field-lbl">Receiving Bank (Select Bank)</label>
                       <select
                         class="form-select-bank"
                         [(ngModel)]="selectedBankCode"
@@ -296,13 +296,13 @@ export interface AvailableBankOption {
 
                     <!-- Account Number -->
                     <div class="form-field-group">
-                      <label class="field-lbl">Số Tài Khoản Nhận (Account Number)</label>
+                      <label class="field-lbl">Receiving Account Number (Account Number)</label>
                       <input
                         type="text"
                         class="form-input-compact font-mono"
                         [(ngModel)]="selectedAccountNumber"
                         [ngModelOptions]="{standalone: true}"
-                        placeholder="Nhập số tài khoản..."
+                        placeholder="Enter account number..."
                         (input)="updateVietQrCode()"
                       />
                     </div>
@@ -310,7 +310,7 @@ export interface AvailableBankOption {
 
                   <!-- Account Holder Name -->
                   <div class="form-field-group mt-10">
-                    <label class="field-lbl">Tên Chủ Tài Khoản (Account Holder Name)</label>
+                    <label class="field-lbl">Account Holder Name (Account Holder Name)</label>
                     <input
                       type="text"
                       class="form-input-compact"
@@ -322,7 +322,7 @@ export interface AvailableBankOption {
                   </div>
                 </div>
 
-                <p class="vqr-desc">Quét mã VietQR bằng bất kỳ ứng dụng ngân hàng di động nào (Vietcombank, MB Bank, Techcombank, BIDV, MoMo...) để nạp tiền hoặc chuyển tiền tức thì 24/7.</p>
+                <p class="vqr-desc">Scan VietQR code with any mobile banking app (Vietcombank, MB Bank, Techcombank, BIDV, MoMo...) to top up or transfer instantly 24/7.</p>
               </div>
 
               <!-- Submit Action Button -->
@@ -378,9 +378,9 @@ export interface AvailableBankOption {
               <div class="qr-display-box">
                 <!-- Template Switcher Pills -->
                 <div class="qr-template-selector">
-                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact2'" (click)="selectTemplate('compact2')">Mẫu Chuẩn</button>
-                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact'" (click)="selectTemplate('compact')">Nhỏ Gọn</button>
-                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'qr_only'" (click)="selectTemplate('qr_only')">Mã QR</button>
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact2'" (click)="selectTemplate('compact2')">Standard</button>
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'compact'" (click)="selectTemplate('compact')">Compact</button>
+                  <button type="button" class="btn-tpl" [class.active]="selectedTemplate === 'qr_only'" (click)="selectTemplate('qr_only')">QR Only</button>
                 </div>
 
                 <div class="qr-image-wrapper">
@@ -392,47 +392,47 @@ export interface AvailableBankOption {
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  <span>Mã hiệu lực trong: <strong>{{ formattedTimer }}</strong></span>
+                  <span>Code valid for: <strong>{{ formattedTimer }}</strong></span>
                 </div>
               </div>
 
               <!-- Right Column: Transfer Info List -->
               <div class="vqr-details-box">
                 <div class="detail-card">
-                  <span class="d-lbl">NGÂN HÀNG THỤ HƯỞNG</span>
+                  <span class="d-lbl">RECEIVING BANK</span>
                   <div class="bank-head-val">
                     <img [src]="getSelectedBankInfo().logo" [alt]="getSelectedBankInfo().shortName" class="b-mini-logo" />
                     <span class="d-val font-bold">{{ getSelectedBankInfo().name }} ({{ getSelectedBankInfo().shortName }})</span>
                   </div>
                 </div>
                 <div class="detail-card">
-                  <span class="d-lbl">SỐ TÀI KHOẢN NHẬN</span>
+                  <span class="d-lbl">RECEIVING ACCOUNT NUMBER</span>
                   <div class="d-val-copy">
                     <span class="font-mono acc-num">{{ selectedAccountNumber }}</span>
-                    <button type="button" class="btn-copy-chip" (click)="copyText(selectedAccountNumber, 'Số tài khoản')">Sao chép</button>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(selectedAccountNumber, 'Account Number')">Copy</button>
                   </div>
                 </div>
                 <div class="detail-card">
-                  <span class="d-lbl">TÊN CHỦ TÀI KHOẢN</span>
+                  <span class="d-lbl">ACCOUNT HOLDER NAME</span>
                   <span class="d-val font-bold">{{ selectedAccountHolder }}</span>
                 </div>
                 <div class="detail-card">
-                  <span class="d-lbl">SỐ TIỀN CHUYỂN</span>
+                  <span class="d-lbl">TRANSFER AMOUNT</span>
                   <span class="d-val amount-val">{{ currentAmount | currency:'VND':'symbol':'1.0-0' }}</span>
                 </div>
                 <div class="detail-card highlight-note">
-                  <span class="d-lbl">NỘI DUNG CHUYỂN TIỀN (BẮT BUỘC CHÍNH XÁC)</span>
+                  <span class="d-lbl">TRANSFER CONTENT (MUST BE EXACT)</span>
                   <div class="d-val-copy">
                     <span class="font-mono text-note">{{ currentTransferNote }}</span>
-                    <button type="button" class="btn-copy-chip" (click)="copyText(currentTransferNote, 'Nội dung chuyển')">Sao chép</button>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(currentTransferNote, 'Transfer Content')">Copy</button>
                   </div>
                 </div>
 
                 <!-- Copy EMVCo Payload String Box -->
                 <div class="emvco-box">
                   <div class="emvco-head">
-                    <span class="emvco-lbl">MÃ CHUỖI EMVCo VIETQR STRING</span>
-                    <button type="button" class="btn-copy-chip" (click)="copyText(emvCoPayload, 'Chuỗi EMVCo VietQR')">Sao chép chuỗi QR</button>
+                    <span class="emvco-lbl">EMVCO VIETQR STRING</span>
+                    <button type="button" class="btn-copy-chip" (click)="copyText(emvCoPayload, 'VietQR EMVCo String')">Copy QR String</button>
                   </div>
                   <code class="emvco-string">{{ emvCoPayload }}</code>
                 </div>

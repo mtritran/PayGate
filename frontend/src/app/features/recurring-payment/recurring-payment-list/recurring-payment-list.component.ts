@@ -26,8 +26,8 @@ import {
             </svg>
           </div>
           <div>
-            <h1 class="page-title">Lịch Định Kỳ & Hóa Đơn Tự Động</h1>
-            <p class="subtitle">Quản lý các lịch chuyển tiền và tự động nộp hóa đơn điện/nước/internet.</p>
+            <h1 class="page-title">Recurring Payments & Auto Bills</h1>
+            <p class="subtitle">Manage auto-transfer schedules and auto-pay for electricity/water/internet.</p>
           </div>
         </div>
         <button class="btn-create" (click)="goToCreate()">
@@ -35,7 +35,7 @@ import {
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span>Tạo Lịch Mới</span>
+          <span>Create New</span>
         </button>
       </div>
 
@@ -43,21 +43,21 @@ import {
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-label">TỔNG LỊCH HẸN</span>
+            <span class="stat-label">TOTAL SCHEDULES</span>
             <span class="stat-dot total-dot"></span>
           </div>
           <span class="stat-value">{{ payments().length }}</span>
         </div>
         <div class="stat-card active-card">
           <div class="stat-top">
-            <span class="stat-label">ĐANG HOẠT ĐỘNG</span>
+            <span class="stat-label">ACTIVE</span>
             <span class="stat-dot active-dot"></span>
           </div>
           <span class="stat-value">{{ activeCount() }}</span>
         </div>
         <div class="stat-card paused-card">
           <div class="stat-top">
-            <span class="stat-label">ĐANG TẠM DỪNG</span>
+            <span class="stat-label">PAUSED</span>
             <span class="stat-dot paused-dot"></span>
           </div>
           <span class="stat-value">{{ pausedCount() }}</span>
@@ -67,7 +67,7 @@ import {
       <!-- Loading / Error -->
       <div *ngIf="isLoading()" class="loading-box">
         <div class="spinner"></div>
-        <span>Đang tải danh sách lịch định kỳ...</span>
+        <span>Loading recurring payments...</span>
       </div>
 
       <div *ngIf="errorMsg()" class="error-alert">
@@ -79,10 +79,10 @@ import {
         <table class="pg-table">
           <thead>
             <tr>
-              <th>Dịch Vụ & Ghi Chú</th>
-              <th>Số Tiền</th>
-              <th>Trạng Thái</th>
-              <th class="text-right">Thao Tác</th>
+              <th>Service & Note</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -124,15 +124,15 @@ import {
               </td>
               <td class="text-right" (click)="$event.stopPropagation()">
                 <div class="action-buttons">
-                  <button class="btn-action btn-detail" (click)="openDetail(item)" title="Xem chi tiết">
+                  <button class="btn-action btn-detail" (click)="openDetail(item)" title="View Details">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="12" y1="16" x2="12" y2="12"></line>
                       <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>Chi Tiết</span>
+                    <span>Details</span>
                   </button>
-                  <button class="btn-action btn-delete" (click)="deleteItem(item)" title="Xóa">
+                  <button class="btn-action btn-delete" (click)="deleteItem(item)" title="Delete">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
@@ -155,9 +155,9 @@ import {
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
         </div>
-        <h3>Chưa Có Lịch Định Kỳ Nào</h3>
-        <p>Tự động hóa chuyển tiền hoặc thanh toán hóa đơn Điện, Nước, Internet dễ dàng.</p>
-        <button class="btn-create" (click)="goToCreate()">+ Tạo Lịch Mới</button>
+        <h3>No Recurring Payments Yet</h3>
+        <p>Automate transfers or Electricity, Water, Internet bill payments with ease.</p>
+        <button class="btn-create" (click)="goToCreate()">+ Create New</button>
       </div>
 
       <!-- Detail Modal -->
@@ -168,7 +168,7 @@ import {
               <div class="category-badge" [ngClass]="selectedItemForDetail()?.category?.toLowerCase() || ''">
                 <span>{{ getCategoryLabel(selectedItemForDetail()?.category || '') }}</span>
               </div>
-              <h3>Chi Tiết Lịch #{{ selectedItemForDetail()?.id }}</h3>
+              <h3>Schedule Details #{{ selectedItemForDetail()?.id }}</h3>
             </div>
             <button class="btn-close" (click)="selectedItemForDetail.set(null)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -181,12 +181,12 @@ import {
           <div class="modal-body" *ngIf="selectedItemForDetail() as d">
             <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">SỐ TIỀN THANH TOÁN</span>
+                <span class="detail-label">PAYMENT AMOUNT</span>
                 <span class="detail-value amount-highlight">{{ d.amount | currency:'VND':'symbol':'1.0-0' }}</span>
               </div>
 
               <div class="detail-item">
-                <span class="detail-label">TRẠNG THÁI</span>
+                <span class="detail-label">STATUS</span>
                 <span class="status-badge" [ngClass]="d.status.toLowerCase()">
                   <span class="status-dot"></span>
                   {{ getStatusLabel(d.status) }}
@@ -194,37 +194,37 @@ import {
               </div>
 
               <div class="detail-item">
-                <span class="detail-label">CHU KỲ</span>
+                <span class="detail-label">FREQUENCY</span>
                 <span class="detail-value">{{ getFrequencyLabel(d.frequency) }}</span>
               </div>
 
               <div class="detail-item" *ngIf="d.category === 'TRANSFER'">
-                <span class="detail-label">TÀI KHOẢN ĐÍCH</span>
+                <span class="detail-label">DESTINATION ACCOUNT</span>
                 <span class="detail-value font-mono">{{ d.destAccountNumber || ('ID: ' + d.destAccountId) }}</span>
               </div>
 
               <div class="detail-item" *ngIf="d.category !== 'TRANSFER'">
-                <span class="detail-label">MÃ HÓA ĐƠN</span>
-                <span class="detail-value font-mono">{{ d.billCode || 'N/A' }} ({{ d.providerCode || 'Nhà cung cấp' }})</span>
+                <span class="detail-label">BILL CODE</span>
+                <span class="detail-value font-mono">{{ d.billCode || 'N/A' }} ({{ d.providerCode || 'Provider' }})</span>
               </div>
 
               <div class="detail-item">
-                <span class="detail-label">LẦN CHẠY KẾ TIẾP</span>
+                <span class="detail-label">NEXT RUN</span>
                 <span class="detail-value font-mono">{{ d.nextRunAt | date:'dd/MM/yyyy HH:mm:ss' }}</span>
               </div>
 
               <div class="detail-item" *ngIf="d.lastRunAt">
-                <span class="detail-label">LẦN CHẠY GẦN NHẤT</span>
+                <span class="detail-label">LAST RUN</span>
                 <span class="detail-value font-mono">{{ d.lastRunAt | date:'dd/MM/yyyy HH:mm:ss' }}</span>
               </div>
 
               <div class="detail-item">
-                <span class="detail-label">NGÀY BẮT ĐẦU</span>
+                <span class="detail-label">START DATE</span>
                 <span class="detail-value font-mono">{{ d.startDate | date:'dd/MM/yyyy HH:mm' }}</span>
               </div>
 
               <div class="detail-item full-width" *ngIf="d.description">
-                <span class="detail-label">GHI CHÚ GIAO DỊCH</span>
+                <span class="detail-label">TRANSACTION NOTE</span>
                 <span class="detail-value text-desc">{{ d.description }}</span>
               </div>
             </div>
@@ -232,27 +232,27 @@ import {
             <!-- Modal Action Buttons -->
             <div class="modal-actions">
               <button class="btn-modal btn-run" (click)="executeNow(d)">
-                <span>Thực Hiện Ngay</span>
+                <span>Execute Now</span>
               </button>
               <button
                 *ngIf="d.status === 'ACTIVE'"
                 class="btn-modal btn-pause"
                 (click)="toggleStatus(d, 'PAUSED')"
               >
-                <span>Tạm Dừng Lịch Hẹn</span>
+                <span>Pause Schedule</span>
               </button>
               <button
                 *ngIf="d.status === 'PAUSED'"
                 class="btn-modal btn-resume"
                 (click)="toggleStatus(d, 'ACTIVE')"
               >
-                <span>Kích Hoạt Lại Lịch Hẹn</span>
+                <span>Resume Schedule</span>
               </button>
               <button class="btn-modal btn-log" (click)="openLogs(d)">
-                <span>Xem Nhật Ký Chạy Ngầm</span>
+                <span>View Execution Logs</span>
               </button>
               <button class="btn-modal btn-delete" (click)="deleteItem(d)">
-                <span>Xóa Lịch</span>
+                <span>Delete Schedule</span>
               </button>
             </div>
           </div>
@@ -268,7 +268,7 @@ import {
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
-              <h3>Nhật Ký Thực Hiện #{{ selectedItemForLogs()?.id }}</h3>
+              <h3>Execution Logs #{{ selectedItemForLogs()?.id }}</h3>
             </div>
             <button class="btn-close" (click)="selectedItemForLogs.set(null)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -278,17 +278,17 @@ import {
             </button>
           </div>
           <div class="modal-body">
-            <div *ngIf="isLogsLoading()" class="loading-box">Đang tải nhật ký...</div>
+            <div *ngIf="isLogsLoading()" class="loading-box">Loading logs...</div>
             <div *ngIf="!isLogsLoading() && logs().length === 0" class="empty-logs">
-              Chưa có lượt chạy ngầm nào được thực hiện.
+              No execution logs recorded yet.
             </div>
             <table *ngIf="!isLogsLoading() && logs().length > 0" class="pg-table">
               <thead>
                 <tr>
-                  <th>Thời Gian</th>
-                  <th>Mã GD</th>
-                  <th>Trạng Thái</th>
-                  <th>Chi Tiết</th>
+                  <th>Time</th>
+                  <th>Ref</th>
+                  <th>Status</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -628,14 +628,14 @@ export class RecurringPaymentListComponent implements OnInit {
   executeNow(item: RecurringPaymentResponse): void {
     this.service.executeNow(item.id).subscribe({
       next: (res) => {
-        alert('Đã thực hiện giao dịch thanh toán thành công!');
+        alert('Payment executed successfully!');
         this.loadData();
         if (this.selectedItemForDetail()) {
           this.selectedItemForDetail.set(res.data);
         }
       },
       error: (err) => {
-        alert(err?.error?.message || 'Không thể thực hiện giao dịch. Vui lòng kiểm tra số dư ví.');
+        alert(err?.error?.message || 'Could not execute payment. Please check your wallet balance.');
       }
     });
   }
@@ -649,7 +649,7 @@ export class RecurringPaymentListComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMsg.set('Không thể tải danh sách lịch định kỳ.');
+        this.errorMsg.set('Could not load recurring payment list.');
       }
     });
   }
@@ -678,18 +678,18 @@ export class RecurringPaymentListComponent implements OnInit {
           this.selectedItemForDetail.update(curr => curr ? { ...curr, status: newStatus } : null);
         }
       },
-      error: () => alert('Lỗi khi đổi trạng thái lịch hẹn.')
+      error: () => alert('Could not update schedule status.')
     });
   }
 
   deleteItem(item: RecurringPaymentResponse): void {
-    if (confirm('Bạn có chắc chắn muốn xóa lịch thanh toán định kỳ này?')) {
+    if (confirm('Are you sure you want to delete this recurring payment?')) {
       this.service.delete(item.id).subscribe({
         next: () => {
           this.selectedItemForDetail.set(null);
           this.loadData();
         },
-        error: () => alert('Lỗi khi xóa lịch hẹn.')
+        error: () => alert('Could not delete schedule.')
       });
     }
   }
@@ -712,9 +712,9 @@ export class RecurringPaymentListComponent implements OnInit {
   getCategoryLabel(cat: string): string {
     switch (cat) {
       case 'TRANSFER': return 'Chuyển Tiền';
-      case 'ELECTRICITY': return 'Hóa Đơn Điện';
-      case 'WATER': return 'Hóa Đơn Nước';
-      case 'INTERNET': return 'Hóa Đơn Internet';
+      case 'ELECTRICITY': return 'Electricity Bill';
+      case 'WATER': return 'Water Bill';
+      case 'INTERNET': return 'Internet Bill';
       default: return cat;
     }
   }
@@ -722,20 +722,20 @@ export class RecurringPaymentListComponent implements OnInit {
   getFrequencyLabel(freq: string): string {
     switch (freq) {
       case 'ONCE': return '1 Lần';
-      case 'MINUTELY': return 'Mỗi Phút (Test)';
-      case 'DAILY': return 'Hàng Ngày';
-      case 'WEEKLY': return 'Hàng Tuần';
-      case 'MONTHLY': return 'Hàng Tháng';
+      case 'MINUTELY': return 'Every Minute (Test)';
+      case 'DAILY': return 'Daily';
+      case 'WEEKLY': return 'Weekly';
+      case 'MONTHLY': return 'Monthly';
       default: return freq;
     }
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'ACTIVE': return 'Đang Hoạt Động';
-      case 'PAUSED': return 'Tạm Dừng';
-      case 'COMPLETED': return 'Đã Hoàn Thành';
-      case 'CANCELLED': return 'Đã Hủy';
+      case 'ACTIVE': return 'Active';
+      case 'PAUSED': return 'Paused';
+      case 'COMPLETED': return 'Completed';
+      case 'CANCELLED': return 'Cancelled';
       default: return status;
     }
   }

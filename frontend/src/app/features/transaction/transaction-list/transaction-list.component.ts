@@ -3,6 +3,7 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { Subject } from 'rxjs';
 import { TransactionService, TransactionFilters } from '../../../core/services/transaction.service';
 import { TransactionResponse, TransactionType, TransactionStatus } from '../../../core/models/transaction.model';
@@ -30,7 +31,8 @@ export interface BankBadge {
     MatDialogModule,
     SkeletonComponent,
     EmptyStateComponent,
-    BadgeComponent
+    BadgeComponent,
+    MatIconModule
   ],
   template: `
     <div class="transactions-page fade-in-up">
@@ -156,7 +158,7 @@ export interface BankBadge {
                     [style.backgroundColor]="getBankBadge(tx.description, tx.type).bg"
                     [style.color]="getBankBadge(tx.description, tx.type).color"
                     [style.borderColor]="getBankBadge(tx.description, tx.type).border">
-                    🏦 {{ getBankBadge(tx.description, tx.type).name }}
+                    <mat-icon>account_balance</mat-icon> {{ getBankBadge(tx.description, tx.type).name }}
                   </span>
                 </td>
 
