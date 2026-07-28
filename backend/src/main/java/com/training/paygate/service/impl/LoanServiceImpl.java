@@ -170,8 +170,10 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Loan is not in OFFERED status for acceptance");
         }
 
-        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
+        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                .orElseGet(() -> accountRepository.findAll().stream()
+                        .filter(a -> a.getOwnerType() == OwnerType.SYSTEM).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found")));
 
         Account userAccount = accountRepository.findById(loan.getAccountId())
                 .orElseThrow(() -> new ResourceNotFoundException("User Account not found", loan.getAccountId()));
@@ -189,7 +191,8 @@ public class LoanServiceImpl implements LoanService {
         );
 
         User systemUser = userRepository.findById(systemAccount.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found", systemAccount.getOwnerId()));
+                .orElseGet(() -> userRepository.findAll().stream().filter(u -> u.getRole() == com.training.paygate.enums.Role.ADMIN).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found")));
 
         TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq, systemUser.getUsername());
         log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(), txResponse.transactionRef());
@@ -228,7 +231,10 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
 
-        if (!isAdmin && !loan.getUserId().equals(currentUserId)) {
+        User currentUser = userRepository.findById(currentUserId).orElse(null);
+        boolean userIsAdmin = isAdmin || (currentUser != null && currentUser.getRole() == com.training.paygate.enums.Role.ADMIN);
+
+        if (!userIsAdmin && !loan.getUserId().equals(currentUserId)) {
             throw new BadRequestException("Access denied to loan contract");
         }
 

@@ -55,7 +55,7 @@ public class LoanContractPdfGenerator {
                 cs.setFont(fontBold, 10);
                 cs.beginText();
                 cs.newLineAtOffset(50, y);
-                cs.showText("Contract Reference: " + loan.getLoanRef());
+                cs.showText("Contract Reference: " + cleanText(loan.getLoanRef()));
                 cs.endText();
 
                 cs.setFont(fontRegular, 10);
@@ -92,9 +92,9 @@ public class LoanContractPdfGenerator {
                 cs.setFont(fontBold, 10);
                 cs.beginText(); cs.newLineAtOffset(50, y); cs.showText("PARTY B (BORROWER): CUSTOMER ACCOUNT HOLDER"); cs.endText(); y -= 15;
                 cs.setFont(fontRegular, 9.5f);
-                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Full Name / Account Holder: " + (user.getFullName() != null ? user.getFullName() : user.getUsername())); cs.endText(); y -= 14;
-                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Username / User ID: " + user.getUsername() + " (ID: #" + user.getId() + ")"); cs.endText(); y -= 14;
-                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Registered Email: " + (user.getEmail() != null ? user.getEmail() : "N/A")); cs.endText(); y -= 22;
+                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Full Name / Account Holder: " + cleanText(user.getFullName() != null ? user.getFullName() : user.getUsername())); cs.endText(); y -= 14;
+                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Username / User ID: " + cleanText(user.getUsername()) + " (ID: #" + user.getId() + ")"); cs.endText(); y -= 14;
+                cs.beginText(); cs.newLineAtOffset(65, y); cs.showText("Registered Email: " + cleanText(user.getEmail() != null ? user.getEmail() : "N/A")); cs.endText(); y -= 22;
 
                 // ARTICLE 1
                 cs.setFont(fontBold, 11);
@@ -257,28 +257,39 @@ public class LoanContractPdfGenerator {
         }
     }
 
+    private static String cleanText(String text) {
+        if (text == null) return "";
+        String normalized = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+        String unaccented = normalized.replaceAll("\\p{M}", "");
+        unaccented = unaccented.replace('đ', 'd').replace('Đ', 'D');
+        return unaccented.replaceAll("[^\\x00-\\x7F]", "");
+    }
+
     private static void drawBulletPoint(PDPageContentStream cs, String label, String value, float x, float y, PDType1Font font) throws IOException {
+        String safeLabel = cleanText(label);
+        String safeValue = cleanText(value);
         cs.beginText();
         cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9.5f);
         cs.newLineAtOffset(x, y);
-        cs.showText("• " + label + " ");
+        cs.showText("• " + safeLabel + " ");
         cs.endText();
 
-        float labelWidth = (new PDType1Font(Standard14Fonts.FontName.HELVETICA).getStringWidth("• " + label + " ") / 1000) * 9.5f;
+        float labelWidth = (new PDType1Font(Standard14Fonts.FontName.HELVETICA).getStringWidth("• " + safeLabel + " ") / 1000) * 9.5f;
         cs.beginText();
         cs.setFont(font, 9.5f);
         cs.newLineAtOffset(x + labelWidth, y);
-        cs.showText(value);
+        cs.showText(safeValue);
         cs.endText();
     }
 
     private static void drawTextCentered(PDPageContentStream cs, String text, float x, float y, float pageWidth, PDType1Font font, float fontSize) throws IOException {
-        float titleWidth = (font.getStringWidth(text) / 1000) * fontSize;
+        String safeText = cleanText(text);
+        float titleWidth = (font.getStringWidth(safeText) / 1000) * fontSize;
         float startX = (pageWidth - titleWidth) / 2;
         cs.beginText();
         cs.setFont(font, fontSize);
         cs.newLineAtOffset(startX, y);
-        cs.showText(text);
+        cs.showText(safeText);
         cs.endText();
     }
 
@@ -299,7 +310,7 @@ public class LoanContractPdfGenerator {
 
     private static String formatVnd(BigDecimal amount) {
         if (amount == null) return "0 VND";
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        return formatter.format(amount);
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("en", "US"));
+        return formatter.format(amount).replace("$", "") + " VND";
     }
 }
