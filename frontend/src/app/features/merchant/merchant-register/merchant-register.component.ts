@@ -182,8 +182,8 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="card-title-group">
             <div class="icon-box">🚀</div>
             <div>
-              <h3>Hướng Dẫn Tích Hợp Thanh Toán Trong 4 Bước</h3>
-              <p class="card-desc">Tích hợp Cổng thanh toán PayGate vào Website / Ứng dụng bán hàng dễ dàng.</p>
+              <h3>Tài Liệu Tích Hợp Chi Tiết (Full API Documentation)</h3>
+              <p class="card-desc">Tài liệu kỹ thuật quy định cấu trúc Request, Response, Mã lỗi & Luồng xử lý giao dịch.</p>
             </div>
           </div>
 
@@ -191,26 +191,75 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="workflow-steps mt-24">
             <div class="workflow-card">
               <div class="step-badge">BƯỚC 1</div>
-              <h4>Tạo Đơn Hàng Thanh Toán</h4>
-              <p>Server của bạn gọi API <code>/api/v1/checkout/create</code> kèm <code>apiKey</code> và số tiền để nhận <code>paymentUrl</code>.</p>
+              <h4>1. Khởi Tạo Đơn Hàng Thanh Toán</h4>
+              <p>Server của bạn gửi <code>POST /api/v1/checkout/create</code> kèm <code>apiKey</code> và số tiền để nhận <code>paymentUrl</code>.</p>
             </div>
 
             <div class="workflow-card">
               <div class="step-badge">BƯỚC 2</div>
-              <h4>Redirect Khách Hàng</h4>
-              <p>Chuyển hướng trình duyệt khách hàng sang <code>paymentUrl</code> của PayGate để hiển thị Form thanh toán.</p>
+              <h4>2. Redirect Khách Hàng Sang PayGate</h4>
+              <p>Chuyển hướng trình duyệt khách hàng sang <code>paymentUrl</code> (VD: <code>http://localhost:4200/checkout?token=CHK_...</code>).</p>
             </div>
 
             <div class="workflow-card">
               <div class="step-badge">BƯỚC 3</div>
-              <h4>Xác Thực OTP Gmail</h4>
-              <p>Khách hàng đăng nhập Ví PayGate, nhập mã OTP gửi về Gmail để xác nhận thanh toán.</p>
+              <h4>3. Khách Hàng Nhập OTP Gmail</h4>
+              <p>Khách hàng kiểm tra số tiền, đăng nhập Ví PayGate và nhập mã OTP 6 chữ số gửi về Gmail để xác thực thanh toán.</p>
             </div>
 
             <div class="workflow-card">
               <div class="step-badge">BƯỚC 4</div>
-              <h4>Nhận Kết Quả PayGate</h4>
-              <p>Tiền vào ví bạn lập tức. Khách hàng được redirect về <code>returnUrl</code> của bạn với trạng thái <code>SUCCESS</code>.</p>
+              <h4>4. Nhận Trạng Thái Callback</h4>
+              <p>Tiền tự động chuyển về Ví Merchant của bạn. Khách hàng được redirect về <code>returnUrl</code> với trạng thái <code>SUCCESS</code>.</p>
+            </div>
+          </div>
+
+          <!-- Parameter Specification Table -->
+          <div class="docs-section mt-28">
+            <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Tạo Đơn Hàng (POST /api/v1/checkout/create)</h4>
+            <div class="table-responsive">
+              <table class="docs-table">
+                <thead>
+                  <tr>
+                    <th>Trường (Field)</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Bắt buộc</th>
+                    <th>Mô tả chi tiết</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>apiKey</code></td>
+                    <td><code>String</code></td>
+                    <td><span class="badge-req">Bắt buộc</span></td>
+                    <td>Secret API Key riêng của Merchant (Lấy tại Tab API Keys).</td>
+                  </tr>
+                  <tr>
+                    <td><code>orderId</code></td>
+                    <td><code>String</code></td>
+                    <td><span class="badge-req">Bắt buộc</span></td>
+                    <td>Mã đơn hàng duy nhất trên hệ thống của bạn (Ví dụ: <code>ORDER_998811</code>).</td>
+                  </tr>
+                  <tr>
+                    <td><code>amount</code></td>
+                    <td><code>Number</code></td>
+                    <td><span class="badge-req">Bắt buộc</span></td>
+                    <td>Số tiền thanh toán tính bằng VND (Tối thiểu <code>1,000</code> VND).</td>
+                  </tr>
+                  <tr>
+                    <td><code>description</code></td>
+                    <td><code>String</code></td>
+                    <td>Tùy chọn</td>
+                    <td>Nội dung hiển thị cho khách hàng khi thanh toán.</td>
+                  </tr>
+                  <tr>
+                    <td><code>returnUrl</code></td>
+                    <td><code>String</code></td>
+                    <td><span class="badge-req">Bắt buộc</span></td>
+                    <td>Đường dẫn Website của bạn để PayGate chuyển hướng về sau khi thanh toán thành công.</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -323,6 +372,15 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
     .step-badge { font-size: 0.68rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 4px 10px; border-radius: 20px; width: fit-content; margin-bottom: 8px; }
     .workflow-card h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px; color: #0f172a; }
     .workflow-card p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.5; }
+
+    /* Parameter Specification Table */
+    .section-subtitle { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
+    .table-responsive { overflow-x: auto; border: 1.5px solid #e2e8f0; border-radius: 14px; }
+    .docs-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    .docs-table th { background: #f8fafc; padding: 12px 16px; font-weight: 800; color: #475569; border-bottom: 1.5px solid #e2e8f0; }
+    .docs-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .docs-table code { background: #f1f5f9; color: #059669; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-family: monospace; }
+    .badge-req { background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
 
     /* Code Snippet Box */
     .code-snippets-section { background: #0f172a; border-radius: 16px; overflow: hidden; }
