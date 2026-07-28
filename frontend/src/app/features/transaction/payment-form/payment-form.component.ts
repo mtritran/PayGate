@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -11,6 +11,7 @@ import { BeneficiaryService, BeneficiaryResponse } from '../../../core/services/
 import { AccountLookupResponse } from '../../../core/models/account.model';
 import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
+import { PinService } from '../../../core/services/pin.service';
 
 @Component({
   selector: 'app-payment-form',
@@ -485,9 +486,10 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <!-- PIN Modal for Transaction Security -->
       <app-pin-modal
         [isOpen]="showPinModal"
-        title="Xác thực PIN chuyển tiền"
-        subtitle="Nhập Mã PIN 6 số để hoàn tất giao dịch chuyển tiền"
-        (confirmed)="onPinConfirmed()"
+        [isSetupMode]="isPinSetupMode"
+        [title]="isPinSetupMode ? 'Tạo Mã PIN Giao Dịch Mới' : 'Xác thực PIN chuyển tiền'"
+        [subtitle]="isPinSetupMode ? 'Tạo Mã PIN 6 số để bảo mật các giao dịch về sau' : 'Nhập Mã PIN 6 số để hoàn tất giao dịch chuyển tiền'"
+        (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal = false"
       ></app-pin-modal>
     </div>
@@ -1296,6 +1298,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   showPinModal = false;
+  isPinSetupMode = false;
+  private pinService = inject(PinService);
 
   openConfirmation(): void {
     if (this.paymentForm.invalid || !this.recipientLookup) {
@@ -1310,11 +1314,42 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   executePayment(): void {
-    // Open PIN modal first for security verification
-    this.showPinModal = true;
+    // Check if user has setup PIN
+    this.pinService.getPinStatus().subscribe({
+      next: (res: any) => {
+        if (res.data && res.data.hasPin) {
+          this.isPinSetupMode = false;
+        } else {
+          this.isPinSetupMode = true;
+          this.notification.info('Bạn chưa cài đặt Mã PIN. Vui lòng tạo Mã PIN 6 số để tiếp tục.');
+        }
+        this.showPinModal = true;
+      },
+      error: () => {
+        this.isPinSetupMode = false;
+        this.showPinModal = true;
+      }
+    });
   }
 
-  onPinConfirmed(): void {
+  onPinConfirmed(pinStr?: string): void {
+    if (this.isPinSetupMode && pinStr) {
+      this.pinService.setupPin(pinStr).subscribe({
+        next: () => {
+          this.notification.success('Đã tạo Mã PIN giao dịch thành công!');
+          this.isPinSetupMode = false;
+          this.proceedPayment();
+        },
+        error: (err: any) => {
+          this.notification.error(err?.error?.message || 'Không thể thiết lập Mã PIN');
+        }
+      });
+      return;
+    }
+    this.proceedPayment();
+  }
+
+  private proceedPayment(): void {
     this.showPinModal = false;
     this.submitting = true;
     this.transactionService.processPayment(this.paymentForm.value).subscribe({

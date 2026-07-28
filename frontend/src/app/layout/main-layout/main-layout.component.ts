@@ -5,6 +5,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { AvatarComponent } from '../../shared/components/avatar/avatar.component';
 import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-assistant.component';
+import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.component';
+import { PinService } from '../../core/services/pin.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -14,7 +17,8 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
     RouterModule,
     ButtonComponent,
     AvatarComponent,
-    AiAssistantComponent
+    AiAssistantComponent,
+    PinModalComponent
   ],
   template: `
     <div class="main-layout">
@@ -182,6 +186,15 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" (click)="openPinSetupModal()" title="Cài đặt Mã PIN 6 số" style="cursor: pointer;">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Mã PIN Giao Dịch</span>
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" routerLink="/users" routerLinkActive="active" title="User Management">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -277,6 +290,16 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
 
     <!-- Overlay for mobile -->
     <div class="sidenav-overlay" *ngIf="isMobile() && !collapsed()" (click)="closeOnMobile()"></div>
+
+    <!-- PIN Setup Modal -->
+    <app-pin-modal
+      [isOpen]="showPinSetupModal()"
+      [isSetupMode]="true"
+      title="Cài đặt Mã PIN Giao Dịch"
+      subtitle="Nhập 6 chữ số để tạo mới hoặc cập nhật Mã PIN bảo mật"
+      (confirmed)="onPinSetupConfirmed($event)"
+      (cancelled)="showPinSetupModal.set(false)"
+    ></app-pin-modal>
   `,
   styles: [`
     .main-layout {
@@ -679,6 +702,27 @@ export class MainLayoutComponent {
     if (this.isMobile()) {
       this.collapsed.set(true);
     }
+  }
+
+  private pinService = inject(PinService);
+  private notification = inject(NotificationService);
+
+  showPinSetupModal = signal(false);
+
+  openPinSetupModal(): void {
+    this.showPinSetupModal.set(true);
+  }
+
+  onPinSetupConfirmed(newPin: string): void {
+    this.pinService.setupPin(newPin).subscribe({
+      next: () => {
+        this.showPinSetupModal.set(false);
+        this.notification.success('Đã cập nhật Mã PIN giao dịch 6 số thành công!');
+      },
+      error: (err: any) => {
+        this.notification.error(err?.error?.message || 'Không thể cập nhật Mã PIN');
+      }
+    });
   }
 
   logout(): void {

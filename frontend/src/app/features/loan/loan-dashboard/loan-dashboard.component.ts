@@ -6,6 +6,7 @@ import { LoanService, LoanResponse, LoanScheduleResponse, RepayType } from '../.
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
+import { PinService } from '../../../core/services/pin.service';
 
 @Component({
   selector: 'app-loan-dashboard',
@@ -362,9 +363,10 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <!-- PIN Security Modal for Digital Contract Signature -->
       <app-pin-modal
         [isOpen]="showPinModal()"
-        title="Xác nhận chữ ký PIN điện tử"
-        subtitle="Nhập Mã PIN 6 số để hoàn tất ký hợp đồng vay và nhận tiền giải ngân"
-        (confirmed)="onPinConfirmed()"
+        [isSetupMode]="isPinSetupMode()"
+        [title]="isPinSetupMode() ? 'Tạo Mã PIN Giao Dịch Mới' : 'Xác nhận chữ ký PIN điện tử'"
+        [subtitle]="isPinSetupMode() ? 'Tạo Mã PIN 6 số để bảo mật các giao dịch về sau' : 'Nhập Mã PIN 6 số để hoàn tất ký hợp đồng vay và nhận tiền giải ngân'"
+        (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal.set(false)"
       ></app-pin-modal>
     </div>
@@ -664,14 +666,47 @@ export class LoanDashboardComponent implements OnInit {
   }
 
   showPinModal = signal(false);
+  isPinSetupMode = signal(false);
   pendingLoanToAccept = signal<number | null>(null);
+  private pinService = inject(PinService);
 
   acceptOffer(loanId: number): void {
     this.pendingLoanToAccept.set(loanId);
-    this.showPinModal.set(true);
+    this.pinService.getPinStatus().subscribe({
+      next: (res: any) => {
+        if (res.data && res.data.hasPin) {
+          this.isPinSetupMode.set(false);
+        } else {
+          this.isPinSetupMode.set(true);
+          this.notification.info('Bạn chưa cài đặt Mã PIN. Vui lòng tạo Mã PIN 6 số để tiếp tục.');
+        }
+        this.showPinModal.set(true);
+      },
+      error: () => {
+        this.isPinSetupMode.set(false);
+        this.showPinModal.set(true);
+      }
+    });
   }
 
-  onPinConfirmed(): void {
+  onPinConfirmed(pinStr?: string): void {
+    if (this.isPinSetupMode() && pinStr) {
+      this.pinService.setupPin(pinStr).subscribe({
+        next: () => {
+          this.notification.success('Đã tạo Mã PIN giao dịch thành công!');
+          this.isPinSetupMode.set(false);
+          this.proceedAcceptLoan();
+        },
+        error: (err: any) => {
+          this.notification.error(err?.error?.message || 'Không thể thiết lập Mã PIN');
+        }
+      });
+      return;
+    }
+    this.proceedAcceptLoan();
+  }
+
+  private proceedAcceptLoan(): void {
     this.showPinModal.set(false);
     const loanId = this.pendingLoanToAccept();
     if (!loanId) return;

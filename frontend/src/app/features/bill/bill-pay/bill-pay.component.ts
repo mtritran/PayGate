@@ -14,8 +14,8 @@ import {
   LinkBillRequest
 } from '../../../core/services/bill.service';
 import { NotificationService } from '../../../core/services/notification.service';
-
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
+import { PinService } from '../../../core/services/pin.service';
 
 type Tab = 'services' | 'bills';
 type LinkMode = 'LINK_EXISTING' | 'REGISTER_NEW';
@@ -307,9 +307,10 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
   <!-- PIN Security Modal -->
   <app-pin-modal
     [isOpen]="showPinModal()"
-    title="Xác thực PIN thanh toán hóa đơn"
-    subtitle="Nhập Mã PIN 6 số để xác nhận thanh toán dịch vụ"
-    (confirmed)="onPinConfirmed()"
+    [isSetupMode]="isPinSetupMode()"
+    [title]="isPinSetupMode() ? 'Tạo Mã PIN Giao Dịch Mới' : 'Xác thực PIN thanh toán hóa đơn'"
+    [subtitle]="isPinSetupMode() ? 'Tạo Mã PIN 6 số để bảo mật các giao dịch về sau' : 'Nhập Mã PIN 6 số để xác nhận thanh toán dịch vụ'"
+    (confirmed)="onPinConfirmed($event)"
     (cancelled)="showPinModal.set(false)"
   ></app-pin-modal>
 </div>
@@ -641,14 +642,47 @@ export class BillPayComponent implements OnInit {
   }
 
   showPinModal = signal(false);
+  isPinSetupMode = signal(false);
   pendingBillToPay = signal<BillLookupResponse | null>(null);
+  private pinService = inject(PinService);
 
   payBill(bill: BillLookupResponse): void {
     this.pendingBillToPay.set(bill);
-    this.showPinModal.set(true);
+    this.pinService.getPinStatus().subscribe({
+      next: (res: any) => {
+        if (res.data && res.data.hasPin) {
+          this.isPinSetupMode.set(false);
+        } else {
+          this.isPinSetupMode.set(true);
+          this.notify.info('Bạn chưa cài đặt Mã PIN. Vui lòng tạo Mã PIN 6 số để tiếp tục.');
+        }
+        this.showPinModal.set(true);
+      },
+      error: () => {
+        this.isPinSetupMode.set(false);
+        this.showPinModal.set(true);
+      }
+    });
   }
 
-  onPinConfirmed(): void {
+  onPinConfirmed(pinStr?: string): void {
+    if (this.isPinSetupMode() && pinStr) {
+      this.pinService.setupPin(pinStr).subscribe({
+        next: () => {
+          this.notify.success('Đã tạo Mã PIN giao dịch thành công!');
+          this.isPinSetupMode.set(false);
+          this.proceedBillPay();
+        },
+        error: (err: any) => {
+          this.notify.error(err?.error?.message || 'Không thể thiết lập Mã PIN');
+        }
+      });
+      return;
+    }
+    this.proceedBillPay();
+  }
+
+  private proceedBillPay(): void {
     this.showPinModal.set(false);
     const bill = this.pendingBillToPay();
     if (!bill) return;
