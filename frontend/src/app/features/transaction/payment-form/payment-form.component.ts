@@ -333,7 +333,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           <div class="receive-body">
             <!-- QR Canvas with logo overlay -->
             <div class="receive-qr-wrap">
-              <canvas #qrCanvas class="receive-qr-canvas" width="240" height="240"></canvas>
+              <canvas #qrCanvas class="receive-qr-canvas" width="280" height="280"></canvas>
               <div class="receive-qr-owner">
                 <strong class="qr-acc-name">{{ myAccountName || 'PayGate User' }}</strong>
                 <span class="qr-acc-number font-mono">{{ myAccountNumber }}</span>
@@ -503,13 +503,13 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     .modal-fade-in { animation: modalFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 580px; margin: 0 auto; width: 100%; color: #0f172a; }
+    .paygate-form-page { display: flex; flex-direction: column; gap: 24px; max-width: 760px; margin: 0 auto; width: 100%; color: #0f172a; padding: 0 8px; }
     
-    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .form-header-group h2 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px 0; letter-spacing: -0.02em; }
-    .subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
+    .header-tag { font-size: 0.68rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .form-header-group h2 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.025em; }
+    .subtitle { font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.6; }
     
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04); }
+    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 36px 40px; box-shadow: 0 8px 32px -8px rgba(0,0,0,0.06), 0 2px 8px -2px rgba(0,0,0,0.03); }
     
     /* Balance Strip */
     .balance-strip { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid #a7f3d0; }
@@ -826,43 +826,54 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .btn-accept-large { font-size: 1rem; padding: 14px 28px; flex: 1; }
 
     /* Tab Switcher */
-    .tab-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 14px; }
-    .tab-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: transparent; border: 1px solid transparent; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.18s ease; color: #475569; }
-    .tab-btn:hover { background: #ffffff; }
-    .tab-btn.active { background: #ffffff; border-color: #a7f3d0; box-shadow: 0 4px 12px -3px rgba(5,150,105,0.18); color: #0f172a; }
-    .tab-btn.active .tab-icon { transform: scale(1.1); }
-    .tab-icon { font-size: 1.5rem; width: 1.5rem; height: 1.5rem; line-height: 1; }
-    .tab-label-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-    .tab-label-block strong { font-size: 0.9rem; font-weight: 800; color: inherit; }
-    .tab-label-block small { font-size: 0.72rem; color: #94a3b8; }
+    .tab-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 18px; }
+    .tab-btn { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: transparent; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.2s ease; color: #475569; }
+    .tab-btn:hover { background: rgba(255,255,255,0.7); }
+    .tab-btn.active { background: #ffffff; border-color: #a7f3d0; box-shadow: 0 4px 16px -4px rgba(5,150,105,0.2); color: #0f172a; }
+    .tab-btn.active .tab-icon { transform: scale(1.1); color: #059669; }
+    .tab-icon { font-size: 1.6rem; width: 22px; height: 22px; line-height: 1; flex-shrink: 0; }
+    .tab-label-block { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+    .tab-label-block strong { font-size: 0.95rem; font-weight: 800; color: inherit; }
+    .tab-label-block small { font-size: 0.75rem; color: #94a3b8; }
     .tab-btn.active .tab-label-block small { color: #059669; font-weight: 600; }
 
     /* Receive Tab Card */
-    .receive-card { padding: 26px 24px; display: flex; flex-direction: column; gap: 20px; }
-    .receive-header-row { display: flex; align-items: flex-start; gap: 12px; }
-    .receive-title-tag { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .receive-brand-name { font-size: 0.85rem; font-weight: 900; color: #059669; }
+    .receive-card { padding: 40px; display: flex; flex-direction: column; gap: 32px; }
+    .receive-header-row { display: flex; align-items: flex-start; gap: 16px; }
+    .receive-title-tag { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .qr-verified-pill { font-size: 0.65rem; font-weight: 800; background: linear-gradient(135deg, #dcfce7, #a7f3d0); color: #15803d; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
+    .receive-brand-name { font-size: 0.9rem; font-weight: 900; color: #059669; }
     .receive-brand-name i { font-style: italic; color: #1d4ed8; }
-    .receive-title { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; }
-    .receive-desc { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.55; }
-    .receive-body { display: grid; grid-template-columns: 240px 1fr; gap: 22px; align-items: flex-start; }
-    @media (max-width: 620px) { .receive-body { grid-template-columns: 1fr; } }
-    .receive-qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border: 2px solid #a7f3d0; border-radius: 16px; }
-    .receive-qr-canvas { width: 240px; height: 240px; border-radius: 10px; background: #fff; display: block; }
-    .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .receive-qr-owner .qr-acc-name { font-size: 0.88rem; font-weight: 800; color: #0f172a; text-align: center; }
-    .receive-qr-owner .qr-acc-number { font-size: 0.9rem; font-weight: 900; color: #059669; }
-    .receive-config { display: flex; flex-direction: column; gap: 14px; }
-    .receive-link-row { display: flex; align-items: stretch; gap: 8px; }
-    .receive-link-input { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #334155; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; }
+    .receive-title { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.02em; }
+    .receive-desc { font-size: 0.9rem; color: #64748b; margin: 0; line-height: 1.65; max-width: 480px; }
+    .receive-body { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: flex-start; }
+    @media (max-width: 680px) { .receive-body { grid-template-columns: 1fr; } }
+    .receive-qr-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      padding: 24px 20px;
+      background: linear-gradient(145deg, #ecfdf5 0%, #f0fdfa 60%, #e0f2fe 100%);
+      border: 2px solid #a7f3d0; border-radius: 24px;
+      box-shadow: 0 12px 40px -8px rgba(5,150,105,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+    .receive-qr-canvas { width: 280px; height: 280px; border-radius: 16px; background: #fff; display: block; box-shadow: 0 4px 24px -4px rgba(0,0,0,0.12); }
+    .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .receive-qr-owner .qr-acc-name { font-size: 1rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .receive-qr-owner .qr-acc-number { font-size: 1rem; font-weight: 900; color: #059669; font-family: monospace; letter-spacing: 0.04em; }
+    .receive-config { display: flex; flex-direction: column; gap: 18px; }
+    .form-label { font-size: 0.75rem; font-weight: 700; color: #475569; letter-spacing: 0.06em; text-transform: uppercase; }
+    .custom-input { padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; color: #0f172a; background: #fafafa; transition: 0.15s; width: 100%; }
+    .custom-input:focus { outline: none; border-color: #10b981; background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+    .receive-link-row { display: flex; align-items: stretch; gap: 10px; }
+    .receive-link-input { flex: 1; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #f8fafc; color: #334155; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
     .receive-link-input:focus { outline: none; border-color: #059669; background: #fff; }
-    .btn-copy { padding: 10px 16px; background: #059669; color: #fff; border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: background 0.18s; white-space: nowrap; }
-    .btn-copy:hover { background: #047857; }
-    .receive-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .btn-share, .btn-download { padding: 11px 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.83rem; font-weight: 700; color: #0f172a; cursor: pointer; transition: all 0.18s; }
-    .btn-share:hover, .btn-download:hover { border-color: #059669; background: #ecfdf5; color: #059669; }
-    .receive-note { font-size: 0.8rem; color: #475569; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 12px; line-height: 1.55; }
-    .receive-note strong { color: #059669; }
+    .btn-copy { display: flex; align-items: center; gap: 7px; padding: 13px 20px; background: #059669; color: #fff; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+    .btn-copy:hover { background: #047857; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,0.3); }
+    .receive-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-share, .btn-download { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 16px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 0.88rem; font-weight: 700; color: #374151; cursor: pointer; transition: all 0.18s; }
+    .btn-share:hover, .btn-download:hover { border-color: #10b981; background: #f0fdf4; color: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.12); }
+    .receive-note { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #475569; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1.5px solid #bae6fd; border-radius: 14px; padding: 16px 18px; line-height: 1.6; }
+    .receive-note svg { margin-top: 2px; }
+    .receive-note strong { color: #059669; font-weight: 700; }
   `]
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {
@@ -995,7 +1006,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     const ctx = canvasEl.getContext('2d');
     if (!ctx) return;
 
-    const size = 240;
+    const size = 280;
     canvasEl.width = size;
     canvasEl.height = size;
 
