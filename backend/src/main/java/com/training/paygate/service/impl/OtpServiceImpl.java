@@ -57,7 +57,7 @@ public class OtpServiceImpl implements OtpService {
         String cacheKey = buildCacheKey(username, action);
         otpCache.put(cacheKey, new OtpEntry(otpCode, expiresAt));
 
-        log.info("[OTP GENERATED] Created OTP code for user '{}' action '{}'. Expiration: {}s", username, action, ttlSeconds);
+        log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", otpCode, username, action, ttlSeconds);
 
         // Dispatch OTP code to user's real email (Gmail)
         String actionTitle = action != null && !action.isBlank() ? action : "Xác thực giao dịch";

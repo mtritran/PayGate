@@ -26,4 +26,6 @@ public interface MerchantService {
     MerchantResponse rejectMerchant(Long id);
 
     MerchantResponse getByUserId(Long userId);
+
+    String getRawApiKey(Long id);
 }
