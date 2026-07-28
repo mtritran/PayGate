@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import {
   BillService,
   SavedBillResponse
@@ -11,43 +12,45 @@ import { NotificationService } from '../../../core/services/notification.service
 @Component({
   selector: 'app-saved-bills',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MatIconModule],
   template: `
     <div class="saved-page">
       <div class="page-header">
         <div>
           <div class="header-tag">PAYGATE BILLS</div>
-          <h2>Hóa đơn đã lưu</h2>
-          <p class="subtitle">Tra cứu nhanh các hóa đơn thường dùng — tối đa 10 hóa đơn/user.</p>
+          <h2>Saved Bills</h2>
+          <p class="subtitle">Quick lookup of frequently used bills — max 10 bills/user.</p>
         </div>
-        <a routerLink="/bills/pay" class="btn btn-primary">+ Thanh toán hóa đơn mới</a>
+        <a routerLink="/bills/pay" class="btn btn-primary">+ Pay New Bill</a>
       </div>
 
       <div class="content-card">
-        <div *ngIf="loading()" class="empty-note">Đang tải…</div>
+        <div *ngIf="loading()" class="empty-note">Loading…</div>
         <div *ngIf="!loading() && saved().length === 0" class="empty-state">
-          <div class="empty-icon">📄</div>
-          <h4>Chưa có hóa đơn nào được lưu</h4>
-          <p>Lưu hóa đơn thường dùng để tra cứu nhanh vào các tháng sau.</p>
-          <a routerLink="/bills/pay" class="btn btn-primary">Đến trang thanh toán hóa đơn</a>
+          <mat-icon class="empty-icon">description</mat-icon>
+          <h4>No saved bills yet</h4>
+          <p>Save frequently used bills for quick lookup in future months.</p>
+          <a routerLink="/bills/pay" class="btn btn-primary">Go to Bill Payment</a>
         </div>
 
         <div class="saved-list" *ngIf="!loading() && saved().length > 0">
           <div class="saved-item" *ngFor="let s of saved()">
             <div class="left-cell">
-              <div class="type-badge" [attr.data-type]="s.providerType">{{ typeIcon(s.providerType) }}</div>
+              <div class="type-badge" [attr.data-type]="s.providerType">
+                <mat-icon>{{ typeIcon(s.providerType) }}</mat-icon>
+              </div>
               <div class="info">
                 <div class="nickname">{{ s.nickname || s.customerCode }}</div>
                 <div class="meta">
                   <span>{{ s.providerName }}</span>
                   <span class="dot">•</span>
-                  <span class="code">Mã KH: {{ s.customerCode }}</span>
+                  <span class="code">Code: {{ s.customerCode }}</span>
                 </div>
               </div>
             </div>
             <div class="right-cell">
               <button class="btn btn-secondary btn-sm" (click)="onQuickLookup(s)" [disabled]="lookingUp() === s.id">
-                {{ lookingUp() === s.id ? 'Đang tra cứu…' : 'Tra cứu ngay' }}
+                {{ lookingUp() === s.id ? 'Looking up…' : 'Look Up Now' }}
               </button>
             </div>
           </div>
@@ -69,7 +72,7 @@ import { NotificationService } from '../../../core/services/notification.service
       padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
     .empty-state { text-align: center; padding: 40px 20px; }
-    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-icon { font-size: 40px; width: 40px; height: 40px; margin-bottom: 12px; }
     .empty-state h4 { color: #111827; margin: 0 0 6px; }
     .empty-state p { color: #6b7280; margin: 0 0 16px; }
     .empty-note { color: #6b7280; font-style: italic; padding: 12px; }
@@ -81,10 +84,11 @@ import { NotificationService } from '../../../core/services/notification.service
     .saved-item:hover { border-color: #10b981; }
     .left-cell { display: flex; align-items: center; gap: 14px; }
     .type-badge {
-      width: 42px; height: 42px; border-radius: 10px; font-size: 20px;
+      width: 42px; height: 42px; border-radius: 10px;
       display: inline-flex; align-items: center; justify-content: center;
       background: #eef2ff; color: #4338ca;
     }
+    .type-badge mat-icon { font-size: 20px; width: 20px; height: 20px; }
     .type-badge[data-type='ELECTRICITY'] { background: #fef3c7; color: #92400e; }
     .type-badge[data-type='WATER'] { background: #dbeafe; color: #1d4ed8; }
     .type-badge[data-type='INTERNET'] { background: #ede9fe; color: #6d28d9; }
@@ -127,17 +131,17 @@ export class SavedBillsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.notify.error('Không tải được danh sách hóa đơn đã lưu');
+        this.notify.error('Could not load saved bills');
       }
     });
   }
 
   typeIcon(t: string): string {
     switch (t) {
-      case 'ELECTRICITY': return '⚡';
-      case 'WATER': return '💧';
-      case 'INTERNET': return '🌐';
-      default: return '📄';
+      case 'ELECTRICITY': return 'electric_bolt';
+      case 'WATER': return 'water_drop';
+      case 'INTERNET': return 'wifi';
+      default: return 'description';
     }
   }
 
@@ -146,7 +150,7 @@ export class SavedBillsComponent implements OnInit {
     this.bill.lookup({ providerCode: s.providerCode, customerCode: s.customerCode }).subscribe({
       next: r => {
         this.lookingUp.set(null);
-        this.notify.success(`Tìm thấy hóa đơn kỳ ${r.data.period} — chuyển tới trang thanh toán`);
+        this.notify.success(`Found bill for period ${r.data.period} — redirecting to payment`);
         this.router.navigate(['/bills/pay'], {
           queryParams: {
             type: s.providerType,
@@ -157,7 +161,7 @@ export class SavedBillsComponent implements OnInit {
       },
       error: e => {
         this.lookingUp.set(null);
-        this.notify.error(e?.error?.message || 'Không tìm thấy hóa đơn UNPAID hiện tại');
+        this.notify.error(e?.error?.message || 'No unpaid bill found');
       }
     });
   }

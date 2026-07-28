@@ -140,7 +140,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         // 6. Validate balance
         if (lockedSource.getBalance().compareTo(request.amount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in account: " + lockedSource.getAccountNumber());
+            throw new InsufficientBalanceException(
+                    "Insufficient wallet balance. Please top up and try again.");
         }
 
         // 7. Update balances
@@ -345,7 +346,7 @@ public class TransactionServiceImpl implements TransactionService {
         Account lockedMerchant = firstLocked.getId().equals(originalTx.getDestAccountId()) ? firstLocked : secondLocked;
 
         if (lockedMerchant.getBalance().compareTo(originalTx.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in merchant account to perform refund: " + lockedMerchant.getAccountNumber());
+            throw new InsufficientBalanceException("Insufficient merchant balance to process refund.");
         }
 
         // Update balances

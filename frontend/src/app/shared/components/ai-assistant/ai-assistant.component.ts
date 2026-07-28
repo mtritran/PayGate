@@ -106,17 +106,17 @@ export interface ChatMessage {
 
         <!-- Quick Suggestion Chips -->
         <div class="quick-chips-bar" *ngIf="!isThinking()">
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Số dư ví của tôi là bao nhiêu?')">
-            <span>Số dư ví</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('What is my current wallet balance?')">
+            <span>My Balance</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Tôi có bao nhiêu lịch định kỳ đang chạy?')">
-            <span>Lịch định kỳ</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('How many recurring payments are active?')">
+            <span>Recurring</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cài đặt tự động thanh toán tiền điện')">
-            <span>Tự động đóng tiền điện</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Set up auto-pay for my electricity bill')">
+            <span>Auto Pay Bill</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cho tôi xem lịch sử giao dịch gần đây')">
-            <span>Lịch sử giao dịch</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my recent transaction history')">
+            <span>History</span>
           </button>
         </div>
 
@@ -125,7 +125,7 @@ export interface ChatMessage {
           <input
             type="text"
             class="chat-input"
-            placeholder="Hỏi AI bất cứ điều gì..."
+            placeholder="Ask AI anything..."
             [(ngModel)]="userInputText"
             (keyup.enter)="sendMessage()"
             [disabled]="isThinking()"
@@ -418,7 +418,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     {
       id: 'init-1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là **PayGate AI Assistant**, được cung cấp bởi OpenRouter. Hãy hỏi tôi bất cứ điều gì về tài chính, thanh toán hoặc các tính năng PayGate.',
+      text: 'Hello! I am **PayGate AI Assistant**, powered by OpenRouter. Ask me anything about finance, payments, or PayGate features.',
       timestamp: new Date()
     }
   ]);
@@ -467,7 +467,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
       next: (res: any) => {
         this.isThinking.set(false);
         const data = res.data || res;
-        const reply = data.reply || 'Dịch vụ AI không trả về phản hồi.';
+        const reply = data.reply || 'AI service returned no response.';
         const model = data.modelUsed;
 
         const aiMsg: ChatMessage = {
@@ -485,13 +485,16 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
         this.isThinking.set(false);
         const status = err?.status;
         if (status === 0) {
-          this.errorMsg.set('Không thể kết nối đến server. Vui lòng kiểm tra backend đang chạy.');
+          this.errorMsg.set('Cannot connect to server. Please check that the backend is running.');
         } else if (status === 401 || status === 403) {
-          this.errorMsg.set('API Key OpenRouter không hợp lệ. Vui lòng kiểm tra cấu hình OPENROUTER_API_KEY.');
+          this.errorMsg.set('Invalid OpenRouter API Key. Please check the OPENROUTER_API_KEY configuration.');
+        } else if (status === 422) {
+          this.errorMsg.set(err?.error?.message || 'Insufficient balance or invalid request.');
         } else if (status === 429) {
-          this.errorMsg.set('Đã vượt quá giới hạn yêu cầu OpenRouter. Vui lòng thử lại sau.');
+          this.errorMsg.set('OpenRouter rate limit exceeded. Please try again later.');
         } else {
-          this.errorMsg.set(`Lỗi từ server (${status || 'unknown'}). Vui lòng thử lại.`);
+          const msg = err?.error?.message || err?.message || '';
+          this.errorMsg.set(msg || `Server error (${status || 'unknown'}). Please try again.`);
         }
       }
     });
@@ -502,15 +505,15 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.router.navigate([actionBtn.route], { queryParams: actionBtn.queryParams });
   }
 
-  /** Chỉ hiển thị nút redirect cho TOPUP và TRANSFER.
-   *  Câu hỏi về số dư / lịch sử → AI trả lời trực tiếp trong chat, không cần redirect. */
+  /** Only show redirect button for TOPUP and TRANSFER actions.
+   *  Balance / history questions → AI replies directly in chat, no redirect needed. */
   private resolveActionButton(data: any): ChatMessage['actionButton'] | undefined {
     const action: string | undefined = data.action;
     const amount: number | undefined = data.suggestedAmount;
     const recipient: string | undefined = data.suggestedRecipient;
 
     if (action === 'RECURRING') {
-      return { text: 'Quản Lý Lịch Định Kỳ & Hóa Đơn', route: '/recurring-payments' };
+      return { text: 'Manage Recurring & Bills', route: '/recurring-payments' };
     }
     if (action === 'TOPUP') {
       return { text: 'Nạp tiền ngay', route: '/top-up' };
@@ -525,7 +528,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
         queryParams: { amount, recipient }
       };
     }
-    // VIEW_BALANCE, VIEW_TRANSACTIONS → AI đã trả lời text đầy đủ rồi, không cần nút
+    // VIEW_BALANCE, VIEW_TRANSACTIONS → AI already replied in full, no button needed
     return undefined;
   }
 

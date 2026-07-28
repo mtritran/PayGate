@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } 
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { MatIconModule } from '@angular/material/icon';
 import { TransactionService } from '../../../core/services/transaction.service';
 import { AccountService } from '../../../core/services/account.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -19,7 +20,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
-    CurrencyPipe
+    CurrencyPipe,
+    MatIconModule
   ],
   template: `
     <div class="paygate-form-wrapper">
@@ -28,26 +30,26 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
         <!-- Form Header -->
         <div class="form-header-group">
           <div class="header-tag">{{ acceptMode ? 'PAYGATE QUICK ACCEPT' : (activeTab === 'receive' ? 'PAYGATE QUICK RECEIVE' : 'PAYGATE EXPRESS TRANSFER') }}</div>
-          <h2>{{ acceptMode ? 'Xác nhận chuyển tiền' : (activeTab === 'receive' ? 'Nhận tiền qua Mã QR' : 'Send Payment') }}</h2>
+          <h2>{{ acceptMode ? 'Confirm Transfer' : (activeTab === 'receive' ? 'Receive Money via QR Code' : 'Send Payment') }}</h2>
           <p class="subtitle" *ngIf="!acceptMode && activeTab === 'send'">Secure money transfer to any User or Merchant account using double-entry ledger & idempotency protection.</p>
-          <p class="subtitle" *ngIf="!acceptMode && activeTab === 'receive'">Chia sẻ mã QR bên dưới. Người khác quét bằng Camera điện thoại sẽ mở thẳng trang chuyển tiền cho bạn.</p>
-          <p class="subtitle" *ngIf="acceptMode">Người nhận đã tạo yêu cầu chuyển tiền. Kiểm tra thông tin và bấm Accept để chuyển ngay.</p>
+          <p class="subtitle" *ngIf="!acceptMode && activeTab === 'receive'">Share the QR code below. Others scan with their phone camera to open the payment page for you.</p>
+          <p class="subtitle" *ngIf="acceptMode">The recipient has created a payment request. Review the details and press Accept to transfer immediately.</p>
         </div>
 
         <!-- Tab Switcher: Send vs Receive (hidden in accept mode) -->
         <div class="tab-switcher" *ngIf="!acceptMode">
           <button type="button" class="tab-btn" [class.active]="activeTab === 'send'" (click)="switchTab('send')">
-            <span class="tab-icon">📤</span>
+            <mat-icon class="tab-icon">send</mat-icon>
             <span class="tab-label-block">
-              <strong>Gửi tiền đi</strong>
-              <small>Chuyển tới tài khoản khác</small>
+              <strong>Send Money</strong>
+              <small>Transfer to another account</small>
             </span>
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'receive'" (click)="switchTab('receive')">
-            <span class="tab-icon">📥</span>
+            <mat-icon class="tab-icon">inbox</mat-icon>
             <span class="tab-label-block">
               <strong>Nhận qua QR</strong>
-              <small>Tạo mã cho người khác quét</small>
+              <small>Generate QR for others to scan</small>
             </span>
           </button>
         </div>
@@ -62,7 +64,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
                 <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
                 <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
               </svg>
-              <span class="balance-label">Số dư khả dụng:</span>
+              <span class="balance-label">Available Balance:</span>
             </div>
             <strong class="balance-amount">{{ myBalance | currency:'VND':'symbol':'1.0-0' }}</strong>
           </div>
@@ -70,7 +72,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           <!-- Loading receiver -->
           <div *ngIf="lookingUp" class="accept-loading">
             <div class="spinner-sm"></div>
-            <span>Đang xác minh người nhận...</span>
+            <span>Verifying recipient...</span>
           </div>
 
           <!-- Receiver resolved OK -->
@@ -79,9 +81,9 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
               <div class="accept-avatar">{{ getInitials(recipientLookup.ownerName) }}</div>
               <div class="accept-receiver-info">
                 <span class="verified-badge">
-                  <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">🏪 MERCHANT</span>
-                  <span *ngIf="recipientLookup.ownerType === 'USER'">👤 PERSONAL</span>
-                  <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">⚡ SYSTEM</span>
+                  <span *ngIf="recipientLookup.ownerType === 'MERCHANT'"><mat-icon>store</mat-icon> MERCHANT</span>
+                  <span *ngIf="recipientLookup.ownerType === 'USER'"><mat-icon>person</mat-icon> PERSONAL</span>
+                  <span *ngIf="recipientLookup.ownerType === 'SYSTEM'"><mat-icon>bolt</mat-icon> SYSTEM</span>
                 </span>
                 <strong class="accept-receiver-name">{{ recipientLookup.ownerName }}</strong>
                 <span class="accept-receiver-acc font-mono">{{ recipientLookup.accountNumber }}</span>
@@ -99,11 +101,11 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             </div>
 
             <div class="accept-warning" *ngIf="isSelfTransfer">
-              ⚠️ Không thể chuyển tiền cho chính bạn. Đây là tài khoản của bạn.
+              <mat-icon>warning</mat-icon> Cannot transfer to yourself. This is your own account.
             </div>
 
             <div class="accept-warning" *ngIf="!isSelfTransfer && (!paymentForm.value.amount || paymentForm.value.amount < 1000)">
-              ⚠️ Số tiền không hợp lệ (tối thiểu 1,000 VND).
+              <mat-icon>warning</mat-icon> Invalid amount (minimum 1,000 VND).
             </div>
 
             <div class="accept-actions">
@@ -119,7 +121,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
                 <span *ngIf="!submitting">✓ Accept & Pay Now</span>
                 <span *ngIf="submitting" class="spinner-wrapper">
                   <span class="btn-spinner"></span>
-                  Đang xử lý...
+                  Processing...
                 </span>
               </button>
             </div>
@@ -127,7 +129,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
           <!-- Receiver lookup failed -->
           <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
-            ❌ {{ lookupError }}
+            <mat-icon>close</mat-icon> {{ lookupError }}
             <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" style="margin-top: 12px; display: inline-block;">
               Về form nhập tay
             </button>
@@ -154,7 +156,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             
             <!-- Saved Beneficiaries Quick Contact Selector -->
             <div class="form-group" *ngIf="beneficiaries.length > 0">
-              <label class="form-label">DANH BẠ NGƯỜI NHẬN NHANH</label>
+              <label class="form-label">QUICK CONTACTS</label>
               <div class="beneficiaries-chips-bar">
                 <button
                   type="button"
@@ -174,7 +176,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
             <!-- Recipient Account Number Field -->
             <div class="form-group">
-              <label class="form-label required">Recipient Account Number (Số tài khoản nhận)</label>
+              <label class="form-label required">Recipient Account Number <span class="required">*</span></label>
 
               <div class="input-wrapper">
                 <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -202,9 +204,9 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
             <div *ngIf="!lookingUp && recipientLookup" class="lookup-card success-card">
               <div class="verified-badge">
-                <span *ngIf="recipientLookup.ownerType === 'MERCHANT'">🏪 MERCHANT ACCOUNT</span>
-                <span *ngIf="recipientLookup.ownerType === 'USER'">👤 PERSONAL ACCOUNT</span>
-                <span *ngIf="recipientLookup.ownerType === 'SYSTEM'">⚡ SYSTEM ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'MERCHANT'"><mat-icon>store</mat-icon> MERCHANT ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'USER'"><mat-icon>person</mat-icon> PERSONAL ACCOUNT</span>
+                <span *ngIf="recipientLookup.ownerType === 'SYSTEM'"><mat-icon>bolt</mat-icon> SYSTEM ACCOUNT</span>
               </div>
               <div class="recipient-details">
                 <strong class="recipient-name">{{ recipientLookup.ownerName }}</strong>
@@ -212,7 +214,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             </div>
 
             <div *ngIf="!lookingUp && lookupError" class="lookup-card error-card">
-              ❌ {{ lookupError }}
+              <mat-icon>close</mat-icon> {{ lookupError }}
             </div>
 
             <!-- Amount Field -->
@@ -302,8 +304,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
                 <span class="qr-verified-pill">VERIFIED</span>
                 <span class="receive-brand-name">PayGate <i>Wallet</i></span>
               </div>
-              <h3 class="receive-title">Mã QR nhận tiền của bạn</h3>
-              <p class="receive-desc">Người khác quét mã bằng Camera điện thoại sẽ mở thẳng trang chuyển tiền cho bạn.</p>
+              <h3 class="receive-title">Your Receive QR Code</h3>
+              <p class="receive-desc">Others scan this QR code with their phone camera to open the payment page for you.</p>
             </div>
           </div>
 
@@ -320,12 +322,12 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
             <!-- Config + Actions -->
             <div class="receive-config">
               <div class="form-group">
-                <label class="form-label">SỐ TIỀN YÊU CẦU (VND) — TÙY CHỌN</label>
+                <label class="form-label">REQUESTED AMOUNT (VND) — OPTIONAL</label>
                 <input
                   type="number"
                   min="0"
                   class="custom-input"
-                  placeholder="Để trống nếu chưa xác định (VD: 100000)"
+                  placeholder="Leave blank if not yet determined (e.g., 100000)"
                   [(ngModel)]="myQrCustomAmount"
                   [ngModelOptions]="{standalone: true}"
                   (ngModelChange)="updateMyQr()"
@@ -333,12 +335,12 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
               </div>
 
               <div class="form-group">
-                <label class="form-label">LỜI NHẮN (TÙY CHỌN)</label>
+                <label class="form-label">MESSAGE (OPTIONAL)</label>
                 <input
                   type="text"
                   maxlength="120"
                   class="custom-input"
-                  placeholder="VD: Tiền cà phê, Tiền cơm..."
+                  placeholder="e.g., Coffee money, Lunch money..."
                   [(ngModel)]="myQrCustomNote"
                   [ngModelOptions]="{standalone: true}"
                   (ngModelChange)="updateMyQr()"
@@ -347,28 +349,29 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 
               <div class="qr-live-badge" *ngIf="myQrCustomAmount > 0">
                 <span class="dot-live"></span>
-                Đang yêu cầu: <strong>{{ myQrCustomAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+                Requesting: <strong>{{ myQrCustomAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
 
               <div class="receive-link-row">
                 <input type="text" readonly class="receive-link-input font-mono" [value]="getMyPaymentLink()" />
                 <button type="button" class="btn-copy" (click)="copyPaymentLink()">
-                  <span *ngIf="!linkCopied">📋 Copy</span>
-                  <span *ngIf="linkCopied">✓ Đã copy</span>
+                  <mat-icon *ngIf="!linkCopied">content_copy</mat-icon>
+                  <span *ngIf="!linkCopied">Copy</span>
+                  <span *ngIf="linkCopied">✓ Copied</span>
                 </button>
               </div>
 
               <div class="receive-actions">
                 <button type="button" class="btn-share" (click)="sharePaymentLink()">
-                  🔗 Chia sẻ link
+                  <mat-icon>share</mat-icon> Chia sẻ link
                 </button>
                 <button type="button" class="btn-download" (click)="downloadQr()">
-                  ⬇️ Tải QR về máy
+                  <mat-icon>download</mat-icon> Download QR
                 </button>
               </div>
 
               <div class="receive-note">
-                💡 Người nhận mở link/quét QR → thấy trang xác nhận với thông tin đã điền → bấm <strong>1 nút Accept</strong> là chuyển xong.
+                <mat-icon>lightbulb</mat-icon> Recipient opens link/scans QR → sees confirmation page with pre-filled info → presses <strong>1 button Accept</strong> to complete transfer.
               </div>
             </div>
           </div>
@@ -792,7 +795,7 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     .tab-btn:hover { background: #ffffff; }
     .tab-btn.active { background: #ffffff; border-color: #a7f3d0; box-shadow: 0 4px 12px -3px rgba(5,150,105,0.18); color: #0f172a; }
     .tab-btn.active .tab-icon { transform: scale(1.1); }
-    .tab-icon { font-size: 1.5rem; line-height: 1; }
+    .tab-icon { font-size: 1.5rem; width: 1.5rem; height: 1.5rem; line-height: 1; }
     .tab-label-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
     .tab-label-block strong { font-size: 0.9rem; font-weight: 800; color: inherit; }
     .tab-label-block small { font-size: 0.72rem; color: #94a3b8; }
@@ -903,7 +906,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       this.acceptMode = params['accept'] === '1' || params['accept'] === 'true';
 
       if (filled && !this.acceptMode) {
-        this.notification.success('✨ Đã tự động điền thông tin thanh toán từ Mã QR!');
+        this.notification.success('Auto-filled payment info from QR Code!');
       }
     });
     // Watch amount field changes to update QR live
@@ -977,7 +980,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(() => {
         this.linkCopied = true;
-        this.notification.success('✓ Đã copy link vào clipboard');
+        this.notification.success('Copied link to clipboard');
         setTimeout(() => this.linkCopied = false, 2500);
       }).catch(() => this.fallbackCopy(link));
     } else {
@@ -995,10 +998,10 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     try {
       document.execCommand('copy');
       this.linkCopied = true;
-      this.notification.success('✓ Đã copy link');
+      this.notification.success('Link copied');
       setTimeout(() => this.linkCopied = false, 2500);
     } catch {
-      this.notification.error('Không thể copy. Hãy copy thủ công.');
+      this.notification.error('Could not copy. Please copy manually.');
     }
     document.body.removeChild(ta);
   }

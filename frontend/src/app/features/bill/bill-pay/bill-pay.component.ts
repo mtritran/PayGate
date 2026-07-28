@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import {
   BillService,
   BillType,
@@ -18,15 +19,15 @@ type Tab = 'services' | 'bills';
 type LinkMode = 'LINK_EXISTING' | 'REGISTER_NEW';
 
 const TYPE_META: Record<BillType, { label: string; icon: string; color: string; bg: string }> = {
-  ELECTRICITY: { label: 'Điện', icon: '⚡', color: '#f59e0b', bg: '#fef3c7' },
-  WATER:       { label: 'Nước', icon: '💧', color: '#3b82f6', bg: '#dbeafe' },
-  INTERNET:    { label: 'Internet', icon: '🌐', color: '#8b5cf6', bg: '#ede9fe' }
+  ELECTRICITY: { label: 'Electricity', icon: 'electric_bolt', color: '#f59e0b', bg: '#fef3c7' },
+  WATER:       { label: 'Water', icon: 'water_drop', color: '#3b82f6', bg: '#dbeafe' },
+  INTERNET:    { label: 'Internet', icon: 'wifi', color: '#8b5cf6', bg: '#ede9fe' }
 };
 
 @Component({
   selector: 'app-bill-pay',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, MatIconModule],
   template: `
 <div class="hub-page">
 
@@ -34,22 +35,22 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
   <div class="hub-header">
     <div>
       <div class="header-tag">PAYGATE · UTILITIES</div>
-      <h2>Quản lý hóa đơn dịch vụ</h2>
-      <p class="subtitle">Liên kết tài khoản điện · nước · internet và thanh toán tự động hàng tháng</p>
+      <h2>Manage Bills & Utilities</h2>
+      <p class="subtitle">Link your electricity, water, and internet accounts for one-click bill payment</p>
     </div>
     <button class="btn btn-primary btn-link" (click)="openLinkModal()">
-      + Liên kết dịch vụ mới
+      + Link New Service
     </button>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab" [class.active]="activeTab() === 'services'" (click)="activeTab.set('services')">
-      🏠 Dịch vụ của tôi
+      <mat-icon>home</mat-icon> My Services
       <span class="tab-badge" *ngIf="subscriptions().length">{{ subscriptions().length }}</span>
     </button>
     <button class="tab" [class.active]="activeTab() === 'bills'" (click)="activeTab.set('bills')">
-      📄 Hóa đơn
+      <mat-icon>description</mat-icon> Bills
       <span class="tab-badge unpaid" *ngIf="unpaidCount() > 0">{{ unpaidCount() }}</span>
     </button>
   </div>
@@ -58,14 +59,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
   <div *ngIf="activeTab() === 'services'">
 
     <div *ngIf="loadingSubs()" class="loading-state">
-      <div class="spinner"></div> Đang tải dịch vụ…
+      <div class="spinner"></div> Loading services…
     </div>
 
     <div *ngIf="!loadingSubs() && subscriptions().length === 0" class="empty-state">
-      <div class="empty-icon">🔌</div>
-      <h3>Chưa liên kết dịch vụ nào</h3>
-      <p>Liên kết tài khoản điện, nước, internet để xem và thanh toán hóa đơn một chạm</p>
-      <button class="btn btn-primary" (click)="openLinkModal()">+ Liên kết dịch vụ đầu tiên</button>
+      <mat-icon class="empty-icon">power_off</mat-icon>
+      <h3>No services linked</h3>
+      <p>Link your electricity, water, and internet accounts for one-click bill viewing and payment</p>
+      <button class="btn btn-primary" (click)="openLinkModal()">+ Link Your First Service</button>
     </div>
 
     <div class="subs-grid" *ngIf="!loadingSubs() && subscriptions().length > 0">
@@ -78,10 +79,11 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
         <div class="sub-card-header">
           <div class="sub-type-badge" [style.background]="typeBg(sub.providerType)" [style.color]="typeColor(sub.providerType)">
-            {{ typeIcon(sub.providerType) }} {{ typeLabel(sub.providerType) }}
+            <mat-icon class="sub-type-icon">{{ typeIcon(sub.providerType) }}</mat-icon>
+            {{ typeLabel(sub.providerType) }}
           </div>
           <span class="sub-status" [class.active]="sub.status === 'ACTIVE'" [class.cancelled]="sub.status === 'CANCELLED'">
-            {{ sub.status === 'ACTIVE' ? 'Đang hoạt động' : sub.status }}
+            {{ sub.status === 'ACTIVE' ? 'Active' : sub.status }}
           </span>
         </div>
 
@@ -90,20 +92,20 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
         <div class="sub-name">{{ sub.customerName }}</div>
         <div class="sub-address" *ngIf="sub.address">{{ sub.address }}</div>
         <div class="sub-meta">
-          <span>Chu kỳ: {{ frequencyLabel(sub.frequency) }}</span>
+          <span>Frequency: {{ frequencyLabel(sub.frequency) }}</span>
           <span>~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/kỳ</span>
         </div>
 
         <div class="sub-actions">
           <button class="btn btn-sm btn-pay" (click)="goToBills(sub); $event.stopPropagation()">
-            Xem hóa đơn →
+            View Bills →
           </button>
           <button
             class="btn btn-sm btn-cancel"
             *ngIf="sub.status === 'ACTIVE'"
             [disabled]="cancellingId() === sub.id"
             (click)="cancelSub(sub); $event.stopPropagation()">
-            {{ cancellingId() === sub.id ? '…' : 'Huỷ liên kết' }}
+            {{ cancellingId() === sub.id ? '…' : 'Unlink' }}
           </button>
         </div>
       </div>
@@ -115,22 +117,22 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
     <!-- Sub selector -->
     <div class="sub-selector" *ngIf="subscriptions().length > 0">
-      <label>Dịch vụ:</label>
+      <label>Service:</label>
       <div class="sub-chips">
         <button
           *ngFor="let sub of activeSubscriptions()"
           class="sub-chip"
           [class.selected]="selectedSub()?.id === sub.id"
           (click)="selectSub(sub)">
-          {{ typeIcon(sub.providerType) }} {{ sub.providerName }} · {{ sub.customerCode }}
+          {{ sub.providerName }} · {{ sub.customerCode }}
         </button>
       </div>
     </div>
 
     <div *ngIf="subscriptions().length === 0" class="empty-state">
-      <div class="empty-icon">📄</div>
-      <h3>Chưa có dịch vụ nào được liên kết</h3>
-      <button class="btn btn-primary" (click)="openLinkModal()">Liên kết dịch vụ ngay</button>
+      <mat-icon class="empty-icon">description</mat-icon>
+      <h3>No services linked yet</h3>
+      <button class="btn btn-primary" (click)="openLinkModal()">Link a Service Now</button>
     </div>
 
     <!-- Bills for selected sub -->
@@ -142,17 +144,17 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
           <div class="bills-sub-owner">{{ selectedSub()!.customerName }}</div>
         </div>
         <button class="btn btn-secondary btn-sm" [disabled]="refreshing()" (click)="refreshBill()">
-          {{ refreshing() ? '⟳ Đang cập nhật…' : '⟳ Tra cứu hóa đơn mới nhất' }}
+          {{ refreshing() ? 'Updating…' : 'Fetch latest bill' }}
         </button>
       </div>
 
       <div *ngIf="loadingBills()" class="loading-state">
-        <div class="spinner"></div> Đang tải hóa đơn…
+        <div class="spinner"></div> Loading bills…
       </div>
 
       <!-- No bills yet -->
       <div *ngIf="!loadingBills() && subBills().length === 0" class="empty-state small">
-        <p>Chưa có hóa đơn nào. Nhấn "Tra cứu hóa đơn mới nhất" để lấy hóa đơn từ nhà cung cấp.</p>
+        <p>No bills yet. Click "Fetch latest bill" to retrieve your bill from the provider.</p>
       </div>
 
       <!-- Bills list -->
@@ -160,7 +162,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
         <!-- Pay error banner -->
         <div class="pay-error-banner" *ngIf="payError()">
-          <span>⚠️ {{ payError() }}</span>
+          <mat-icon>warning</mat-icon> <span>{{ payError() }}</span>
           <a routerLink="/topup" class="topup-link">Nạp tiền ngay →</a>
         </div>
 
@@ -173,14 +175,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
           <div class="bill-card-right">
             <div class="bill-amount">{{ bill.amount | currency:'VND':'symbol':'1.0-0' }}</div>
             <span class="bill-badge" [class.unpaid]="bill.status === 'UNPAID'" [class.paid]="bill.status === 'PAID'">
-              {{ bill.status === 'UNPAID' ? 'Chưa thanh toán' : '✓ Đã thanh toán' }}
+              {{ bill.status === 'UNPAID' ? 'Unpaid' : '✓ Paid' }}
             </span>
             <button
               *ngIf="bill.status === 'UNPAID'"
               class="btn btn-primary btn-sm btn-pay-now"
               [disabled]="payingBillId() === bill.billId"
               (click)="payBill(bill)">
-              {{ payingBillId() === bill.billId ? 'Đang thanh toán…' : 'Thanh toán ngay' }}
+              {{ payingBillId() === bill.billId ? 'Paying…' : 'Pay Now' }}
             </button>
           </div>
         </div>
@@ -188,14 +190,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
       <!-- Payment Success Receipt -->
       <div class="receipt" *ngIf="lastPaid()">
-        <div class="receipt-icon">✓</div>
-        <h3>Thanh toán thành công</h3>
+        <mat-icon class="receipt-icon">check_circle</mat-icon>
+        <h3>Payment Successful</h3>
         <div class="receipt-rows">
-          <div><span>Mã giao dịch</span><b>{{ lastPaid()!.transactionRef }}</b></div>
-          <div><span>Số tiền</span><b>{{ lastPaid()!.paidAmount | currency:'VND':'symbol':'1.0-0' }}</b></div>
-          <div><span>Thời gian</span><b>{{ lastPaid()!.paidAt | date:'dd/MM/yyyy HH:mm' }}</b></div>
+          <div><span>Transaction Ref</span><b>{{ lastPaid()!.transactionRef }}</b></div>
+          <div><span>Amount</span><b>{{ lastPaid()!.paidAmount | currency:'VND':'symbol':'1.0-0' }}</b></div>
+          <div><span>Time</span><b>{{ lastPaid()!.paidAt | date:'dd/MM/yyyy HH:mm' }}</b></div>
         </div>
-        <button class="btn btn-secondary btn-sm" (click)="lastPaid.set(null)">Đóng</button>
+        <button class="btn btn-secondary btn-sm" (click)="lastPaid.set(null)">Close</button>
       </div>
     </div>
   </div>
@@ -206,13 +208,13 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 <div class="modal-backdrop" *ngIf="showLinkModal()" (click)="closeLinkModal()">
   <div class="modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h3>Liên kết tài khoản dịch vụ</h3>
+      <h3>Link a Service Account</h3>
       <button class="modal-close" (click)="closeLinkModal()">✕</button>
     </div>
 
     <!-- Step 1: Choose type -->
     <div class="modal-section" *ngIf="!linkProvider()">
-      <div class="modal-label">Chọn loại dịch vụ</div>
+      <div class="modal-label">Select service type</div>
       <div class="type-grid">
         <button
           *ngFor="let t of billTypeList"
@@ -220,14 +222,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
           [style.--accent]="t.color"
           [class.selected]="linkTypeFilter === t.type"
           (click)="linkTypeFilter = t.type; loadModalProviders()">
-          <div class="type-icon">{{ t.icon }}</div>
+          <mat-icon class="type-icon">{{ t.icon }}</mat-icon>
           <div class="type-label">{{ t.label }}</div>
         </button>
       </div>
 
       <div *ngIf="linkTypeFilter" class="provider-section">
-        <div class="modal-label">Chọn nhà cung cấp</div>
-        <div *ngIf="loadingModalProviders()" class="hint">Đang tải…</div>
+        <div class="modal-label">Choose a provider</div>
+        <div *ngIf="loadingModalProviders()" class="hint">Loading…</div>
         <div class="provider-chips" *ngIf="!loadingModalProviders()">
           <button
             *ngFor="let p of modalProviders()"
@@ -249,39 +251,39 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       <!-- Mode toggle -->
       <div class="mode-toggle">
         <button class="mode-btn" [class.active]="linkMode === 'LINK_EXISTING'" (click)="linkMode = 'LINK_EXISTING'">
-          🔗 Có sẵn mã hợp đồng
+          <mat-icon>link</mat-icon> I Have a Contract Code
         </button>
         <button class="mode-btn" [class.active]="linkMode === 'REGISTER_NEW'" (click)="linkMode = 'REGISTER_NEW'">
-          ✨ Đăng ký mới
+          <mat-icon>add_circle</mat-icon> Register New
         </button>
       </div>
 
       <div class="mode-hint" *ngIf="linkMode === 'LINK_EXISTING'">
-        Nhập mã khách hàng / số hợp đồng in trên hóa đơn giấy của bạn
+        Enter the customer code / contract number printed on your paper bill
       </div>
       <div class="mode-hint" *ngIf="linkMode === 'REGISTER_NEW'">
-        Đăng ký tài khoản dịch vụ mới — bạn sẽ nhận mã khách hàng sau khi liên kết
+        Register a new service account — you will receive a customer code after linking
       </div>
 
       <!-- LINK_EXISTING fields -->
       <div *ngIf="linkMode === 'LINK_EXISTING'" class="form-fields">
-        <label>Mã khách hàng / số hợp đồng</label>
+        <label>Customer Code / Contract Number</label>
         <input class="input" [(ngModel)]="linkCustomerCode" placeholder="VD: PE02100001" />
       </div>
 
       <!-- REGISTER_NEW fields -->
       <div *ngIf="linkMode === 'REGISTER_NEW'" class="form-fields">
-        <label>Tên chủ hợp đồng</label>
-        <input class="input" [(ngModel)]="linkCustomerName" placeholder="VD: NGUYEN VAN AN" />
-        <label>Địa chỉ lắp đặt</label>
-        <input class="input" [(ngModel)]="linkAddress" placeholder="VD: 123 Nguyễn Huệ, Q1, HCM" />
-        <label>Số tiền kỳ ước tính (VND)</label>
+        <label>Contract Holder Name</label>
+        <input class="input" [(ngModel)]="linkCustomerName" placeholder="e.g. NGUYEN VAN AN" />
+        <label>Installation Address</label>
+        <input class="input" [(ngModel)]="linkAddress" placeholder="e.g. 123 Nguyen Hue, Q1, HCMC" />
+        <label>Estimated Cycle Amount (VND)</label>
         <input class="input" type="number" [(ngModel)]="linkCycleAmount" placeholder="VD: 350000" />
       </div>
 
       <!-- Frequency -->
       <div class="form-fields">
-        <label>Chu kỳ nhắc hóa đơn</label>
+        <label>Bill Reminder Cycle</label>
         <div class="freq-chips">
           <button *ngFor="let f of freqOptions" class="freq-chip" [class.selected]="linkFrequency === f.value" (click)="linkFrequency = f.value">
             {{ f.label }}
@@ -294,7 +296,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       <div class="modal-actions">
         <button class="btn btn-secondary" (click)="closeLinkModal()">Huỷ</button>
         <button class="btn btn-primary" [disabled]="linking()" (click)="submitLink()">
-          {{ linking() ? 'Đang liên kết…' : (linkMode === 'LINK_EXISTING' ? '🔗 Liên kết tài khoản' : '✨ Đăng ký & Liên kết') }}
+          {{ linking() ? 'Linking…' : (linkMode === 'LINK_EXISTING' ? 'Link Account' : 'Register & Link') }}
         </button>
       </div>
     </div>
@@ -340,7 +342,8 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     }
     .sub-card:hover, .sub-card.selected { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     .sub-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .sub-type-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .sub-type-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .sub-type-icon { font-size: 16px; width: 16px; height: 16px; }
     .sub-status { font-size: 12px; font-weight: 600; }
     .sub-status.active { color: #059669; }
     .sub-status.cancelled { color: #9ca3af; }
@@ -393,9 +396,8 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       border-radius: 14px; padding: 28px; text-align: center; margin-top: 20px;
     }
     .receipt-icon {
-      display: inline-flex; width: 52px; height: 52px; border-radius: 50%;
-      background: #10b981; color: #fff; font-size: 26px; font-weight: 700;
-      align-items: center; justify-content: center; margin-bottom: 10px;
+      font-size: 52px; width: 52px; height: 52px; color: #fff; background: #10b981;
+      border-radius: 50%; margin-bottom: 10px;
     }
     .receipt h3 { color: #065f46; margin: 0 0 14px; }
     .receipt-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
@@ -474,7 +476,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     }
     .type-card:hover { border-color: var(--accent); }
     .type-card.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, white); }
-    .type-icon { font-size: 24px; }
+    .type-icon { font-size: 28px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
     .type-label { font-weight: 600; font-size: 13px; color: #111827; }
 
     .provider-section { border-top: 1px dashed #e5e7eb; padding-top: 16px; }
@@ -559,15 +561,15 @@ export class BillPayComponent implements OnInit {
   loadingModalProviders = signal(false);
 
   readonly billTypeList = [
-    { type: 'ELECTRICITY' as BillType, label: 'Điện', icon: '⚡', color: '#f59e0b' },
-    { type: 'WATER' as BillType,       label: 'Nước', icon: '💧', color: '#3b82f6' },
-    { type: 'INTERNET' as BillType,    label: 'Internet', icon: '🌐', color: '#8b5cf6' }
+    { type: 'ELECTRICITY' as BillType, label: 'Electricity', icon: 'electric_bolt', color: '#f59e0b' },
+    { type: 'WATER' as BillType,       label: 'Water', icon: 'water_drop', color: '#3b82f6' },
+    { type: 'INTERNET' as BillType,    label: 'Internet', icon: 'wifi', color: '#8b5cf6' }
   ];
 
   readonly freqOptions = [
-    { value: 'MINUTELY' as BillSubscriptionFrequency, label: 'Mỗi phút (Demo)' },
-    { value: 'MONTHLY' as BillSubscriptionFrequency,  label: 'Hàng tháng' },
-    { value: 'WEEKLY' as BillSubscriptionFrequency,   label: 'Hàng tuần' },
+    { value: 'MINUTELY' as BillSubscriptionFrequency, label: 'Every Minute (Demo)' },
+    { value: 'MONTHLY' as BillSubscriptionFrequency,  label: 'Monthly' },
+    { value: 'WEEKLY' as BillSubscriptionFrequency,   label: 'Weekly' },
   ];
 
   ngOnInit(): void {
@@ -616,13 +618,13 @@ export class BillPayComponent implements OnInit {
         this.refreshing.set(false);
         this.loadBillsForSub(sub.id);
         if (res.data?.status === 'UNPAID') {
-          this.notify.success('Đã tải hóa đơn kỳ ' + res.data.period + ' — ' +
+          this.notify.success('Loaded bill for ' + res.data.period + ' — ' +
             new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(res.data.amount));
         }
       },
       error: e => {
         this.refreshing.set(false);
-        this.notify.error(e?.error?.message || 'Không thể tra cứu hóa đơn từ nhà cung cấp');
+        this.notify.error(e?.error?.message || 'Could not fetch bill from provider');
       }
     });
   }
@@ -635,13 +637,13 @@ export class BillPayComponent implements OnInit {
       next: res => {
         this.payingBillId.set(null);
         this.lastPaid.set(res.data ?? null);
-        this.notify.success('Thanh toán thành công!');
+        this.notify.success('Payment successful!');
         const sub = this.selectedSub();
         if (sub) this.loadBillsForSub(sub.id);
       },
       error: e => {
         this.payingBillId.set(null);
-        const msg = e?.error?.message || e?.message || 'Thanh toán thất bại';
+        const msg = e?.error?.message || e?.message || 'Payment failed';
         this.payError.set(msg);
         this.notify.error(msg);
       }
@@ -655,12 +657,12 @@ export class BillPayComponent implements OnInit {
   }
 
   cancelSub(sub: BillSubscriptionResponse): void {
-    if (!confirm(`Huỷ liên kết với ${sub.providerName} (${sub.customerCode})?`)) return;
+    if (!confirm(`Unlink from ${sub.providerName} (${sub.customerCode})?`)) return;
     this.cancellingId.set(sub.id);
     this.bill.cancelSubscription(sub.id).subscribe({
       next: () => {
         this.cancellingId.set(null);
-        this.notify.success('Đã huỷ liên kết');
+        this.notify.success('Unlinked successfully');
         this.loadSubscriptions();
       },
       error: e => {
@@ -718,13 +720,13 @@ export class BillPayComponent implements OnInit {
 
     if (this.linkMode === 'LINK_EXISTING') {
       if (!this.linkCustomerCode.trim()) {
-        this.linkError.set('Vui lòng nhập mã khách hàng');
+        this.linkError.set('Please enter a customer code');
         return;
       }
       req.customerCode = this.linkCustomerCode.trim();
     } else {
       if (!this.linkCustomerName.trim() || !this.linkAddress.trim() || !this.linkCycleAmount) {
-        this.linkError.set('Vui lòng điền đầy đủ thông tin đăng ký');
+        this.linkError.set('Please fill in all registration details');
         return;
       }
       req.customerName = this.linkCustomerName.trim();
@@ -739,27 +741,27 @@ export class BillPayComponent implements OnInit {
         this.closeLinkModal();
         const sub = res.data!;
         this.notify.success(
-          `✅ Đã liên kết ${sub.providerName} · Mã KH: ${sub.customerCode}`
+          `Linked ${sub.providerName} · Code: ${sub.customerCode}`
         );
         this.loadSubscriptions();
         this.activeTab.set('services');
       },
       error: e => {
         this.linking.set(false);
-        this.linkError.set(e?.error?.message || 'Liên kết thất bại. Vui lòng thử lại.');
+        this.linkError.set(e?.error?.message || 'Link failed. Please try again.');
       }
     });
   }
 
   // Type helpers
-  typeIcon(t: BillType | string): string { return TYPE_META[t as BillType]?.icon ?? '📋'; }
+  typeIcon(t: BillType | string): string { return TYPE_META[t as BillType]?.icon ?? 'description'; }
   typeLabel(t: BillType | string): string { return TYPE_META[t as BillType]?.label ?? t; }
   typeColor(t: BillType | string): string { return TYPE_META[t as BillType]?.color ?? '#6b7280'; }
   typeBg(t: BillType | string): string { return TYPE_META[t as BillType]?.bg ?? '#f3f4f6'; }
 
   frequencyLabel(f: string): string {
     const map: Record<string, string> = {
-      MINUTELY: 'Mỗi phút', DAILY: 'Hàng ngày', WEEKLY: 'Hàng tuần', MONTHLY: 'Hàng tháng'
+      MINUTELY: 'Every Minute', DAILY: 'Daily', WEEKLY: 'Weekly', MONTHLY: 'Monthly'
     };
     return map[f] ?? f;
   }

@@ -175,7 +175,7 @@ public class BillServiceImpl implements BillService {
         }
         if (lockedSource.getBalance().compareTo(paidAmount) < 0) {
             throw new InsufficientBalanceException(
-                    "Insufficient balance in account: " + lockedSource.getAccountNumber());
+                    "Insufficient wallet balance. Please top up and try again.");
         }
 
         lockedSource.setBalance(lockedSource.getBalance().subtract(paidAmount));

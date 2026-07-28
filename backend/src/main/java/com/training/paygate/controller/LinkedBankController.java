@@ -24,13 +24,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/accounts/linked-banks")
 @RequiredArgsConstructor
-@Tag(name = "Linked Banks", description = "API liên kết tài khoản ngân hàng và ví điện tử cho người dùng")
+@Tag(name = "Linked Banks", description = "Link bank accounts & e-wallets for users")
 public class LinkedBankController {
 
     private final LinkedBankService linkedBankService;
 
     @GetMapping
-    @Operation(summary = "Lấy danh sách ngân hàng liên kết của người dùng")
+    @Operation(summary = "List linked banks for current user")
     public ApiResponse<List<LinkedBankResponse>> getMyLinkedBanks(Principal principal) {
         List<LinkedBankResponse> list = linkedBankService.getUserLinkedBanks(principal.getName());
         return ApiResponse.success(list);
@@ -38,16 +38,16 @@ public class LinkedBankController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Thêm liên kết ngân hàng mới")
+    @Operation(summary = "Add a new linked bank account")
     public ApiResponse<LinkedBankResponse> linkBank(@Valid @RequestBody LinkedBankRequest request, Principal principal) {
         LinkedBankResponse response = linkedBankService.linkBank(principal.getName(), request);
-        return ApiResponse.success("Liên kết ngân hàng thành công", response);
+        return ApiResponse.success("Bank linked successfully", response);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Hủy liên kết ngân hàng")
+    @Operation(summary = "Unlink/remove a bank account")
     public ApiResponse<Void> unlinkBank(@PathVariable Long id, Principal principal) {
         linkedBankService.unlinkBank(principal.getName(), id);
-        return ApiResponse.success("Đã hủy liên kết ngân hàng thành công", null);
+        return ApiResponse.success("Bank unlinked successfully", null);
     }
 }

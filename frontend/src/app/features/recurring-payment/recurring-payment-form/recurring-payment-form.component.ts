@@ -27,8 +27,8 @@ import {
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </div>
-          <h2>Tạo Lịch Định Kỳ & Hóa Đơn Tự Động</h2>
-          <p>Thiết lập tự động chuyển tiền hoặc thanh toán hóa đơn Điện, Nước, Internet.</p>
+          <h2>Create Recurring Payment & Auto Bills</h2>
+          <p>Set up automatic transfers or auto-pay for Electricity, Water, Internet bills.</p>
         </div>
 
         <form (ngSubmit)="submitForm()">
@@ -55,7 +55,7 @@ import {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
-              <span>Hóa Đơn Điện</span>
+              <span>Electricity Bill</span>
             </button>
             <button
               type="button"
@@ -66,7 +66,7 @@ import {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"></path>
               </svg>
-              <span>Hóa Đơn Nước</span>
+              <span>Water Bill</span>
             </button>
             <button
               type="button"
@@ -84,11 +84,11 @@ import {
 
           <!-- Target Dest Account (if TRANSFER) -->
           <div class="form-group" *ngIf="category === 'TRANSFER'">
-            <label class="form-label">TÀI KHOẢN ĐÍCH (ID / SỐ TÀI KHOẢN) <span class="required">*</span></label>
+            <label class="form-label">DEST ACCOUNT (ID / ACCOUNT NUMBER) <span class="required">*</span></label>
             <input
               type="number"
               class="pg-input font-mono"
-              placeholder="Nhập ID tài khoản nhận (VD: 2)"
+              placeholder="Enter recipient account ID (e.g., 2)"
               [(ngModel)]="destAccountId"
               name="destAccountId"
               required
@@ -98,13 +98,13 @@ import {
           <!-- Provider & Bill Code (if BILL) -->
           <div class="form-grid" *ngIf="category !== 'TRANSFER'">
             <div class="form-group">
-              <label class="form-label">NHÀ CUNG CẤP</label>
+              <label class="form-label">PROVIDER</label>
               <select class="pg-select" [(ngModel)]="providerCode" name="providerCode">
-                <option value="EVN_HANOI" *ngIf="category === 'ELECTRICITY'">EVN Hà Nội</option>
+                <option value="EVN_HANOI" *ngIf="category === 'ELECTRICITY'">EVN Hanoi</option>
                 <option value="EVN_HCM" *ngIf="category === 'ELECTRICITY'">EVN TP.HCM</option>
                 <option value="EVN_MIENTRUNG" *ngIf="category === 'ELECTRICITY'">EVN Miền Trung</option>
-                <option value="VIWACO" *ngIf="category === 'WATER'">Nước Viwaco</option>
-                <option value="SAWACO" *ngIf="category === 'WATER'">Nước Sawaco</option>
+                <option value="VIWACO" *ngIf="category === 'WATER'">Viwaco Water</option>
+                <option value="SAWACO" *ngIf="category === 'WATER'">Sawaco Water</option>
                 <option value="VNPT" *ngIf="category === 'INTERNET'">VNPT Internet</option>
                 <option value="FPT" *ngIf="category === 'INTERNET'">FPT Telecom</option>
                 <option value="VIETTEL" *ngIf="category === 'INTERNET'">Viettel Internet</option>
@@ -112,7 +112,7 @@ import {
             </div>
 
             <div class="form-group">
-              <label class="form-label">MÃ HÓA ĐƠN / KHÁCH HÀNG <span class="required">*</span></label>
+              <label class="form-label">BILL CODE / CUSTOMER CODE <span class="required">*</span></label>
               <input
                 type="text"
                 class="pg-input font-mono"
@@ -126,7 +126,7 @@ import {
 
           <!-- Amount -->
           <div class="form-group">
-            <label class="form-label">SỐ TIỀN THANH TOÁN (VND) <span class="required">*</span></label>
+            <label class="form-label">PAYMENT AMOUNT (VND) <span class="required">*</span></label>
             <input
               type="number"
               class="pg-input font-mono"
@@ -137,32 +137,32 @@ import {
               required
             />
             <div class="quick-amounts">
-              <button type="button" class="btn-quick" (click)="amount = 50000">50,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 200000">200,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 500000">500,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 1000000">1,000,000đ</button>
+              <button type="button" class="btn-quick" (click)="amount = 50000">50,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 200000">200,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 500000">500,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 1000000">1,000,000 VND</button>
             </div>
           </div>
 
           <!-- Frequency -->
           <div class="form-group">
-            <label class="form-label">CHU KỲ TỰ ĐỘNG <span class="required">*</span></label>
+            <label class="form-label">AUTO CYCLE <span class="required">*</span></label>
             <select class="pg-select" [(ngModel)]="frequency" name="frequency">
-              <option value="DAILY">Hàng Ngày (Mỗi 24 giờ)</option>
-              <option value="WEEKLY">Hàng Tuần (Mỗi tuần 1 lần)</option>
-              <option value="MONTHLY">Hàng Tháng (Mỗi tháng 1 lần)</option>
-              <option value="MINUTELY">Mỗi 1 Phút (Dùng thử nghiệm / Demo)</option>
-              <option value="ONCE">1 Lần Duy Nhất (Chờ ngày đến hạn)</option>
+              <option value="DAILY">Daily (Every 24 hours)</option>
+              <option value="WEEKLY">Weekly (Once per week)</option>
+              <option value="MONTHLY">Monthly (Once per month)</option>
+              <option value="MINUTELY">Every 1 Minute (Testing / Demo)</option>
+              <option value="ONCE">One Time Only (Wait for due date)</option>
             </select>
           </div>
 
           <!-- Description -->
           <div class="form-group">
-            <label class="form-label">GHI CHÚ GIAO DỊCH</label>
+            <label class="form-label">TRANSACTION NOTE</label>
             <input
               type="text"
               class="pg-input"
-              placeholder="Ghi chú thêm cho lịch hẹn này..."
+              placeholder="Add a note for this schedule..."
               [(ngModel)]="description"
               name="description"
             />
@@ -177,7 +177,7 @@ import {
           <div class="form-actions">
             <button type="button" class="btn-cancel" (click)="goBack()">Hủy Bỏ</button>
             <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
-              <span>{{ isSubmitting() ? 'Đang Tạo Lịch...' : 'Xác Nhận Tạo Lịch' }}</span>
+              <span>{{ isSubmitting() ? 'Creating…' : 'Confirm Create Schedule' }}</span>
             </button>
           </div>
         </form>
@@ -371,15 +371,15 @@ export class RecurringPaymentFormComponent implements OnInit {
 
   submitForm(): void {
     if (this.category === 'TRANSFER' && !this.destAccountId) {
-      this.errorMsg.set('Vui lòng nhập ID tài khoản nhận.');
+      this.errorMsg.set('Please enter the destination account ID.');
       return;
     }
     if (this.category !== 'TRANSFER' && !this.billCode) {
-      this.errorMsg.set('Vui lòng nhập mã hóa đơn / mã khách hàng.');
+      this.errorMsg.set('Please enter the bill code / customer code.');
       return;
     }
     if (!this.amount || this.amount < 1000) {
-      this.errorMsg.set('Số tiền tối thiểu là 1,000 VND.');
+      this.errorMsg.set('Minimum amount is 1,000 VND.');
       return;
     }
 
@@ -394,7 +394,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       destAccountId: this.category === 'TRANSFER' ? this.destAccountId : undefined,
       amount: this.amount,
       frequency: this.frequency,
-      description: this.description || (this.category === 'TRANSFER' ? 'Chuyển tiền định kỳ' : `Thanh toán hóa đơn ${this.category}`)
+      description: this.description || (this.category === 'TRANSFER' ? 'Recurring transfer' : `Auto bill payment ${this.category}`)
     };
 
     this.service.create(payload).subscribe({
@@ -404,7 +404,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.errorMsg.set(err?.error?.message || 'Có lỗi xảy ra khi tạo lịch thanh toán.');
+        this.errorMsg.set(err?.error?.message || 'An error occurred while creating the recurring payment.');
       }
     });
   }
