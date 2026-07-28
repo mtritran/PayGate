@@ -25,6 +25,20 @@ public class CustomerService {
     private final Map<String, CustomerRecord> customers = new ConcurrentHashMap<>();
     private final Map<String, AtomicLong> providerSeqs = new ConcurrentHashMap<>();
 
+    @jakarta.annotation.PostConstruct
+    void initSeed() {
+        seedCustomer("PE01001234", "Nguyễn Văn An", "123 Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM", "EVN_HANOI", com.training.providermock.model.ProviderType.ELECTRICITY, new BigDecimal("450000"));
+        seedCustomer("PE02005678", "Trần Thị Bích", "456 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM", "EVN_HCM", com.training.providermock.model.ProviderType.ELECTRICITY, new BigDecimal("680000"));
+        seedCustomer("ND02001122", "Lê Văn Cường", "789 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM", "SAWACO", com.training.providermock.model.ProviderType.WATER, new BigDecimal("120000"));
+        seedCustomer("INT03009988", "Phạm Minh Dung", "101 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội", "VNPT_HN", com.training.providermock.model.ProviderType.INTERNET, new BigDecimal("220000"));
+        seedCustomer("FPT04100001", "Trần Văn Vinh", "202 Nam Kỳ Khởi Nghĩa, Phường 7, Quận 3, TP.HCM", "FPT_HCM", com.training.providermock.model.ProviderType.INTERNET, new BigDecimal("330000"));
+    }
+
+    private void seedCustomer(String code, String name, String address, String providerCode, com.training.providermock.model.ProviderType type, BigDecimal amount) {
+        CustomerRecord rec = new CustomerRecord(code, name, address, providerCode, type, amount, LocalDateTime.now());
+        customers.put(code, rec);
+    }
+
     public CustomerRecord register(RegisterCustomerRequest req) {
         ProviderInfo provider = registry.find(req.providerCode())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown provider: " + req.providerCode()));
