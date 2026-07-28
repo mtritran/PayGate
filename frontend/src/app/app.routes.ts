@@ -40,6 +40,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
       },
       {
+        path: 'vaults',
+        loadComponent: () => import('./features/vault/vault-list/vault-list.component').then(m => m.VaultListComponent)
+      },
+      {
+        path: 'vaults/new',
+        loadComponent: () => import('./features/vault/vault-create/vault-create.component').then(m => m.VaultCreateComponent)
+      },
+      {
+        path: 'vaults/:id',
+        loadComponent: () => import('./features/vault/vault-detail/vault-detail.component').then(m => m.VaultDetailComponent)
+      },
+      {
         path: 'loans',
         loadComponent: () => import('./features/loan/loan-dashboard/loan-dashboard.component').then(m => m.LoanDashboardComponent)
       },
