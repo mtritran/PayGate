@@ -132,11 +132,11 @@ import { NotificationService } from '../../core/services/notification.service';
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" routerLink="/vouchers" routerLinkActive="active" title="Kho Voucher">
+              <a class="nav-link" routerLink="/vouchers" routerLinkActive="active" title="Voucher Store">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
                 </svg>
-                <span class="nav-title" *ngIf="!collapsed()">Kho Voucher</span>
+                <span class="nav-title" *ngIf="!collapsed()">Voucher Store</span>
               </a>
             </li>
           </ul>
@@ -228,6 +228,14 @@ import { NotificationService } from '../../core/services/notification.service';
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
                 <span class="nav-title" *ngIf="!collapsed()">Webhook Logs</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin/vouchers" routerLinkActive="active" title="Voucher Management">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Voucher Management</span>
               </a>
             </li>
           </ul>

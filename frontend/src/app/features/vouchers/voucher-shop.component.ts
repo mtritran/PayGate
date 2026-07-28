@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { VoucherService, VoucherResponse, UserVoucherResponse, VoucherCreateRequest } from '../../core/services/voucher.service';
+import { VoucherService, VoucherResponse, UserVoucherResponse } from '../../core/services/voucher.service';
 import { RewardService, PointsResponse, PointTransactionResponse } from '../../core/services/reward.service';
-import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { ApiResponse } from '../../core/models/api-response.model';
 
 @Component({
@@ -11,342 +11,814 @@ import { ApiResponse } from '../../core/models/api-response.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="container mt-4 mb-5">
-      <!-- Top Banner Header & User Points Center -->
-      <div class="row mb-4">
-        <div class="col-md-12">
-          <div class="card bg-gradient text-white shadow-sm border-0 mb-3" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); border-radius: 20px;">
-            <div class="card-body p-4">
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                  <h3 class="fw-bold mb-1 text-white">🎁 Kho Voucher & Trung Tâm Điểm Thưởng</h3>
-                  <p class="mb-0 text-white-50">Tích lũy điểm thưởng tự động qua mỗi giao dịch thanh toán để đổi Voucher ưu đãi từ PayGate</p>
-                </div>
+    <div class="voucher-shop-page">
+
+      <!-- Points Hero Banner -->
+      <div class="points-hero" *ngIf="points">
+        <div class="hero-content">
+          <div class="hero-text">
+            <h1 class="hero-title">Voucher Store & Rewards Center</h1>
+            <p class="hero-subtitle">Earn points automatically on every payment transaction and redeem exclusive voucher deals</p>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hero-stat-icon" style="background: #ecfdf5; color: #059669;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+              </span>
+              <div class="hero-stat-text">
+                <span class="hero-stat-label">Total Points</span>
+                <span class="hero-stat-value">{{ points.totalPoints | number }} <small>pts</small></span>
               </div>
-
-              <!-- 3 Feature Stat Badges for User Points -->
-              <div class="row g-3 mt-3" *ngIf="points">
-                <div class="col-md-4">
-                  <div class="p-3 bg-white text-dark rounded-4 shadow-sm d-flex align-items-center justify-content-between">
-                    <div>
-                      <small class="text-muted text-uppercase fw-bold d-block mb-1">Tổng điểm hiện có</small>
-                      <div class="fs-3 fw-extrabold text-success">{{ points.totalPoints | number }} <span class="fs-6 text-muted">pts</span></div>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #ecfdf5; color: #059669;">
-                      <span class="fs-3">🏆</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-4">
-                  <div class="p-3 bg-white text-dark rounded-4 shadow-sm d-flex align-items-center justify-content-between">
-                    <div>
-                      <small class="text-muted text-uppercase fw-bold d-block mb-1">Hạng thành viên</small>
-                      <div class="fs-4 fw-bold text-warning">{{ points.tier }}</div>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #fef3c7; color: #d97706;">
-                      <span class="fs-3">⭐</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-4">
-                  <div class="p-3 bg-white text-dark rounded-4 shadow-sm d-flex align-items-center justify-content-between">
-                    <div>
-                      <small class="text-muted text-uppercase fw-bold d-block mb-1">Tích lũy tháng này</small>
-                      <div class="fs-4 fw-bold text-primary">+{{ points.earnedThisMonth | number }} <span class="fs-6 text-muted">pts</span></div>
-                    </div>
-                    <div class="p-3 rounded-circle" style="background: #eff6ff; color: #2563eb;">
-                      <span class="fs-3">📈</span>
-                    </div>
-                  </div>
-                </div>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-icon" style="background: #fef3c7; color: #d97706;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </span>
+              <div class="hero-stat-text">
+                <span class="hero-stat-label">Member Tier</span>
+                <span class="hero-stat-value">{{ points.tier }}</span>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-icon" style="background: #eff6ff; color: #2563eb;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+              </span>
+              <div class="hero-stat-text">
+                <span class="hero-stat-label">Earned This Month</span>
+                <span class="hero-stat-value accent">+{{ points.earnedThisMonth | number }} <small>pts</small></span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Navigation Tabs & Admin Action -->
-      <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2 flex-wrap gap-2">
-        <ul class="nav nav-pills gap-2">
-          <li class="nav-item">
-            <button class="nav-link fw-semibold" [class.active]="activeTab === 'shop'" (click)="activeTab = 'shop'">
-              🛒 Đổi Voucher ({{ shopVouchers.length }})
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-semibold" [class.active]="activeTab === 'my'" (click)="activeTab = 'my'">
-              🎟️ Voucher Của Tôi ({{ myVouchers.length }})
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link fw-semibold" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory()">
-              📜 Lịch Sử Điểm ({{ pointHistory.length }})
-            </button>
-          </li>
-        </ul>
-
-        <!-- Admin Only Toggle Button -->
-        <button *ngIf="isAdmin" 
-                class="btn fw-bold px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2"
-                [ngClass]="activeTab === 'admin' ? 'btn-dark' : 'btn-outline-dark'"
-                (click)="toggleAdminTab()">
-          <span>⚙️ {{ activeTab === 'admin' ? 'Đóng Quản Lý Admin' : 'Tạo & Quản Lý Voucher (Admin)' }}</span>
+      <!-- Tabs -->
+      <div class="tabs-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'shop'" (click)="activeTab = 'shop'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+          </svg>
+          Redeem
+          <span class="tab-count">{{ shopVouchers.length }}</span>
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'my'" (click)="activeTab = 'my'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+          </svg>
+          My Vouchers
+          <span class="tab-count">{{ myVouchers.length }}</span>
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+          </svg>
+          History
+          <span class="tab-count" *ngIf="pointHistory.length">{{ pointHistory.length }}</span>
         </button>
       </div>
 
-      <!-- Tab 1: Voucher Shop -->
-      <div *ngIf="activeTab === 'shop'" class="row g-3">
-        <div *ngFor="let voucher of shopVouchers" class="col-md-6 col-lg-4">
-          <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden position-relative hover-lift">
-            <div class="card-header bg-emerald text-white p-3 d-flex justify-content-between align-items-center" style="background: #10b981;">
-              <span class="badge bg-white text-emerald fw-bold fs-6" style="color: #047857;">Mã: {{ voucher.code }}</span>
-              <span class="badge bg-danger">Còn {{ voucher.remainingQty }}/{{ voucher.totalQuantity }}</span>
+      <!-- Tab: Voucher Shop -->
+      <div *ngIf="activeTab === 'shop'">
+        <div class="voucher-grid" *ngIf="shopVouchers.length > 0">
+          <div class="voucher-card" *ngFor="let voucher of shopVouchers">
+            <!-- Card Decorative Top -->
+            <div class="voucher-card-top">
+              <div class="voucher-code">{{ voucher.code }}</div>
+              <span class="voucher-remaining" [class.remaining-low]="voucher.remainingQty <= 0">
+                <span class="remaining-dot"></span>
+                {{ voucher.remainingQty > 0 ? voucher.remainingQty + ' left' : 'Sold out' }}
+              </span>
             </div>
-            <div class="card-body p-3 d-flex flex-column justify-content-between">
-              <div>
-                <h5 class="fw-bold text-dark mb-2">{{ voucher.title }}</h5>
-                <div class="mb-2">
-                  <span class="fs-4 fw-bold text-danger">{{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</span>
-                  <small class="text-muted ms-1">cho đơn từ {{ voucher.minOrderAmount | currency:'VND':'symbol':'1.0-0' }}</small>
-                </div>
-                <div class="small text-secondary mb-1">Áp dụng: <span class="badge bg-light text-dark border">{{ voucher.applicableType }}</span></div>
-                <div class="small text-secondary">Hạn dùng: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</div>
+
+            <div class="voucher-card-body">
+              <h3 class="voucher-title">{{ voucher.title }}</h3>
+
+              <div class="voucher-discount">
+                <span class="discount-amount">{{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</span>
+                <span class="discount-min">Min order {{ voucher.minOrderAmount | currency:'VND':'symbol':'1.0-0' }}</span>
               </div>
-              <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                <div>
-                  <small class="text-muted d-block">Giá đổi</small>
-                  <span class="fw-bold text-primary fs-5">{{ voucher.pointsRequired }} pts</span>
-                </div>
-                <button class="btn btn-emerald text-white fw-bold px-3 py-2 rounded-3" 
-                        style="background: #10b981;"
-                        (click)="redeem(voucher.id)" 
-                        [disabled]="redeemingId === voucher.id || (points ? points.totalPoints < voucher.pointsRequired : false) || voucher.remainingQty <= 0">
-                  {{ redeemingId === voucher.id ? 'Đang xử lý...' : (points && points.totalPoints < voucher.pointsRequired ? 'Thiếu điểm' : 'Đổi Ngay') }}
-                </button>
+
+              <div class="voucher-meta">
+                <span class="voucher-tag">{{ APPLICABLE_LABELS[voucher.applicableType] || voucher.applicableType }}</span>
+                <span class="voucher-expiry">Expires: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
               </div>
+            </div>
+
+            <div class="voucher-card-footer">
+              <div class="points-price">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-warning-500);">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                <span class="points-value">{{ voucher.pointsRequired | number }} pts</span>
+              </div>
+              <button class="btn-redeem"
+                      (click)="redeem(voucher.id)"
+                      [disabled]="redeemingId === voucher.id || (points ? points.totalPoints < voucher.pointsRequired : false) || voucher.remainingQty <= 0">
+                <span *ngIf="redeemingId === voucher.id" class="btn-spinner"></span>
+                {{ redeemingId === voucher.id ? 'Processing...' : (points && points.totalPoints < voucher.pointsRequired ? 'Not enough pts' : 'Redeem') }}
+              </button>
             </div>
           </div>
         </div>
-        <div *ngIf="shopVouchers.length === 0" class="col-12 text-center py-5 text-muted">
-          Hiện tại chưa có Voucher nào sẵn có để đổi.
+
+        <div class="empty-state" *ngIf="shopVouchers.length === 0">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
+            </svg>
+          </div>
+          <h4 class="empty-title">No vouchers available</h4>
+          <p class="empty-desc">Redeemable vouchers will appear here. Check back later!</p>
         </div>
       </div>
 
-      <!-- Tab 2: My Vouchers -->
-      <div *ngIf="activeTab === 'my'" class="row g-3">
-        <div *ngFor="let voucher of myVouchers" class="col-md-6 col-lg-4">
-          <div class="card h-100 shadow-sm border-0 rounded-4"
-               [ngClass]="{
-                 'border-start border-5 border-success': voucher.status === 'AVAILABLE',
-                 'border-start border-5 border-secondary opacity-75': voucher.status === 'USED',
-                 'border-start border-5 border-danger opacity-50': voucher.status === 'EXPIRED'
-               }">
-            <div class="card-body p-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="fw-bold mb-0 text-primary">{{ voucher.voucherCode }}</h5>
-                <span class="badge px-3 py-2 rounded-pill"
-                      [ngClass]="{
-                        'bg-success': voucher.status === 'AVAILABLE',
-                        'bg-secondary': voucher.status === 'USED',
-                        'bg-danger': voucher.status === 'EXPIRED'
-                      }">
-                  {{ voucher.status === 'AVAILABLE' ? 'Sẵn sàng dùng' : (voucher.status === 'USED' ? 'Đã sử dụng' : 'Hết hạn') }}
+      <!-- Tab: My Vouchers -->
+      <div *ngIf="activeTab === 'my'">
+        <div class="voucher-grid" *ngIf="myVouchers.length > 0">
+          <div class="user-voucher-card" *ngFor="let voucher of myVouchers"
+               [class.status-available]="voucher.status === 'AVAILABLE'"
+               [class.status-used]="voucher.status === 'USED'"
+               [class.status-expired]="voucher.status === 'EXPIRED'">
+            <div class="uvc-status-bar"></div>
+            <div class="uvc-body">
+              <div class="uvc-header">
+                <span class="uvc-code">{{ voucher.voucherCode }}</span>
+                <span class="uvc-status-badge"
+                      [class.badge-available]="voucher.status === 'AVAILABLE'"
+                      [class.badge-used]="voucher.status === 'USED'"
+                      [class.badge-expired]="voucher.status === 'EXPIRED'">
+                  {{ voucher.status === 'AVAILABLE' ? 'Available' : (voucher.status === 'USED' ? 'Used' : 'Expired') }}
                 </span>
               </div>
-              <p class="fw-semibold text-dark mb-1">{{ voucher.title }}</p>
-              <div class="fs-5 fw-bold text-danger mb-2">Giảm {{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</div>
-              <small class="text-muted d-block">Đã đổi: {{ voucher.redeemedAt | date:'dd/MM/yyyy HH:mm' }}</small>
-              <small class="text-muted d-block">Hạn sử dụng: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</small>
+              <h4 class="uvc-title">{{ voucher.title }}</h4>
+              <div class="uvc-discount">Save {{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</div>
+              <div class="uvc-meta">
+                <span>Redeemed: {{ voucher.redeemedAt | date:'dd/MM/yyyy' }}</span>
+                <span>Expires: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
+              </div>
             </div>
           </div>
         </div>
-        <div *ngIf="myVouchers.length === 0" class="col-12 text-center py-5 text-muted">
-          Bạn chưa sở hữu Voucher nào. Hãy chọn tab "Đổi Voucher" để tích đổi nhé!
+
+        <div class="empty-state" *ngIf="myVouchers.length === 0">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+            </svg>
+          </div>
+          <h4 class="empty-title">No vouchers yet</h4>
+          <p class="empty-desc">Redeem your reward points for vouchers in the "Redeem" tab!</p>
         </div>
       </div>
 
-      <!-- Tab 3: Point History -->
-      <div *ngIf="activeTab === 'history'" class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
+      <!-- Tab: Point History -->
+      <div *ngIf="activeTab === 'history'">
+        <div class="card" *ngIf="pointHistory.length > 0">
+          <table class="table">
+            <thead>
               <tr>
-                <th class="py-3 ps-3">Loại</th>
-                <th class="py-3">Mô tả</th>
-                <th class="py-3">Mã tham chiếu</th>
-                <th class="py-3">Điểm thay đổi</th>
-                <th class="py-3 text-end pe-3">Thời gian</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Transaction Ref</th>
+                <th>Points</th>
+                <th class="text-right">Date</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of pointHistory">
-                <td class="ps-3">
-                  <span class="badge" [class.bg-success]="item.type === 'EARN'" [class.bg-danger]="item.type === 'REDEEM'">
-                    {{ item.type === 'EARN' ? '+ Tích điểm' : '- Đổi quà' }}
+                <td>
+                  <span class="history-type" [class.type-earn]="item.type === 'EARN'" [class.type-redeem]="item.type === 'REDEEM'">
+                    {{ item.type === 'EARN' ? 'Earned' : 'Redeemed' }}
                   </span>
                 </td>
-                <td>{{ item.description }}</td>
-                <td><code>{{ item.transactionRef || '-' }}</code></td>
-                <td class="fw-bold" [class.text-success]="item.type === 'EARN'" [class.text-danger]="item.type === 'REDEEM'">
-                  {{ item.type === 'EARN' ? '+' : '-' }}{{ item.points }} pts
+                <td class="text-tertiary">{{ item.description }}</td>
+                <td>
+                  <code class="txn-ref">{{ item.transactionRef || '-' }}</code>
                 </td>
-                <td class="text-end pe-3 text-muted small">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
-              </tr>
-              <tr *ngIf="pointHistory.length === 0">
-                <td colspan="5" class="text-center py-4 text-muted">Chưa có lịch sử giao dịch điểm.</td>
+                <td>
+                  <span class="points-change" [class.text-success]="item.type === 'EARN'" [class.text-danger]="item.type === 'REDEEM'">
+                    {{ item.type === 'EARN' ? '+' : '-' }}{{ item.points }} pts
+                  </span>
+                </td>
+                <td class="text-right text-tertiary text-sm">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
 
-      <!-- Tab 4: Admin Management & Create Voucher -->
-      <div *ngIf="activeTab === 'admin'" class="row g-4">
-        <!-- Form Tạo Voucher Mới -->
-        <div class="col-md-5">
-          <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header bg-dark text-white rounded-top-4 p-3">
-              <h5 class="mb-0 fw-bold">➕ Tạo Voucher Mới</h5>
-            </div>
-            <div class="card-body p-3">
-              <form (ngSubmit)="createVoucher()">
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Mã Voucher (Code)</label>
-                  <input type="text" class="form-control" [(ngModel)]="newVoucher.code" name="code" placeholder="VD: BILL50K" required>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Tên hiển thị (Title)</label>
-                  <input type="text" class="form-control" [(ngModel)]="newVoucher.title" name="title" placeholder="Giảm 50K hóa đơn Điện" required>
-                </div>
-                <div class="row g-2 mb-3">
-                  <div class="col-6">
-                    <label class="form-label fw-semibold small">Số tiền giảm (VND)</label>
-                    <input type="number" class="form-control" [(ngModel)]="newVoucher.discountAmount" name="discountAmount" required>
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label fw-semibold small">Điểm cần đổi (pts)</label>
-                    <input type="number" class="form-control" [(ngModel)]="newVoucher.pointsRequired" name="pointsRequired" required>
-                  </div>
-                </div>
-                <div class="row g-2 mb-3">
-                  <div class="col-6">
-                    <label class="form-label fw-semibold small">Đơn tối thiểu (VND)</label>
-                    <input type="number" class="form-control" [(ngModel)]="newVoucher.minOrderAmount" name="minOrderAmount" required>
-                  </div>
-                  <div class="col-6">
-                    <label class="form-label fw-semibold small">Số lượng phát hành</label>
-                    <input type="number" class="form-control" [(ngModel)]="newVoucher.totalQuantity" name="totalQuantity" required>
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Loại áp dụng (Applicable Type)</label>
-                  <select class="form-select" [(ngModel)]="newVoucher.applicableType" name="applicableType">
-                    <option value="ALL">ALL (Tất cả dịch vụ)</option>
-                    <option value="BILL_PAYMENT">BILL_PAYMENT (Thanh toán hóa đơn)</option>
-                    <option value="ELECTRICITY">ELECTRICITY (Điện)</option>
-                    <option value="WATER">WATER (Nước)</option>
-                    <option value="INTERNET">INTERNET (Internet)</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-semibold small">Ngày hết hạn (YYYY-MM-DDTHH:mm:ss)</label>
-                  <input type="text" class="form-control" [(ngModel)]="newVoucher.expiresAt" name="expiresAt" placeholder="2026-12-31T23:59:59" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-3" [disabled]="creating">
-                  {{ creating ? 'Đang khởi tạo...' : 'Tạo Voucher' }}
-                </button>
-              </form>
-            </div>
+        <div class="empty-state" *ngIf="pointHistory.length === 0">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+            </svg>
           </div>
-        </div>
-
-        <!-- Danh Sách Voucher Hệ Thống (Admin View) -->
-        <div class="col-md-7">
-          <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header bg-light p-3">
-              <h5 class="mb-0 fw-bold">📋 Tất Cả Voucher Trong Hệ Thống</h5>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th class="ps-3">Code</th>
-                      <th>Giảm giá</th>
-                      <th>Điểm đổi</th>
-                      <th>Còn lại</th>
-                      <th>Hạn dùng</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let v of adminVouchers">
-                      <td class="ps-3">
-                        <span class="fw-bold text-success">{{ v.code }}</span>
-                        <div class="small text-muted">{{ v.title }}</div>
-                      </td>
-                      <td class="fw-bold text-danger">{{ v.discountAmount | currency:'VND':'symbol':'1.0-0' }}</td>
-                      <td>{{ v.pointsRequired }} pts</td>
-                      <td><span class="badge bg-info text-dark">{{ v.remainingQty }}/{{ v.totalQuantity }}</span></td>
-                      <td class="small text-muted">{{ v.expiresAt | date:'dd/MM/yyyy' }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <h4 class="empty-title">No history yet</h4>
+          <p class="empty-desc">Your point transaction history will be recorded here.</p>
         </div>
       </div>
 
     </div>
-  `
+  `,
+  styles: [`
+    .voucher-shop-page {
+      max-width: 1280px;
+    }
+
+    /* ── Points Hero ── */
+    .points-hero {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      border-radius: var(--radius-2xl);
+      padding: var(--space-8);
+      margin-bottom: var(--space-6);
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .hero-text {
+      text-align: center;
+    }
+
+    .hero-title {
+      font-size: 1.5rem;
+      font-weight: var(--font-weight-bold);
+      color: #ffffff;
+      margin: 0 0 var(--space-1);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      font-size: var(--font-size-sm);
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+    }
+
+    .hero-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius-xl);
+      padding: var(--space-4) var(--space-5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .hero-stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .hero-stat-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-stat-label {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-stat-value {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-primary);
+      line-height: 1.2;
+    }
+
+    .hero-stat-value small {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-normal);
+      color: var(--color-text-tertiary);
+    }
+
+    .hero-stat-value.accent {
+      color: var(--color-primary-600);
+    }
+
+    @media (max-width: 768px) {
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+      .points-hero {
+        padding: var(--space-5);
+      }
+    }
+
+    /* ── Tabs ── */
+    .tabs-bar {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+      border-bottom: 1px solid var(--color-border-primary);
+      padding-bottom: 0;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-tertiary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover {
+      color: var(--color-text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--color-primary-500);
+      border-bottom-color: var(--color-primary-500);
+    }
+
+    .tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 var(--space-1);
+      font-size: 11px;
+      font-weight: var(--font-weight-bold);
+      background: var(--color-bg-tertiary);
+      border-radius: var(--radius-full);
+      color: var(--color-text-secondary);
+    }
+
+    .tab-btn.active .tab-count {
+      background: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+
+    /* ── Voucher Grid ── */
+    .voucher-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--space-4);
+    }
+
+    /* ── Voucher Card (Shop) ── */
+    .voucher-card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border-primary);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .voucher-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-border-secondary);
+      transform: translateY(-2px);
+    }
+
+    .voucher-card-top {
+      background: linear-gradient(135deg, #059669, #047857);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .voucher-code {
+      font-family: var(--font-family-mono);
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-sm);
+      color: #ffffff;
+      letter-spacing: 0.05em;
+    }
+
+    .voucher-remaining {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+      padding: var(--space-1) var(--space-2);
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-radius: var(--radius-full);
+    }
+
+    .remaining-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    .remaining-low .remaining-dot {
+      background: #fca5a5;
+    }
+
+    .remaining-low {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .voucher-card-body {
+      padding: var(--space-4);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .voucher-title {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--space-3);
+      line-height: var(--line-height-tight);
+    }
+
+    .voucher-discount {
+      margin-bottom: var(--space-3);
+    }
+
+    .discount-amount {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-error);
+      display: block;
+      line-height: 1.1;
+    }
+
+    .discount-min {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-tertiary);
+    }
+
+    .voucher-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-top: auto;
+    }
+
+    .voucher-tag {
+      display: inline-flex;
+      padding: var(--space-1) var(--space-2);
+      background: var(--color-bg-tertiary);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-secondary);
+    }
+
+    .voucher-expiry {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-tertiary);
+    }
+
+    .voucher-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--color-border-primary);
+      background: var(--color-bg-tertiary);
+    }
+
+    .points-price {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .points-value {
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+    }
+
+    .btn-redeem {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      height: 34px;
+      padding: 0 var(--space-4);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: #ffffff;
+      background: var(--color-bg-brand);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn-redeem:hover:not(:disabled) {
+      background: var(--color-bg-brand-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-brand);
+    }
+
+    .btn-redeem:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    /* ── User Voucher Card ── */
+    .user-voucher-card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border-primary);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      display: flex;
+      transition: all var(--transition-normal);
+    }
+
+    .user-voucher-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .uvc-status-bar {
+      width: 5px;
+      flex-shrink: 0;
+    }
+
+    .status-available .uvc-status-bar {
+      background: var(--color-success-500);
+    }
+
+    .status-used .uvc-status-bar {
+      background: var(--color-neutral-400);
+    }
+
+    .status-expired .uvc-status-bar {
+      background: var(--color-error-500);
+    }
+
+    .status-used,
+    .status-expired {
+      opacity: 0.65;
+    }
+
+    .uvc-body {
+      padding: var(--space-4);
+      flex: 1;
+    }
+
+    .uvc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+
+    .uvc-code {
+      font-family: var(--font-family-mono);
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-base);
+      color: var(--color-text-brand);
+    }
+
+    .uvc-status-badge {
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-full);
+    }
+
+    .badge-available {
+      background: var(--color-success-100);
+      color: var(--color-success-700);
+    }
+
+    .badge-used {
+      background: var(--color-neutral-100);
+      color: var(--color-neutral-600);
+    }
+
+    .badge-expired {
+      background: var(--color-error-100);
+      color: var(--color-error-700);
+    }
+
+    .uvc-title {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--space-2);
+    }
+
+    .uvc-discount {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-error);
+      margin-bottom: var(--space-2);
+    }
+
+    .uvc-meta {
+      display: flex;
+      gap: var(--space-4);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-tertiary);
+    }
+
+    /* ── History Table ── */
+    .card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border-primary);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table thead th {
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--color-bg-tertiary);
+      border-bottom: 1px solid var(--color-border-primary);
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--color-border-primary);
+      color: var(--color-text-primary);
+      font-size: var(--font-size-sm);
+      vertical-align: middle;
+    }
+
+    .table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table tbody tr {
+      transition: background-color var(--transition-fast);
+    }
+
+    .table tbody tr:hover {
+      background-color: var(--color-bg-hover);
+    }
+
+    .text-right { text-align: right; }
+    .text-tertiary { color: var(--color-text-tertiary); }
+    .text-sm { font-size: var(--font-size-sm); }
+
+    .history-type {
+      display: inline-flex;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .type-earn {
+      background: var(--color-success-100);
+      color: var(--color-success-700);
+    }
+
+    .type-redeem {
+      background: var(--color-error-100);
+      color: var(--color-error-700);
+    }
+
+    .txn-ref {
+      font-family: var(--font-family-mono);
+      font-size: var(--font-size-xs);
+      background: var(--color-bg-tertiary);
+      padding: 2px var(--space-1);
+      border-radius: var(--radius-sm);
+    }
+
+    .points-change {
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-sm);
+    }
+
+    .text-success { color: var(--color-text-success); }
+    .text-danger { color: var(--color-text-error); }
+
+    /* ── Empty State ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: var(--space-12) var(--space-4);
+    }
+
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-full);
+      background: var(--color-bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-4);
+      color: var(--color-text-tertiary);
+    }
+
+    .empty-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+      margin: 0 0 var(--space-2);
+    }
+
+    .empty-desc {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin: 0;
+      max-width: 320px;
+    }
+
+    /* ── Animations ── */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Global fallbacks ── */
+    :host {
+      --color-bg-hover: var(--color-neutral-100);
+    }
+  `]
 })
 export class VoucherShopComponent implements OnInit {
-  activeTab: 'shop' | 'my' | 'history' | 'admin' = 'shop';
+  private notification = inject(NotificationService);
+
+  activeTab: 'shop' | 'my' | 'history' = 'shop';
   points: PointsResponse | null = null;
   shopVouchers: VoucherResponse[] = [];
   myVouchers: UserVoucherResponse[] = [];
   pointHistory: PointTransactionResponse[] = [];
-  adminVouchers: VoucherResponse[] = [];
-  
   redeemingId: number | null = null;
-  creating: boolean = false;
 
-  newVoucher: VoucherCreateRequest = {
-    code: '',
-    title: '',
-    discountAmount: 20000,
-    pointsRequired: 100,
-    minOrderAmount: 100000,
-    applicableType: 'ALL',
-    totalQuantity: 100,
-    expiresAt: '2026-12-31T23:59:59'
+  readonly APPLICABLE_LABELS: Record<string, string> = {
+    ALL: 'All',
+    BILL_PAYMENT: 'Bill Payment',
+    ELECTRICITY: 'Electricity',
+    WATER: 'Water',
+    INTERNET: 'Internet'
   };
 
   constructor(
     private voucherService: VoucherService,
-    private rewardService: RewardService,
-    private authService: AuthService
+    private rewardService: RewardService
   ) {}
-
-  get isAdmin(): boolean {
-    return this.authService.getRole() === 'ADMIN';
-  }
 
   ngOnInit(): void {
     this.loadPoints();
     this.loadShopVouchers();
     this.loadMyVouchers();
-  }
-
-  toggleAdminTab(): void {
-    if (this.activeTab === 'admin') {
-      this.activeTab = 'shop';
-    } else {
-      this.activeTab = 'admin';
-      this.loadAdminVouchers();
-    }
   }
 
   loadPoints(): void {
@@ -385,22 +857,13 @@ export class VoucherShopComponent implements OnInit {
     });
   }
 
-  loadAdminVouchers(): void {
-    this.voucherService.getAllVouchersForAdmin().subscribe({
-      next: (res: any) => {
-        if (res.success && res.data) this.adminVouchers = res.data.content || [];
-      },
-      error: (err) => console.error('Failed to load admin vouchers:', err)
-    });
-  }
-
   redeem(voucherId: number): void {
     this.redeemingId = voucherId;
     this.voucherService.redeemVoucher(voucherId).subscribe({
       next: (res: ApiResponse<UserVoucherResponse>) => {
         this.redeemingId = null;
         if (res.success) {
-          alert('🎉 Đổi voucher thành công!');
+          this.notification.success('Voucher redeemed successfully! 🎉');
           this.loadPoints();
           this.loadShopVouchers();
           this.loadMyVouchers();
@@ -408,31 +871,7 @@ export class VoucherShopComponent implements OnInit {
       },
       error: (err: any) => {
         this.redeemingId = null;
-        alert(err.error?.message || 'Đổi voucher thất bại');
-      }
-    });
-  }
-
-  createVoucher(): void {
-    if (!this.newVoucher.code || !this.newVoucher.title) {
-      alert('Vui lòng nhập đầy đủ mã và tên Voucher');
-      return;
-    }
-    this.creating = true;
-    this.voucherService.createVoucher(this.newVoucher).subscribe({
-      next: (res) => {
-        this.creating = false;
-        if (res.success) {
-          alert('✅ Tạo Voucher thành công!');
-          this.newVoucher.code = '';
-          this.newVoucher.title = '';
-          this.loadAdminVouchers();
-          this.loadShopVouchers();
-        }
-      },
-      error: (err) => {
-        this.creating = false;
-        alert(err.error?.message || 'Tạo Voucher thất bại');
+        this.notification.error(err.error?.message || 'Failed to redeem voucher');
       }
     });
   }

@@ -98,6 +98,11 @@ export const routes: Routes = [
         path: 'admin/webhooks',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/webhook/webhook-log/webhook-log.component').then(m => m.WebhookLogComponent)
+      },
+      {
+        path: 'admin/vouchers',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/vouchers/admin-voucher.component').then(m => m.AdminVoucherComponent)
       }
     ]
   },
