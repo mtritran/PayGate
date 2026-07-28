@@ -30,6 +30,12 @@ public class LoanController {
     private final LoanService loanService;
     private final UserRepository userRepository;
 
+    private User getUserFromPrincipal(String username) {
+        return userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username)));
+    }
+
     // --- USER ENDPOINTS ---
 
     @PostMapping("/loans/apply")
@@ -39,8 +45,7 @@ public class LoanController {
             Principal principal,
             @Valid @RequestBody LoanApplyRequest request
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
+        User user = getUserFromPrincipal(principal.getName());
         return ApiResponse.success("Loan application submitted successfully", loanService.applyLoan(user.getId(), request));
     }
 
@@ -51,8 +56,7 @@ public class LoanController {
             Principal principal,
             Pageable pageable
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
+        User user = getUserFromPrincipal(principal.getName());
         return ApiResponse.success(PageResponse.from(loanService.getMyLoans(user.getId(), pageable), l -> l));
     }
 
@@ -63,8 +67,7 @@ public class LoanController {
             @PathVariable Long id,
             Authentication authentication
     ) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
+        User user = getUserFromPrincipal(authentication.getName());
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
         return ApiResponse.success(loanService.getLoanById(id, user.getId(), isAdmin));
@@ -77,8 +80,7 @@ public class LoanController {
             @PathVariable Long id,
             Principal principal
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
+        User user = getUserFromPrincipal(principal.getName());
         return ApiResponse.success("Loan offer accepted. Contract signed and funds disbursed successfully!", loanService.acceptLoanOffer(user.getId(), id));
     }
 
@@ -89,8 +91,7 @@ public class LoanController {
             @PathVariable Long id,
             Authentication authentication
     ) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
+        User user = getUserFromPrincipal(authentication.getName());
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
 
@@ -111,8 +112,7 @@ public class LoanController {
             Principal principal,
             @Valid @RequestBody LoanRepayRequest request
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
+        User user = getUserFromPrincipal(principal.getName());
         return ApiResponse.success("Loan repayment processed successfully", loanService.repayLoan(user.getId(), id, request));
     }
 
@@ -133,8 +133,7 @@ public class LoanController {
             Principal principal,
             @RequestBody(required = false) LoanApprovalRequest request
     ) {
-        User admin = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found: " + principal.getName()));
+        User admin = getUserFromPrincipal(principal.getName());
         return ApiResponse.success("Loan approved and disbursed successfully", loanService.approveLoan(id, admin.getId(), request));
     }
 
@@ -146,8 +145,7 @@ public class LoanController {
             Principal principal,
             @RequestBody(required = false) LoanApprovalRequest request
     ) {
-        User admin = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Admin user not found: " + principal.getName()));
+        User admin = getUserFromPrincipal(principal.getName());
         return ApiResponse.success("Loan rejected", loanService.rejectLoan(id, admin.getId(), request));
     }
 }

@@ -63,10 +63,10 @@ public class LoanServiceImpl implements LoanService {
 
         // Validate user does not already have an active or pending loan
         boolean hasActiveOrPending = loanRepository.existsByUserIdAndStatusIn(
-                userId, List.of(LoanStatus.PENDING_APPROVAL, LoanStatus.ACTIVE, LoanStatus.OVERDUE)
+                userId, List.of(LoanStatus.PENDING_APPROVAL, LoanStatus.OFFERED, LoanStatus.ACTIVE, LoanStatus.OVERDUE)
         );
         if (hasActiveOrPending) {
-            throw new DuplicateResourceException("Loan", "userId", "User already has an active or pending loan application");
+            throw new BadRequestException("Bạn đang có một khoản vay chưa hoàn tất (đang duyệt, chờ ký hoặc đang hoạt động). Vui lòng hoàn tất hoặc trả nợ khoản vay hiện tại trước khi tạo đơn mới.");
         }
 
         Account userAccount = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER)
@@ -166,8 +166,26 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Access denied to loan");
         }
 
-        if (loan.getStatus() != LoanStatus.OFFERED) {
-            throw new BadRequestException("Loan is not in OFFERED status for acceptance");
+        if (loan.getStatus() != LoanStatus.OFFERED && loan.getStatus() != LoanStatus.PENDING_APPROVAL) {
+            throw new BadRequestException("Khoản vay không ở trạng thái chờ ký hợp đồng (Trạng thái hiện tại: " + loan.getStatus() + ")");
+        }
+
+        // Generate schedule if not already present
+        List<LoanSchedule> existingSchedules = loanScheduleRepository.findByLoanIdOrderByPeriodNumberAsc(loanId);
+        if (existingSchedules.isEmpty()) {
+            List<LoanSchedule> schedules = new ArrayList<>();
+            LocalDate now = LocalDate.now();
+            for (int i = 1; i <= loan.getTermMonths(); i++) {
+                LoanSchedule schedule = LoanSchedule.builder()
+                        .loan(loan)
+                        .periodNumber(i)
+                        .amountDue(loan.getMonthlyAmount())
+                        .dueDate(now.plusMonths(i))
+                        .status(LoanScheduleStatus.PENDING)
+                        .build();
+                schedules.add(schedule);
+            }
+            loanScheduleRepository.saveAll(schedules);
         }
 
         Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
