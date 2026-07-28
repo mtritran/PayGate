@@ -79,4 +79,44 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
         userRepository.delete(user);
     }
+
+    @Override
+    @Transactional
+    public void setupPin(Long userId, com.training.paygate.dto.request.PinSetupRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (user.isPinEnabled() && user.getPinCode() != null) {
+            if (request.oldPin() == null || !passwordEncoder.matches(request.oldPin(), user.getPinCode())) {
+                throw new com.training.paygate.exception.BadRequestException("Mã PIN hiện tại không chính xác");
+            }
+        }
+
+        user.setPinCode(passwordEncoder.encode(request.newPin()));
+        user.setPinEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean verifyPin(Long userId, String pin) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (!user.isPinEnabled() || user.getPinCode() == null) {
+            throw new com.training.paygate.exception.BadRequestException("Bạn chưa thiết lập Mã PIN giao dịch");
+        }
+
+        return passwordEncoder.matches(pin, user.getPinCode());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.training.paygate.dto.response.PinStatusResponse getPinStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        boolean hasPin = user.getPinCode() != null && !user.getPinCode().isBlank();
+        return new com.training.paygate.dto.response.PinStatusResponse(hasPin, user.isPinEnabled());
+    }
 }

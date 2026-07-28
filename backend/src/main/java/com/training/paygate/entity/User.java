@@ -41,4 +41,11 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @Column(name = "pin_code", length = 100)
+    private String pinCode;
+
+    @Column(name = "pin_enabled")
+    @Builder.Default
+    private boolean pinEnabled = false;
 }

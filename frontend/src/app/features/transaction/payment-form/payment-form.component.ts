@@ -10,6 +10,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { BeneficiaryService, BeneficiaryResponse } from '../../../core/services/beneficiary.service';
 import { AccountLookupResponse } from '../../../core/models/account.model';
 import { PaygateQrService } from '../../../core/services/paygate-qr.service';
+import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
 
 @Component({
   selector: 'app-payment-form',
@@ -19,7 +20,8 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
     ReactiveFormsModule,
     FormsModule,
     RouterLink,
-    CurrencyPipe
+    CurrencyPipe,
+    PinModalComponent
   ],
   template: `
     <div class="paygate-form-wrapper">
@@ -479,6 +481,15 @@ import { PaygateQrService } from '../../../core/services/paygate-qr.service';
           </div>
         </div>
       </div>
+
+      <!-- PIN Modal for Transaction Security -->
+      <app-pin-modal
+        [isOpen]="showPinModal"
+        title="Xác thực PIN chuyển tiền"
+        subtitle="Nhập Mã PIN 6 số để hoàn tất giao dịch chuyển tiền"
+        (confirmed)="onPinConfirmed()"
+        (cancelled)="showPinModal = false"
+      ></app-pin-modal>
     </div>
   `,
   styles: [`
@@ -1284,6 +1295,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.executePayment();
   }
 
+  showPinModal = false;
+
   openConfirmation(): void {
     if (this.paymentForm.invalid || !this.recipientLookup) {
       this.paymentForm.markAllAsTouched();
@@ -1297,6 +1310,12 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   executePayment(): void {
+    // Open PIN modal first for security verification
+    this.showPinModal = true;
+  }
+
+  onPinConfirmed(): void {
+    this.showPinModal = false;
     this.submitting = true;
     this.transactionService.processPayment(this.paymentForm.value).subscribe({
       next: (res) => {

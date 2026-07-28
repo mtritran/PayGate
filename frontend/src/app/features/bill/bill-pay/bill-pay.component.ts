@@ -15,6 +15,8 @@ import {
 } from '../../../core/services/bill.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
+import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
+
 type Tab = 'services' | 'bills';
 type LinkMode = 'LINK_EXISTING' | 'REGISTER_NEW';
 
@@ -27,7 +29,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 @Component({
   selector: 'app-bill-pay',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, MatIconModule],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, MatIconModule, PinModalComponent],
   template: `
 <div class="hub-page">
 
@@ -301,6 +303,15 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       </div>
     </div>
   </div>
+
+  <!-- PIN Security Modal -->
+  <app-pin-modal
+    [isOpen]="showPinModal()"
+    title="Xác thực PIN thanh toán hóa đơn"
+    subtitle="Nhập Mã PIN 6 số để xác nhận thanh toán dịch vụ"
+    (confirmed)="onPinConfirmed()"
+    (cancelled)="showPinModal.set(false)"
+  ></app-pin-modal>
 </div>
   `,
   styles: [`
@@ -629,7 +640,19 @@ export class BillPayComponent implements OnInit {
     });
   }
 
+  showPinModal = signal(false);
+  pendingBillToPay = signal<BillLookupResponse | null>(null);
+
   payBill(bill: BillLookupResponse): void {
+    this.pendingBillToPay.set(bill);
+    this.showPinModal.set(true);
+  }
+
+  onPinConfirmed(): void {
+    this.showPinModal.set(false);
+    const bill = this.pendingBillToPay();
+    if (!bill) return;
+
     this.payingBillId.set(bill.billId);
     this.lastPaid.set(null);
     this.payError.set(null);

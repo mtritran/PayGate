@@ -5,11 +5,12 @@ import { RouterModule } from '@angular/router';
 import { LoanService, LoanResponse, LoanScheduleResponse, RepayType } from '../../../core/services/loan.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
 
 @Component({
   selector: 'app-loan-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CurrencyPipe, DatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, CurrencyPipe, DatePipe, PinModalComponent],
   template: `
     <div class="loan-container fade-in">
       <!-- Top Banner Header -->
@@ -357,6 +358,15 @@ import { NotificationService } from '../../../core/services/notification.service
           </div>
         </div>
       </div>
+
+      <!-- PIN Security Modal for Digital Contract Signature -->
+      <app-pin-modal
+        [isOpen]="showPinModal()"
+        title="Xác nhận chữ ký PIN điện tử"
+        subtitle="Nhập Mã PIN 6 số để hoàn tất ký hợp đồng vay và nhận tiền giải ngân"
+        (confirmed)="onPinConfirmed()"
+        (cancelled)="showPinModal.set(false)"
+      ></app-pin-modal>
     </div>
   `,
   styles: [`
@@ -653,7 +663,19 @@ export class LoanDashboardComponent implements OnInit {
     });
   }
 
+  showPinModal = signal(false);
+  pendingLoanToAccept = signal<number | null>(null);
+
   acceptOffer(loanId: number): void {
+    this.pendingLoanToAccept.set(loanId);
+    this.showPinModal.set(true);
+  }
+
+  onPinConfirmed(): void {
+    this.showPinModal.set(false);
+    const loanId = this.pendingLoanToAccept();
+    if (!loanId) return;
+
     this.accepting.set(true);
     this.loanService.acceptLoanOffer(loanId).subscribe({
       next: (res) => {
