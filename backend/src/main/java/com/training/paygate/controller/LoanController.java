@@ -57,7 +57,7 @@ public class LoanController {
     }
 
     @GetMapping("/loans/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Xem chi tiết khoản vay và lịch trả nợ")
     public ApiResponse<LoanResponse> getLoanById(
             @PathVariable Long id,
@@ -66,12 +66,12 @@ public class LoanController {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
         return ApiResponse.success(loanService.getLoanById(id, user.getId(), isAdmin));
     }
 
     @PostMapping("/loans/{id}/accept-offer")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
     @Operation(summary = "User chấp nhận đề nghị vay, hoàn tất ký hợp đồng & giải ngân về ví PayGate")
     public ApiResponse<LoanResponse> acceptLoanOffer(
             @PathVariable Long id,
@@ -83,7 +83,7 @@ public class LoanController {
     }
 
     @GetMapping("/loans/{id}/contract-pdf")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Tải file Hợp đồng vay tiêu dùng PDF 3 trang chi tiết")
     public org.springframework.http.ResponseEntity<byte[]> downloadContractPdf(
             @PathVariable Long id,
@@ -92,7 +92,7 @@ public class LoanController {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + authentication.getName()));
         boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
 
         byte[] pdfBytes = loanService.generateLoanContractPdf(id, user.getId(), isAdmin);
 
@@ -119,14 +119,14 @@ public class LoanController {
     // --- ADMIN ENDPOINTS ---
 
     @GetMapping("/admin/loans")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Admin xem tất cả đơn vay trong hệ thống")
     public ApiResponse<PageResponse<LoanResponse>> getAllLoansForAdmin(Pageable pageable) {
         return ApiResponse.success(PageResponse.from(loanService.getAllLoansForAdmin(pageable), l -> l));
     }
 
     @PostMapping("/admin/loans/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Admin phê duyệt và tự động giải ngân khoản vay sang ví User")
     public ApiResponse<LoanResponse> approveLoan(
             @PathVariable Long id,
@@ -139,7 +139,7 @@ public class LoanController {
     }
 
     @PostMapping("/admin/loans/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Admin từ chối đơn vay")
     public ApiResponse<LoanResponse> rejectLoan(
             @PathVariable Long id,
