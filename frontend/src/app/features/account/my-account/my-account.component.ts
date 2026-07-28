@@ -9,8 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AccountService } from '../../../core/services/account.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
-import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
-import { PinService } from '../../../core/services/pin.service';
+
 
 @Component({
   selector: 'app-my-account',
@@ -24,8 +23,7 @@ import { PinService } from '../../../core/services/pin.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule,
-    PinModalComponent
+    MatSnackBarModule
   ],
   template: `
     <div class="my-account-page">
@@ -84,23 +82,11 @@ import { PinService } from '../../../core/services/pin.service';
             <div class="actions-list">
               <a mat-raised-button class="btn-action-solid" routerLink="/transactions/pay">Send payment</a>
               <a mat-stroked-button class="btn-action-outline" routerLink="/accounts/topup">Top up wallet</a>
-              <button mat-flat-button class="btn-action-pin" (click)="showPinModal = true">
-                <mat-icon style="margin-right: 6px;">lock</mat-icon> 🔐 Tạo / Đổi Mã PIN 6 Số
-              </button>
               <a mat-button class="btn-action-text" routerLink="/transactions/history">Full history</a>
             </div>
           </div>
         </div>
 
-        <!-- PIN Setup Modal -->
-        <app-pin-modal
-          [isOpen]="showPinModal"
-          [isSetupMode]="true"
-          title="Cài Đặt Mã PIN Giao Dịch 6 Số"
-          subtitle="Tạo mới hoặc đổi Mã PIN 6 số dùng để xác thực Chuyển tiền & Thanh toán"
-          (confirmed)="onPinSetupConfirmed($event)"
-          (cancelled)="showPinModal = false"
-        ></app-pin-modal>
 
         <!-- Bottom Card: Account Activity -->
         <div class="content-card activity-card mt-24">
@@ -216,25 +202,12 @@ export class MyAccountComponent implements OnInit {
   account: AccountResponse | null = null;
   transactions: TransactionResponse[] = [];
   loading = true;
-  showPinModal = false;
 
   constructor(
     private accountService: AccountService,
-    private pinService: PinService,
     private snackBar: MatSnackBar
   ) {}
 
-  onPinSetupConfirmed(newPin: string): void {
-    this.pinService.setupPin(newPin).subscribe({
-      next: () => {
-        this.showPinModal = false;
-        this.snackBar.open('Đã thiết lập Mã PIN giao dịch 6 số thành công!', 'Đóng', { duration: 3000 });
-      },
-      error: (err: any) => {
-        this.snackBar.open(err?.error?.message || 'Không thể cài đặt Mã PIN', 'Đóng', { duration: 3000 });
-      }
-    });
-  }
 
   ngOnInit(): void {
     this.loadAccountData();

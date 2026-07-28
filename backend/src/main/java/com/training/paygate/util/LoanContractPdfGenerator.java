@@ -225,7 +225,7 @@ public class LoanContractPdfGenerator {
 
                 cs.setFont(fontBold, 9);
                 cs.setNonStrokingColor(4 / 255.0f, 120 / 255.0f, 87 / 255.0f);
-                cs.beginText(); cs.newLineAtOffset(70, sigY + 12); cs.showText("✓ PAYGATE DIGITAL SIGNED"); cs.endText();
+                cs.beginText(); cs.newLineAtOffset(70, sigY + 12); cs.showText("[OK] PAYGATE DIGITAL SIGNED"); cs.endText();
                 cs.setFont(fontRegular, 7.5f);
                 cs.beginText(); cs.newLineAtOffset(70, sigY - 2); cs.showText("Timestamp: " + (loan.getDisbursedAt() != null ? loan.getDisbursedAt().format(DATE_FMT) : "PENDING")); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(70, sigY - 14); cs.showText("Certificate ID: PG-CA-998822"); cs.endText();
@@ -240,7 +240,7 @@ public class LoanContractPdfGenerator {
 
                 cs.setFont(fontBold, 9);
                 cs.setNonStrokingColor(29 / 255.0f, 78 / 255.0f, 216 / 255.0f);
-                cs.beginText(); cs.newLineAtOffset(350, sigY + 12); cs.showText("✓ USER E-ACCEPTED & SIGNED"); cs.endText();
+                cs.beginText(); cs.newLineAtOffset(350, sigY + 12); cs.showText("[OK] USER E-ACCEPTED & SIGNED"); cs.endText();
                 cs.setFont(fontRegular, 7.5f);
                 cs.beginText(); cs.newLineAtOffset(350, sigY - 2); cs.showText("User: " + cleanText(user.getUsername())); cs.endText();
                 cs.beginText(); cs.newLineAtOffset(350, sigY - 14); cs.showText("Status: FULLY DISBURSED"); cs.endText();
@@ -271,10 +271,10 @@ public class LoanContractPdfGenerator {
         cs.beginText();
         cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9.5f);
         cs.newLineAtOffset(x, y);
-        cs.showText("• " + safeLabel + " ");
+        cs.showText("- " + safeLabel + " ");
         cs.endText();
 
-        float labelWidth = (new PDType1Font(Standard14Fonts.FontName.HELVETICA).getStringWidth("• " + safeLabel + " ") / 1000) * 9.5f;
+        float labelWidth = (new PDType1Font(Standard14Fonts.FontName.HELVETICA).getStringWidth("- " + safeLabel + " ") / 1000) * 9.5f;
         cs.beginText();
         cs.setFont(font, 9.5f);
         cs.newLineAtOffset(x + labelWidth, y);
@@ -295,7 +295,7 @@ public class LoanContractPdfGenerator {
 
     private static void drawFooter(PDPageContentStream cs, int pageNum, int totalPages) throws IOException {
         cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
-        cs.setNonStrokingColor(120, 120, 120);
+        cs.setNonStrokingColor(120 / 255.0f, 120 / 255.0f, 120 / 255.0f);
         cs.beginText();
         cs.newLineAtOffset(50, 30);
         cs.showText("PayGate Digital Banking - Confidential Consumer Loan Agreement Protocol");
@@ -305,7 +305,7 @@ public class LoanContractPdfGenerator {
         cs.newLineAtOffset(500, 30);
         cs.showText("Page " + pageNum + " / " + totalPages);
         cs.endText();
-        cs.setNonStrokingColor(0, 0, 0);
+        cs.setNonStrokingColor(0.0f, 0.0f, 0.0f);
     }
 
     private static String formatVnd(BigDecimal amount) {

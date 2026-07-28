@@ -6,7 +6,7 @@ import { LoanService, LoanResponse, LoanScheduleResponse, RepayType } from '../.
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
-import { PinService } from '../../../core/services/pin.service';
+
 
 @Component({
   selector: 'app-loan-dashboard',
@@ -318,10 +318,10 @@ import { PinService } from '../../../core/services/pin.service';
 
             <!-- Repayment actions -->
             <div class="repay-actions-box" *ngIf="loan.status === 'ACTIVE' && loan.remainingAmount > 0">
-              <button class="btn-repay-period" (click)="repayLoan(loan.id, 'PAY_PERIOD')" [disabled]="repaying()">
-                💳 Thanh toán kỳ hiện tại ({{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }})
+              <button class="btn-repay-period" (click)="repayLoan(loan.id, 'NEXT_PERIOD')" [disabled]="repaying()">
+                💳 Thanh toán kỳ tới
               </button>
-              <button class="btn-repay-all" (click)="repayLoan(loan.id, 'PAY_ALL')" [disabled]="repaying()">
+              <button class="btn-repay-all" (click)="repayLoan(loan.id, 'FULL_SETTLEMENT')" [disabled]="repaying()">
                 ✨ Tất toán toàn bộ ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
               </button>
             </div>
@@ -360,12 +360,10 @@ import { PinService } from '../../../core/services/pin.service';
         </div>
       </div>
 
-      <!-- PIN Security Modal for Digital Contract Signature -->
+      <!-- OTP Security Modal for Digital Contract Signature -->
       <app-pin-modal
         [isOpen]="showPinModal()"
-        [isSetupMode]="isPinSetupMode()"
-        [title]="isPinSetupMode() ? 'Tạo Mã PIN Giao Dịch Mới' : 'Xác nhận chữ ký PIN điện tử'"
-        [subtitle]="isPinSetupMode() ? 'Tạo Mã PIN 6 số để bảo mật các giao dịch về sau' : 'Nhập Mã PIN 6 số để hoàn tất ký hợp đồng vay và nhận tiền giải ngân'"
+        [title]="'Xác thực OTP ký hợp đồng vay'"
         (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal.set(false)"
       ></app-pin-modal>
@@ -666,43 +664,16 @@ export class LoanDashboardComponent implements OnInit {
   }
 
   showPinModal = signal(false);
-  isPinSetupMode = signal(false);
   pendingLoanToAccept = signal<number | null>(null);
-  private pinService = inject(PinService);
 
   acceptOffer(loanId: number): void {
     this.pendingLoanToAccept.set(loanId);
-    this.pinService.getPinStatus().subscribe({
-      next: (res: any) => {
-        if (res.data && res.data.hasPin) {
-          this.isPinSetupMode.set(false);
-        } else {
-          this.isPinSetupMode.set(true);
-          this.notification.info('Bạn chưa cài đặt Mã PIN. Vui lòng tạo Mã PIN 6 số để tiếp tục.');
-        }
-        this.showPinModal.set(true);
-      },
-      error: () => {
-        this.isPinSetupMode.set(false);
-        this.showPinModal.set(true);
-      }
-    });
+    // Open OTP modal — auto-sends OTP email on open
+    this.showPinModal.set(true);
   }
 
-  onPinConfirmed(pinStr?: string): void {
-    if (this.isPinSetupMode() && pinStr) {
-      this.pinService.setupPin(pinStr).subscribe({
-        next: () => {
-          this.notification.success('Đã tạo Mã PIN giao dịch thành công!');
-          this.isPinSetupMode.set(false);
-          this.proceedAcceptLoan();
-        },
-        error: (err: any) => {
-          this.notification.error(err?.error?.message || 'Không thể thiết lập Mã PIN');
-        }
-      });
-      return;
-    }
+  onPinConfirmed(_otpStr?: string): void {
+    // OTP already verified inside PinModalComponent before emitting confirmed
     this.proceedAcceptLoan();
   }
 

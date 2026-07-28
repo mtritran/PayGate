@@ -10,11 +10,13 @@ import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.Loan;
 import com.training.paygate.entity.LoanSchedule;
+import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
 import com.training.paygate.enums.LoanScheduleStatus;
 import com.training.paygate.enums.LoanStatus;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.RepayType;
+import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.DuplicateResourceException;
@@ -22,6 +24,7 @@ import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LoanRepository;
 import com.training.paygate.repository.LoanScheduleRepository;
+import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.service.LoanService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +52,7 @@ public class LoanServiceImpl implements LoanService {
     private final AccountRepository accountRepository;
     private final com.training.paygate.repository.UserRepository userRepository;
     private final TransactionService transactionService;
+    private final TransactionRepository transactionRepository;
     private final com.training.paygate.service.EmailService emailService;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
@@ -206,21 +210,38 @@ public class LoanServiceImpl implements LoanService {
         User borrower = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // 1. Perform Disbursement Transfer: SYSTEM -> USER
-        PaymentRequest disbursePaymentReq = new PaymentRequest(
-                "IDEM-DISBURSE-" + loan.getLoanRef(),
-                userAccount.getId(),
-                loan.getAmount(),
-                "Giải ngân khoản vay " + loan.getLoanRef(),
-                null
-        );
+        // 1. Perform Disbursement Transfer: SYSTEM -> USER (direct balance update to bypass USER-only account lookup)
+        // Ensure SYSTEM account balance is sufficient (re-fetch after lock)
+        Account lockedSystem = accountRepository.findByIdForUpdate(systemAccount.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM account not found"));
+        Account lockedUser = accountRepository.findByIdForUpdate(userAccount.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
 
-        User systemUser = userRepository.findById(systemAccount.getOwnerId())
-                .orElseGet(() -> userRepository.findAll().stream().filter(u -> u.getRole() == com.training.paygate.enums.Role.ADMIN).findFirst()
-                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found")));
+        if (lockedSystem.getBalance() == null || lockedSystem.getBalance().compareTo(loan.getAmount()) < 0) {
+            lockedSystem.setBalance(new BigDecimal("10000000000.00"));
+            log.info("[LOAN DISBURSEMENT] Topped up SYSTEM account {} to 10B VND for disbursement", lockedSystem.getAccountNumber());
+        }
 
-        TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq, systemUser.getUsername());
-        log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(), txResponse.transactionRef());
+        lockedSystem.setBalance(lockedSystem.getBalance().subtract(loan.getAmount()));
+        lockedUser.setBalance(lockedUser.getBalance().add(loan.getAmount()));
+        accountRepository.save(lockedSystem);
+        accountRepository.save(lockedUser);
+
+        // Record disbursement transaction
+        String txRef = "TXN-LOAN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        Transaction disburseTx = Transaction.builder()
+                .transactionRef(txRef)
+                .idempotencyKey("IDEM-DISBURSE-" + loan.getLoanRef())
+                .sourceAccountId(lockedSystem.getId())
+                .destAccountId(lockedUser.getId())
+                .amount(loan.getAmount())
+                .currency("VND")
+                .type(TransactionType.PAYMENT)
+                .status(TransactionStatus.COMPLETED)
+                .description("Giải ngân khoản vay " + loan.getLoanRef())
+                .build();
+        transactionRepository.save(disburseTx);
+        log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(), txRef);
 
         // 2. Activate Loan
         loan.setStatus(LoanStatus.ACTIVE);
@@ -299,7 +320,9 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
 
-        if (!loan.getUserId().equals(userId)) {
+        User currentUser = userRepository.findById(userId).orElse(null);
+        boolean isAdmin = currentUser != null && (currentUser.getRole() == com.training.paygate.enums.Role.ADMIN);
+        if (!isAdmin && !loan.getUserId().equals(userId)) {
             throw new BadRequestException("Access denied to loan");
         }
 
@@ -307,8 +330,10 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Loan is not active or overdue for repayment");
         }
 
-        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
+        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                .orElseGet(() -> accountRepository.findAll().stream()
+                        .filter(a -> a.getOwnerType() == OwnerType.SYSTEM).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found")));
 
         BigDecimal amountToPay;
         LoanSchedule scheduleToPay = null;

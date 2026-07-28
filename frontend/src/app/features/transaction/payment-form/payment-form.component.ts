@@ -11,7 +11,7 @@ import { BeneficiaryService, BeneficiaryResponse } from '../../../core/services/
 import { AccountLookupResponse } from '../../../core/models/account.model';
 import { PaygateQrService } from '../../../core/services/paygate-qr.service';
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
-import { PinService } from '../../../core/services/pin.service';
+
 
 @Component({
   selector: 'app-payment-form',
@@ -483,12 +483,10 @@ import { PinService } from '../../../core/services/pin.service';
         </div>
       </div>
 
-      <!-- PIN Modal for Transaction Security -->
+      <!-- OTP Modal for Transaction Security -->
       <app-pin-modal
         [isOpen]="showPinModal"
-        [isSetupMode]="isPinSetupMode"
-        [title]="isPinSetupMode ? 'Tạo Mã PIN Giao Dịch Mới' : 'Xác thực PIN chuyển tiền'"
-        [subtitle]="isPinSetupMode ? 'Tạo Mã PIN 6 số để bảo mật các giao dịch về sau' : 'Nhập Mã PIN 6 số để hoàn tất giao dịch chuyển tiền'"
+        [title]="'Xác thực OTP Chuyển tiền'"
         (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal = false"
       ></app-pin-modal>
@@ -1298,8 +1296,6 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   showPinModal = false;
-  isPinSetupMode = false;
-  private pinService = inject(PinService);
 
   openConfirmation(): void {
     if (this.paymentForm.invalid || !this.recipientLookup) {
@@ -1314,38 +1310,12 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   executePayment(): void {
-    // Check if user has setup PIN
-    this.pinService.getPinStatus().subscribe({
-      next: (res: any) => {
-        if (res.data && res.data.hasPin) {
-          this.isPinSetupMode = false;
-        } else {
-          this.isPinSetupMode = true;
-          this.notification.info('Bạn chưa cài đặt Mã PIN. Vui lòng tạo Mã PIN 6 số để tiếp tục.');
-        }
-        this.showPinModal = true;
-      },
-      error: () => {
-        this.isPinSetupMode = false;
-        this.showPinModal = true;
-      }
-    });
+    // Open OTP modal — PinModalComponent auto-sends OTP email on open
+    this.showPinModal = true;
   }
 
-  onPinConfirmed(pinStr?: string): void {
-    if (this.isPinSetupMode && pinStr) {
-      this.pinService.setupPin(pinStr).subscribe({
-        next: () => {
-          this.notification.success('Đã tạo Mã PIN giao dịch thành công!');
-          this.isPinSetupMode = false;
-          this.proceedPayment();
-        },
-        error: (err: any) => {
-          this.notification.error(err?.error?.message || 'Không thể thiết lập Mã PIN');
-        }
-      });
-      return;
-    }
+  onPinConfirmed(_otpStr?: string): void {
+    // OTP already verified inside PinModalComponent before emitting confirmed
     this.proceedPayment();
   }
 

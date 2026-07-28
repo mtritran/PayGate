@@ -7,7 +7,7 @@ import { PageResponse } from '../models/page-response.model';
 
 export type LoanStatus = 'PENDING_APPROVAL' | 'OFFERED' | 'ACTIVE' | 'PAID_OFF' | 'REJECTED' | 'OVERDUE';
 export type LoanScheduleStatus = 'UNPAID' | 'PAID' | 'OVERDUE';
-export type RepayType = 'PAY_PERIOD' | 'PAY_ALL';
+export type RepayType = 'NEXT_PERIOD' | 'FULL_SETTLEMENT';
 
 export interface LoanScheduleResponse {
   id: number;
