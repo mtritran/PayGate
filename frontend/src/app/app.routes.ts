@@ -72,6 +72,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/bill/saved-bills/saved-bills.component').then(m => m.SavedBillsComponent)
       },
       {
+        path: 'vouchers',
+        loadComponent: () => import('./features/vouchers/voucher-shop.component').then(m => m.VoucherShopComponent)
+      },
+      {
         path: 'merchant/register',
         loadComponent: () => import('./features/merchant/merchant-register/merchant-register.component').then(m => m.MerchantRegisterComponent)
       },

@@ -131,6 +131,14 @@ import { NotificationService } from '../../core/services/notification.service';
                 <span class="nav-title" *ngIf="!collapsed()">Saved Bills</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/vouchers" routerLinkActive="active" title="Kho Voucher">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+                </svg>
+                <span class="nav-title" *ngIf="!collapsed()">Kho Voucher</span>
+              </a>
+            </li>
           </ul>
 
           <!-- Merchant Section -->

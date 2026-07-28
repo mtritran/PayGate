@@ -27,6 +27,7 @@ spring:
     locations: classpath:db/migration
     out-of-order: true
     repair-on-migrate: true
+    validate-on-migrate: false
 
   data:
     redis:

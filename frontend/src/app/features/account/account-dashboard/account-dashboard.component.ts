@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AccountService } from '../../../core/services/account.service';
 import { TransactionService } from '../../../core/services/transaction.service';
+import { RewardService, PointsResponse } from '../../../core/services/reward.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
@@ -77,13 +78,30 @@ interface DailyVolumePoint {
             <div class="metric-value-row">
               <span class="metric-value">{{ (account?.balance || 0) | currency:'VND':'symbol':'1.0-0' }}</span>
               <span class="trend-badge positive">
-                <mat-icon class="trend-icon">trending_up</mat-icon> +12.5%
+                <mat-icon class="trend-icon">trending_up</mat-icon> Active
               </span>
             </div>
-            <div class="metric-subtext">Updated 1 min ago</div>
+            <div class="metric-subtext">Updated real-time</div>
           </div>
 
-          <!-- Metric 2: Total Volume (7D) -->
+          <!-- Metric 2: Reward Points -->
+          <div class="metric-card hover-lift" routerLink="/vouchers" style="cursor: pointer;">
+            <div class="metric-header">
+              <span class="metric-label">REWARD POINTS</span>
+              <div class="icon-circle emerald-tint" style="background-color: #fef3c7;">
+                <mat-icon class="metric-icon" style="color: #d97706;">card_giftcard</mat-icon>
+              </div>
+            </div>
+            <div class="metric-value-row">
+              <span class="metric-value text-warning" style="color: #d97706;">{{ rewardPoints?.totalPoints || 0 }} pts</span>
+              <span class="trend-badge positive" style="background-color: #fef3c7; color: #92400e;">
+                <mat-icon class="trend-icon">stars</mat-icon> {{ rewardPoints?.tier || 'BRONZE' }}
+              </span>
+            </div>
+            <div class="metric-subtext">Click to redeem vouchers</div>
+          </div>
+
+          <!-- Metric 3: Total Volume (7D) -->
           <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">TOTAL VOLUME (7D)</span>
@@ -100,7 +118,7 @@ interface DailyVolumePoint {
             <div class="metric-subtext">Past 7 consecutive days</div>
           </div>
 
-          <!-- Metric 3: Transactions Count -->
+          <!-- Metric 4: Transactions Count -->
           <div class="metric-card hover-lift">
             <div class="metric-header">
               <span class="metric-label">TRANSACTIONS</span>
@@ -115,26 +133,6 @@ interface DailyVolumePoint {
               </span>
             </div>
             <div class="metric-subtext">Processed successfully</div>
-          </div>
-
-          <!-- Metric 4: Failed Count -->
-          <div class="metric-card hover-lift">
-            <div class="metric-header">
-              <span class="metric-label">FAILED</span>
-              <div class="icon-circle red-tint">
-                <mat-icon class="metric-icon red">error_outline</mat-icon>
-              </div>
-            </div>
-            <div class="metric-value-row">
-              <span class="metric-value">{{ failedTransactionsCount }}</span>
-              <span class="trend-badge negative" *ngIf="failedTransactionsCount > 0">
-                <mat-icon class="trend-icon">warning</mat-icon> Action req
-              </span>
-              <span class="trend-badge positive" *ngIf="failedTransactionsCount === 0">
-                <mat-icon class="trend-icon">check_circle</mat-icon> 0%
-              </span>
-            </div>
-            <div class="metric-subtext">Declined or error rate</div>
           </div>
         </div>
 
@@ -647,9 +645,12 @@ export class AccountDashboardComponent implements OnInit {
   chartPath: string = 'M 70 150 C 120 120, 140 100, 170 100 C 210 100, 230 115, 270 115 C 310 115, 330 75, 370 70 C 410 65, 430 47, 470 47 C 510 47, 530 85, 570 85 C 610 85, 630 25, 670 20';
   chartAreaPath: string = 'M 70 150 C 120 120, 140 100, 170 100 C 210 100, 230 115, 270 115 C 310 115, 330 75, 370 70 C 410 65, 430 47, 470 47 C 510 47, 530 85, 570 85 C 610 85, 630 25, 670 20 L 670 190 L 70 190 Z';
 
+  rewardPoints: PointsResponse | null = null;
+
   constructor(
     private accountService: AccountService,
     private transactionService: TransactionService,
+    private rewardService: RewardService,
     private authService: AuthService,
     private snackBar: MatSnackBar
   ) { }
@@ -710,6 +711,13 @@ export class AccountDashboardComponent implements OnInit {
 
   private loadDashboardData(): void {
     this.loading = true;
+    this.rewardService.getMyPoints().subscribe({
+      next: (res) => {
+        if (res.success) this.rewardPoints = res.data;
+      },
+      error: (err) => console.error('Failed to fetch reward points on dashboard:', err)
+    });
+
     this.accountService.getAccountMe().subscribe({
       next: (res) => {
         if (res.success && res.data) {
