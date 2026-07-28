@@ -33,7 +33,7 @@ public class LoanController {
     // --- USER ENDPOINTS ---
 
     @PostMapping("/loans/apply")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Tạo yêu cầu vay tiêu dùng mới")
     public ApiResponse<LoanResponse> applyLoan(
             Principal principal,
@@ -45,7 +45,7 @@ public class LoanController {
     }
 
     @GetMapping("/loans/my-loans")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Xem danh sách khoản vay của User")
     public ApiResponse<PageResponse<LoanResponse>> getMyLoans(
             Principal principal,
@@ -71,7 +71,7 @@ public class LoanController {
     }
 
     @PostMapping("/loans/{id}/accept-offer")
-    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "User chấp nhận đề nghị vay, hoàn tất ký hợp đồng & giải ngân về ví PayGate")
     public ApiResponse<LoanResponse> acceptLoanOffer(
             @PathVariable Long id,
@@ -104,7 +104,7 @@ public class LoanController {
     }
 
     @PostMapping("/loans/{id}/repay")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ROLE_USER', 'ADMIN', 'ROLE_ADMIN')")
     @Operation(summary = "Thanh toán khoản vay (trả nợ theo kỳ hoặc tất toán)")
     public ApiResponse<LoanResponse> repayLoan(
             @PathVariable Long id,
