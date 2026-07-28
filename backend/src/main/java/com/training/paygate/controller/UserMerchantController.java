@@ -49,6 +49,16 @@ public class UserMerchantController {
         return ApiResponse.success(merchantService.getByUserId(userId));
     }
 
+    @GetMapping("/me/api-key")
+    @Operation(summary = "Get current user's raw merchant API key")
+    public ApiResponse<String> getMyApiKey(Principal principal) {
+        Long userId = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+        var merch = merchantService.getByUserId(userId);
+        return ApiResponse.success("API Key retrieved", merchantService.getRawApiKey(merch.id()));
+    }
+
     @GetMapping("/active")
     @Operation(summary = "Get list of active merchants", description = "Retrieves active merchants for checkout / payment dropdown selector.")
     public ApiResponse<List<MerchantResponse>> getActiveMerchants() {
