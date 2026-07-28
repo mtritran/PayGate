@@ -12,6 +12,8 @@ public interface TransactionService {
 
     TransactionResponse processPayment(PaymentRequest request, String currentUsername);
 
+    TransactionResponse processPayment(PaymentRequest request, Long userId);
+
     TransactionDetailResponse getTransactionByRef(String ref, String currentUsername);
 
     Page<TransactionResponse> getTransactions(
