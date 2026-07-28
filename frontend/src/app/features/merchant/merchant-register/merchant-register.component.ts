@@ -7,278 +7,364 @@ import { NotificationService } from '../../../core/services/notification.service
 import { Merchant } from '../../../core/models/merchant.model';
 
 type MerchantTab = 'profile' | 'api-keys' | 'docs';
+type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 
 @Component({
   selector: 'app-merchant-register',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="paygate-form-wrapper">
-      <div class="paygate-form-page fade-in-up">
-        <!-- Header -->
-        <div class="form-header-group">
-          <div class="header-tag">ENTERPRISE MERCHANT ONBOARDING & API PORTAL</div>
-          <h2>Merchant Portal & Payment Gateway Integration</h2>
-          <p class="subtitle">Quản lý tài khoản doanh nghiệp, lấy API Key bảo mật & Xem tài liệu tích hợp cổng thanh toán.</p>
+    <div class="merchant-portal-wrapper fade-in-up">
+      <!-- Portal Top Hero Header -->
+      <div class="portal-hero">
+        <div class="hero-content">
+          <div class="hero-badge">ENTERPRISE GATEWAY PORTAL</div>
+          <h1 class="hero-title">Merchant Partner & API Integration Center</h1>
+          <p class="hero-subtitle">Quản lý tài khoản doanh nghiệp, khai thác API Key bảo mật và tích hợp Cổng thanh toán PayGate.</p>
         </div>
-
+        
         <!-- Navigation Tabs -->
-        <div class="merchant-tabs">
+        <div class="portal-tabs">
           <button
-            class="tab-btn"
+            class="portal-tab"
             [class.active]="activeTab() === 'profile'"
             (click)="activeTab.set('profile')"
           >
-            📋 Thông tin Doanh Nghiệp
+            🏢 Hồ Sơ Doanh Nghiệp
           </button>
           <button
-            class="tab-btn"
+            class="portal-tab"
             [class.active]="activeTab() === 'api-keys'"
             (click)="activeTab.set('api-keys'); loadApiKey()"
           >
             🔑 API Integration Keys
           </button>
           <button
-            class="tab-btn"
+            class="portal-tab"
             [class.active]="activeTab() === 'docs'"
             (click)="activeTab.set('docs')"
           >
-            📖 Tài Liệu Tích Hợp (API Docs)
+            📖 Tài Liệu Tích Hợp & Code Mẫu
           </button>
         </div>
+      </div>
 
-        <!-- TAB 1: PROFILE & STATUS -->
-        <div *ngIf="activeTab() === 'profile'">
-          <!-- Status Card if Existing Request Exists -->
-          <div *ngIf="existingMerchant" class="content-card status-card">
-            <div class="status-header">
-              <div class="status-badge" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
-                <span class="status-dot"></span>
-                STATUS: {{ existingMerchant.status || (existingMerchant.active ? 'ACTIVE' : 'PENDING') }}
-              </div>
-              <span class="created-at">Submitted: {{ existingMerchant.createdAt | date:'medium' }}</span>
+      <!-- TAB 1: ENTERPRISE PROFILE -->
+      <div *ngIf="activeTab() === 'profile'" class="portal-tab-content">
+        <!-- If Request Exists -->
+        <div *ngIf="existingMerchant" class="portal-card">
+          <div class="card-header-row">
+            <div class="status-badge" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
+              <span class="status-dot"></span>
+              TRẠNG THÁI: {{ existingMerchant.status || (existingMerchant.active ? 'ACTIVE' : 'PENDING') }}
             </div>
+            <span class="date-text">Ngày đăng ký: {{ existingMerchant.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
 
-            <div class="merchant-profile-details">
-              <div class="detail-row">
-                <span class="label">Business Name:</span>
-                <strong class="val">{{ existingMerchant.merchantName }}</strong>
-              </div>
-              <div class="detail-row">
-                <span class="label">Merchant Code:</span>
-                <strong class="val font-mono text-emerald">{{ existingMerchant.merchantCode }}</strong>
-              </div>
-              <div class="detail-row">
-                <span class="label">Webhook Endpoint:</span>
-                <span class="val font-mono text-break">{{ existingMerchant.webhookUrl || 'Not configured' }}</span>
-              </div>
-              <div class="detail-row" *ngIf="existingMerchant.accountNumber">
-                <span class="label">Wallet Account #:</span>
-                <code class="val font-mono key-box">{{ existingMerchant.accountNumber }}</code>
-              </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">TÊN DOANH NGHIỆP / CỬA HÀNG</span>
+              <div class="info-val font-bold">{{ existingMerchant.merchantName }}</div>
             </div>
-
-            <div class="status-alert" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
-              <div *ngIf="existingMerchant.status === 'PENDING' || (!existingMerchant.active && existingMerchant.status !== 'REJECTED')">
-                <strong>[Application Under Admin Review]</strong> Hồ sơ doanh nghiệp của bạn đang được Admin duyệt. API Key & Cổng thanh toán sẽ sẵn sàng ngay sau khi kích hoạt.
-              </div>
-              <div *ngIf="existingMerchant.status === 'ACTIVE' || existingMerchant.active">
-                <strong>[Enterprise Account Active]</strong> Tài khoản Merchant của bạn đã hoạt động. Hãy sang tab <strong>API Integration Keys</strong> để lấy Key tích hợp!
-              </div>
-              <div *ngIf="existingMerchant.status === 'REJECTED'">
-                <strong>[Application Declined]</strong> Yêu cầu Merchant của bạn bị từ chối bởi Admin.
-              </div>
+            <div class="info-item">
+              <span class="info-label">MÃ DOANH NGHIỆP (MERCHANT CODE)</span>
+              <div class="info-val font-mono text-emerald">{{ existingMerchant.merchantCode }}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">WEBHOOK NOTIFICATION ENDPOINT</span>
+              <div class="info-val font-mono text-muted">{{ existingMerchant.webhookUrl || 'Chưa cấu hình' }}</div>
+            </div>
+            <div class="info-item" *ngIf="existingMerchant.accountNumber">
+              <span class="info-label">SỐ VÍ DOANH NGHIỆP PAYGATE</span>
+              <code class="wallet-badge font-mono">{{ existingMerchant.accountNumber }}</code>
             </div>
           </div>
 
-          <!-- Form Card if No Existing Request -->
-          <div *ngIf="!existingMerchant && !loading" class="content-card form-card">
-            <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="custom-form">
-              <div class="form-group">
-                <label class="form-label required">Tên Công Ty / Cửa Hàng</label>
-                <input type="text" class="form-input" formControlName="merchantName" placeholder="e.g. Shopee Vietnam Co., Ltd">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">Mã Doanh Nghiệp (Merchant Code)</label>
-                <input type="text" class="form-input font-mono" formControlName="merchantCode" placeholder="e.g. SHOPEE_STORE">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">Webhook URL (Nhận thông báo thanh toán)</label>
-                <input type="url" class="form-input" formControlName="webhookUrl" placeholder="e.g. https://api.shopee.vn/v1/webhooks/paygate">
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn-emerald-submit" [disabled]="registerForm.invalid || submitting">
-                  Submit Merchant Registration Request ↗
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- TAB 2: API KEYS -->
-        <div *ngIf="activeTab() === 'api-keys'" class="content-card">
-          <div class="key-section-header">
-            <h3>🔑 Khóa Tích Hợp API (API Integration Credentials)</h3>
-            <p class="subtitle">Sử dụng API Key này để xác thực các request khởi tạo đơn hàng thanh toán từ Server của bạn.</p>
-          </div>
-
-          <div *ngIf="!existingMerchant" class="no-key-warning">
-            ⚠️ Bạn chưa đăng ký tài khoản Merchant. Vui lòng đăng ký ở tab <strong>Thông tin Doanh Nghiệp</strong> trước.
-          </div>
-
-          <div *ngIf="existingMerchant" class="keys-display-box">
-            <div class="key-field-group">
-              <label>Merchant Code (Mã Đối Tác):</label>
-              <div class="key-copy-row">
-                <input type="text" readonly [value]="existingMerchant.merchantCode" class="key-input font-mono">
-                <button class="btn-copy" (click)="copyText(existingMerchant.merchantCode)">Copy</button>
-              </div>
+          <div class="notice-box" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
+            <div *ngIf="existingMerchant.status === 'PENDING' || (!existingMerchant.active && existingMerchant.status !== 'REJECTED')">
+              ⏳ <strong>Đang chờ Admin phê duyệt:</strong> Hồ sơ của bạn đang được kiểm tra. Ngay sau khi approved, API Key sẽ hoạt động 100%.
             </div>
-
-            <div class="key-field-group mt-16">
-              <label>API Key (Secret Key Kết Nối):</label>
-              <div class="key-copy-row">
-                <input [type]="showRawKey() ? 'text' : 'password'" readonly [value]="rawApiKey() || '••••••••••••••••••••••••••••••••'" class="key-input font-mono">
-                <button class="btn-toggle-key" (click)="showRawKey.set(!showRawKey())">
-                  {{ showRawKey() ? '👁️ Ẩn' : '👁️ Hiện' }}
-                </button>
-                <button class="btn-copy" [disabled]="!rawApiKey()" (click)="copyText(rawApiKey())">Copy API Key</button>
-              </div>
-              <span class="key-hint">⚠️ Không chia sẻ API Key này ra công khai. Chỉ lưu trữ trên Server phía backend của bạn.</span>
+            <div *ngIf="existingMerchant.status === 'ACTIVE' || existingMerchant.active">
+              ✅ <strong>Đã hoạt động:</strong> Tài khoản Merchant của bạn đã được kích hoạt. Hãy sang tab <strong>API Integration Keys</strong> để lấy API Key tích hợp.
             </div>
-
-            <div class="checkout-endpoint-box mt-24">
-              <div class="endpoint-title">🌐 URL Cổng Thanh Toán Checkout API:</div>
-              <code class="endpoint-code">POST http://localhost:8080/api/v1/checkout/create</code>
+            <div *ngIf="existingMerchant.status === 'REJECTED'">
+              ❌ <strong>Bị từ chối:</strong> Đơn đăng ký Merchant bị từ chối. Vui lòng liên hệ Admin.
             </div>
           </div>
         </div>
 
-        <!-- TAB 3: API DOCS & INTEGRATION GUIDE -->
-        <div *ngIf="activeTab() === 'docs'" class="content-card docs-card">
-          <div class="docs-header">
-            <h3>📖 Hướng Dẫn Tích Hợp Cổng Thanh Toán PayGate</h3>
-            <p class="subtitle">Tích hợp thanh toán PayGate vào Website / App của bạn qua 4 bước đơn giản.</p>
-          </div>
-
-          <div class="steps-flow">
-            <div class="step-item">
-              <div class="step-num">1</div>
-              <div class="step-content">
-                <h4>Khởi tạo Đơn hàng Thanh Toán (Server-to-Server)</h4>
-                <p>Từ Server của bạn, gửi HTTP POST request tới Cổng PayGate kèm <code>apiKey</code> và <code>orderId</code>:</p>
-                <pre class="code-snippet"><code>POST http://localhost:8080/api/v1/checkout/create
-Content-Type: application/json
-
-&#123;
-  "apiKey": "YOUR_API_KEY",
-  "orderId": "ORDER_123456",
-  "amount": 250000,
-  "description": "Thanh toan don hang #123456",
-  "returnUrl": "https://website-cua-ban.com/checkout/success"
-&#125;</code></pre>
-              </div>
+        <!-- Registration Form if No Merchant Profile -->
+        <div *ngIf="!existingMerchant && !loading" class="portal-card">
+          <div class="card-title">Đăng Ký Tài Khoản Doanh Nghiệp (Merchant Partner)</div>
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="portal-form mt-20">
+            <div class="form-group">
+              <label class="form-label required">Tên Công Ty / Thương Hiệu Cửa Hàng</label>
+              <input type="text" class="form-control" formControlName="merchantName" placeholder="Ví dụ: Shopee Vietnam Co., Ltd">
             </div>
 
-            <div class="step-item">
-              <div class="step-num">2</div>
-              <div class="step-content">
-                <h4>Nhận Payment URL & Chuyển Hướng Khách Hàng</h4>
-                <p>PayGate trả về paymentUrl chứa Token giao dịch. Server của bạn chuyển hướng khách hàng sang URL này:</p>
-                <pre class="code-snippet"><code>&#123;
-  "success": true,
-  "data": &#123;
-    "token": "CHK_88F3A29B...",
-    "paymentUrl": "http://localhost:4200/checkout?token=CHK_88F3A29B..."
-  &#125;
-&#125;</code></pre>
-              </div>
+            <div class="form-group">
+              <label class="form-label required">Mã Doanh Nghiệp Duy Nhất (Merchant Code)</label>
+              <input type="text" class="form-control font-mono" formControlName="merchantCode" placeholder="Ví dụ: SHOPEE_STORE">
             </div>
 
-            <div class="step-item">
-              <div class="step-num">3</div>
-              <div class="step-content">
-                <h4>Khách Hàng Nhập OTP Hoàn Tất Thanh Toán</h4>
-                <p>Khách hàng đăng nhập Ví PayGate, nhận mã OTP qua Gmail và xác thực thanh toán. Tiền tự động cộng vào Ví Merchant của bạn.</p>
-              </div>
+            <div class="form-group">
+              <label class="form-label required">Webhook Callback URL (Nhận thông báo tự động)</label>
+              <input type="url" class="form-control font-mono" formControlName="webhookUrl" placeholder="Ví dụ: https://api.shopee.vn/v1/webhooks/paygate">
             </div>
 
-            <div class="step-item">
-              <div class="step-num">4</div>
-              <div class="step-content">
-                <h4>Xử Lý Kết Quả Trả Về (Callback & Return URL)</h4>
-                <p>Khi thanh toán xong, PayGate tự động redirect người dùng về <code>returnUrl</code> của bạn kèm trạng thái:</p>
-                <pre class="code-snippet"><code>https://website-cua-ban.com/checkout/success?status=SUCCESS&orderId=ORDER_123456&transactionRef=TXN-PAY-XXXXXX</code></pre>
-              </div>
+            <button type="submit" class="btn-submit-emerald" [disabled]="registerForm.invalid || submitting">
+              {{ submitting ? 'Đang gửi đăng ký...' : 'Gửi Đơn Đăng Ký Merchant ↗' }}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 2: API KEYS -->
+      <div *ngIf="activeTab() === 'api-keys'" class="portal-tab-content">
+        <div class="portal-card">
+          <div class="card-title-group">
+            <div class="icon-box">🔑</div>
+            <div>
+              <h3>Khóa Tích Hợp API (Merchant Credentials)</h3>
+              <p class="card-desc">API Key này bảo mật cao và đại diện cho doanh nghiệp của bạn khi khởi tạo giao dịch thanh toán.</p>
             </div>
           </div>
 
-          <div class="swagger-link-box mt-24">
-            <span>🔗 Xem và thử nghiệm trực tiếp trên Swagger UI Interactive Docs:</span>
-            <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-swagger">Mở Swagger UI Docs ↗</a>
+          <div *ngIf="!existingMerchant" class="warning-banner">
+            ⚠️ Bạn chưa đăng ký tài khoản Merchant. Vui lòng đăng ký ở tab <strong>Hồ Sơ Doanh Nghiệp</strong> trước.
+          </div>
+
+          <div *ngIf="existingMerchant" class="credentials-container mt-20">
+            <!-- Merchant Code Field -->
+            <div class="cred-field">
+              <label class="cred-label">MERCHANT CODE (Mã định danh):</label>
+              <div class="input-copy-group">
+                <input type="text" readonly [value]="existingMerchant.merchantCode" class="cred-input font-mono">
+                <button class="btn-copy" (click)="copyText(existingMerchant.merchantCode)">📋 Copy</button>
+              </div>
+            </div>
+
+            <!-- API Key Field -->
+            <div class="cred-field mt-18">
+              <label class="cred-label">SECRET API KEY (Khóa kết nối bảo mật):</label>
+              <div class="input-copy-group">
+                <input
+                  [type]="showRawKey() ? 'text' : 'password'"
+                  readonly
+                  [value]="rawApiKey() || '••••••••••••••••••••••••••••••••'"
+                  class="cred-input font-mono api-key-highlight"
+                >
+                <button class="btn-toggle" (click)="showRawKey.set(!showRawKey())">
+                  {{ showRawKey() ? '👁️ Ẩn Key' : '👁️ Hiển Thị Key' }}
+                </button>
+                <button class="btn-copy primary" [disabled]="!rawApiKey()" (click)="copyText(rawApiKey())">
+                  📋 Copy API Key
+                </button>
+              </div>
+              <p class="key-security-note">🔒 <strong>Bảo mật:</strong> Lưu trữ API Key này trên Server của bạn (file <code>.env</code>). Không chia sẻ công khai!</p>
+            </div>
+
+            <!-- API Gateway Endpoint Info Box -->
+            <div class="endpoint-info-card mt-24">
+              <div class="endpoint-header">
+                <span class="http-badge post">POST</span>
+                <span class="endpoint-url">http://localhost:8080/api/v1/checkout/create</span>
+              </div>
+              <p class="endpoint-desc">Endpoint chính dùng để gọi khởi tạo đơn hàng thanh toán từ Server của bạn.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: INTEGRATION DOCS & CODE SNIPPETS -->
+      <div *ngIf="activeTab() === 'docs'" class="portal-tab-content">
+        <div class="portal-card">
+          <div class="card-title-group">
+            <div class="icon-box">🚀</div>
+            <div>
+              <h3>Hướng Dẫn Tích Hợp Thanh Toán Trong 4 Bước</h3>
+              <p class="card-desc">Tích hợp Cổng thanh toán PayGate vào Website / Ứng dụng bán hàng dễ dàng.</p>
+            </div>
+          </div>
+
+          <!-- Workflow Visual Steps -->
+          <div class="workflow-steps mt-24">
+            <div class="workflow-card">
+              <div class="step-badge">BƯỚC 1</div>
+              <h4>Tạo Đơn Hàng Thanh Toán</h4>
+              <p>Server của bạn gọi API <code>/api/v1/checkout/create</code> kèm <code>apiKey</code> và số tiền để nhận <code>paymentUrl</code>.</p>
+            </div>
+
+            <div class="workflow-card">
+              <div class="step-badge">BƯỚC 2</div>
+              <h4>Redirect Khách Hàng</h4>
+              <p>Chuyển hướng trình duyệt khách hàng sang <code>paymentUrl</code> của PayGate để hiển thị Form thanh toán.</p>
+            </div>
+
+            <div class="workflow-card">
+              <div class="step-badge">BƯỚC 3</div>
+              <h4>Xác Thực OTP Gmail</h4>
+              <p>Khách hàng đăng nhập Ví PayGate, nhập mã OTP gửi về Gmail để xác nhận thanh toán.</p>
+            </div>
+
+            <div class="workflow-card">
+              <div class="step-badge">BƯỚC 4</div>
+              <h4>Nhận Kết Quả PayGate</h4>
+              <p>Tiền vào ví bạn lập tức. Khách hàng được redirect về <code>returnUrl</code> của bạn với trạng thái <code>SUCCESS</code>.</p>
+            </div>
+          </div>
+
+          <!-- Code Snippets Selector -->
+          <div class="code-snippets-section mt-28">
+            <div class="code-header">
+              <div class="code-tabs">
+                <button class="code-tab" [class.active]="selectedLang() === 'curl'" (click)="selectedLang.set('curl')">cURL</button>
+                <button class="code-tab" [class.active]="selectedLang() === 'nodejs'" (click)="selectedLang.set('nodejs')">Node.js (Express)</button>
+                <button class="code-tab" [class.active]="selectedLang() === 'php'" (click)="selectedLang.set('php')">PHP</button>
+                <button class="code-tab" [class.active]="selectedLang() === 'python'" (click)="selectedLang.set('python')">Python</button>
+              </div>
+              <button class="btn-copy-code" (click)="copyText(getCodeSnippet())">📋 Copy Code Mẫu</button>
+            </div>
+
+            <pre class="code-box"><code>{{ getCodeSnippet() }}</code></pre>
+          </div>
+
+          <div class="swagger-banner mt-24">
+            <div class="swagger-info">
+              <span class="swagger-icon">⚡</span>
+              <div>
+                <strong>Tài liệu API Interactive Swagger UI</strong>
+                <p>Thử nghiệm API trực tiếp trên giao diện Swagger chuẩn OpenAPI 3.0</p>
+              </div>
+            </div>
+            <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-open-swagger">Mở Swagger UI ↗</a>
           </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .paygate-form-wrapper { width: 100%; font-family: 'Inter', system-ui, sans-serif; }
-    .paygate-form-page { display: flex; flex-direction: column; gap: 20px; max-width: 800px; margin: 0 auto; color: #0f172a; }
-    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .form-header-group h2 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px 0; }
-    .subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
-
-    /* Tabs */
-    .merchant-tabs { display: flex; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 2px; }
-    .tab-btn {
-      padding: 12px 18px; border: none; background: transparent; font-size: 0.9rem;
-      font-weight: 700; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent;
-      transition: all 0.15s; margin-bottom: -2px; border-radius: 8px 8px 0 0;
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .tab-btn.active { color: #059669; border-bottom-color: #059669; background: #ecfdf5; }
-    .tab-btn:hover:not(.active) { background: #f8fafc; color: #0f172a; }
+    .fade-in-up { animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.04); }
-    .custom-form { display: flex; flex-direction: column; gap: 18px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-label { font-size: 0.825rem; font-weight: 700; color: #334155; }
-    .form-label.required::after { content: ' *'; color: #ef4444; }
-    .form-input { width: 100%; height: 44px; padding: 0 14px; font-size: 0.9rem; font-weight: 600; color: #0f172a; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
-    .form-input:focus { border-color: #059669; background-color: #ffffff; outline: none; }
+    .merchant-portal-wrapper { max-width: 960px; margin: 0 auto; padding: 0 0 40px; color: #0f172a; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     
-    .btn-emerald-submit { height: 46px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    /* Hero Banner */
+    .portal-hero {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%);
+      color: #ffffff; border-radius: 20px; padding: 32px 36px 0; margin-bottom: 24px;
+      box-shadow: 0 10px 30px -10px rgba(4, 120, 87, 0.3);
+    }
+    .hero-badge { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #a7f3d0; text-transform: uppercase; margin-bottom: 6px; }
+    .hero-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .hero-subtitle { font-size: 0.92rem; color: #d1fae5; margin: 0 0 24px; max-width: 680px; line-height: 1.5; }
 
-    /* API Keys tab */
-    .key-section-header h3 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 800; color: #0f172a; }
-    .key-field-group label { font-size: 0.85rem; font-weight: 700; color: #475569; display: block; margin-bottom: 6px; }
-    .key-copy-row { display: flex; gap: 10px; }
-    .key-input { flex: 1; height: 44px; padding: 0 14px; border: 1.5px solid #cbd5e1; border-radius: 10px; background: #f8fafc; font-size: 0.95rem; font-weight: 700; color: #059669; }
-    .btn-copy { padding: 0 18px; background: #059669; color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .btn-toggle-key { padding: 0 14px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .key-hint { font-size: 0.78rem; color: #ef4444; margin-top: 6px; display: block; }
+    /* Portal Tabs */
+    .portal-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .portal-tab {
+      padding: 14px 22px; border: none; background: transparent; font-size: 0.92rem; font-weight: 700;
+      color: #a7f3d0; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;
+    }
+    .portal-tab.active { color: #ffffff; border-bottom-color: #ffffff; background: rgba(255,255,255,0.1); border-radius: 10px 10px 0 0; }
+    .portal-tab:hover:not(.active) { color: #ffffff; background: rgba(255,255,255,0.05); border-radius: 10px 10px 0 0; }
 
-    .checkout-endpoint-box { background: #0f172a; color: #fff; padding: 18px; border-radius: 14px; }
-    .endpoint-title { font-size: 0.85rem; font-weight: 700; color: #a7f3d0; margin-bottom: 6px; }
-    .endpoint-code { font-family: monospace; font-size: 1rem; color: #34d399; }
+    /* Portal Cards */
+    .portal-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 32px; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.04); }
+    .card-title-group { display: flex; gap: 14px; align-items: flex-start; }
+    .icon-box { font-size: 32px; background: #ecfdf5; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-title-group h3 { font-size: 1.25rem; font-weight: 800; margin: 0 0 4px; color: #0f172a; }
+    .card-desc { font-size: 0.88rem; color: #64748b; margin: 0; }
 
-    /* Docs Tab */
-    .docs-header h3 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 800; }
-    .steps-flow { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
-    .step-item { display: flex; gap: 16px; }
-    .step-num { width: 36px; height: 36px; background: #059669; color: #fff; border-radius: 50%; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .step-content h4 { margin: 0 0 6px; font-size: 1rem; font-weight: 700; color: #0f172a; }
-    .step-content p { margin: 0 0 10px; font-size: 0.88rem; color: #475569; }
-    .code-snippet { background: #1e293b; color: #e2e8f0; padding: 14px; border-radius: 10px; font-size: 0.82rem; overflow-x: auto; margin: 0; }
+    /* Form & Profile */
+    .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; }
+    .status-badge.active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-badge.pending { background: #fef3c7; color: #b45309; border: 1px solid #fde047; }
+    .status-badge.rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
-    .swagger-link-box { display: flex; align-items: center; justify-content: space-between; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 16px; border-radius: 12px; font-size: 0.88rem; color: #047857; font-weight: 700; }
-    .btn-swagger { background: #059669; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .info-item { display: flex; flex-direction: column; gap: 4px; }
+    .info-label { font-size: 0.72rem; font-weight: 800; color: #64748b; letter-spacing: 0.04em; }
+    .info-val { font-size: 0.95rem; color: #0f172a; }
+    .wallet-badge { background: #ecfdf5; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: 700; width: fit-content; }
+
+    .notice-box { margin-top: 20px; padding: 16px 20px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; }
+    .notice-box.active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .notice-box.pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+
+    /* API Keys Credentials Box */
+    .cred-field { display: flex; flex-direction: column; gap: 6px; }
+    .cred-label { font-size: 0.8rem; font-weight: 800; color: #475569; letter-spacing: 0.03em; }
+    .input-copy-group { display: flex; gap: 10px; }
+    .cred-input { flex: 1; height: 48px; padding: 0 16px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #f8fafc; font-size: 1rem; font-weight: 700; color: #0f172a; }
+    .cred-input.api-key-highlight { color: #059669; background: #f0fdf4; border-color: #a7f3d0; }
+    .btn-copy { padding: 0 20px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .btn-copy:hover { background: #e2e8f0; }
+    .btn-copy.primary { background: #059669; color: #ffffff; border: none; }
+    .btn-copy.primary:hover { background: #047857; }
+    .btn-toggle { padding: 0 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; color: #475569; }
+    .btn-toggle:hover { background: #f8fafc; }
+    .key-security-note { font-size: 0.8rem; color: #64748b; margin-top: 6px; }
+
+    .endpoint-info-card { background: #0f172a; color: #ffffff; padding: 20px; border-radius: 16px; }
+    .endpoint-header { display: flex; align-items: center; gap: 12px; font-family: monospace; font-size: 0.95rem; }
+    .http-badge { padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.78rem; }
+    .http-badge.post { background: #10b981; color: #ffffff; }
+    .endpoint-url { color: #34d399; font-weight: 700; }
+    .endpoint-desc { font-size: 0.82rem; color: #94a3b8; margin: 8px 0 0; }
+
+    /* Workflow Cards */
+    .workflow-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .workflow-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; }
+    .step-badge { font-size: 0.68rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 4px 10px; border-radius: 20px; width: fit-content; margin-bottom: 8px; }
+    .workflow-card h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px; color: #0f172a; }
+    .workflow-card p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.5; }
+
+    /* Code Snippet Box */
+    .code-snippets-section { background: #0f172a; border-radius: 16px; overflow: hidden; }
+    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #1e293b; border-bottom: 1px solid #334155; }
+    .code-tabs { display: flex; gap: 6px; }
+    .code-tab { padding: 6px 14px; background: transparent; border: none; color: #94a3b8; font-size: 0.82rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
+    .code-tab.active { background: #059669; color: #ffffff; }
+    .btn-copy-code { background: rgba(255,255,255,0.1); color: #ffffff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+    .btn-copy-code:hover { background: rgba(255,255,255,0.2); }
+    .code-box { padding: 20px; margin: 0; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85rem; color: #34d399; overflow-x: auto; line-height: 1.6; }
+
+    .swagger-banner { display: flex; justify-content: space-between; align-items: center; background: #ecfdf5; border: 1.5px solid #a7f3d0; padding: 20px; border-radius: 16px; }
+    .swagger-info { display: flex; gap: 14px; align-items: center; }
+    .swagger-icon { font-size: 28px; }
+    .swagger-info strong { font-size: 0.95rem; color: #047857; display: block; }
+    .swagger-info p { font-size: 0.82rem; color: #059669; margin: 2px 0 0; }
+    .btn-open-swagger { background: #059669; color: #ffffff; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 0.88rem; white-space: nowrap; }
+    .btn-open-swagger:hover { background: #047857; }
+
+    .mt-16 { margin-top: 16px; }
+    .mt-18 { margin-top: 18px; }
+    .mt-20 { margin-top: 20px; }
+    .mt-24 { margin-top: 24px; }
+    .mt-28 { margin-top: 28px; }
+    .font-bold { font-weight: 800; }
+    .font-mono { font-family: monospace; }
+    .text-emerald { color: #059669; }
+    .text-muted { color: #64748b; }
+    .warning-banner { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 16px; border-radius: 12px; font-weight: 600; margin-top: 16px; }
+
+    .portal-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 0.82rem; font-weight: 700; color: #475569; }
+    .form-label.required::after { content: ' *'; color: #ef4444; }
+    .form-control { height: 46px; padding: 0 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; }
+    .form-control:focus { outline: none; border-color: #059669; }
+    .btn-submit-emerald { height: 48px; background: #059669; color: #fff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
   `]
 })
 export class MerchantRegisterComponent implements OnInit {
   activeTab = signal<MerchantTab>('profile');
+  selectedLang = signal<CodeLanguage>('curl');
   registerForm!: FormGroup;
   existingMerchant: Merchant | null = null;
   rawApiKey = signal<string>('');
@@ -308,10 +394,11 @@ export class MerchantRegisterComponent implements OnInit {
   private checkExistingMerchant(): void {
     this.loading = true;
     this.merchantService.getMyMerchant().subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.loading = false;
-        if (res.success && res.data) {
+        if (res && res.data) {
           this.existingMerchant = res.data;
+          this.loadApiKey();
         }
       },
       error: () => this.loading = false
@@ -319,10 +406,11 @@ export class MerchantRegisterComponent implements OnInit {
   }
 
   loadApiKey(): void {
-    if (!this.existingMerchant || this.rawApiKey()) return;
     this.merchantService.getMyApiKey().subscribe({
-      next: (res) => {
-        if (res.data) this.rawApiKey.set(res.data);
+      next: (res: any) => {
+        if (res && res.data) {
+          this.rawApiKey.set(res.data);
+        }
       }
     });
   }
@@ -331,6 +419,77 @@ export class MerchantRegisterComponent implements OnInit {
     if (!val) return;
     navigator.clipboard.writeText(val);
     this.notification.success('Đã sao chép vào bộ nhớ tạm!');
+  }
+
+  getCodeSnippet(): string {
+    const key = this.rawApiKey() || 'YOUR_API_KEY_HERE';
+    const lang = this.selectedLang();
+
+    if (lang === 'curl') {
+      return `curl -X POST http://localhost:8080/api/v1/checkout/create \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "apiKey": "${key}",
+    "orderId": "SHOPEE_ORDER_1001",
+    "amount": 250000,
+    "description": "Thanh toan don hang tren Shopee Store",
+    "returnUrl": "https://shopee.vn/checkout/callback"
+  }'`;
+    }
+
+    if (lang === 'nodejs') {
+      return `const axios = require('axios');
+
+async function createPayGateCheckout() {
+  const response = await axios.post('http://localhost:8080/api/v1/checkout/create', {
+    apiKey: '${key}',
+    orderId: 'SHOPEE_ORDER_1001',
+    amount: 250000,
+    description: 'Thanh toan don hang tren Shopee Store',
+    returnUrl: 'https://shopee.vn/checkout/callback'
+  });
+
+  const { paymentUrl } = response.data.data;
+  console.log('Redirect customer to:', paymentUrl);
+  return paymentUrl;
+}`;
+    }
+
+    if (lang === 'php') {
+      return `<?php
+$ch = curl_init('http://localhost:8080/api/v1/checkout/create');
+$payload = json_encode([
+    "apiKey" => "${key}",
+    "orderId" => "SHOPEE_ORDER_1001",
+    "amount" => 250000,
+    "description" => "Thanh toan don hang",
+    "returnUrl" => "https://shopee.vn/checkout/callback"
+]);
+
+curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$result = json_decode(curl_exec($ch), true);
+curl_close($ch);
+
+header('Location: ' . $result['data']['paymentUrl']);
+exit;`;
+    }
+
+    return `import requests
+
+url = "http://localhost:8080/api/v1/checkout/create"
+payload = {
+    "apiKey": "${key}",
+    "orderId": "SHOPEE_ORDER_1001",
+    "amount": 250000,
+    "description": "Thanh toan don hang",
+    "returnUrl": "https://shopee.vn/checkout/callback"
+}
+
+res = requests.post(url, json=payload).json()
+payment_url = res['data']['paymentUrl']
+print("Redirecting to:", payment_url)`;
   }
 
   onSubmit(): void {
@@ -343,14 +502,15 @@ export class MerchantRegisterComponent implements OnInit {
     const req = this.registerForm.value;
 
     this.merchantService.requestMerchant(req).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.submitting = false;
-        if (res.success && res.data) {
+        if (res && res.data) {
           this.notification.success('Gửi yêu cầu đăng ký Merchant thành công!');
           this.existingMerchant = res.data;
+          this.loadApiKey();
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         this.submitting = false;
         this.notification.error(err?.error?.message || 'Không thể đăng ký Merchant');
       }
