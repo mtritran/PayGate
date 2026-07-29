@@ -21,59 +21,101 @@ import { VaultResponse, VaultService } from '../vault.service';
         </div>
 
         <div class="pig-wrap" aria-hidden="true">
-          <svg class="pig" viewBox="0 0 360 270" role="img">
+          <svg class="pig" viewBox="0 0 360 280" role="img">
             <defs>
-              <linearGradient id="pigBody2" x1="40" y1="30" x2="300" y2="220">
-                <stop offset="0%" stop-color="#ffd6e7"/>
-                <stop offset="50%" stop-color="#ffb8d0"/>
-                <stop offset="100%" stop-color="#f48fb1"/>
+              <!-- 3D Soft Body Gradient -->
+              <linearGradient id="pig3dBody" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffdeeb"/>
+                <stop offset="45%" stop-color="#ffb3d1"/>
+                <stop offset="85%" stop-color="#f472b6"/>
+                <stop offset="100%" stop-color="#db2777"/>
               </linearGradient>
-              <radialGradient id="pigBelly2" cx="0.5" cy="0.45" r="0.5">
-                <stop offset="0%" stop-color="#fff5f9" stop-opacity="0.85"/>
-                <stop offset="100%" stop-color="#ffb8d0" stop-opacity="0"/>
+
+              <!-- Inner Ear & Details Gradient -->
+              <linearGradient id="pigPinkAccent" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#f43f5e"/>
+                <stop offset="100%" stop-color="#be123c"/>
+              </linearGradient>
+
+              <!-- Belly 3D Highlight -->
+              <radialGradient id="bellyHighlight" cx="40%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+                <stop offset="50%" stop-color="#ffdbe9" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
               </radialGradient>
-              <linearGradient id="coinGold2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#ffe68f"/>
-                <stop offset="100%" stop-color="#f59e0b"/>
+
+              <!-- Gold Coin Gradient -->
+              <linearGradient id="goldCoinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fef08a"/>
+                <stop offset="40%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#b45309"/>
               </linearGradient>
-              <linearGradient id="noseGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#f06292"/>
-                <stop offset="100%" stop-color="#c20067"/>
-              </linearGradient>
+
+              <!-- Ground Soft Shadow -->
+              <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#9d174d" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#9d174d" stop-opacity="0"/>
+              </radialGradient>
             </defs>
-            <!-- Ears -->
-            <ellipse cx="100" cy="72" rx="28" ry="32" fill="#f48fb1" transform="rotate(-20 100 72)"/>
-            <ellipse cx="100" cy="76" rx="16" ry="20" fill="#ec407a" opacity="0.5" transform="rotate(-20 100 76)"/>
-            <ellipse cx="248" cy="72" rx="28" ry="32" fill="#f48fb1" transform="rotate(20 248 72)"/>
-            <ellipse cx="248" cy="76" rx="16" ry="20" fill="#ec407a" opacity="0.5" transform="rotate(20 248 76)"/>
-            <!-- Body -->
-            <path d="M72 140 c0-52 45-86 118-86 58 0 102 22 120 58 12-4 24 2 25 14 1 15-11 26-30 26 -17 36-60 58-118 58 -15 0-30-2-44-5 l-20 22 h-32 l6-36 c-20-16-30-36-30-58z" fill="url(#pigBody2)"/>
-            <!-- Belly -->
-            <ellipse cx="180" cy="132" rx="82" ry="34" fill="url(#pigBelly2)"/>
-            <!-- Tail -->
-            <path d="M52 128 c-14-6-20 12-5 18 10 4 18-1 16-9" fill="none" stroke="#f48fb1" stroke-width="8" stroke-linecap="round"/>
-            <!-- Legs -->
-            <rect x="116" y="216" width="30" height="18" rx="9" fill="url(#pigBody2)"/>
-            <rect x="216" y="216" width="30" height="18" rx="9" fill="url(#pigBody2)"/>
-            <ellipse cx="131" cy="236" rx="22" ry="7" fill="#e88ba8"/>
-            <ellipse cx="231" cy="236" rx="22" ry="7" fill="#e88ba8"/>
-            <!-- Coin -->
-            <rect x="138" y="18" width="72" height="22" rx="11" fill="url(#coinGold2)"/>
-            <text x="174" y="34" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
-            <!-- Progress bar -->
-            <rect x="130" y="88" width="100" height="10" rx="5" fill="#fce4ec" opacity="0.7"/>
-            <rect x="130" y="88" width="60" height="10" rx="5" fill="url(#coinGold2)"/>
-            <!-- Eye -->
-            <ellipse cx="224" cy="112" rx="9" ry="11" fill="#fff"/>
-            <circle cx="226" cy="112" r="5.5" fill="#380e1f"/>
-            <circle cx="228" cy="109.5" r="2" fill="#fff"/>
-            <!-- Blush -->
-            <ellipse cx="210" cy="128" rx="14" ry="7" fill="#ec407a" opacity="0.12"/>
-            <!-- Snout -->
-            <ellipse cx="270" cy="136" rx="20" ry="16" fill="url(#noseGrad2)"/>
-            <circle cx="262" cy="135" r="3.5" fill="#380e1f" opacity="0.5"/>
-            <circle cx="278" cy="135" r="3.5" fill="#380e1f" opacity="0.5"/>
-            <ellipse cx="270" cy="131" rx="12" ry="4" fill="#fff" opacity="0.15"/>
+
+            <!-- Drop Shadow under Piggy -->
+            <ellipse cx="180" cy="252" rx="110" ry="14" fill="url(#groundShadow)"/>
+
+            <!-- Back Ear -->
+            <path d="M 125 75 C 105 35, 75 55, 95 95 Z" fill="#e11d48"/>
+            <path d="M 120 75 C 105 45, 85 60, 98 90 Z" fill="#be123c" opacity="0.6"/>
+
+            <!-- Back Legs -->
+            <rect x="110" y="195" width="34" height="42" rx="17" fill="#db2777"/>
+            <rect x="200" y="195" width="34" height="42" rx="17" fill="#db2777"/>
+
+            <!-- Tail (Curly cute spiral) -->
+            <path d="M 75 145 Q 50 140 55 160 Q 60 175 72 165 Q 80 155 68 152" fill="none" stroke="#f472b6" stroke-width="6" stroke-linecap="round"/>
+
+            <!-- Main Body (Symmetrical cute round piggy) -->
+            <ellipse cx="175" cy="155" rx="100" ry="75" fill="url(#pig3dBody)"/>
+            <ellipse cx="160" cy="140" rx="85" ry="60" fill="url(#bellyHighlight)"/>
+
+            <!-- Front Ear -->
+            <path d="M 165 72 C 140 25, 105 45, 130 92 Z" fill="url(#pig3dBody)"/>
+            <path d="M 160 72 C 142 38, 115 52, 133 88 Z" fill="url(#pigPinkAccent)"/>
+
+            <!-- Coin Slot on top of back -->
+            <ellipse cx="175" cy="82" rx="30" ry="7" fill="#831843"/>
+            <ellipse cx="175" cy="82" rx="26" ry="4" fill="#4c0519"/>
+
+            <!-- Floating Gold Coin Animation -->
+            <g class="floating-coin">
+              <ellipse cx="175" cy="42" rx="22" ry="22" fill="url(#goldCoinGrad)"/>
+              <ellipse cx="175" cy="42" rx="17" ry="17" fill="none" stroke="#fef08a" stroke-width="2"/>
+              <text x="175" y="48" font-family="system-ui, sans-serif" font-size="17" font-weight="900" fill="#78350f" text-anchor="middle">$</text>
+            </g>
+
+            <!-- Front Legs -->
+            <rect x="125" y="202" width="36" height="44" rx="18" fill="url(#pig3dBody)"/>
+            <ellipse cx="143" cy="242" rx="15" ry="5" fill="#be123c" opacity="0.3"/>
+            
+            <rect x="215" y="202" width="36" height="44" rx="18" fill="url(#pig3dBody)"/>
+            <ellipse cx="233" cy="242" rx="15" ry="5" fill="#be123c" opacity="0.3"/>
+
+            <!-- Cheerful Eyes -->
+            <g>
+              <ellipse cx="225" cy="132" rx="10" ry="13" fill="#ffffff"/>
+              <circle cx="227" cy="132" r="6.5" fill="#0f172a"/>
+              <circle cx="229.5" cy="129" r="2.5" fill="#ffffff"/>
+              <circle cx="224" cy="134" r="1.2" fill="#ffffff"/>
+            </g>
+
+            <!-- Rosy Blush -->
+            <ellipse cx="215" cy="155" rx="16" ry="9" fill="#f43f5e" opacity="0.35"/>
+
+            <!-- Snout (Cute Pig Nose) -->
+            <g>
+              <ellipse cx="258" cy="150" rx="24" ry="18" fill="url(#pigPinkAccent)"/>
+              <ellipse cx="258" cy="144" rx="20" ry="6" fill="#ffffff" opacity="0.25"/>
+              <ellipse cx="250" cy="150" rx="5" ry="7" fill="#4c0519"/>
+              <ellipse cx="266" cy="150" rx="5" ry="7" fill="#4c0519"/>
+            </g>
           </svg>
         </div>
       </section>
@@ -178,8 +220,26 @@ import { VaultResponse, VaultService } from '../vault.service';
     .primary-btn { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: white; padding: 12px 22px; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.01em; text-decoration: none; box-shadow: 0 8px 22px rgba(194, 0, 103, 0.25); cursor: pointer; transition: all 0.25s cubic-bezier(.16,1,.3,1); }
     .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.35); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); }
     .soft-pill { display: inline-flex; align-items: center; min-height: 38px; border-radius: 999px; padding: 8px 16px; background: rgba(255,255,255,.9); color: #c20067; font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(244,114,182,.3); }
-    .pig-wrap { display: flex; align-items: center; justify-content: center; min-height: 210px; }
-    .pig { width: min(100%, 360px); filter: drop-shadow(0 16px 24px rgba(194,0,103,.12)); }
+    .pig-wrap { display: flex; align-items: center; justify-content: center; min-height: 220px; }
+    .pig {
+      width: min(100%, 340px);
+      filter: drop-shadow(0 20px 30px rgba(190, 24, 93, 0.18));
+      animation: pigBobbing 4s ease-in-out infinite;
+    }
+    .floating-coin {
+      animation: coinDrop 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes pigBobbing {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+    @keyframes coinDrop {
+      0% { transform: translateY(-16px); opacity: 0; }
+      30% { opacity: 1; }
+      80% { transform: translateY(22px); opacity: 1; }
+      100% { transform: translateY(28px); opacity: 0; }
+    }
     .stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
     .stat-tile, .panel, .empty-state, .vault-card { background: #ffffff; border: 1px solid #fce4ec; box-shadow: 0 8px 24px rgba(194,0,103,.04); }
     .stat-tile { border-radius: 18px; padding: 18px; transition: all .2s ease; }
