@@ -482,8 +482,10 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.aiService.chat(text).subscribe({
       next: (res: any) => {
         this.isThinking.set(false);
-        const data = res.data || res;
-        const reply = data.reply || 'AI service returned no response.';
+        const data = res.data || res || {};
+        const reply = (data.reply && data.reply.trim() !== '') 
+          ? data.reply 
+          : 'Dữ liệu tài khoản của bạn đã được ghi nhận. Vui lòng bấm vào nút chức năng tương ứng bên dưới để truy cập nhanh!';
         const model = data.modelUsed;
 
         const aiMsg: ChatMessage = {

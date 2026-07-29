@@ -339,7 +339,43 @@ public class AiServiceImpl implements AiService {
             }
         }
 
-        return "Xin lỗi, hiện tại trợ lý AI chưa thể xử lý yêu cầu. Vui lòng thử lại sau ít phút!";
+        // Smart Local Financial Fallback Engine if OpenRouter API is unavailable
+        return buildSmartFallbackReply(prompt, financialContext);
+    }
+
+    private String buildSmartFallbackReply(String prompt, String context) {
+        String lower = prompt != null ? prompt.toLowerCase() : "";
+        
+        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance")) {
+            if (context.contains("Available Main Balance:")) {
+                String balLine = extractLine(context, "Available Main Balance:");
+                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là " + balLine.replace("Available Main Balance:", "").trim() + ".";
+            }
+            return "Số dư ví PayGate của bạn đang được cập nhật realtime.";
+        }
+        
+        if (lower.contains("hũ") || lower.contains("tiết kiệm") || lower.contains("vault")) {
+            if (context.contains("SAVINGS VAULTS")) {
+                return "Hệ thống ghi nhận bạn đang có các hũ tiết kiệm khả dụng. Bạn có thể bấm nút bên dưới để truy cập danh sách hũ chi tiết.";
+            }
+            return "Bạn hiện chưa có hũ tiết kiệm nào. Bạn có thể mở hũ tiết kiệm mới ngay trên ứng dụng.";
+        }
+        
+        if (lower.contains("vay") || lower.contains("nợ") || lower.contains("loan")) {
+            if (context.contains("CONSUMER LOANS & CREDIT")) {
+                return "Hệ thống ghi nhận thông tin khoản vay tiêu dùng của bạn. Bạn có thể bấm nút xem khoản vay bên dưới để kiểm tra chi tiết dư nợ và lịch trả.";
+            }
+            return "Bạn hiện không có khoản vay tiêu dùng nào đang hoạt động.";
+        }
+
+        return "Dữ liệu ví PayGate của bạn đã được ghi nhận. Bạn có thể sử dụng các phím chức năng bên dưới để thao tác nhanh!";
+    }
+
+    private String extractLine(String text, String prefix) {
+        for (String line : text.split("\n")) {
+            if (line.contains(prefix)) return line;
+        }
+        return "";
     }
 
     private String sendOpenRouterRequest(String targetModel, String systemPrompt, String userPrompt) throws Exception {
