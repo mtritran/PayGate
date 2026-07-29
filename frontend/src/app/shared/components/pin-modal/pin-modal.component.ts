@@ -13,12 +13,17 @@ import { NotificationService } from '../../../core/services/notification.service
         <button class="btn-close-modal" (click)="closeModal()">✕</button>
 
         <div class="pin-header">
-          <div class="lock-icon">📧</div>
+          <div class="otp-badge-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
           <h3 class="pin-title">{{ title }}</h3>
-          <p class="pin-subtitle">Mã OTP 6 chữ số đã được gửi về Gmail của bạn</p>
+          <p class="pin-subtitle">Mã xác thực OTP (6 chữ số) đã được gửi đến Email của bạn</p>
         </div>
 
-        <!-- OTP Sent Status Banner -->
+        <!-- OTP Status Message Banner -->
         <div class="otp-sent-banner" *ngIf="otpMessage()">
           <span class="banner-icon">📩</span>
           <div class="banner-text">{{ otpMessage() }}</div>
@@ -26,19 +31,23 @@ import { NotificationService } from '../../../core/services/notification.service
 
         <div class="otp-sent-banner loading-banner" *ngIf="isSendingOtp() && !otpMessage()">
           <span class="banner-icon">⏳</span>
-          <div class="banner-text">Đang gửi mã OTP về Gmail...</div>
+          <div class="banner-text">Đang tạo & gửi mã OTP về Email...</div>
         </div>
 
-        <!-- 6-digit Dots Display -->
-        <div class="pin-dots-container">
+        <!-- 6-Digit Real Number Boxes Display -->
+        <div class="otp-boxes-container">
           <div
             *ngFor="let i of [0,1,2,3,4,5]"
-            class="pin-dot otp-dot"
+            class="otp-box"
+            [class.active]="digits().length === i"
             [class.filled]="digits().length > i"
-          ></div>
+          >
+            <span class="otp-num-val" *ngIf="digits().length > i">{{ digits()[i] }}</span>
+            <span class="otp-cursor" *ngIf="digits().length === i"></span>
+          </div>
         </div>
 
-        <div class="error-msg" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+        <div class="error-msg" *ngIf="errorMessage()">⚠️ {{ errorMessage() }}</div>
 
         <!-- Keypad Numbers -->
         <div class="keypad-grid">
@@ -50,14 +59,14 @@ import { NotificationService } from '../../../core/services/notification.service
           <button class="keypad-btn btn-action" (click)="deleteDigit()">⌫</button>
         </div>
 
-        <!-- Resend OTP -->
+        <!-- Resend OTP Button -->
         <div class="resend-otp-box">
           <button
             class="btn-resend-otp"
             [disabled]="resendCountdown() > 0 || isSendingOtp()"
             (click)="requestEmailOtp()"
           >
-            {{ isSendingOtp() ? 'Đang gửi Email...' : (resendCountdown() > 0 ? ('Gửi lại OTP (' + resendCountdown() + 's)') : '🔄 Gửi lại mã OTP về Gmail') }}
+            {{ isSendingOtp() ? 'Đang gửi Email...' : (resendCountdown() > 0 ? ('Gửi lại OTP (' + resendCountdown() + 's)') : '🔄 Gửi lại mã OTP mới') }}
           </button>
         </div>
       </div>
@@ -65,134 +74,187 @@ import { NotificationService } from '../../../core/services/notification.service
   `,
   styles: [`
     .pin-modal-overlay {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px);
-      z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; box-sizing: border-box;
     }
     .pin-modal-card {
-      background: #1e293b; border: 1px solid rgba(100, 116, 139, 0.3);
-      border-radius: 20px; padding: 32px 28px; max-width: 380px; width: 100%;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.5); position: relative;
-      animation: slideUp 0.25s ease;
+      background: #ffffff;
+      border: 1.5px solid #f3d6e5;
+      border-radius: 28px; padding: 36px 32px;
+      max-width: 440px; width: 100%;
+      box-shadow: 0 25px 60px rgba(194, 0, 103, 0.15);
+      position: relative;
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .shake-error { animation: shake 0.4s ease; }
     @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+
     .btn-close-modal {
-      position: absolute; top: 14px; right: 14px;
-      background: rgba(100,116,139,0.2); border: none; color: #94a3b8;
-      width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 14px;
-      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+      position: absolute; top: 18px; right: 18px;
+      background: #f1f5f9; border: none; color: #64748b;
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+      font-size: 14px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
     }
-    .btn-close-modal:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
-    .pin-header { text-align: center; margin-bottom: 20px; }
-    .lock-icon { font-size: 36px; margin-bottom: 10px; }
-    .pin-title { font-size: 18px; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
-    .pin-subtitle { font-size: 13px; color: #64748b; margin: 0; }
+    .btn-close-modal:hover { background: #fee2e2; color: #ef4444; }
+
+    .pin-header { text-align: center; margin-bottom: 22px; display: flex; flex-direction: column; align-items: center; }
+    .otp-badge-icon {
+      width: 52px; height: 52px; border-radius: 16px;
+      background: #fff0f6; border: 1px solid #f8bbd0;
+      color: #c20067; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px; box-shadow: 0 4px 14px rgba(194, 0, 103, 0.12);
+    }
+    .pin-title { font-size: 1.35rem; font-weight: 900; color: #0d2b5c; margin: 0 0 6px; letter-spacing: -0.01em; }
+    .pin-subtitle { font-size: 0.88rem; color: #64748b; margin: 0; line-height: 1.4; }
+
     .otp-sent-banner {
       display: flex; align-items: center; gap: 10px;
-      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
-      border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+      background: #fff0f6; border: 1px solid #f8bbd0;
+      border-radius: 12px; padding: 10px 14px; margin-bottom: 20px;
     }
-    .loading-banner { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); }
+    .loading-banner { background: #eff6ff; border-color: #bfdbfe; }
     .banner-icon { font-size: 18px; }
-    .banner-text { font-size: 12px; color: #94a3b8; line-height: 1.4; }
-    .pin-dots-container {
-      display: flex; gap: 10px; justify-content: center; margin-bottom: 18px;
+    .banner-text { font-size: 0.82rem; color: #0d2b5c; font-weight: 700; line-height: 1.4; }
+
+    /* 6-Digit Real Number Boxes */
+    .otp-boxes-container {
+      display: flex; gap: 10px; justify-content: center; margin-bottom: 22px;
     }
-    .pin-dot {
-      width: 42px; height: 42px; border-radius: 10px;
-      border: 2px solid rgba(59,130,246,0.4); background: rgba(30,41,59,0.8);
-      transition: all 0.15s;
+    .otp-box {
+      width: 48px; height: 56px; border-radius: 14px;
+      border: 2px solid #e2e8f0; background: #fffafd;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
-    .pin-dot.filled {
-      background: #3b82f6; border-color: #3b82f6;
-      box-shadow: 0 0 12px rgba(59,130,246,0.5);
+    .otp-box.active {
+      border-color: #c20067; background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(194, 0, 103, 0.15);
+      transform: translateY(-2px);
     }
-    .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-bottom: 12px; }
+    .otp-box.filled {
+      border-color: #c20067; background: #ffffff;
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.12);
+    }
+    .otp-num-val {
+      font-size: 1.6rem; font-weight: 900; color: #0d2b5c;
+      animation: numPop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes numPop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    .otp-cursor {
+      width: 2px; height: 22px; background: #c20067;
+      animation: blinkCursor 0.8s infinite;
+    }
+    @keyframes blinkCursor { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .error-msg { color: #dc2626; font-size: 0.85rem; font-weight: 800; text-align: center; margin-bottom: 16px; }
+
+    /* Keypad Grid */
     .keypad-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;
     }
     .keypad-btn {
-      background: rgba(51,65,85,0.8); border: 1px solid rgba(100,116,139,0.2);
-      color: #f1f5f9; font-size: 20px; font-weight: 600; height: 56px; border-radius: 12px;
-      cursor: pointer; transition: all 0.15s;
+      background: #f8fafc; border: 1.5px solid #e2e8f0;
+      color: #0d2b5c; font-size: 1.35rem; font-weight: 800; height: 54px; border-radius: 14px;
+      cursor: pointer; transition: all 0.15s; user-select: none;
     }
-    .keypad-btn:hover { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.5); transform: scale(1.04); }
-    .keypad-btn:active { transform: scale(0.96); }
-    .btn-action { font-size: 14px; color: #94a3b8; }
+    .keypad-btn:hover {
+      background: #fff0f6; border-color: #f8bbd0; color: #c20067;
+      transform: translateY(-1px); box-shadow: 0 4px 12px rgba(194, 0, 103, 0.1);
+    }
+    .keypad-btn:active { transform: translateY(1px); }
+    .keypad-btn.btn-action { color: #64748b; font-size: 1.1rem; background: #f1f5f9; }
+    .keypad-btn.btn-action:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+
+    /* Resend OTP Button */
     .resend-otp-box { text-align: center; }
     .btn-resend-otp {
-      background: none; border: 1px solid rgba(100,116,139,0.3); color: #60a5fa;
-      font-size: 13px; border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: all 0.2s;
+      background: transparent; border: none; color: #c20067;
+      font-size: 0.88rem; font-weight: 800; cursor: pointer; padding: 6px 12px;
+      border-radius: 8px; transition: all 0.15s;
     }
-    .btn-resend-otp:hover:not(:disabled) { background: rgba(59,130,246,0.1); }
-    .btn-resend-otp:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-resend-otp:hover:not(:disabled) { text-decoration: underline; background: #fff0f6; }
+    .btn-resend-otp:disabled { color: #94a3b8; cursor: not-allowed; text-decoration: none; }
   `]
 })
 export class PinModalComponent implements OnChanges {
-  private otpService = inject(OtpService);
-  private notification = inject(NotificationService);
-
   @Input() isOpen = false;
-  @Input() title = 'Xác thực OTP Giao Dịch';
-  // isSetupMode kept for backwards compat but not used
-  @Input() isSetupMode = false;
-
+  @Input() title = 'Xác thực OTP';
+  @Input() pinLength = 6;
+  @Input() userEmail: string | null = null;
   @Output() confirmed = new EventEmitter<string>();
+  @Output() pinComplete = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
+
+  private otpService = inject(OtpService);
+  private notificationService = inject(NotificationService);
 
   digits = signal<number[]>([]);
   isError = signal(false);
-  errorMessage = signal('');
-
-  otpMessage = signal('');
+  errorMessage = signal<string | null>(null);
+  otpMessage = signal<string | null>(null);
   isSendingOtp = signal(false);
   resendCountdown = signal(0);
-  private timer: any;
+
+  private countdownTimer: any = null;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
-      this.clearDigits();
-      this.otpMessage.set('');
+      this.resetModal();
       this.requestEmailOtp();
     }
   }
 
   requestEmailOtp(): void {
     this.isSendingOtp.set(true);
-    this.errorMessage.set('');
+    this.otpMessage.set(null);
+    this.errorMessage.set(null);
 
-    this.otpService.sendOtp(this.title).subscribe({
-      next: (res) => {
+    this.otpService.sendOtp(this.userEmail || undefined).subscribe({
+      next: (res: any) => {
         this.isSendingOtp.set(false);
-        if (res.data) {
-          this.otpMessage.set(res.data.message);
-          this.notification.success('Đã gửi mã OTP 6 số về Gmail của bạn!');
-          this.startCountdown(60);
+        if (res.success) {
+          this.otpMessage.set(res.message || 'Mã OTP đã được gửi đến Email của bạn.');
+          this.startResendCountdown(60);
+        } else {
+          this.errorMessage.set(res.message || 'Không thể gửi OTP.');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSendingOtp.set(false);
-        this.errorMessage.set(err?.error?.message || 'Không thể gửi mã OTP về Email');
+        const msg = err.error?.message || 'Lỗi kết nối gửi mã OTP.';
+        this.errorMessage.set(msg);
       }
     });
   }
 
-  private startCountdown(seconds: number): void {
+  private startResendCountdown(seconds: number): void {
     this.resendCountdown.set(seconds);
-    if (this.timer) clearInterval(this.timer);
-    this.timer = setInterval(() => {
-      if (this.resendCountdown() > 0) {
-        this.resendCountdown.update(v => v - 1);
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+    this.countdownTimer = setInterval(() => {
+      const cur = this.resendCountdown();
+      if (cur <= 1) {
+        clearInterval(this.countdownTimer);
+        this.resendCountdown.set(0);
       } else {
-        clearInterval(this.timer);
+        this.resendCountdown.set(cur - 1);
       }
     }, 1000);
   }
 
   @HostListener('window:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
+  handleKeyDown(event: KeyboardEvent): void {
     if (!this.isOpen) return;
+
     if (event.key >= '0' && event.key <= '9') {
       this.appendDigit(parseInt(event.key, 10));
     } else if (event.key === 'Backspace') {
@@ -202,59 +264,72 @@ export class PinModalComponent implements OnChanges {
     }
   }
 
-  appendDigit(digit: number): void {
-    if (this.digits().length < 6) {
-      this.digits.update(d => [...d, digit]);
-      this.errorMessage.set('');
-      if (this.digits().length === 6) {
-        this.processSubmit();
-      }
+  appendDigit(num: number): void {
+    if (this.digits().length >= this.pinLength) return;
+    this.isError.set(false);
+    this.errorMessage.set(null);
+
+    const next = [...this.digits(), num];
+    this.digits.set(next);
+
+    if (next.length === this.pinLength) {
+      const otpCode = next.join('');
+      this.verifyOtp(otpCode);
     }
+  }
+
+  verifyOtp(code: string): void {
+    this.otpService.verifyOtp(code).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.confirmed.emit(code);
+          this.pinComplete.emit(code);
+        } else {
+          this.handleVerifyFailure(res.message || 'Mã OTP không chính xác');
+        }
+      },
+      error: (err: any) => {
+        const msg = err.error?.message || 'Mã OTP không đúng hoặc đã hết hạn';
+        this.handleVerifyFailure(msg);
+      }
+    });
+  }
+
+  private handleVerifyFailure(msg: string): void {
+    this.isError.set(true);
+    this.errorMessage.set(msg);
+    setTimeout(() => {
+      this.isError.set(false);
+      this.digits.set([]);
+    }, 600);
   }
 
   deleteDigit(): void {
     if (this.digits().length > 0) {
-      this.digits.update(d => d.slice(0, -1));
-      this.errorMessage.set('');
+      this.digits.set(this.digits().slice(0, -1));
+      this.isError.set(false);
+      this.errorMessage.set(null);
     }
   }
 
   clearDigits(): void {
     this.digits.set([]);
-    this.errorMessage.set('');
+    this.isError.set(false);
+    this.errorMessage.set(null);
   }
 
   closeModal(): void {
-    this.clearDigits();
-    if (this.timer) clearInterval(this.timer);
+    this.isOpen = false;
     this.cancelled.emit();
+    this.resetModal();
   }
 
-  private processSubmit(): void {
-    const codeStr = this.digits().join('');
-
-    this.otpService.verifyOtp(codeStr, this.title).subscribe({
-      next: (res) => {
-        if (res.data) {
-          this.notification.success('Xác thực OTP thành công!');
-          this.confirmed.emit(codeStr);
-          this.clearDigits();
-        } else {
-          this.triggerError('Mã OTP không chính xác. Vui lòng kiểm tra Gmail.');
-        }
-      },
-      error: (err) => {
-        this.triggerError(err?.error?.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
-      }
-    });
-  }
-
-  private triggerError(msg: string): void {
-    this.isError.set(true);
-    this.errorMessage.set(msg);
-    setTimeout(() => {
-      this.isError.set(false);
-      this.clearDigits();
-    }, 400);
+  private resetModal(): void {
+    this.digits.set([]);
+    this.isError.set(false);
+    this.errorMessage.set(null);
+    this.otpMessage.set(null);
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+    this.resendCountdown.set(0);
   }
 }
