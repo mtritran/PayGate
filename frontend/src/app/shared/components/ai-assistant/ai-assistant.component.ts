@@ -28,15 +28,20 @@ export interface ChatMessage {
       <button
         class="ai-trigger-btn"
         (click)="toggleOpen()"
-        title="PayGate AI Financial Assistant"
+        title="PayGate AI Assistant"
         aria-label="Toggle AI Financial Assistant"
       >
         <div class="ai-icon-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="10" rx="3"/>
+            <circle cx="9" cy="16" r="1.5" fill="currentColor"/>
+            <circle cx="15" cy="16" r="1.5" fill="currentColor"/>
+            <path d="M12 2v4"/>
+            <circle cx="12" cy="2" r="1" fill="currentColor"/>
+            <path d="M2 15h1"/>
+            <path d="M21 15h1"/>
           </svg>
         </div>
-        <span class="ai-btn-text">PayGate AI</span>
         <span class="online-dot"></span>
       </button>
 
@@ -171,38 +176,46 @@ export interface ChatMessage {
     }
 
     .ai-trigger-btn {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      width: 52px;
       height: 52px;
-      padding: 0 20px 0 14px;
-      border-radius: 28px;
+      padding: 0;
+      border-radius: 50%;
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       color: #ffffff;
-      font-size: 0.92rem;
-      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(5, 150, 105, 0.38);
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.3);
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: pulseGlow 2.5s infinite;
     }
     .ai-trigger-btn:hover {
-      transform: translateY(-3px) scale(1.03);
-      box-shadow: 0 14px 34px rgba(5, 150, 105, 0.48);
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 0 12px 30px rgba(5, 150, 105, 0.55);
     }
     .ai-icon-box {
-      width: 30px; height: 30px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .ai-icon-box svg { width: 16px; height: 16px; }
+    .ai-icon-box svg {
+      width: 26px;
+      height: 26px;
+    }
     .online-dot {
-      width: 8px; height: 8px;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 11px;
+      height: 11px;
       background: #34d399;
       border-radius: 50%;
       border: 2px solid #ffffff;
+      box-shadow: 0 0 6px #34d399;
     }
 
     /* Chat Window */

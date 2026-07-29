@@ -10,21 +10,16 @@ import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.Loan;
 import com.training.paygate.entity.LoanSchedule;
-import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
 import com.training.paygate.enums.LoanScheduleStatus;
 import com.training.paygate.enums.LoanStatus;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.RepayType;
-import com.training.paygate.enums.TransactionStatus;
-import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
-import com.training.paygate.exception.DuplicateResourceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LoanRepository;
 import com.training.paygate.repository.LoanScheduleRepository;
-import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.service.LoanService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +47,6 @@ public class LoanServiceImpl implements LoanService {
     private final AccountRepository accountRepository;
     private final com.training.paygate.repository.UserRepository userRepository;
     private final TransactionService transactionService;
-    private final TransactionRepository transactionRepository;
     private final com.training.paygate.service.EmailService emailService;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
@@ -67,10 +61,11 @@ public class LoanServiceImpl implements LoanService {
 
         // Validate user does not already have an active or pending loan
         boolean hasActiveOrPending = loanRepository.existsByUserIdAndStatusIn(
-                userId, List.of(LoanStatus.PENDING_APPROVAL, LoanStatus.OFFERED, LoanStatus.ACTIVE, LoanStatus.OVERDUE)
-        );
+                userId,
+                List.of(LoanStatus.PENDING_APPROVAL, LoanStatus.OFFERED, LoanStatus.ACTIVE, LoanStatus.OVERDUE));
         if (hasActiveOrPending) {
-            throw new BadRequestException("Bạn đang có một khoản vay chưa hoàn tất (đang duyệt, chờ ký hoặc đang hoạt động). Vui lòng hoàn tất hoặc trả nợ khoản vay hiện tại trước khi tạo đơn mới.");
+            throw new BadRequestException(
+                    "Bạn đang có một khoản vay chưa hoàn tất (đang duyệt, chờ ký hoặc đang hoạt động). Vui lòng hoàn tất hoặc trả nợ khoản vay hiện tại trước khi tạo đơn mới.");
         }
 
         Account userAccount = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER)
@@ -152,7 +147,8 @@ public class LoanServiceImpl implements LoanService {
 
         loan.setStatus(LoanStatus.OFFERED);
         loan.setApprovedBy(adminId);
-        loan.setAdminNote(request != null ? request.adminNote() : "Approved loan offer. Waiting for borrower agreement signature.");
+        loan.setAdminNote(request != null ? request.adminNote()
+                : "Approved loan offer. Waiting for borrower agreement signature.");
 
         Loan saved = loanRepository.save(loan);
         log.info("[LOAN] Admin {} approved offer for loan {}. Status: OFFERED", adminId, loan.getLoanRef());
@@ -171,7 +167,8 @@ public class LoanServiceImpl implements LoanService {
         }
 
         if (loan.getStatus() != LoanStatus.OFFERED && loan.getStatus() != LoanStatus.PENDING_APPROVAL) {
-            throw new BadRequestException("Khoản vay không ở trạng thái chờ ký hợp đồng (Trạng thái hiện tại: " + loan.getStatus() + ")");
+            throw new BadRequestException(
+                    "Khoản vay không ở trạng thái chờ ký hợp đồng (Trạng thái hiện tại: " + loan.getStatus() + ")");
         }
 
         // Generate schedule if not already present
@@ -201,7 +198,8 @@ public class LoanServiceImpl implements LoanService {
         if (systemAccount.getBalance() == null || systemAccount.getBalance().compareTo(loan.getAmount()) < 0) {
             systemAccount.setBalance(new BigDecimal("10000000000.00"));
             systemAccount = accountRepository.save(systemAccount);
-            log.info("[LOAN DISBURSEMENT] Provided 10 Billion VND liquidity reserve to SYSTEM Account {}", systemAccount.getAccountNumber());
+            log.info("[LOAN DISBURSEMENT] Provided 10 Billion VND liquidity reserve to SYSTEM Account {}",
+                    systemAccount.getAccountNumber());
         }
 
         Account userAccount = accountRepository.findById(loan.getAccountId())
@@ -210,38 +208,23 @@ public class LoanServiceImpl implements LoanService {
         User borrower = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // 1. Perform Disbursement Transfer: SYSTEM -> USER (direct balance update to bypass USER-only account lookup)
-        // Ensure SYSTEM account balance is sufficient (re-fetch after lock)
-        Account lockedSystem = accountRepository.findByIdForUpdate(systemAccount.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM account not found"));
-        Account lockedUser = accountRepository.findByIdForUpdate(userAccount.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
+        // 1. Perform Disbursement Transfer: SYSTEM -> USER
+        PaymentRequest disbursePaymentReq = new PaymentRequest(
+                "IDEM-DISBURSE-" + loan.getLoanRef(),
+                userAccount.getId(),
+                loan.getAmount(),
+                "Giải ngân khoản vay " + loan.getLoanRef(),
+                null);
 
-        if (lockedSystem.getBalance() == null || lockedSystem.getBalance().compareTo(loan.getAmount()) < 0) {
-            lockedSystem.setBalance(new BigDecimal("10000000000.00"));
-            log.info("[LOAN DISBURSEMENT] Topped up SYSTEM account {} to 10B VND for disbursement", lockedSystem.getAccountNumber());
-        }
+        User systemUser = userRepository.findById(systemAccount.getOwnerId())
+                .orElseGet(() -> userRepository.findAll().stream()
+                        .filter(u -> u.getRole() == com.training.paygate.enums.Role.ADMIN).findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found")));
 
-        lockedSystem.setBalance(lockedSystem.getBalance().subtract(loan.getAmount()));
-        lockedUser.setBalance(lockedUser.getBalance().add(loan.getAmount()));
-        accountRepository.save(lockedSystem);
-        accountRepository.save(lockedUser);
-
-        // Record disbursement transaction
-        String txRef = "TXN-LOAN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        Transaction disburseTx = Transaction.builder()
-                .transactionRef(txRef)
-                .idempotencyKey("IDEM-DISBURSE-" + loan.getLoanRef())
-                .sourceAccountId(lockedSystem.getId())
-                .destAccountId(lockedUser.getId())
-                .amount(loan.getAmount())
-                .currency("VND")
-                .type(TransactionType.PAYMENT)
-                .status(TransactionStatus.COMPLETED)
-                .description("Giải ngân khoản vay " + loan.getLoanRef())
-                .build();
-        transactionRepository.save(disburseTx);
-        log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(), txRef);
+        TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq,
+                systemUser.getUsername());
+        log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(),
+                txResponse.transactionRef());
 
         // 2. Activate Loan
         loan.setStatus(LoanStatus.ACTIVE);
@@ -251,7 +234,8 @@ public class LoanServiceImpl implements LoanService {
         // 3. Generate PDF Agreement & Send Email to User's Gmail
         try {
             List<LoanSchedule> schedules = loanScheduleRepository.findByLoanIdOrderByPeriodNumberAsc(saved.getId());
-            byte[] pdfBytes = com.training.paygate.util.LoanContractPdfGenerator.generateContractPdf(saved, borrower, schedules);
+            byte[] pdfBytes = com.training.paygate.util.LoanContractPdfGenerator.generateContractPdf(saved, borrower,
+                    schedules);
             String fileName = "HopDongVay_PayGate_" + saved.getLoanRef() + ".pdf";
 
             if (borrower.getEmail() != null && !borrower.getEmail().isBlank()) {
@@ -261,11 +245,11 @@ public class LoanServiceImpl implements LoanService {
                         saved.getLoanRef(),
                         saved.getAmount(),
                         pdfBytes,
-                        fileName
-                );
+                        fileName);
             }
         } catch (Exception e) {
-            log.error("[LOAN CONTRACT PDF] Error generating or emailing PDF contract for loan {}: {}", loan.getLoanRef(), e.getMessage());
+            log.error("[LOAN CONTRACT PDF] Error generating or emailing PDF contract for loan {}: {}",
+                    loan.getLoanRef(), e.getMessage());
         }
 
         return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
@@ -278,7 +262,8 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
 
         User currentUser = userRepository.findById(currentUserId).orElse(null);
-        boolean userIsAdmin = isAdmin || (currentUser != null && currentUser.getRole() == com.training.paygate.enums.Role.ADMIN);
+        boolean userIsAdmin = isAdmin
+                || (currentUser != null && currentUser.getRole() == com.training.paygate.enums.Role.ADMIN);
 
         if (!userIsAdmin && !loan.getUserId().equals(currentUserId)) {
             throw new BadRequestException("Access denied to loan contract");
@@ -320,9 +305,7 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = loanRepository.findById(loanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan", loanId));
 
-        User currentUser = userRepository.findById(userId).orElse(null);
-        boolean isAdmin = currentUser != null && (currentUser.getRole() == com.training.paygate.enums.Role.ADMIN);
-        if (!isAdmin && !loan.getUserId().equals(userId)) {
+        if (!loan.getUserId().equals(userId)) {
             throw new BadRequestException("Access denied to loan");
         }
 
@@ -330,16 +313,15 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Loan is not active or overdue for repayment");
         }
 
-        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
-                .orElseGet(() -> accountRepository.findAll().stream()
-                        .filter(a -> a.getOwnerType() == OwnerType.SYSTEM).findFirst()
-                        .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found")));
+        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
+                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
 
         BigDecimal amountToPay;
         LoanSchedule scheduleToPay = null;
 
         if (request.repayType() == RepayType.NEXT_PERIOD) {
-            scheduleToPay = loanScheduleRepository.findFirstByLoanIdAndStatusOrderByPeriodNumberAsc(loanId, LoanScheduleStatus.PENDING)
+            scheduleToPay = loanScheduleRepository
+                    .findFirstByLoanIdAndStatusOrderByPeriodNumberAsc(loanId, LoanScheduleStatus.PENDING)
                     .orElseThrow(() -> new BadRequestException("No pending schedule found to pay"));
             amountToPay = scheduleToPay.getAmountDue();
         } else {
@@ -353,8 +335,7 @@ public class LoanServiceImpl implements LoanService {
                 systemAccount.getId(),
                 amountToPay,
                 "Trả nợ khoản vay " + loan.getLoanRef(),
-                null
-        );
+                null);
 
         User borrower = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));

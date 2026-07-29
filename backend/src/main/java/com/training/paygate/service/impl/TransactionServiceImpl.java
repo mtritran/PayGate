@@ -26,7 +26,6 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
-import com.training.paygate.service.EmailService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -11,784 +11,615 @@ import { ApiResponse } from '../../core/models/api-response.model';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="voucher-shop-page">
+    <div class="voucher-shop-momo fade-in-up">
 
-      <!-- Points Hero Banner -->
-      <div class="points-hero" *ngIf="points">
-        <div class="hero-content">
-          <div class="hero-text">
-            <h1 class="hero-title">Voucher Store & Rewards Center</h1>
-            <p class="hero-subtitle">Earn points automatically on every payment transaction and redeem exclusive voucher deals</p>
+      <!-- MOMO PINK & EMERALD HERO BANNER -->
+      <div class="momo-hero-card">
+        <div class="hero-bg-glow"></div>
+        <div class="hero-bg-glow-right"></div>
+
+        <div class="hero-inner">
+          <div class="hero-top-bar">
+            <div class="hero-badge-pink">
+              <span class="pulse-pink-dot"></span>
+              <span class="badge-text">PAYGATE VOUCHER & REWARDS</span>
+            </div>
+            <div class="tier-pill-pink">
+              <span class="tier-icon">👑</span>
+              <span class="tier-name">{{ points?.tier || 'SILVER' }} MEMBER</span>
+            </div>
           </div>
 
-          <div class="hero-stats">
-            <div class="hero-stat">
-              <span class="hero-stat-icon" style="background: #ecfdf5; color: #059669;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
+          <div class="hero-headline-group">
+            <h1 class="hero-headline">
+              Voucher <span class="highlight-pink">Reward Store</span> PayGate
+            </h1>
+            <p class="hero-description">
+              Earn reward points automatically on every payment transaction. Redeem points for exclusive discount vouchers instantly!
+            </p>
+          </div>
+
+          <!-- 3 Stats Cards Row -->
+          <div class="momo-stats-grid">
+            <div class="stat-card-momo accent-pink">
+              <div class="stat-icon-box pink-bg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 16 14"/>
                 </svg>
-              </span>
-              <div class="hero-stat-text">
-                <span class="hero-stat-label">Total Points</span>
-                <span class="hero-stat-value">{{ points.totalPoints | number }} <small>pts</small></span>
+              </div>
+              <div class="stat-detail">
+                <span class="stat-title">TOTAL REWARD POINTS</span>
+                <div class="stat-number text-pink">
+                  {{ (points?.totalPoints || 0) | number }} <small>PTS</small>
+                </div>
               </div>
             </div>
-            <div class="hero-stat">
-              <span class="hero-stat-icon" style="background: #fef3c7; color: #d97706;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+
+            <div class="stat-card-momo accent-emerald">
+              <div class="stat-icon-box emerald-bg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                 </svg>
-              </span>
-              <div class="hero-stat-text">
-                <span class="hero-stat-label">Member Tier</span>
-                <span class="hero-stat-value">{{ points.tier }}</span>
+              </div>
+              <div class="stat-detail">
+                <span class="stat-title">EARNED THIS MONTH</span>
+                <div class="stat-number text-emerald">
+                  +{{ (points?.earnedThisMonth || 0) | number }} <small>PTS</small>
+                </div>
               </div>
             </div>
-            <div class="hero-stat">
-              <span class="hero-stat-icon" style="background: #eff6ff; color: #2563eb;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+
+            <div class="stat-card-momo accent-purple">
+              <div class="stat-icon-box purple-bg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
                 </svg>
-              </span>
-              <div class="hero-stat-text">
-                <span class="hero-stat-label">Earned This Month</span>
-                <span class="hero-stat-value accent">+{{ points.earnedThisMonth | number }} <small>pts</small></span>
+              </div>
+              <div class="stat-detail">
+                <span class="stat-title">AVAILABLE DEALS</span>
+                <div class="stat-number text-purple">
+                  {{ shopVouchers.length }} <small>DEALS</small>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="tabs-bar">
-        <button class="tab-btn" [class.active]="activeTab === 'shop'" (click)="activeTab = 'shop'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-          </svg>
-          Redeem
-          <span class="tab-count">{{ shopVouchers.length }}</span>
-        </button>
-        <button class="tab-btn" [class.active]="activeTab === 'my'" (click)="activeTab = 'my'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-          </svg>
-          My Vouchers
-          <span class="tab-count">{{ myVouchers.length }}</span>
-        </button>
-        <button class="tab-btn" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-          </svg>
-          History
-          <span class="tab-count" *ngIf="pointHistory.length">{{ pointHistory.length }}</span>
-        </button>
+      <!-- MOMO PINK TABS NAVIGATION -->
+      <div class="tabs-wrapper">
+        <div class="momo-tabs-container">
+          <button class="tab-item" [class.active]="activeTab === 'shop'" (click)="activeTab = 'shop'">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
+            <span>REDEEM DEALS</span>
+            <span class="count-tag">{{ shopVouchers.length }}</span>
+          </button>
+
+          <button class="tab-item" [class.active]="activeTab === 'my'" (click)="activeTab = 'my'">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+            </svg>
+            <span>MY VOUCHERS</span>
+            <span class="count-tag">{{ myVouchers.length }}</span>
+          </button>
+
+          <button class="tab-item" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'; loadHistory()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>POINT LOGS</span>
+            <span class="count-tag" *ngIf="pointHistory.length">{{ pointHistory.length }}</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Tab: Voucher Shop -->
-      <div *ngIf="activeTab === 'shop'">
-        <div class="voucher-grid" *ngIf="shopVouchers.length > 0">
-          <div class="voucher-card" *ngFor="let voucher of shopVouchers">
-            <!-- Card Decorative Top -->
-            <div class="voucher-card-top">
-              <div class="voucher-code">{{ voucher.code }}</div>
-              <span class="voucher-remaining" [class.remaining-low]="voucher.remainingQty <= 0">
-                <span class="remaining-dot"></span>
-                {{ voucher.remainingQty > 0 ? voucher.remainingQty + ' left' : 'Sold out' }}
+      <!-- TAB 1: REDEEM VOUCHERS SHOP -->
+      <div *ngIf="activeTab === 'shop'" class="tab-pane">
+        <div class="vouchers-grid" *ngIf="shopVouchers.length > 0">
+          <div class="momo-voucher-card" *ngFor="let voucher of shopVouchers">
+            <div class="ticket-header">
+              <div class="voucher-code-chip">
+                <span class="chip-dot"></span>
+                <span>{{ voucher.code }}</span>
+              </div>
+              <span class="stock-badge" [class.stock-out]="voucher.remainingQty <= 0">
+                {{ voucher.remainingQty > 0 ? (voucher.remainingQty + ' left') : 'Sold out' }}
               </span>
             </div>
 
-            <div class="voucher-card-body">
+            <div class="ticket-body">
               <h3 class="voucher-title">{{ voucher.title }}</h3>
 
-              <div class="voucher-discount">
+              <div class="discount-box">
+                <span class="discount-label">INSTANT DISCOUNT</span>
                 <span class="discount-amount">{{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</span>
-                <span class="discount-min">Min order {{ voucher.minOrderAmount | currency:'VND':'symbol':'1.0-0' }}</span>
+                <span class="discount-rule">For orders over {{ voucher.minOrderAmount | currency:'VND':'symbol':'1.0-0' }}</span>
               </div>
 
-              <div class="voucher-meta">
-                <span class="voucher-tag">{{ APPLICABLE_LABELS[voucher.applicableType] || voucher.applicableType }}</span>
-                <span class="voucher-expiry">Expires: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
+              <div class="meta-row">
+                <span class="meta-tag">{{ APPLICABLE_LABELS[voucher.applicableType] || voucher.applicableType }}</span>
+                <span class="expiry-text">Exp: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
               </div>
             </div>
 
-            <div class="voucher-card-footer">
-              <div class="points-price">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-warning-500);">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-                <span class="points-value">{{ voucher.pointsRequired | number }} pts</span>
+            <div class="coupon-divider">
+              <div class="circle-notch notch-l"></div>
+              <div class="dashed-line"></div>
+              <div class="circle-notch notch-r"></div>
+            </div>
+
+            <div class="ticket-footer">
+              <div class="pts-cost">
+                <span class="pts-title">EXCHANGE PRICE</span>
+                <div class="pts-display">
+                  <span class="pts-val">{{ voucher.pointsRequired | number }}</span>
+                  <span class="pts-unit">PTS</span>
+                </div>
               </div>
-              <button class="btn-redeem"
+
+              <button class="btn-momo-pink"
                       (click)="redeem(voucher.id)"
                       [disabled]="redeemingId === voucher.id || (points ? points.totalPoints < voucher.pointsRequired : false) || voucher.remainingQty <= 0">
                 <span *ngIf="redeemingId === voucher.id" class="btn-spinner"></span>
-                {{ redeemingId === voucher.id ? 'Processing...' : (points && points.totalPoints < voucher.pointsRequired ? 'Not enough pts' : 'Redeem') }}
+                <span>
+                  {{ redeemingId === voucher.id ? 'Redeeming...' : (points && points.totalPoints < voucher.pointsRequired ? 'Need Points' : 'Redeem Now') }}
+                </span>
               </button>
             </div>
           </div>
         </div>
 
-        <div class="empty-state" *ngIf="shopVouchers.length === 0">
-          <div class="empty-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" /><path d="M16 16s-1.5-2-4-2-4 2-4 2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
-            </svg>
-          </div>
-          <h4 class="empty-title">No vouchers available</h4>
-          <p class="empty-desc">Redeemable vouchers will appear here. Check back later!</p>
+        <div class="empty-card" *ngIf="shopVouchers.length === 0">
+          <div class="empty-icon-circle">🎁</div>
+          <h4>No Vouchers Available Currently</h4>
+          <p>Check back soon for new promotions and reward offers!</p>
         </div>
       </div>
 
-      <!-- Tab: My Vouchers -->
-      <div *ngIf="activeTab === 'my'">
-        <div class="voucher-grid" *ngIf="myVouchers.length > 0">
-          <div class="user-voucher-card" *ngFor="let voucher of myVouchers"
-               [class.status-available]="voucher.status === 'AVAILABLE'"
-               [class.status-used]="voucher.status === 'USED'"
-               [class.status-expired]="voucher.status === 'EXPIRED'">
-            <div class="uvc-status-bar"></div>
-            <div class="uvc-body">
-              <div class="uvc-header">
-                <span class="uvc-code">{{ voucher.voucherCode }}</span>
-                <span class="uvc-status-badge"
-                      [class.badge-available]="voucher.status === 'AVAILABLE'"
-                      [class.badge-used]="voucher.status === 'USED'"
-                      [class.badge-expired]="voucher.status === 'EXPIRED'">
-                  {{ voucher.status === 'AVAILABLE' ? 'Available' : (voucher.status === 'USED' ? 'Used' : 'Expired') }}
+      <!-- TAB 2: MY VOUCHERS WALLET -->
+      <div *ngIf="activeTab === 'my'" class="tab-pane">
+        <div class="vouchers-grid" *ngIf="myVouchers.length > 0">
+          <div class="my-voucher-card" *ngFor="let voucher of myVouchers"
+               [class.my-avail]="voucher.status === 'AVAILABLE'"
+               [class.my-used]="voucher.status === 'USED'"
+               [class.my-exp]="voucher.status === 'EXPIRED'">
+            <div class="my-card-stripe"></div>
+            <div class="my-card-content">
+              <div class="my-card-top">
+                <span class="my-code">{{ voucher.voucherCode }}</span>
+                <span class="my-status-badge"
+                      [class.bg-avail]="voucher.status === 'AVAILABLE'"
+                      [class.bg-used]="voucher.status === 'USED'"
+                      [class.bg-exp]="voucher.status === 'EXPIRED'">
+                  {{ voucher.status === 'AVAILABLE' ? 'Ready to use' : (voucher.status === 'USED' ? 'Used' : 'Expired') }}
                 </span>
               </div>
-              <h4 class="uvc-title">{{ voucher.title }}</h4>
-              <div class="uvc-discount">Save {{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</div>
-              <div class="uvc-meta">
+              <h4 class="my-title">{{ voucher.title }}</h4>
+              <div class="my-discount">Save {{ voucher.discountAmount | currency:'VND':'symbol':'1.0-0' }}</div>
+              <div class="my-dates">
                 <span>Redeemed: {{ voucher.redeemedAt | date:'dd/MM/yyyy' }}</span>
-                <span>Expires: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
+                <span>Expiry: {{ voucher.expiresAt | date:'dd/MM/yyyy' }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="empty-state" *ngIf="myVouchers.length === 0">
-          <div class="empty-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-            </svg>
-          </div>
-          <h4 class="empty-title">No vouchers yet</h4>
-          <p class="empty-desc">Redeem your reward points for vouchers in the "Redeem" tab!</p>
+        <div class="empty-card" *ngIf="myVouchers.length === 0">
+          <div class="empty-icon-circle">🎟️</div>
+          <h4>Your Voucher Wallet is Empty</h4>
+          <p>Go to "Redeem Deals" tab and exchange your reward points for instant vouchers!</p>
         </div>
       </div>
 
-      <!-- Tab: Point History -->
-      <div *ngIf="activeTab === 'history'">
-        <div class="card" *ngIf="pointHistory.length > 0">
-          <table class="table">
+      <!-- TAB 3: POINT LOGS -->
+      <div *ngIf="activeTab === 'history'" class="tab-pane">
+        <div class="light-table-card" *ngIf="pointHistory.length > 0">
+          <table class="fintech-table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Transaction Ref</th>
-                <th>Points</th>
-                <th class="text-right">Date</th>
+                <th>TYPE</th>
+                <th>DESCRIPTION</th>
+                <th>REFERENCE</th>
+                <th>POINTS CHANGE</th>
+                <th class="text-right">DATE & TIME</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of pointHistory">
                 <td>
-                  <span class="history-type" [class.type-earn]="item.type === 'EARN'" [class.type-redeem]="item.type === 'REDEEM'">
-                    {{ item.type === 'EARN' ? 'Earned' : 'Redeemed' }}
+                  <span class="pill-type" [class.pill-earn]="item.type === 'EARN'" [class.pill-redeem]="item.type === 'REDEEM'">
+                    {{ item.type === 'EARN' ? '+ EARN' : '- REDEEM' }}
                   </span>
                 </td>
-                <td class="text-tertiary">{{ item.description }}</td>
+                <td class="font-semibold">{{ item.description }}</td>
+                <td><code class="code-ref">{{ item.transactionRef || 'SYSTEM' }}</code></td>
                 <td>
-                  <code class="txn-ref">{{ item.transactionRef || '-' }}</code>
-                </td>
-                <td>
-                  <span class="points-change" [class.text-success]="item.type === 'EARN'" [class.text-danger]="item.type === 'REDEEM'">
-                    {{ item.type === 'EARN' ? '+' : '-' }}{{ item.points }} pts
+                  <span class="pts-bold" [class.text-emerald]="item.type === 'EARN'" [class.text-pink]="item.type === 'REDEEM'">
+                    {{ item.type === 'EARN' ? '+' : '-' }}{{ item.points }} PTS
                   </span>
                 </td>
-                <td class="text-right text-tertiary text-sm">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-right text-muted-sm">{{ item.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="pointHistory.length === 0">
-          <div class="empty-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-          <h4 class="empty-title">No history yet</h4>
-          <p class="empty-desc">Your point transaction history will be recorded here.</p>
+        <div class="empty-card" *ngIf="pointHistory.length === 0">
+          <div class="empty-icon-circle">📜</div>
+          <h4>No Point History Recorded</h4>
+          <p>Bill payments and top-ups will automatically earn points here.</p>
         </div>
       </div>
 
     </div>
   `,
   styles: [`
-    .voucher-shop-page {
+    .voucher-shop-momo {
+      font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+      color: #2b1238;
       max-width: 1280px;
+      margin: 0 auto;
+      padding-bottom: 60px;
     }
 
-    /* ── Points Hero ── */
-    .points-hero {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border-radius: var(--radius-2xl);
-      padding: var(--space-8);
-      margin-bottom: var(--space-6);
-    }
-
-    .hero-content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-6);
-    }
-
-    .hero-text {
-      text-align: center;
-    }
-
-    .hero-title {
-      font-size: 1.5rem;
-      font-weight: var(--font-weight-bold);
-      color: #ffffff;
-      margin: 0 0 var(--space-1);
-      letter-spacing: -0.02em;
-    }
-
-    .hero-subtitle {
-      font-size: var(--font-size-sm);
-      color: rgba(255, 255, 255, 0.7);
-      margin: 0;
-    }
-
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-4);
-    }
-
-    .hero-stat {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: var(--radius-xl);
-      padding: var(--space-4) var(--space-5);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .hero-stat-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .hero-stat-text {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .hero-stat-label {
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .hero-stat-value {
-      font-size: var(--font-size-xl);
-      font-weight: var(--font-weight-bold);
-      color: var(--color-text-primary);
-      line-height: 1.2;
-    }
-
-    .hero-stat-value small {
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-normal);
-      color: var(--color-text-tertiary);
-    }
-
-    .hero-stat-value.accent {
-      color: var(--color-primary-600);
-    }
-
-    @media (max-width: 768px) {
-      .hero-stats {
-        grid-template-columns: 1fr;
-      }
-      .points-hero {
-        padding: var(--space-5);
-      }
-    }
-
-    /* ── Tabs ── */
-    .tabs-bar {
-      display: flex;
-      gap: var(--space-2);
-      margin-bottom: var(--space-6);
-      border-bottom: 1px solid var(--color-border-primary);
-      padding-bottom: 0;
-      overflow-x: auto;
-    }
-
-    .tab-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-3) var(--space-4);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-text-tertiary);
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      white-space: nowrap;
-      margin-bottom: -1px;
-    }
-
-    .tab-btn:hover {
-      color: var(--color-text-primary);
-    }
-
-    .tab-btn.active {
-      color: var(--color-primary-500);
-      border-bottom-color: var(--color-primary-500);
-    }
-
-    .tab-count {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      height: 20px;
-      padding: 0 var(--space-1);
-      font-size: 11px;
-      font-weight: var(--font-weight-bold);
-      background: var(--color-bg-tertiary);
-      border-radius: var(--radius-full);
-      color: var(--color-text-secondary);
-    }
-
-    .tab-btn.active .tab-count {
-      background: var(--color-primary-100);
-      color: var(--color-primary-700);
-    }
-
-    /* ── Voucher Grid ── */
-    .voucher-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: var(--space-4);
-    }
-
-    /* ── Voucher Card (Shop) ── */
-    .voucher-card {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-xl);
+    .momo-hero-card {
+      position: relative;
+      background: radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.9), transparent 30%),
+                  linear-gradient(135deg, #fff7fb 0%, #ffe1ef 45%, #e8fdf4 100%);
+      border: 1px solid rgba(244, 114, 182, 0.28);
+      border-radius: 28px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      box-shadow: 0 20px 50px rgba(190, 24, 93, 0.08);
       overflow: hidden;
-      transition: all var(--transition-normal);
+    }
+
+    .hero-bg-glow {
+      position: absolute;
+      top: -30%; left: -10%;
+      width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-bg-glow-right {
+      position: absolute;
+      bottom: -40%; right: -5%;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
       display: flex;
       flex-direction: column;
+      gap: 24px;
     }
 
-    .voucher-card:hover {
-      box-shadow: var(--shadow-md);
-      border-color: var(--color-border-secondary);
-      transform: translateY(-2px);
-    }
-
-    .voucher-card-top {
-      background: linear-gradient(135deg, #059669, #047857);
-      padding: var(--space-3) var(--space-4);
+    .hero-top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .voucher-code {
-      font-family: var(--font-family-mono);
-      font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-sm);
-      color: #ffffff;
-      letter-spacing: 0.05em;
-    }
-
-    .voucher-remaining {
+    .hero-badge-pink {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-1);
-      font-size: 11px;
-      font-weight: var(--font-weight-semibold);
-      padding: var(--space-1) var(--space-2);
-      background: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      border-radius: var(--radius-full);
+      gap: 8px;
+      background: rgba(255, 241, 247, 0.9);
+      border: 1px solid rgba(244, 114, 182, 0.4);
+      padding: 5px 14px;
+      border-radius: 20px;
     }
 
-    .remaining-dot {
-      width: 5px;
-      height: 5px;
+    .pulse-pink-dot {
+      width: 7px; height: 7px;
+      background-color: #be185d;
       border-radius: 50%;
+      box-shadow: 0 0 8px #be185d;
+    }
+
+    .badge-text {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #be185d;
+    }
+
+    .tier-pill-pink {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #fff1f7, #fde68a);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 5px 16px;
+      border-radius: 20px;
+    }
+    .tier-icon { font-size: 0.9rem; }
+    .tier-name {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #92400e;
+    }
+
+    .hero-headline-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .hero-headline {
+      font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+      font-weight: 900;
+      color: #2b1238;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    .highlight-pink {
+      background: linear-gradient(135deg, #be185d 0%, #e91e63 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-description {
+      font-size: 0.98rem;
+      color: #6b3b57;
+      margin: 0;
+      max-width: 640px;
+      line-height: 1.5;
+    }
+
+    .momo-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .stat-card-momo {
+      background: #ffffff;
+      border: 1px solid #f3d6e5;
+      border-radius: 20px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 10px 24px rgba(190, 24, 93, 0.05);
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .stat-card-momo:hover {
+      transform: translateY(-3px);
+      border-color: #f472b6;
+      box-shadow: 0 14px 30px rgba(190, 24, 93, 0.12);
+    }
+    .stat-card-momo.accent-pink { background: linear-gradient(135deg, #ffffff, #fff1f7); }
+    .stat-card-momo.accent-emerald { background: linear-gradient(135deg, #ffffff, #f0fdf4); }
+    .stat-card-momo.accent-purple { background: linear-gradient(135deg, #ffffff, #faf5ff); }
+
+    .stat-icon-box {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pink-bg { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+    .emerald-bg { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .purple-bg { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+
+    .stat-detail { display: flex; flex-direction: column; }
+    .stat-title { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; color: #7b5870; }
+    .stat-number { font-size: 1.65rem; font-weight: 900; line-height: 1.1; margin-top: 2px; }
+    .stat-number small { font-size: 0.78rem; font-weight: 800; color: #94a3b8; }
+    .text-pink { color: #be185d; }
+    .text-emerald { color: #059669; }
+    .text-purple { color: #7e22ce; }
+
+    .tabs-wrapper { margin-bottom: 28px; }
+    .momo-tabs-container {
+      display: inline-flex;
+      background: #fdf2f8;
+      padding: 5px;
+      border-radius: 16px;
+      gap: 4px;
+      border: 1px solid #fbcfe8;
+    }
+
+    .tab-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-size: 0.85rem; font-weight: 800; letter-spacing: 0.02em;
+      color: #7b5870;
+      background: transparent;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-item:hover { color: #be185d; }
+    .tab-item.active {
+      background: #ffffff;
+      color: #be185d;
+      box-shadow: 0 4px 14px rgba(190, 24, 93, 0.12);
+    }
+
+    .count-tag {
+      background: #fbcfe8; color: #831843;
+      font-size: 0.72rem; font-weight: 800;
+      padding: 2px 7px; border-radius: 8px;
+    }
+    .tab-item.active .count-tag { background: #be185d; color: #ffffff; }
+
+    .vouchers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 24px;
+    }
+
+    .momo-voucher-card {
+      background: #ffffff;
+      border: 1px solid #f3d6e5;
+      border-radius: 22px;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+      box-shadow: 0 10px 28px rgba(190, 24, 93, 0.05);
+      transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .momo-voucher-card:hover {
+      transform: translateY(-5px);
+      border-color: #f472b6;
+      box-shadow: 0 16px 36px rgba(190, 24, 93, 0.15);
+    }
+
+    .ticket-header {
+      padding: 16px 20px 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff1f7;
+      border-bottom: 1px dashed #fbcfe8;
+    }
+
+    .voucher-code-chip {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 1rem; font-weight: 800;
+      color: #be185d; letter-spacing: 0.04em;
+    }
+    .chip-dot { width: 6px; height: 6px; background: #be185d; border-radius: 50%; }
+
+    .stock-badge {
+      font-size: 0.72rem; font-weight: 800;
+      background: #ecfdf5; color: #15803d; border: 1px solid #a7f3d0;
+      padding: 3px 9px; border-radius: 10px;
+    }
+    .stock-badge.stock-out { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    .ticket-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+    .voucher-title { font-size: 1.1rem; font-weight: 800; color: #2b1238; margin: 0; line-height: 1.35; }
+
+    .discount-box {
+      background: linear-gradient(135deg, #fff1f7 0%, #fce7f3 100%);
+      border: 1px solid #fbcfe8;
+      border-radius: 14px; padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .discount-label { font-size: 0.68rem; font-weight: 900; color: #be185d; letter-spacing: 0.05em; }
+    .discount-amount { font-size: 1.7rem; font-weight: 900; color: #be185d; letter-spacing: -0.02em; }
+    .discount-rule { font-size: 0.72rem; font-weight: 700; color: #7b5870; }
+
+    .meta-row { display: flex; justify-content: space-between; align-items: center; }
+    .meta-tag { background: #fdf2f8; color: #9d174d; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #fbcfe8; }
+    .expiry-text { font-size: 0.75rem; color: #7b5870; font-weight: 700; }
+
+    .coupon-divider { position: relative; height: 20px; display: flex; align-items: center; }
+    .circle-notch {
+      width: 16px; height: 16px; background: #fff7fb;
+      border-radius: 50%; position: absolute; top: 2px; border: 1px solid #f3d6e5;
+    }
+    .notch-l { left: -8px; }
+    .notch-r { right: -8px; }
+    .dashed-line { width: 100%; border-top: 2px dashed #fbcfe8; margin: 0 14px; }
+
+    .ticket-footer {
+      padding: 14px 20px 20px;
+      display: flex; justify-content: space-between; align-items: center;
       background: #ffffff;
     }
 
-    .remaining-low .remaining-dot {
-      background: #fca5a5;
-    }
+    .pts-cost { display: flex; flex-direction: column; }
+    .pts-title { font-size: 0.7rem; font-weight: 800; color: #7b5870; letter-spacing: 0.05em; }
+    .pts-display { display: flex; align-items: baseline; gap: 3px; }
+    .pts-val { font-size: 1.4rem; font-weight: 900; color: #be185d; }
+    .pts-unit { font-size: 0.78rem; font-weight: 800; color: #be185d; }
 
-    .remaining-low {
-      background: rgba(239, 68, 68, 0.3);
-    }
-
-    .voucher-card-body {
-      padding: var(--space-4);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .voucher-title {
-      font-size: var(--font-size-base);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      margin: 0 0 var(--space-3);
-      line-height: var(--line-height-tight);
-    }
-
-    .voucher-discount {
-      margin-bottom: var(--space-3);
-    }
-
-    .discount-amount {
-      font-size: var(--font-size-2xl);
-      font-weight: var(--font-weight-bold);
-      color: var(--color-text-error);
-      display: block;
-      line-height: 1.1;
-    }
-
-    .discount-min {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
-    }
-
-    .voucher-meta {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      margin-top: auto;
-    }
-
-    .voucher-tag {
-      display: inline-flex;
-      padding: var(--space-1) var(--space-2);
-      background: var(--color-bg-tertiary);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-text-secondary);
-    }
-
-    .voucher-expiry {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
-    }
-
-    .voucher-card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: var(--space-3) var(--space-4);
-      border-top: 1px solid var(--color-border-primary);
-      background: var(--color-bg-tertiary);
-    }
-
-    .points-price {
-      display: flex;
-      align-items: center;
-      gap: var(--space-1);
-    }
-
-    .points-value {
-      font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-sm);
-      color: var(--color-text-primary);
-    }
-
-    .btn-redeem {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-2);
-      height: 34px;
-      padding: 0 var(--space-4);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
+    .btn-momo-pink {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: linear-gradient(135deg, #e91e63 0%, #b5179e 100%);
       color: #ffffff;
-      background: var(--color-bg-brand);
-      border: none;
-      border-radius: var(--radius-lg);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      white-space: nowrap;
+      font-size: 0.9rem; font-weight: 800;
+      padding: 0 22px; height: 42px;
+      border-radius: 12px; border: none; cursor: pointer;
+      box-shadow: 0 8px 20px rgba(233, 30, 99, 0.28);
+      transition: all 0.2s;
     }
-
-    .btn-redeem:hover:not(:disabled) {
-      background: var(--color-bg-brand-hover);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-brand);
+    .btn-momo-pink:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(233, 30, 99, 0.38);
+      background: linear-gradient(135deg, #f43f5e 0%, #c026d3 100%);
     }
-
-    .btn-redeem:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-momo-pink:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 
     .btn-spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite;
     }
 
-    /* ── User Voucher Card ── */
-    .user-voucher-card {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      display: flex;
-      transition: all var(--transition-normal);
+    .my-voucher-card {
+      background: #ffffff; border: 1px solid #f3d6e5; border-radius: 18px;
+      overflow: hidden; display: flex; flex-direction: column; transition: all 0.25s;
     }
+    .my-card-stripe { height: 4px; width: 100%; }
+    .my-avail .my-card-stripe { background: #be185d; }
+    .my-used .my-card-stripe { background: #94a3b8; }
+    .my-exp .my-card-stripe { background: #ef4444; }
 
-    .user-voucher-card:hover {
-      box-shadow: var(--shadow-md);
+    .my-voucher-card.my-used, .my-voucher-card.my-exp { opacity: 0.6; }
+
+    .my-card-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .my-card-top { display: flex; justify-content: space-between; align-items: center; }
+    .my-code { font-size: 1rem; font-weight: 800; color: #2563eb; }
+
+    .my-status-badge { font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 8px; }
+    .bg-avail { background: #fff1f7; color: #be185d; border: 1px solid #fbcfe8; }
+    .bg-used { background: #f1f5f9; color: #475569; }
+    .bg-exp { background: #fee2e2; color: #991b1b; }
+
+    .my-title { font-size: 1.05rem; font-weight: 800; color: #2b1238; margin: 0; }
+    .my-discount { font-size: 1.4rem; font-weight: 900; color: #be185d; }
+    .my-dates { display: flex; justify-content: space-between; font-size: 0.75rem; color: #7b5870; border-top: 1px solid #fdf2f8; padding-top: 10px; }
+
+    .light-table-card {
+      background: #ffffff; border: 1px solid #f3d6e5; border-radius: 20px;
+      overflow: hidden; box-shadow: 0 10px 28px rgba(190, 24, 93, 0.05);
     }
-
-    .uvc-status-bar {
-      width: 5px;
-      flex-shrink: 0;
+    .fintech-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .fintech-table th {
+      padding: 14px 20px;
+      font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em;
+      color: #7b5870; background: #fff1f7; border-bottom: 1px solid #fbcfe8;
     }
+    .fintech-table td { padding: 16px 20px; border-bottom: 1px solid #fdf2f8; font-size: 0.9rem; color: #2b1238; }
+    .fintech-table tr:hover td { background: #fff1f7; }
 
-    .status-available .uvc-status-bar {
-      background: var(--color-success-500);
-    }
+    .pill-type { font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 8px; }
+    .pill-earn { background: #ecfdf5; color: #15803d; border: 1px solid #a7f3d0; }
+    .pill-redeem { background: #fff1f7; color: #be185d; border: 1px solid #fbcfe8; }
 
-    .status-used .uvc-status-bar {
-      background: var(--color-neutral-400);
-    }
-
-    .status-expired .uvc-status-bar {
-      background: var(--color-error-500);
-    }
-
-    .status-used,
-    .status-expired {
-      opacity: 0.65;
-    }
-
-    .uvc-body {
-      padding: var(--space-4);
-      flex: 1;
-    }
-
-    .uvc-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--space-2);
-    }
-
-    .uvc-code {
-      font-family: var(--font-family-mono);
-      font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-base);
-      color: var(--color-text-brand);
-    }
-
-    .uvc-status-badge {
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-full);
-    }
-
-    .badge-available {
-      background: var(--color-success-100);
-      color: var(--color-success-700);
-    }
-
-    .badge-used {
-      background: var(--color-neutral-100);
-      color: var(--color-neutral-600);
-    }
-
-    .badge-expired {
-      background: var(--color-error-100);
-      color: var(--color-error-700);
-    }
-
-    .uvc-title {
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-text-primary);
-      margin: 0 0 var(--space-2);
-    }
-
-    .uvc-discount {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-bold);
-      color: var(--color-text-error);
-      margin-bottom: var(--space-2);
-    }
-
-    .uvc-meta {
-      display: flex;
-      gap: var(--space-4);
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
-    }
-
-    /* ── History Table ── */
-    .card {
-      background: var(--color-bg-secondary);
-      border: 1px solid var(--color-border-primary);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-    }
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .table thead th {
-      padding: var(--space-3) var(--space-4);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: var(--color-bg-tertiary);
-      border-bottom: 1px solid var(--color-border-primary);
-      white-space: nowrap;
-    }
-
-    .table tbody td {
-      padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--color-border-primary);
-      color: var(--color-text-primary);
-      font-size: var(--font-size-sm);
-      vertical-align: middle;
-    }
-
-    .table tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    .table tbody tr {
-      transition: background-color var(--transition-fast);
-    }
-
-    .table tbody tr:hover {
-      background-color: var(--color-bg-hover);
-    }
-
+    .font-semibold { font-weight: 600; }
+    .code-ref { font-family: monospace; font-size: 0.82rem; background: #fdf2f8; padding: 2px 6px; border-radius: 5px; color: #be185d; }
+    .pts-bold { font-size: 1.05rem; font-weight: 900; }
+    .text-emerald { color: #059669; }
+    .text-pink { color: #be185d; }
+    .text-muted-sm { color: #7b5870; font-size: 0.8rem; }
     .text-right { text-align: right; }
-    .text-tertiary { color: var(--color-text-tertiary); }
-    .text-sm { font-size: var(--font-size-sm); }
 
-    .history-type {
-      display: inline-flex;
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
+    .empty-card {
+      background: #ffffff; border: 1px solid #f3d6e5; border-radius: 20px;
+      padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center;
     }
-
-    .type-earn {
-      background: var(--color-success-100);
-      color: var(--color-success-700);
+    .empty-icon-circle {
+      font-size: 2.5rem; width: 80px; height: 80px; background: #fff1f7;
+      border: 1px solid #fbcfe8; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
     }
+    .empty-card h4 { font-size: 1.25rem; font-weight: 800; color: #2b1238; margin: 0 0 6px 0; }
+    .empty-card p { font-size: 0.9rem; color: #7b5870; margin: 0; }
 
-    .type-redeem {
-      background: var(--color-error-100);
-      color: var(--color-error-700);
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .txn-ref {
-      font-family: var(--font-family-mono);
-      font-size: var(--font-size-xs);
-      background: var(--color-bg-tertiary);
-      padding: 2px var(--space-1);
-      border-radius: var(--radius-sm);
-    }
-
-    .points-change {
-      font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-sm);
-    }
-
-    .text-success { color: var(--color-text-success); }
-    .text-danger { color: var(--color-text-error); }
-
-    /* ── Empty State ── */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: var(--space-12) var(--space-4);
-    }
-
-    .empty-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: var(--radius-full);
-      background: var(--color-bg-tertiary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: var(--space-4);
-      color: var(--color-text-tertiary);
-    }
-
-    .empty-title {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
-      margin: 0 0 var(--space-2);
-    }
-
-    .empty-desc {
-      font-size: var(--font-size-sm);
-      color: var(--color-text-secondary);
-      margin: 0;
-      max-width: 320px;
-    }
-
-    /* ── Animations ── */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* ── Global fallbacks ── */
-    :host {
-      --color-bg-hover: var(--color-neutral-100);
+    @media (max-width: 900px) {
+      .momo-stats-grid { grid-template-columns: 1fr; }
+      .vouchers-grid { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -803,11 +634,11 @@ export class VoucherShopComponent implements OnInit {
   redeemingId: number | null = null;
 
   readonly APPLICABLE_LABELS: Record<string, string> = {
-    ALL: 'All',
-    BILL_PAYMENT: 'Bill Payment',
-    ELECTRICITY: 'Electricity',
-    WATER: 'Water',
-    INTERNET: 'Internet'
+    ALL: 'ALL SERVICES',
+    BILL_PAYMENT: 'BILL PAYMENT',
+    ELECTRICITY: 'ELECTRICITY',
+    WATER: 'WATER',
+    INTERNET: 'INTERNET'
   };
 
   constructor(
@@ -823,36 +654,28 @@ export class VoucherShopComponent implements OnInit {
 
   loadPoints(): void {
     this.rewardService.getMyPoints().subscribe({
-      next: (res: ApiResponse<PointsResponse>) => {
-        if (res.success) this.points = res.data;
-      },
+      next: (res: ApiResponse<PointsResponse>) => { if (res.success) this.points = res.data; },
       error: (err) => console.error('Failed to load points:', err)
     });
   }
 
   loadShopVouchers(): void {
     this.voucherService.getShopVouchers().subscribe({
-      next: (res: any) => {
-        if (res.success && res.data) this.shopVouchers = res.data.content || [];
-      },
+      next: (res: any) => { if (res.success && res.data) this.shopVouchers = res.data.content || []; },
       error: (err) => console.error('Failed to load shop vouchers:', err)
     });
   }
 
   loadMyVouchers(): void {
     this.voucherService.getMyVouchers().subscribe({
-      next: (res: ApiResponse<UserVoucherResponse[]>) => {
-        if (res.success) this.myVouchers = res.data || [];
-      },
+      next: (res: ApiResponse<UserVoucherResponse[]>) => { if (res.success) this.myVouchers = res.data || []; },
       error: (err) => console.error('Failed to load my vouchers:', err)
     });
   }
 
   loadHistory(): void {
     this.rewardService.getPointsHistory().subscribe({
-      next: (res: any) => {
-        if (res.success && res.data) this.pointHistory = res.data.content || [];
-      },
+      next: (res: any) => { if (res.success && res.data) this.pointHistory = res.data.content || []; },
       error: (err) => console.error('Failed to load point history:', err)
     });
   }
