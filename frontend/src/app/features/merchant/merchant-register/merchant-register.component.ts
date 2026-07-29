@@ -342,16 +342,16 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <h4 class="section-subtitle">📦 Cấu Trúc Response Trả Về</h4>
             <p class="docs-desc">Khi gọi API thành công, bạn nhận được JSON response với cấu trúc như sau:</p>
             <div class="code-with-label">
-              <span class="code-label">✅ Response thành công (HTTP 200)</span>
-              <pre class="code-box"><code>&#123;
-  "success": true,
-  "message": "Tạo phiên thanh toán thành công",
-  "data": &#123;
-    "token": "CHK_3EF6DF2E73B9469093B97BFD47177875",
-    "paymentUrl": "http://localhost:4200/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875",
-    "expiresAt": "2026-07-28T16:30:00.000"
+              <span class="code-label success-label">✅ Response thành công (HTTP 200)</span>
+              <pre class="code-box dark-soft-box"><code>&#123;
+  <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
+  <span class="json-key">"message"</span>: <span class="json-str">"Tạo phiên thanh toán thành công"</span>,
+  <span class="json-key">"data"</span>: &#123;
+    <span class="json-key">"token"</span>: <span class="json-str">"CHK_3EF6DF2E73B9469093B97BFD47177875"</span>,
+    <span class="json-key">"paymentUrl"</span>: <span class="json-str">"http://localhost:4200/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875"</span>,
+    <span class="json-key">"expiresAt"</span>: <span class="json-str">"2026-07-28T16:30:00.000"</span>
   &#125;,
-  "timestamp": "2026-07-28T16:15:00.000"
+  <span class="json-key">"timestamp"</span>: <span class="json-str">"2026-07-28T16:15:00.000"</span>
 &#125;</code></pre>
             </div>
             <div class="response-fields mt-16">
@@ -366,11 +366,14 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="docs-section mt-24">
             <h4 class="section-subtitle">❌ Cấu Trúc Lỗi</h4>
             <p class="docs-desc">Khi có lỗi, API trả về HTTP 4xx / 5xx với body:</p>
-            <pre class="code-box error-code-box"><code>&#123;
-  "success": false,
-  "message": "API Key của Merchant không hợp lệ",
-  "timestamp": "2026-07-28T16:15:00.000"
+            <div class="code-with-label">
+              <span class="code-label error-label">❌ Response Lỗi (HTTP 4xx / 5xx)</span>
+              <pre class="code-box dark-soft-box error-code-box"><code>&#123;
+  <span class="json-key">"success"</span>: <span class="json-bool">false</span>,
+  <span class="json-key">"message"</span>: <span class="json-str">"API Key của Merchant không hợp lệ"</span>,
+  <span class="json-key">"timestamp"</span>: <span class="json-str">"2026-07-28T16:15:00.000"</span>
 &#125;</code></pre>
+            </div>
           </div>
 
           <!-- Error Codes Specification Table -->
@@ -645,11 +648,20 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
     .badge-opt { background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
 
     .code-with-label { margin-top: 4px; }
-    .code-label { display: block; font-size: 0.72rem; font-weight: 800; color: #c20067; background: #fff0f6; padding: 6px 14px; border-radius: 10px 10px 0 0; letter-spacing: 0.03em; }
+    .code-label { display: block; font-size: 0.75rem; font-weight: 800; padding: 8px 16px; border-radius: 12px 12px 0 0; letter-spacing: 0.03em; }
+    .code-label.success-label { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; border-bottom: none; }
+    .code-label.error-label { background: #451a03; color: #fca5a5; border: 1px solid #7f1d1d; border-bottom: none; }
     .code-with-label pre { border-radius: 0 0 14px 14px !important; margin-top: 0 !important; }
-    .error-code-box { border: 1px solid #fecaca !important; }
+
+    .dark-soft-box { background: #0f172a !important; border: 1px solid #1e293b !important; color: #e2e8f0 !important; }
+    .error-code-box { border: 1px solid #7f1d1d !important; background: #0f172a !important; }
+
+    .json-key { color: #38bdf8; font-weight: 700; }
+    .json-str { color: #34d399; }
+    .json-bool { color: #fbbf24; font-weight: 800; }
+
     .response-fields { display: flex; flex-direction: column; gap: 6px; }
-    .rf-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569; padding: 8px 12px; background: #f8fafc; border-radius: 8px; }
+    .rf-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569; padding: 8px 12px; background: #fffafc; border: 1px solid #f3d6e5; border-radius: 8px; }
     .rf-item code { background: #fff0f6; color: #c20067; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-family: monospace; flex-shrink: 0; }
     .rf-item span { line-height: 1.4; }
 
