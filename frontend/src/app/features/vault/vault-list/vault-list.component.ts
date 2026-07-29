@@ -21,100 +21,106 @@ import { VaultResponse, VaultService } from '../vault.service';
         </div>
 
         <div class="pig-wrap" aria-hidden="true">
-          <svg class="pig" viewBox="0 0 360 280" role="img">
+          <svg class="pig" viewBox="0 0 380 300" role="img">
             <defs>
-              <!-- 3D Soft Body Gradient -->
-              <linearGradient id="pig3dBody" x1="0%" y1="0%" x2="100%" y2="100%">
+              <!-- Premium 3D Piggy Gradient -->
+              <linearGradient id="pig3dBody" x1="15%" y1="10%" x2="85%" y2="90%">
                 <stop offset="0%" stop-color="#ffdeeb"/>
-                <stop offset="45%" stop-color="#ffb3d1"/>
-                <stop offset="85%" stop-color="#f472b6"/>
-                <stop offset="100%" stop-color="#db2777"/>
+                <stop offset="40%" stop-color="#ffb3d1"/>
+                <stop offset="80%" stop-color="#f472b6"/>
+                <stop offset="100%" stop-color="#e11d48"/>
               </linearGradient>
 
-              <!-- Inner Ear & Details Gradient -->
-              <linearGradient id="pigPinkAccent" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#f43f5e"/>
+              <!-- Inner Ear & Snout Deep Pink Gradient -->
+              <linearGradient id="pigDeepPink" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#fb7185"/>
                 <stop offset="100%" stop-color="#be123c"/>
               </linearGradient>
 
-              <!-- Belly 3D Highlight -->
-              <radialGradient id="bellyHighlight" cx="40%" cy="40%" r="60%">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
-                <stop offset="50%" stop-color="#ffdbe9" stop-opacity="0.2"/>
+              <!-- 3D Belly Soft Highlight -->
+              <radialGradient id="bellyHighlight" cx="42%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+                <stop offset="60%" stop-color="#ffdbe9" stop-opacity="0.15"/>
                 <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
               </radialGradient>
 
-              <!-- Gold Coin Gradient -->
+              <!-- Gold Coin Shiny 3D Gradient -->
               <linearGradient id="goldCoinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#fef08a"/>
-                <stop offset="40%" stop-color="#f59e0b"/>
-                <stop offset="100%" stop-color="#b45309"/>
+                <stop offset="35%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#92400e"/>
               </linearGradient>
 
               <!-- Ground Soft Shadow -->
               <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#9d174d" stop-opacity="0.25"/>
+                <stop offset="0%" stop-color="#9d174d" stop-opacity="0.22"/>
                 <stop offset="100%" stop-color="#9d174d" stop-opacity="0"/>
               </radialGradient>
             </defs>
 
-            <!-- Drop Shadow under Piggy -->
-            <ellipse cx="180" cy="252" rx="110" ry="14" fill="url(#groundShadow)"/>
+            <!-- Ground Shadow (Mặt đất phẳng bóng đẻ) -->
+            <ellipse cx="190" cy="272" rx="125" ry="16" fill="url(#groundShadow)"/>
 
-            <!-- Back Ear -->
-            <path d="M 125 75 C 105 35, 75 55, 95 95 Z" fill="#e11d48"/>
-            <path d="M 120 75 C 105 45, 85 60, 98 90 Z" fill="#be123c" opacity="0.6"/>
+            <!-- Left Ear (Back Layer) -->
+            <g transform="rotate(-15, 125, 65)">
+              <ellipse cx="125" cy="65" rx="22" ry="34" fill="#e11d48"/>
+              <ellipse cx="125" cy="67" rx="14" ry="24" fill="#be123c" opacity="0.7"/>
+            </g>
 
-            <!-- Back Legs -->
-            <rect x="110" y="195" width="34" height="42" rx="17" fill="#db2777"/>
-            <rect x="200" y="195" width="34" height="42" rx="17" fill="#db2777"/>
+            <!-- Right Ear (Front Layer - Symmetrical & Cute) -->
+            <g transform="rotate(15, 205, 65)">
+              <ellipse cx="205" cy="65" rx="24" ry="36" fill="url(#pig3dBody)"/>
+              <ellipse cx="205" cy="67" rx="15" ry="25" fill="url(#pigDeepPink)"/>
+            </g>
 
-            <!-- Tail (Curly cute spiral) -->
-            <path d="M 75 145 Q 50 140 55 160 Q 60 175 72 165 Q 80 155 68 152" fill="none" stroke="#f472b6" stroke-width="6" stroke-linecap="round"/>
+            <!-- Back Legs (Tạo độ sâu 3D phía sau) -->
+            <rect x="110" y="210" width="38" height="50" rx="19" fill="#be123c"/>
+            <rect x="220" y="210" width="38" height="50" rx="19" fill="#be123c"/>
 
-            <!-- Main Body (Symmetrical cute round piggy) -->
-            <ellipse cx="175" cy="155" rx="100" ry="75" fill="url(#pig3dBody)"/>
-            <ellipse cx="160" cy="140" rx="85" ry="60" fill="url(#bellyHighlight)"/>
+            <!-- Tail (Đuôi xoắn dễ thương cân đối ở hông) -->
+            <path d="M 68 150 C 42 145 44 175 60 178 C 72 180 75 160 62 158" fill="none" stroke="#f472b6" stroke-width="7" stroke-linecap="round"/>
 
-            <!-- Front Ear -->
-            <path d="M 165 72 C 140 25, 105 45, 130 92 Z" fill="url(#pig3dBody)"/>
-            <path d="M 160 72 C 142 38, 115 52, 133 88 Z" fill="url(#pigPinkAccent)"/>
+            <!-- Main Body (Thân heo to tròn mập mạp) -->
+            <ellipse cx="185" cy="165" rx="120" ry="90" fill="url(#pig3dBody)"/>
+            <ellipse cx="168" cy="145" rx="100" ry="72" fill="url(#bellyHighlight)"/>
 
-            <!-- Coin Slot on top of back -->
-            <ellipse cx="175" cy="82" rx="30" ry="7" fill="#831843"/>
-            <ellipse cx="175" cy="82" rx="26" ry="4" fill="#4c0519"/>
+            <!-- Coin Slot (Khe thả coin nằm chính giữa lưng heo) -->
+            <ellipse cx="165" cy="80" rx="34" ry="8" fill="#831843"/>
+            <ellipse cx="165" cy="80" rx="28" ry="4.5" fill="#38020f"/>
 
-            <!-- Floating Gold Coin Animation -->
+            <!-- Floating Gold Coin (Đồng xu vàng thả xuống khe) -->
             <g class="floating-coin">
-              <ellipse cx="175" cy="42" rx="22" ry="22" fill="url(#goldCoinGrad)"/>
-              <ellipse cx="175" cy="42" rx="17" ry="17" fill="none" stroke="#fef08a" stroke-width="2"/>
-              <text x="175" y="48" font-family="system-ui, sans-serif" font-size="17" font-weight="900" fill="#78350f" text-anchor="middle">$</text>
+              <ellipse cx="165" cy="38" rx="25" ry="25" fill="url(#goldCoinGrad)"/>
+              <ellipse cx="165" cy="38" rx="19" ry="19" fill="none" stroke="#fef08a" stroke-width="2.5"/>
+              <text x="165" y="45" font-family="system-ui, sans-serif" font-size="20" font-weight="900" fill="#78350f" text-anchor="middle">$</text>
             </g>
 
-            <!-- Front Legs -->
-            <rect x="125" y="202" width="36" height="44" rx="18" fill="url(#pig3dBody)"/>
-            <ellipse cx="143" cy="242" rx="15" ry="5" fill="#be123c" opacity="0.3"/>
-            
-            <rect x="215" y="202" width="36" height="44" rx="18" fill="url(#pig3dBody)"/>
-            <ellipse cx="233" cy="242" rx="15" ry="5" fill="#be123c" opacity="0.3"/>
-
-            <!-- Cheerful Eyes -->
+            <!-- Front Legs (Chân trước mập mạp đều đặn) -->
             <g>
-              <ellipse cx="225" cy="132" rx="10" ry="13" fill="#ffffff"/>
-              <circle cx="227" cy="132" r="6.5" fill="#0f172a"/>
-              <circle cx="229.5" cy="129" r="2.5" fill="#ffffff"/>
-              <circle cx="224" cy="134" r="1.2" fill="#ffffff"/>
+              <rect x="130" y="218" width="40" height="52" rx="20" fill="url(#pig3dBody)"/>
+              <ellipse cx="150" cy="264" rx="17" ry="5.5" fill="#be123c" opacity="0.35"/>
+
+              <rect x="230" y="218" width="40" height="52" rx="20" fill="url(#pig3dBody)"/>
+              <ellipse cx="250" cy="264" rx="17" ry="5.5" fill="#be123c" opacity="0.35"/>
             </g>
 
-            <!-- Rosy Blush -->
-            <ellipse cx="215" cy="155" rx="16" ry="9" fill="#f43f5e" opacity="0.35"/>
-
-            <!-- Snout (Cute Pig Nose) -->
+            <!-- Cheerful Big Eye (Mắt to tròn lanh lợi) -->
             <g>
-              <ellipse cx="258" cy="150" rx="24" ry="18" fill="url(#pigPinkAccent)"/>
-              <ellipse cx="258" cy="144" rx="20" ry="6" fill="#ffffff" opacity="0.25"/>
-              <ellipse cx="250" cy="150" rx="5" ry="7" fill="#4c0519"/>
-              <ellipse cx="266" cy="150" rx="5" ry="7" fill="#4c0519"/>
+              <ellipse cx="245" cy="138" rx="12" ry="15" fill="#ffffff"/>
+              <circle cx="247.5" cy="138" r="8" fill="#0f172a"/>
+              <circle cx="250.5" cy="134.5" r="3" fill="#ffffff"/>
+              <circle cx="244" cy="140.5" r="1.5" fill="#ffffff"/>
+            </g>
+
+            <!-- Rosy Cheek Blush (Má hồng mũm mĩm) -->
+            <ellipse cx="232" cy="165" rx="18" ry="10" fill="#f43f5e" opacity="0.38"/>
+
+            <!-- Snout / Nose (Mũi heo 3D xinh xắn đặt chuẩn tỉ lệ) -->
+            <g>
+              <ellipse cx="282" cy="160" rx="28" ry="20" fill="url(#pigDeepPink)"/>
+              <ellipse cx="282" cy="153" rx="22" ry="7" fill="#ffffff" opacity="0.25"/>
+              <ellipse cx="272" cy="160" rx="6" ry="8" fill="#38020f"/>
+              <ellipse cx="292" cy="160" rx="6" ry="8" fill="#38020f"/>
             </g>
           </svg>
         </div>
@@ -220,9 +226,9 @@ import { VaultResponse, VaultService } from '../vault.service';
     .primary-btn { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: white; padding: 12px 22px; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.01em; text-decoration: none; box-shadow: 0 8px 22px rgba(194, 0, 103, 0.25); cursor: pointer; transition: all 0.25s cubic-bezier(.16,1,.3,1); }
     .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.35); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); }
     .soft-pill { display: inline-flex; align-items: center; min-height: 38px; border-radius: 999px; padding: 8px 16px; background: rgba(255,255,255,.9); color: #c20067; font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(244,114,182,.3); }
-    .pig-wrap { display: flex; align-items: center; justify-content: center; min-height: 220px; }
+    .pig-wrap { display: flex; align-items: center; justify-content: center; min-height: 240px; }
     .pig {
-      width: min(100%, 340px);
+      width: min(100%, 380px);
       filter: drop-shadow(0 20px 30px rgba(190, 24, 93, 0.18));
       animation: pigBobbing 4s ease-in-out infinite;
     }
