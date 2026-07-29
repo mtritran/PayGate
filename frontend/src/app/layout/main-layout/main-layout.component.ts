@@ -26,9 +26,7 @@ import { NotificationService } from '../../core/services/notification.service';
         <!-- Brand Header -->
         <div class="brand-header">
           <div class="brand-logo" (click)="collapsed() && toggleCollapse()" [title]="collapsed() ? 'Expand sidebar' : ''">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+            <img src="assets/logo.png" alt="PayGate Logo" class="brand-logo-img">
           </div>
           <div class="brand-text" *ngIf="!collapsed()">
             <div class="brand-title">PayGate</div>
@@ -363,21 +361,21 @@ import { NotificationService } from '../../core/services/notification.service';
     }
 
     .brand-logo {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border-radius: var(--radius-md);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+      overflow: hidden;
     }
 
-    .brand-logo svg {
-      width: 22px;
-      height: 22px;
-      color: #ffffff;
+    .brand-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
     }
 
     .brand-text {

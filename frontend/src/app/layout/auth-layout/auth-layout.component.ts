@@ -19,9 +19,7 @@ import { CommonModule } from '@angular/common';
       <header class="auth-header">
         <div class="auth-brand">
           <div class="auth-brand-logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+            <img src="assets/logo.png" alt="PayGate Logo" class="auth-logo-img">
           </div>
           <div class="auth-brand-text">
             <div class="auth-brand-title">PayGate</div>
@@ -114,19 +112,20 @@ import { CommonModule } from '@angular/common';
     .auth-brand-logo {
       width: 44px;
       height: 44px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);
     }
 
-    .auth-brand-logo svg {
-      width: 24px;
-      height: 24px;
-      color: #ffffff;
+    .auth-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
     }
 
     .auth-brand-title {
