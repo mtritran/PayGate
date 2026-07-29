@@ -25,6 +25,9 @@ export interface UserVoucherResponse {
   voucherCode: string;
   title: string;
   discountAmount: number;
+  pointsRequired: number;
+  minOrderAmount: number;
+  applicableType: string;
   status: 'AVAILABLE' | 'USED' | 'EXPIRED';
   redeemedAt: string;
   usedAt?: string;

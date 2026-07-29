@@ -156,7 +156,7 @@ public class VoucherServiceImpl implements VoucherService {
                     .build();
         }
 
-        if (voucher.getApplicableType() != VoucherApplicableType.ALL && voucher.getApplicableType() != request.transactionType()) {
+        if (!isApplicable(voucher.getApplicableType(), request.transactionType())) {
             return VoucherApplyResponse.builder()
                     .valid(false)
                     .message("Voucher is not applicable for transaction type " + request.transactionType())
@@ -217,6 +217,12 @@ public class VoucherServiceImpl implements VoucherService {
                 .build();
     }
 
+    private boolean isApplicable(VoucherApplicableType voucherType, VoucherApplicableType transactionType) {
+        return voucherType == VoucherApplicableType.ALL
+                || voucherType == transactionType
+                || (transactionType == VoucherApplicableType.BILL_PAYMENT && voucherType == VoucherApplicableType.PAYMENT);
+    }
+
     private UserVoucherResponse mapToUserVoucherResponse(UserVoucher userVoucher) {
         Voucher voucher = userVoucher.getVoucher();
         return UserVoucherResponse.builder()
@@ -225,6 +231,9 @@ public class VoucherServiceImpl implements VoucherService {
                 .voucherCode(voucher.getCode())
                 .title(voucher.getTitle())
                 .discountAmount(voucher.getDiscountAmount())
+                .pointsRequired(voucher.getPointsRequired())
+                .minOrderAmount(voucher.getMinOrderAmount())
+                .applicableType(voucher.getApplicableType())
                 .status(userVoucher.getStatus())
                 .redeemedAt(userVoucher.getRedeemedAt())
                 .usedAt(userVoucher.getUsedAt())

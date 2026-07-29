@@ -16,6 +16,8 @@ import com.training.paygate.entity.Merchant;
 import com.training.paygate.entity.SavedBill;
 import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
+import com.training.paygate.entity.UserVoucher;
+import com.training.paygate.entity.Voucher;
 import com.training.paygate.enums.AccountStatus;
 import com.training.paygate.enums.BillStatus;
 import com.training.paygate.enums.BillType;
@@ -23,6 +25,8 @@ import com.training.paygate.enums.EntryType;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
+import com.training.paygate.enums.UserVoucherStatus;
+import com.training.paygate.enums.VoucherApplicableType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.BillAlreadyPaidException;
 import com.training.paygate.exception.BillNotFoundException;
@@ -38,6 +42,7 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.SavedBillRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.repository.UserVoucherRepository;
 import com.training.paygate.integration.provider.BillProviderClient;
 import com.training.paygate.integration.provider.ProviderBillDto;
 import com.training.paygate.service.BillService;
@@ -72,6 +77,7 @@ public class BillServiceImpl implements BillService {
     private final BalanceCacheService balanceCacheService;
     private final BillProviderClient billProviderClient;
     private final AmqpTemplate amqpTemplate;
+    private final UserVoucherRepository userVoucherRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -157,6 +163,28 @@ public class BillServiceImpl implements BillService {
 
         java.math.BigDecimal originalAmount = bill.getAmount();
         java.math.BigDecimal discountAmount = java.math.BigDecimal.ZERO;
+        UserVoucher appliedVoucher = null;
+
+        if (request.voucherCode() != null && !request.voucherCode().isBlank()) {
+            appliedVoucher = userVoucherRepository.findByUserIdAndVoucherCodeAndStatus(
+                            user.getId(), request.voucherCode().trim(), UserVoucherStatus.AVAILABLE)
+                    .orElseThrow(() -> new BadRequestException("Voucher code not found or not available in your collection"));
+
+            Voucher voucher = appliedVoucher.getVoucher();
+            if (voucher.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new BadRequestException("Voucher has expired");
+            }
+            if (originalAmount.compareTo(voucher.getMinOrderAmount()) < 0) {
+                throw new BadRequestException("Order amount is below minimum order requirement of " + voucher.getMinOrderAmount());
+            }
+            if (voucher.getApplicableType() != VoucherApplicableType.ALL
+                    && voucher.getApplicableType() != VoucherApplicableType.BILL_PAYMENT
+                    && voucher.getApplicableType() != VoucherApplicableType.PAYMENT) {
+                throw new BadRequestException("Voucher is not applicable for bill payment");
+            }
+            discountAmount = voucher.getDiscountAmount().min(originalAmount);
+        }
+
         java.math.BigDecimal paidAmount = originalAmount.subtract(discountAmount);
 
         Long firstId = Math.min(sourceAccount.getId(), destAccount.getId());
@@ -222,6 +250,12 @@ public class BillServiceImpl implements BillService {
         bill.setTransactionRef(transaction.getTransactionRef());
         bill.setPaidAt(paidAt);
         billRepository.save(bill);
+
+        if (appliedVoucher != null) {
+            appliedVoucher.setStatus(UserVoucherStatus.USED);
+            appliedVoucher.setUsedAt(paidAt);
+            userVoucherRepository.save(appliedVoucher);
+        }
 
         final Long sourceIdToEvict = lockedSource.getId();
         final Long destIdToEvict = lockedDest.getId();

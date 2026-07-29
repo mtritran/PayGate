@@ -26,6 +26,7 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.service.LoyaltyService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
+    private final LoyaltyService loyaltyService;
 
     @Override
     @Transactional
@@ -175,6 +177,10 @@ public class TransactionServiceImpl implements TransactionService {
                 .description(request.description())
                 .build();
         transaction = transactionRepository.save(transaction);
+
+        if (lockedSource.getOwnerType() == OwnerType.USER && lockedDest.getOwnerType() == OwnerType.MERCHANT) {
+            loyaltyService.earnPoints(user.getId(), transaction.getAmount(), transaction.getTransactionRef());
+        }
 
         // 9. Save Ledger Entries
         LedgerEntry debitEntry = LedgerEntry.builder()
