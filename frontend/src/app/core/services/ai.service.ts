@@ -27,10 +27,16 @@ export class AiService {
     let targetUserId = userId;
     if (!targetUserId && typeof localStorage !== 'undefined') {
       try {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          if (parsed && parsed.id) targetUserId = parsed.id;
+        const keys = ['user', 'currentUser', 'paygate_user', 'auth_user'];
+        for (const key of keys) {
+          const item = localStorage.getItem(key);
+          if (item) {
+            const parsed = JSON.parse(item);
+            if (parsed && parsed.id) {
+              targetUserId = parsed.id;
+              break;
+            }
+          }
         }
       } catch {}
     }
