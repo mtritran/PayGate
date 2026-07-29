@@ -60,9 +60,14 @@ export class SwrService {
 
     // Auto-polling timer
     const pollSubscription = timer(0, refreshInterval).pipe(
-      switchMap(() => fetcher().pipe(
-        catchError(err => of(null))
-      ))
+      switchMap(() => {
+        if (typeof localStorage !== 'undefined' && !localStorage.getItem('access_token')) {
+          return of(null);
+        }
+        return fetcher().pipe(
+          catchError(err => of(null))
+        );
+      })
     ).subscribe(res => {
       if (res !== null) {
         this.cache.set(key, res);
