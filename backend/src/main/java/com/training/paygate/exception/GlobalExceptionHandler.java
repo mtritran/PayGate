@@ -93,8 +93,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
-        log.warn("Data integrity violation: {}", ex.getMessage());
-        return ApiResponse.error("Database constraint violation or duplicate resource");
+        String causeMsg = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        log.warn("Data integrity violation: {}", causeMsg);
+        return ApiResponse.error("Database constraint violation or duplicate resource: " + causeMsg);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
