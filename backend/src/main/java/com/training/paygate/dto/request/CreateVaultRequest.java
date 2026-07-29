@@ -1,6 +1,6 @@
 package com.training.paygate.dto.request;
 
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -21,6 +21,6 @@ public record CreateVaultRequest(
         @Positive(message = "Target amount must be greater than zero")
         BigDecimal targetAmount,
 
-        @Future(message = "Deadline must be in the future")
+        @FutureOrPresent(message = "Deadline must be in the present or future")
         LocalDate deadline
 ) {}

@@ -70,7 +70,17 @@ public class AccountServiceImpl implements AccountService {
                                 .build();
 
                 Account saved = accountRepository.save(account);
-                saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                String prefix = switch (ownerType) {
+                        case USER -> "ACC";
+                        case VAULT -> "VLT";
+                        case MERCHANT -> "MER";
+                        default -> "SYS";
+                };
+                String formattedAccNum = prefix + String.format("%08d", saved.getId());
+                if (accountRepository.existsByAccountNumber(formattedAccNum)) {
+                        formattedAccNum = prefix + System.currentTimeMillis() + (int)(Math.random() * 1000);
+                }
+                saved.setAccountNumber(formattedAccNum);
                 saved = accountRepository.save(saved);
 
                 return accountMapper.toResponse(saved);
