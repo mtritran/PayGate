@@ -20,56 +20,107 @@ import { NotificationService } from '../../../core/services/notification.service
           <p>{{ form.value.description || 'Set a clear target so every deposit feels more motivating.' }}</p>
 
           <div class="pig-stage" aria-hidden="true">
-            <svg viewBox="0 0 320 220">
+            <svg class="pig" viewBox="0 0 380 300" role="img">
               <defs>
-                <linearGradient id="createPig2" x1="20" y1="20" x2="280" y2="190">
-                  <stop offset="0%" stop-color="#ffd6e7"/>
-                  <stop offset="50%" stop-color="#ffb8d0"/>
-                  <stop offset="100%" stop-color="#f48fb1"/>
+                <!-- Premium 3D Piggy Gradient -->
+                <linearGradient id="pig3dBodyCreate" x1="15%" y1="10%" x2="85%" y2="90%">
+                  <stop offset="0%" stop-color="#ffdeeb"/>
+                  <stop offset="40%" stop-color="#ffb3d1"/>
+                  <stop offset="80%" stop-color="#f472b6"/>
+                  <stop offset="100%" stop-color="#e11d48"/>
                 </linearGradient>
-                <radialGradient id="createBelly" cx="0.5" cy="0.45" r="0.5">
-                  <stop offset="0%" stop-color="#fff5f9" stop-opacity="0.85"/>
-                  <stop offset="100%" stop-color="#ffb8d0" stop-opacity="0"/>
+
+                <!-- Inner Ear & Snout Deep Pink Gradient -->
+                <linearGradient id="pigDeepPinkCreate" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#fb7185"/>
+                  <stop offset="100%" stop-color="#be123c"/>
+                </linearGradient>
+
+                <!-- 3D Belly Soft Highlight -->
+                <radialGradient id="bellyHighlightCreate" cx="42%" cy="38%" r="62%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+                  <stop offset="60%" stop-color="#ffdbe9" stop-opacity="0.15"/>
+                  <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
                 </radialGradient>
-                <linearGradient id="createCoin" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#ffe68f"/>
-                  <stop offset="100%" stop-color="#f59e0b"/>
+
+                <!-- Gold Coin Shiny 3D Gradient -->
+                <linearGradient id="goldCoinGradCreate" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fef08a"/>
+                  <stop offset="35%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#92400e"/>
                 </linearGradient>
-                <linearGradient id="createNose" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#f06292"/>
-                  <stop offset="100%" stop-color="#c20067"/>
-                </linearGradient>
+
+                <!-- Ground Soft Shadow -->
+                <radialGradient id="groundShadowCreate" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#9d174d" stop-opacity="0.22"/>
+                  <stop offset="100%" stop-color="#9d174d" stop-opacity="0"/>
+                </radialGradient>
               </defs>
-              <!-- Ears -->
-              <ellipse cx="84" cy="64" rx="22" ry="26" fill="#f48fb1" transform="rotate(-18 84 64)"/>
-              <ellipse cx="84" cy="68" rx="12" ry="16" fill="#ec407a" opacity="0.5" transform="rotate(-18 84 68)"/>
-              <ellipse cx="216" cy="64" rx="22" ry="26" fill="#f48fb1" transform="rotate(18 216 64)"/>
-              <ellipse cx="216" cy="68" rx="12" ry="16" fill="#ec407a" opacity="0.5" transform="rotate(18 216 68)"/>
-              <!-- Body -->
-              <path d="M62 120c0-44 40-74 100-74 50 0 88 18 104 48 10-4 20 2 22 12 1 13-10 22-26 22-16 32-54 50-102 50-14 0-28-2-40-5l-18 18h-28l6-30c-18-14-26-32-26-48z" fill="url(#createPig2)"/>
-              <!-- Belly -->
-              <ellipse cx="155" cy="116" rx="68" ry="26" fill="url(#createBelly)"/>
+
+              <!-- Ground Shadow -->
+              <ellipse cx="190" cy="272" rx="125" ry="16" fill="url(#groundShadowCreate)"/>
+
+              <!-- Left Ear (Back Layer) -->
+              <g transform="rotate(-15, 125, 65)">
+                <ellipse cx="125" cy="65" rx="22" ry="34" fill="#e11d48"/>
+                <ellipse cx="125" cy="67" rx="14" ry="24" fill="#be123c" opacity="0.7"/>
+              </g>
+
+              <!-- Right Ear (Front Layer - Symmetrical) -->
+              <g transform="rotate(15, 205, 65)">
+                <ellipse cx="205" cy="65" rx="24" ry="36" fill="url(#pig3dBodyCreate)"/>
+                <ellipse cx="205" cy="67" rx="15" ry="25" fill="url(#pigDeepPinkCreate)"/>
+              </g>
+
+              <!-- Back Legs -->
+              <rect x="110" y="210" width="38" height="50" rx="19" fill="#be123c"/>
+              <rect x="220" y="210" width="38" height="50" rx="19" fill="#be123c"/>
+
               <!-- Tail -->
-              <path d="M44 112c-10-5-16 10-4 14 8 4 14-1 12-7" fill="none" stroke="#f48fb1" stroke-width="7" stroke-linecap="round"/>
-              <!-- Legs -->
-              <rect x="96" y="184" width="26" height="14" rx="7" fill="url(#createPig2)"/>
-              <rect x="182" y="184" width="26" height="14" rx="7" fill="url(#createPig2)"/>
-              <ellipse cx="109" cy="200" rx="18" ry="6" fill="#e88ba8"/>
-              <ellipse cx="195" cy="200" rx="18" ry="6" fill="#e88ba8"/>
-              <!-- Coin -->
-              <rect x="118" y="14" width="64" height="20" rx="10" fill="url(#createCoin)"/>
-              <text x="150" y="28" font-family="Arial,sans-serif" font-size="12" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
-              <!-- Eye -->
-              <ellipse cx="198" cy="98" rx="7" ry="9" fill="#fff"/>
-              <circle cx="200" cy="98" r="4.5" fill="#380e1f"/>
-              <circle cx="202" cy="95.5" r="1.8" fill="#fff"/>
-              <!-- Blush -->
-              <ellipse cx="186" cy="112" rx="10" ry="5" fill="#ec407a" opacity="0.12"/>
-              <!-- Snout -->
-              <ellipse cx="240" cy="118" rx="16" ry="13" fill="url(#createNose)"/>
-              <circle cx="233" cy="117" r="3" fill="#380e1f" opacity="0.5"/>
-              <circle cx="247" cy="117" r="3" fill="#380e1f" opacity="0.5"/>
-              <ellipse cx="240" cy="114" rx="9" ry="3" fill="#fff" opacity="0.15"/>
+              <path d="M 68 150 C 42 145 44 175 60 178 C 72 180 75 160 62 158" fill="none" stroke="#f472b6" stroke-width="7" stroke-linecap="round"/>
+
+              <!-- Main Body -->
+              <ellipse cx="185" cy="165" rx="120" ry="90" fill="url(#pig3dBodyCreate)"/>
+              <ellipse cx="168" cy="145" rx="100" ry="72" fill="url(#bellyHighlightCreate)"/>
+
+              <!-- Coin Slot -->
+              <ellipse cx="165" cy="80" rx="34" ry="8" fill="#831843"/>
+              <ellipse cx="165" cy="80" rx="28" ry="4.5" fill="#38020f"/>
+
+              <!-- Floating Gold Coin Animation -->
+              <g class="floating-coin">
+                <ellipse cx="165" cy="38" rx="25" ry="25" fill="url(#goldCoinGradCreate)"/>
+                <ellipse cx="165" cy="38" rx="19" ry="19" fill="none" stroke="#fef08a" stroke-width="2.5"/>
+                <text x="165" y="45" font-family="system-ui, sans-serif" font-size="20" font-weight="900" fill="#78350f" text-anchor="middle">$</text>
+              </g>
+
+              <!-- Front Legs -->
+              <g>
+                <rect x="130" y="218" width="40" height="52" rx="20" fill="url(#pig3dBodyCreate)"/>
+                <ellipse cx="150" cy="264" rx="17" ry="5.5" fill="#be123c" opacity="0.35"/>
+
+                <rect x="230" y="218" width="40" height="52" rx="20" fill="url(#pig3dBodyCreate)"/>
+                <ellipse cx="250" cy="264" rx="17" ry="5.5" fill="#be123c" opacity="0.35"/>
+              </g>
+
+              <!-- Cheerful Big Eye -->
+              <g>
+                <ellipse cx="245" cy="138" rx="12" ry="15" fill="#ffffff"/>
+                <circle cx="247.5" cy="138" r="8" fill="#0f172a"/>
+                <circle cx="250.5" cy="134.5" r="3" fill="#ffffff"/>
+                <circle cx="244" cy="140.5" r="1.5" fill="#ffffff"/>
+              </g>
+
+              <!-- Rosy Cheek Blush -->
+              <ellipse cx="232" cy="165" rx="18" ry="10" fill="#f43f5e" opacity="0.38"/>
+
+              <!-- Snout / Nose -->
+              <g>
+                <ellipse cx="282" cy="160" rx="28" ry="20" fill="url(#pigDeepPinkCreate)"/>
+                <ellipse cx="282" cy="153" rx="22" ry="7" fill="#ffffff" opacity="0.25"/>
+                <ellipse cx="272" cy="160" rx="6" ry="8" fill="#38020f"/>
+                <ellipse cx="292" cy="160" rx="6" ry="8" fill="#38020f"/>
+              </g>
             </svg>
           </div>
 
@@ -137,8 +188,26 @@ import { NotificationService } from '../../../core/services/notification.service
       word-break: break-word;
     }
     p { margin: 0; color: #475569; font-size: 0.98rem; font-weight: 500; line-height: 1.5; }
-    .pig-stage { display: flex; justify-content: center; align-items: center; min-height: 210px; margin: 10px 0 18px; }
-    .pig-stage svg { width: min(100%, 320px); filter: drop-shadow(0 16px 24px rgba(194,0,103,.12)); }
+    .pig-stage { display: flex; justify-content: center; align-items: center; min-height: 240px; margin: 10px 0 18px; }
+    .pig-stage .pig {
+      width: min(100%, 340px);
+      filter: drop-shadow(0 20px 30px rgba(190, 24, 93, 0.18));
+      animation: pigBobbing 4s ease-in-out infinite;
+    }
+    .floating-coin {
+      animation: coinDrop 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes pigBobbing {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+    @keyframes coinDrop {
+      0% { transform: translateY(-16px); opacity: 0; }
+      30% { opacity: 1; }
+      80% { transform: translateY(22px); opacity: 1; }
+      100% { transform: translateY(28px); opacity: 0; }
+    }
     .preview-amount { display: flex; justify-content: space-between; gap: 14px; align-items: flex-end; border-radius: 18px; padding: 16px; background: rgba(255,255,255,.9); border: 1px solid rgba(244,114,182,.25); }
     .preview-amount span { color: #64748b; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
     .preview-amount strong { color: #c20067; font-size: 1.35rem; font-weight: 900; letter-spacing: -0.01em; text-align: right; }
