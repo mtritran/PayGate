@@ -434,7 +434,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     {
       id: 'init-1',
       sender: 'ai',
-      text: 'Hello! I am **PayGate AI Assistant**, powered by OpenRouter. Ask me anything about finance, payments, or PayGate features.',
+      text: 'Xin chào! Tôi là **Trợ Lý AI PayGate**, sẵn sàng hỗ trợ bạn kiểm tra số dư, hũ tiết kiệm, khoản vay, thanh toán hóa đơn và giao dịch.',
       timestamp: new Date()
     }
   ]);
@@ -568,7 +568,9 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   private sanitizer = inject(DomSanitizer);
 
   formatMessageText(text: string): SafeHtml {
-    if (!text) return '';
+    if (!text || text === 'null' || text === 'undefined' || text.trim() === '') {
+      return this.sanitizer.bypassSecurityTrustHtml('Dữ liệu tài khoản của bạn đã được ghi nhận. Vui lòng thử hỏi lại hoặc bấm phím chức năng bên dưới!');
+    }
     const formatted = text
       // Strip markdown tables entirely (lines starting with | )
       .replace(/^\|.*\|\s*$/gm, '')
