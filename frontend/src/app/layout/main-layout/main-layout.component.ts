@@ -24,7 +24,7 @@ import { NotificationService } from '../../core/services/notification.service';
     <div class="main-layout">
       <!-- Top Header Bar -->
       <header class="top-header">
-        <div class="header-left">
+        <div class="header-left clickable-brand" routerLink="/accounts/dashboard">
           <div class="header-logo">
             <img src="assets/PayGate_Logo.jpg" alt="PayGate" class="header-logo-img">
           </div>
@@ -98,6 +98,13 @@ import { NotificationService } from '../../core/services/notification.service';
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    }
+    .header-left:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
     }
 
     .header-logo {
