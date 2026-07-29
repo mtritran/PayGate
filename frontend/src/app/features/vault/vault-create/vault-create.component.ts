@@ -90,13 +90,13 @@ import { NotificationService } from '../../../core/services/notification.service
     .preview-panel, .form-card { border: 1px solid #f3d6e5; border-radius: 26px; background: #fff; box-shadow: 0 18px 48px rgba(99, 24, 75, .08); }
     .preview-panel { overflow: hidden; padding: 28px; background: linear-gradient(150deg, #fff7fb, #ffe1ef 55%, #e9fbf1); }
     .eyebrow { color: #be185d; font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
-    h1 { margin: 10px 0 8px; color: #2b1238; font-size: clamp(2rem, 4vw, 3.15rem); line-height: 1.06; letter-spacing: 0; word-break: break-word; }
-    p { margin: 0; color: #74425d; line-height: 1.6; }
+    h1 { margin: 10px 0 8px; color: #2b1238; font-size: clamp(2rem, 4vw, 3.15rem); font-weight: 900; line-height: 1.06; letter-spacing: -0.01em; word-break: break-word; }
+    p { margin: 0; color: #5a2745; font-weight: 600; line-height: 1.6; }
     .pig-stage { display: flex; justify-content: center; align-items: center; min-height: 210px; margin: 10px 0 18px; }
     .pig-stage svg { width: min(100%, 320px); filter: drop-shadow(0 22px 30px rgba(190, 24, 93, .22)); }
-    .preview-amount { display: flex; justify-content: space-between; gap: 14px; align-items: flex-end; border-radius: 18px; padding: 16px; background: rgba(255,255,255,.72); border: 1px solid rgba(244,114,182,.22); }
-    .preview-amount span { color: #7b5870; font-weight: 800; }
-    .preview-amount strong { color: #be185d; font-size: 1.25rem; text-align: right; }
+    .preview-amount { display: flex; justify-content: space-between; gap: 14px; align-items: flex-end; border-radius: 18px; padding: 16px; background: rgba(255,255,255,.85); border: 1px solid rgba(244,114,182,.3); }
+    .preview-amount span { color: #6b405e; font-weight: 800; }
+    .preview-amount strong { color: #be185d; font-size: 1.35rem; font-weight: 900; text-align: right; }
     .form-card { display: flex; flex-direction: column; gap: 16px; padding: 26px; }
     label { display: flex; flex-direction: column; gap: 8px; font-weight: 900; color: #4b2540; }
     input, textarea { width: 100%; box-sizing: border-box; border: 1px solid #edc6d9; border-radius: 14px; padding: 13px 14px; font: inherit; color: #24142f; background: #fffafd; }
