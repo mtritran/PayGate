@@ -16,297 +16,312 @@ import { InputComponent } from '../../../shared/components';
     InputComponent
   ],
   template: `
-    <div class="auth-split-wrapper fade-in-up">
-      <div class="auth-split-card">
-        <!-- LEFT COLUMN: High-Tech Showcase Panel -->
-        <div class="auth-showcase-panel">
-          <div class="showcase-header">
-            <div class="brand-logo-group">
-              <div class="brand-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <span class="brand-name">PayGate <span class="badge-pro">PRO</span></span>
+    <div class="space-auth-container fade-in-up">
+      <div class="space-auth-card">
+        
+        <!-- LEFT COLUMN: Clean Minimalist Login Form -->
+        <div class="auth-form-side">
+          <div class="brand-header">
+            <div class="logo-box">
+              <img src="assets/PayGate_Logo.jpg" alt="PayGate" class="logo-img">
             </div>
-            <span class="version-chip">v2.5 Enterprise</span>
+            <span class="brand-title">PayGate <span class="brand-tag">PRO</span></span>
           </div>
 
-          <div class="showcase-main-content">
-            <h2 class="showcase-title">Cổng Thanh Toán & Ví Số Thông Minh</h2>
-            <p class="showcase-desc">Trải nghiệm giao dịch tức thì 200ms, sổ cái đối ứng realtime và kết nối đa ngân hàng bảo mật tuyệt đối.</p>
+          <div class="form-body">
+            <h1 class="main-title">Login</h1>
+            <p class="sub-text">Don't have an account? <a routerLink="/register" class="highlight-link">Register PayGate Now</a></p>
 
-            <!-- Metallic Glass Card Preview -->
-            <div class="metallic-card-preview shimmer-effect">
-              <div class="preview-top-row">
-                <span class="preview-brand">PayGate <i>VISA</i></span>
-                <span class="preview-chip-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2">
-                    <rect x="2" y="5" width="20" height="14" rx="2"/>
-                    <line x1="2" y1="10" x2="22" y2="10"/>
-                  </svg>
-                </span>
-              </div>
-              <div class="preview-num">4532 •••• •••• 8892</div>
-              <div class="preview-bottom-row">
-                <div>
-                  <span class="lbl">CHỦ THẺ VÍ</span>
-                  <span class="val">PAYGATE PREMIUM</span>
-                </div>
-                <div>
-                  <span class="lbl">TRẠNG THÁI</span>
-                  <span class="status-badge">ACTIVE</span>
-                </div>
-              </div>
+            <!-- Quick Demo Login Buttons -->
+            <div class="quick-demo-row mt-16">
+              <span class="demo-tag">Quick Demo:</span>
+              <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User</button>
+              <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin</button>
             </div>
 
-            <!-- Highlights List -->
-            <div class="showcase-highlights">
-              <div class="highlight-item">
-                <div class="h-icon-box">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2.2">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                  </svg>
-                </div>
-                <div class="h-text">
-                  <strong>Thanh Toán Siêu Tốc</strong>
-                  <span>Gạch nợ tức thì dưới 200ms với mã OTP Gmail</span>
-                </div>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-20">
+              <div class="form-field">
+                <pg-input
+                  label="Email Address or Username"
+                  placeholder="Enter email or username..."
+                  formControlName="username"
+                  type="text"
+                  autocomplete="username"
+                  [error]="usernameError()"
+                  [prefixIcon]="userIcon"
+                ></pg-input>
               </div>
 
-              <div class="highlight-item">
-                <div class="h-icon-box">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                </div>
-                <div class="h-text">
-                  <strong>Bảo Mật Chuẩn Bank-Grade</strong>
-                  <span>Mã hóa SSL 256-bit & hệ thống Sổ cái kép</span>
-                </div>
+              <div class="form-field">
+                <pg-input
+                  label="Password"
+                  placeholder="Enter password..."
+                  formControlName="password"
+                  type="password"
+                  autocomplete="current-password"
+                  [error]="passwordError()"
+                  [prefixIcon]="lockIcon"
+                  [showPasswordToggle]="true"
+                ></pg-input>
               </div>
-            </div>
+
+              <div class="form-actions">
+                <label class="remember-label">
+                  <input type="checkbox" formControlName="rememberMe" />
+                  <span>Remember Me</span>
+                </label>
+                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot Your Password?</a>
+              </div>
+
+              <button type="submit" class="btn-rocket-submit" [disabled]="form.invalid || loading()">
+                <span *ngIf="!loading()">Log In 🚀</span>
+                <span *ngIf="loading()" class="loading-span"><span class="spinner"></span> Authenticating...</span>
+              </button>
+
+              <div class="error-msg-banner" *ngIf="submitError()">
+                ⚠️ {{ submitError() }}
+              </div>
+            </form>
           </div>
 
-          <!-- Footer Trust Badges -->
-          <div class="showcase-footer">
-            <span>ISO 27001 Certified</span>
-            <span>•</span>
-            <span>99.99% Uptime SLA</span>
+          <div class="form-footer">
+            <p>© 2026 PayGate Inc. All rights reserved. <br> <a routerLink="/terms" class="legal-link">Terms of Service</a> | <a routerLink="/privacy" class="legal-link">Privacy Policy</a></p>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Modern Form Panel -->
-        <div class="auth-form-panel">
-          <div class="form-panel-header">
-            <div class="auth-header-tag">WELCOME BACK</div>
-            <h1 class="form-title">Đăng Nhập PayGate</h1>
-            <p class="form-subtitle">Nhập tài khoản của bạn để truy cập Bảng điều khiển Ví.</p>
-          </div>
+        <!-- RIGHT COLUMN: Animated Space Rocket Launch Graphics -->
+        <div class="space-illustration-side">
+          <svg class="space-scene" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img">
+            <defs>
+              <!-- Space Sky Gradient -->
+              <linearGradient id="spaceSky" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#0b0726"/>
+                <stop offset="40%" stop-color="#190e4f"/>
+                <stop offset="75%" stop-color="#4a154b"/>
+                <stop offset="100%" stop-color="#932b26"/>
+              </linearGradient>
 
-          <!-- Quick Fill Demo Buttons -->
-          <div class="demo-quick-bar">
-            <span class="demo-label">Đăng nhập nhanh (Demo):</span>
-            <div class="demo-btn-group">
-              <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">
-                👤 User Demo
-              </button>
-              <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">
-                🛡️ Admin Demo
-              </button>
-            </div>
-          </div>
+              <!-- Mountain Sunset Gradients -->
+              <linearGradient id="mountainFront" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ea580c"/>
+                <stop offset="50%" stop-color="#c2410c"/>
+                <stop offset="100%" stop-color="#7c2d12"/>
+              </linearGradient>
+              <linearGradient id="mountainBack" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#c026d3"/>
+                <stop offset="100%" stop-color="#4c1d95"/>
+              </linearGradient>
 
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form-content mt-20">
-            <div class="form-group">
-              <pg-input
-                label="Tên đăng nhập hoặc Email"
-                placeholder="Nhập username hoặc email..."
-                formControlName="username"
-                type="text"
-                autocomplete="username"
-                [error]="usernameError()"
-                [prefixIcon]="userIcon"
-              ></pg-input>
-            </div>
+              <!-- Rocket Body Gradients -->
+              <linearGradient id="rocketBody" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#fdba74"/>
+                <stop offset="50%" stop-color="#f97316"/>
+                <stop offset="100%" stop-color="#c2410c"/>
+              </linearGradient>
+              <linearGradient id="rocketWing" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#ea580c"/>
+                <stop offset="100%" stop-color="#7c2d12"/>
+              </linearGradient>
+              <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#fef08a"/>
+                <stop offset="40%" stop-color="#f97316"/>
+                <stop offset="100%" stop-color="#dc2626"/>
+              </linearGradient>
+            </defs>
 
-            <div class="form-group">
-              <pg-input
-                label="Mật khẩu"
-                placeholder="Nhập mật khẩu..."
-                formControlName="password"
-                type="password"
-                autocomplete="current-password"
-                [error]="passwordError()"
-                [prefixIcon]="lockIcon"
-                [showPasswordToggle]="true"
-              ></pg-input>
-            </div>
+            <!-- Sky Background -->
+            <rect width="500" height="600" fill="url(#spaceSky)"/>
 
-            <div class="form-options">
-              <label class="checkbox-wrapper">
-                <input type="checkbox" formControlName="rememberMe" />
-                <span class="checkbox-custom"></span>
-                <span class="checkbox-label">Ghi nhớ đăng nhập</span>
-              </label>
-              <a routerLink="/auth/forgot-password" class="forgot-link">Quên mật khẩu?</a>
-            </div>
+            <!-- Twinkling Stars -->
+            <g class="stars-group">
+              <circle cx="60" cy="80" r="1.5" fill="#fff" opacity="0.8"/>
+              <circle cx="120" cy="40" r="2" fill="#fff" opacity="0.9"/>
+              <circle cx="210" cy="90" r="1.2" fill="#fff" opacity="0.7"/>
+              <circle cx="340" cy="50" r="2.5" fill="#fff" opacity="0.95"/>
+              <circle cx="420" cy="110" r="1.8" fill="#fff" opacity="0.85"/>
+              <circle cx="450" cy="30" r="1" fill="#fff" opacity="0.6"/>
+              <circle cx="90" cy="180" r="2" fill="#fff" opacity="0.9"/>
+              <circle cx="390" cy="190" r="1.5" fill="#fff" opacity="0.75"/>
+            </g>
 
-            <button
-              type="submit"
-              class="btn-pink-primary pulse-glow"
-              [disabled]="form.invalid || loading()"
-            >
-              <span *ngIf="!loading()" class="btn-text-content">
-                Đăng Nhập Ngay ↗
-              </span>
-              <span *ngIf="loading()" class="btn-text-content">
-                <span class="btn-spinner"></span>
-                Đang xác thực...
-              </span>
-            </button>
+            <!-- Drifting Clouds -->
+            <g class="drifting-clouds" opacity="0.4">
+              <path d="M 30 110 Q 50 90 80 100 Q 110 80 140 100 Q 160 120 130 130 Z" fill="#c084fc"/>
+              <path d="M 320 140 Q 340 120 370 130 Q 400 110 430 130 Q 450 150 420 160 Z" fill="#e879f9"/>
+              <path d="M 180 50 Q 200 35 220 45 Q 240 30 260 50 Z" fill="#a855f7"/>
+            </g>
 
-            <!-- Error Banner -->
-            <div class="error-banner mt-12" *ngIf="submitError()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="17" />
-              </svg>
-              <span>{{ submitError() }}</span>
-            </div>
-          </form>
+            <!-- Background Mountains -->
+            <path d="M 0 450 L 100 320 L 220 440 L 380 290 L 500 420 L 500 600 L 0 600 Z" fill="url(#mountainBack)"/>
 
-          <div class="form-panel-footer mt-24">
-            <p>Chưa có tài khoản Ví PayGate? <a routerLink="/register" class="link-pink">Đăng ký tài khoản mới ➔</a></p>
-          </div>
+            <!-- Foreground Mountains -->
+            <path d="M 0 480 L 140 360 L 280 500 L 440 340 L 500 410 L 500 600 L 0 600 Z" fill="url(#mountainFront)"/>
+
+            <!-- Rocket Launching Group -->
+            <g class="rocket-launch-group">
+              <!-- Rocket Fire Trail -->
+              <path class="rocket-flame" d="M 235 340 Q 250 420 250 480 Q 250 420 265 340 Z" fill="url(#fireGrad)"/>
+
+              <!-- Rocket Tail Wings -->
+              <path d="M 215 310 L 235 290 L 235 340 Z" fill="url(#rocketWing)"/>
+              <path d="M 285 310 L 265 290 L 265 340 Z" fill="url(#rocketWing)"/>
+
+              <!-- Rocket Main Body -->
+              <path d="M 235 240 Q 250 160 250 160 Q 250 160 265 240 L 265 330 L 235 330 Z" fill="url(#rocketBody)"/>
+              
+              <!-- Rocket Tip Nose Cone -->
+              <path d="M 238 230 Q 250 150 250 150 Q 250 150 262 230 Z" fill="#ea580c"/>
+
+              <!-- Rocket Window Porthole -->
+              <circle cx="250" cy="235" r="14" fill="#1e293b" stroke="#ea580c" stroke-width="3"/>
+              <circle cx="250" cy="235" r="10" fill="#38bdf8"/>
+              <circle cx="247" cy="232" r="3" fill="#ffffff"/>
+
+              <!-- Rocket Metal Stripes -->
+              <line x1="235" y1="280" x2="265" y2="280" stroke="#7c2d12" stroke-width="4"/>
+            </g>
+
+            <!-- Rolling Launch Smoke Clouds at Bottom -->
+            <g class="launch-smoke">
+              <circle cx="160" cy="530" r="65" fill="#f8fafc" opacity="0.95"/>
+              <circle cx="230" cy="510" r="75" fill="#ffffff"/>
+              <circle cx="310" cy="520" r="70" fill="#f1f5f9" opacity="0.95"/>
+              <circle cx="100" cy="550" r="60" fill="#e2e8f0" opacity="0.9"/>
+              <circle cx="380" cy="540" r="65" fill="#e2e8f0" opacity="0.9"/>
+            </g>
+
+            <!-- Bottom Ocean Water Blend -->
+            <path d="M 0 550 Q 250 530 500 550 L 500 600 L 0 600 Z" fill="#1e1b4b" opacity="0.8"/>
+          </svg>
         </div>
+
       </div>
     </div>
   `,
   styles: [`
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(18px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes spin { to { transform: rotate(360deg); } }
     .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-    .auth-split-wrapper {
+    .space-auth-container {
       display: flex; justify-content: center; align-items: center;
-      width: 100%; min-height: 85vh; padding: 36px 0;
+      width: 100%; min-height: 88vh; padding: 20px 0;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    .auth-split-card {
-      display: grid; grid-template-columns: 1fr 1.15fr;
-      width: 100%; max-width: 1100px; background: #ffffff;
-      border-radius: 28px; border: 1.5px solid #f3d6e5;
-      overflow: hidden; box-shadow: 0 20px 60px rgba(194,0,103,0.08);
+    /* 2-Column Split Card matching SeedProd Layout */
+    .space-auth-card {
+      display: grid; grid-template-columns: 460px 1fr;
+      width: 100%; max-width: 1080px; min-height: 600px;
+      background: #ffffff; border-radius: 20px;
+      border: 1px solid #e2e8f0; overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
     }
 
-    /* Left Showcase Panel - Unified Gradient Theme */
-    .auth-showcase-panel {
-      background: linear-gradient(145deg, #0d2b5c 0%, #1e1b4b 40%, #831843 80%, #c20067 100%);
-      color: #ffffff; padding: 48px 44px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      position: relative; overflow: hidden;
+    /* Left Form Panel (Pure Clean White) */
+    .auth-form-side {
+      padding: 44px 48px; display: flex; flex-direction: column;
+      justify-content: space-between; background: #ffffff;
     }
 
-    .showcase-header { display: flex; justify-content: space-between; align-items: center; }
-    .brand-logo-group { display: flex; align-items: center; gap: 12px; }
-    .brand-icon {
-      width: 40px; height: 40px; background: rgba(255,255,255,0.15);
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      color: #f472b6; border: 1px solid rgba(255,255,255,0.25);
-    }
-    .brand-icon svg { width: 22px; height: 22px; }
-    .brand-name { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; }
-    .badge-pro { font-size: 0.65rem; background: linear-gradient(135deg, #c20067, #0072ce); padding: 2px 6px; border-radius: 6px; margin-left: 2px; }
-    .version-chip { font-size: 0.75rem; font-weight: 800; background: rgba(255,255,255,0.12); color: #fbcfe8; padding: 4px 12px; border-radius: 14px; border: 1px solid rgba(251, 207, 232, 0.25); }
+    .brand-header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+    .logo-box { width: 36px; height: 36px; border-radius: 10px; overflow: hidden; border: 1px solid #f48fb1; }
+    .logo-img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-title { font-size: 1.3rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 6px; }
+    .brand-tag { font-size: 0.65rem; font-weight: 800; background: #c20067; color: #fff; padding: 2px 6px; border-radius: 6px; }
 
-    .showcase-main-content { display: flex; flex-direction: column; gap: 20px; margin: 28px 0; }
-    .showcase-title { font-size: 1.75rem; font-weight: 900; line-height: 1.3; margin: 0; letter-spacing: -0.02em; }
-    .showcase-desc { font-size: 0.92rem; color: #fbcfe8; opacity: 0.92; margin: 0; line-height: 1.5; }
+    .form-body { display: flex; flex-direction: column; }
+    .main-title { font-size: 2rem; font-weight: 900; color: #0f172a; margin: 0 0 6px 0; letter-spacing: -0.02em; }
+    .sub-text { font-size: 0.88rem; color: #64748b; margin: 0 0 16px 0; }
+    .highlight-link { color: #ea580c; font-weight: 800; text-decoration: none; }
+    .highlight-link:hover { text-decoration: underline; }
 
-    /* Metallic Glass Card Preview */
-    .metallic-card-preview {
-      background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 20px;
-      padding: 22px; display: flex; flex-direction: column; gap: 14px;
-      box-shadow: 0 14px 32px rgba(0,0,0,0.18);
-    }
-    .preview-top-row { display: flex; justify-content: space-between; align-items: center; }
-    .preview-brand { font-weight: 900; font-size: 1.05rem; }
-    .preview-brand i { font-style: italic; color: #fde047; }
-    .preview-num { font-family: monospace; font-size: 1.2rem; font-weight: 800; letter-spacing: 0.08em; color: #ffffff; }
-    .preview-bottom-row { display: flex; justify-content: space-between; }
-    .preview-bottom-row .lbl { font-size: 0.65rem; font-weight: 800; color: #fbcfe8; display: block; margin-bottom: 2px; }
-    .preview-bottom-row .val { font-size: 0.88rem; font-weight: 800; }
-    .status-badge { font-size: 0.7rem; font-weight: 800; color: #047857; background: #dcfce7; padding: 3px 10px; border-radius: 10px; }
+    .quick-demo-row { display: flex; align-items: center; gap: 8px; background: #fff7ed; border: 1px solid #ffedd5; padding: 8px 12px; border-radius: 10px; }
+    .demo-tag { font-size: 0.75rem; font-weight: 800; color: #c2410c; }
+    .btn-demo-pill { background: #ffffff; border: 1px solid #fdba74; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 800; color: #ea580c; cursor: pointer; transition: all 0.15s; }
+    .btn-demo-pill:hover { background: #ea580c; color: #fff; }
+    .btn-demo-pill.admin { color: #0284c7; border-color: #7dd3fc; }
+    .btn-demo-pill.admin:hover { background: #0284c7; color: #fff; }
 
-    .showcase-highlights { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
-    .highlight-item { display: flex; align-items: flex-start; gap: 12px; }
-    .h-icon-box { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .h-text { display: flex; flex-direction: column; gap: 2px; }
-    .h-text strong { font-size: 0.9rem; font-weight: 800; color: #ffffff; }
-    .h-text span { font-size: 0.8rem; color: #fbcfe8; opacity: 0.88; line-height: 1.35; }
+    .pure-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-field { display: flex; flex-direction: column; }
 
-    .showcase-footer { font-size: 0.8rem; color: #fbcfe8; opacity: 0.85; display: flex; gap: 12px; align-items: center; }
-
-    /* Right Column Form */
-    .auth-form-panel { padding: 48px 52px; display: flex; flex-direction: column; justify-content: center; }
-    .auth-header-tag { font-size: 0.75rem; font-weight: 900; color: #c20067; letter-spacing: 0.08em; margin-bottom: 6px; }
-    .form-title { font-size: 1.85rem; font-weight: 900; color: #0d2b5c; margin: 0 0 6px 0; letter-spacing: -0.025em; }
-    .form-subtitle { font-size: 0.9rem; color: #64748b; margin: 0 0 24px 0; line-height: 1.5; }
-
-    .demo-quick-bar { background: #fff0f6; border: 1px solid #f8bbd0; border-radius: 14px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
-    .demo-label { font-size: 0.78rem; font-weight: 800; color: #0d2b5c; }
-    .demo-btn-group { display: flex; gap: 8px; }
-    .btn-demo-pill { background: #ffffff; border: 1px solid #f48fb1; border-radius: 8px; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
-    .btn-demo-pill:hover { background: #c20067; color: #ffffff; }
-    .btn-demo-pill.admin { color: #0072ce; border-color: #93c5fd; }
-    .btn-demo-pill.admin:hover { background: #0072ce; color: #ffffff; }
-
-    .auth-form-content { display: flex; flex-direction: column; gap: 16px; }
-    .form-group { display: flex; flex-direction: column; }
-
-    .form-options { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
-    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .checkbox-wrapper input { display: none; }
-    .checkbox-custom { width: 18px; height: 18px; border: 1.5px solid #cbd5e1; border-radius: 5px; display: inline-block; position: relative; transition: all 0.15s; }
-    .checkbox-wrapper input:checked + .checkbox-custom { background: #c20067; border-color: #c20067; }
-    .checkbox-wrapper input:checked + .checkbox-custom::after { content: '✓'; color: #fff; position: absolute; top: -1px; left: 4px; font-size: 12px; font-weight: 900; }
-    .checkbox-label { color: #475569; font-weight: 600; }
-    .forgot-link { color: #c20067; text-decoration: none; font-weight: 700; }
+    .form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px; }
+    .remember-label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #475569; font-weight: 600; }
+    .remember-label input { accent-color: #ea580c; width: 16px; height: 16px; cursor: pointer; }
+    .forgot-link { color: #ea580c; font-weight: 700; text-decoration: none; }
     .forgot-link:hover { text-decoration: underline; }
 
-    /* Unified Pink Primary Button */
-    .btn-pink-primary {
-      height: 48px; width: 100%; border: none; border-radius: 12px;
-      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
-      color: #ffffff; font-weight: 900; font-size: 0.95rem; cursor: pointer;
-      box-shadow: 0 8px 22px rgba(194, 0, 103, 0.25); transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Orange Rocket Launch Submit Button */
+    .btn-rocket-submit {
+      height: 48px; width: 100%; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+      color: #ffffff; font-weight: 900; font-size: 1rem; cursor: pointer;
+      box-shadow: 0 8px 20px rgba(234, 88, 12, 0.35);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); margin-top: 8px;
     }
-    .btn-pink-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.35); }
-    .btn-pink-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-rocket-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(234, 88, 12, 0.45); }
+    .btn-rocket-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .btn-text-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #ffffff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .loading-span { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .error-msg-banner { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; margin-top: 10px; }
 
-    .error-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .link-pink { color: #c20067; font-weight: 800; text-decoration: none; }
-    .link-pink:hover { text-decoration: underline; }
+    .form-footer { font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: 20px; }
+    .legal-link { color: #64748b; text-decoration: none; }
 
-    .mt-12 { margin-top: 12px; }
+    /* Right Space Illustration Panel */
+    .space-illustration-side {
+      position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0726;
+    }
+    .space-scene { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* CSS Animations for Space Scene */
+    .rocket-launch-group {
+      animation: rocketHover 3s ease-in-out infinite alternate;
+    }
+    .rocket-flame {
+      animation: flameFlicker 0.15s ease-in-out infinite alternate;
+      transform-origin: center top;
+    }
+    .launch-smoke {
+      animation: smokePuff 2s ease-in-out infinite alternate;
+    }
+    .stars-group circle {
+      animation: starTwinkle 2s ease-in-out infinite alternate;
+    }
+    .drifting-clouds {
+      animation: cloudDrift 20s linear infinite;
+    }
+
+    @keyframes rocketHover {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-14px); }
+    }
+    @keyframes flameFlicker {
+      0% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+      100% { transform: scaleY(1.15) scaleX(0.92); opacity: 1; }
+    }
+    @keyframes smokePuff {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(1.04); opacity: 1; }
+    }
+    @keyframes starTwinkle {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+    @keyframes cloudDrift {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-60px); }
+    }
+
+    .mt-16 { margin-top: 16px; }
     .mt-20 { margin-top: 20px; }
-    .mt-24 { margin-top: 24px; }
 
-    @media (max-width: 960px) {
-      .auth-split-card { grid-template-columns: 1fr; }
-      .auth-showcase-panel { display: none; }
-      .auth-form-panel { padding: 36px 28px; }
+    @media (max-width: 860px) {
+      .space-auth-card { grid-template-columns: 1fr; }
+      .space-illustration-side { display: none; }
+      .auth-form-side { padding: 32px 24px; }
     }
   `]
 })
@@ -332,7 +347,7 @@ export class LoginComponent {
   usernameError = computed(() => {
     const ctrl = this.form.get('username');
     if (ctrl?.touched && ctrl?.errors) {
-      if (ctrl.errors['required']) return 'Tên đăng nhập hoặc Email là bắt buộc';
+      if (ctrl.errors['required']) return 'Email address or username is required';
     }
     return '';
   });
@@ -340,7 +355,7 @@ export class LoginComponent {
   passwordError = computed(() => {
     const ctrl = this.form.get('password');
     if (ctrl?.touched && ctrl?.errors) {
-      if (ctrl.errors['required']) return 'Mật khẩu là bắt buộc';
+      if (ctrl.errors['required']) return 'Password is required';
     }
     return '';
   });
@@ -379,16 +394,16 @@ export class LoginComponent {
       next: (res: any) => {
         this.loading.set(false);
         if (res.success) {
-          this.notificationService.success('Đăng nhập thành công!');
+          this.notificationService.success('Login successful!');
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/accounts/dashboard';
           this.router.navigateByUrl(returnUrl);
         } else {
-          this.submitError.set(res.message || 'Đăng nhập thất bại.');
+          this.submitError.set(res.message || 'Login failed.');
         }
       },
       error: (err: any) => {
         this.loading.set(false);
-        const msg = err.error?.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+        const msg = err.error?.message || 'Invalid username or password.';
         this.submitError.set(msg);
       }
     });
