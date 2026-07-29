@@ -29,21 +29,21 @@ import { InputComponent } from '../../../shared/components';
           </div>
 
           <div class="form-body">
-            <h1 class="main-title">Login</h1>
-            <p class="sub-text">Don't have an account? <a routerLink="/register" class="highlight-link">Register PayGate Now</a></p>
+            <h1 class="main-title">Sign In</h1>
+            <p class="sub-text">Don't have an account? <a routerLink="/register" class="highlight-link">Create PayGate Account</a></p>
 
             <!-- Quick Demo Login Buttons -->
             <div class="quick-demo-row mt-16">
-              <span class="demo-tag">Quick Demo:</span>
+              <span class="demo-tag">Quick Demo Login:</span>
               <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User</button>
               <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin</button>
             </div>
 
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-20">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-24">
               <div class="form-field">
                 <pg-input
                   label="Email Address or Username"
-                  placeholder="Enter email or username..."
+                  placeholder="Enter username or email..."
                   formControlName="username"
                   type="text"
                   autocomplete="username"
@@ -68,13 +68,13 @@ import { InputComponent } from '../../../shared/components';
               <div class="form-actions">
                 <label class="remember-label">
                   <input type="checkbox" formControlName="rememberMe" />
-                  <span>Remember Me</span>
+                  <span>Remember Session</span>
                 </label>
-                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot Your Password?</a>
+                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot Password?</a>
               </div>
 
-              <button type="submit" class="btn-rocket-submit" [disabled]="form.invalid || loading()">
-                <span *ngIf="!loading()">Log In 🚀</span>
+              <button type="submit" class="btn-paygate-submit" [disabled]="form.invalid || loading()">
+                <span *ngIf="!loading()">Sign In to PayGate ↗</span>
                 <span *ngIf="loading()" class="loading-span"><span class="spinner"></span> Authenticating...</span>
               </button>
 
@@ -85,113 +85,109 @@ import { InputComponent } from '../../../shared/components';
           </div>
 
           <div class="form-footer">
-            <p>© 2026 PayGate Inc. All rights reserved. <br> <a routerLink="/terms" class="legal-link">Terms of Service</a> | <a routerLink="/privacy" class="legal-link">Privacy Policy</a></p>
+            <p>© 2026 PayGate Inc. Secure Payment Infrastructure. <br> <a routerLink="/terms" class="legal-link">Terms of Service</a> | <a routerLink="/privacy" class="legal-link">Privacy Policy</a></p>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Animated Space Rocket Launch Graphics -->
+        <!-- RIGHT COLUMN: Animated PayGate System 3D FinTech Graphics -->
         <div class="space-illustration-side">
-          <svg class="space-scene" viewBox="0 0 500 600" preserveAspectRatio="xMidYMid slice" role="img">
+          <svg class="space-scene" viewBox="0 0 650 700" preserveAspectRatio="xMidYMid slice" role="img">
             <defs>
-              <!-- Space Sky Gradient -->
-              <linearGradient id="spaceSky" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#0b0726"/>
-                <stop offset="40%" stop-color="#190e4f"/>
-                <stop offset="75%" stop-color="#4a154b"/>
-                <stop offset="100%" stop-color="#932b26"/>
+              <!-- PayGate Futuristic Gradient Sky -->
+              <linearGradient id="paygateSky" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0b1329"/>
+                <stop offset="40%" stop-color="#0d2b5c"/>
+                <stop offset="80%" stop-color="#4a0e4e"/>
+                <stop offset="100%" stop-color="#831843"/>
               </linearGradient>
 
-              <!-- Mountain Sunset Gradients -->
-              <linearGradient id="mountainFront" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ea580c"/>
-                <stop offset="50%" stop-color="#c2410c"/>
+              <!-- Neon Waves Gradient -->
+              <linearGradient id="waveFront" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#c20067"/>
+                <stop offset="50%" stop-color="#e11d48"/>
                 <stop offset="100%" stop-color="#7c2d12"/>
               </linearGradient>
-              <linearGradient id="mountainBack" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#c026d3"/>
-                <stop offset="100%" stop-color="#4c1d95"/>
+              <linearGradient id="waveBack" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0072ce"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
               </linearGradient>
 
-              <!-- Rocket Body Gradients -->
-              <linearGradient id="rocketBody" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#fdba74"/>
-                <stop offset="50%" stop-color="#f97316"/>
-                <stop offset="100%" stop-color="#c2410c"/>
-              </linearGradient>
-              <linearGradient id="rocketWing" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#ea580c"/>
-                <stop offset="100%" stop-color="#7c2d12"/>
-              </linearGradient>
-              <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <!-- Shiny Gold Coin Gradient -->
+              <linearGradient id="goldCoin" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#fef08a"/>
-                <stop offset="40%" stop-color="#f97316"/>
-                <stop offset="100%" stop-color="#dc2626"/>
+                <stop offset="50%" stop-color="#eab308"/>
+                <stop offset="100%" stop-color="#854d0e"/>
+              </linearGradient>
+
+              <!-- 3D Visa Glass Card Gradient -->
+              <linearGradient id="visaCardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffdeeb" stop-opacity="0.9"/>
+                <stop offset="40%" stop-color="#c20067" stop-opacity="0.85"/>
+                <stop offset="85%" stop-color="#0d2b5c" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#0072ce" stop-opacity="1"/>
               </linearGradient>
             </defs>
 
             <!-- Sky Background -->
-            <rect width="500" height="600" fill="url(#spaceSky)"/>
+            <rect width="650" height="700" fill="url(#paygateSky)"/>
 
-            <!-- Twinkling Stars -->
+            <!-- Floating Binary Data Particles -->
             <g class="stars-group">
-              <circle cx="60" cy="80" r="1.5" fill="#fff" opacity="0.8"/>
-              <circle cx="120" cy="40" r="2" fill="#fff" opacity="0.9"/>
-              <circle cx="210" cy="90" r="1.2" fill="#fff" opacity="0.7"/>
-              <circle cx="340" cy="50" r="2.5" fill="#fff" opacity="0.95"/>
-              <circle cx="420" cy="110" r="1.8" fill="#fff" opacity="0.85"/>
-              <circle cx="450" cy="30" r="1" fill="#fff" opacity="0.6"/>
-              <circle cx="90" cy="180" r="2" fill="#fff" opacity="0.9"/>
-              <circle cx="390" cy="190" r="1.5" fill="#fff" opacity="0.75"/>
+              <circle cx="90" cy="100" r="2.5" fill="#f472b6" opacity="0.9"/>
+              <circle cx="180" cy="60" r="3" fill="#60a5fa" opacity="0.85"/>
+              <circle cx="310" cy="110" r="2" fill="#fef08a" opacity="0.95"/>
+              <circle cx="480" cy="70" r="3.5" fill="#f472b6" opacity="0.9"/>
+              <circle cx="580" cy="140" r="2" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="130" cy="220" r="2.5" fill="#ffffff" opacity="0.75"/>
+              <circle cx="520" cy="240" r="3" fill="#fef08a" opacity="0.9"/>
             </g>
 
-            <!-- Drifting Clouds -->
-            <g class="drifting-clouds" opacity="0.4">
-              <path d="M 30 110 Q 50 90 80 100 Q 110 80 140 100 Q 160 120 130 130 Z" fill="#c084fc"/>
-              <path d="M 320 140 Q 340 120 370 130 Q 400 110 430 130 Q 450 150 420 160 Z" fill="#e879f9"/>
-              <path d="M 180 50 Q 200 35 220 45 Q 240 30 260 50 Z" fill="#a855f7"/>
+            <!-- Background Waves -->
+            <path d="M 0 540 Q 180 420 340 500 T 650 480 L 650 700 L 0 700 Z" fill="url(#waveBack)" opacity="0.45"/>
+            <path d="M 0 580 Q 220 480 420 540 T 650 510 L 650 700 L 0 700 Z" fill="url(#waveFront)" opacity="0.7"/>
+
+            <!-- Floating 3D PayGate Card (Central Hero Graphics) -->
+            <g class="card-float-group">
+              <!-- Card Shadow -->
+              <rect x="140" y="270" width="370" height="225" rx="24" fill="#000" opacity="0.35" filter="blur(10px)"/>
+
+              <!-- Card Base -->
+              <rect x="130" y="240" width="370" height="225" rx="24" fill="url(#visaCardGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+
+              <!-- Card Chip -->
+              <rect x="170" y="290" width="46" height="36" rx="8" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+              <line x1="170" y1="308" x2="216" y2="308" stroke="#ca8a04" stroke-width="1.5"/>
+              <line x1="193" y1="290" x2="193" y2="326" stroke="#ca8a04" stroke-width="1.5"/>
+
+              <!-- Contactless Pay Wave Icon -->
+              <path d="M 235 298 A 12 12 0 0 1 235 318 M 243 294 A 18 18 0 0 1 243 322" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+
+              <!-- Card Number -->
+              <text x="170" y="375" font-family="monospace" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="4">4532 •••• •••• 8892</text>
+
+              <!-- Card Holder & Badge -->
+              <text x="170" y="420" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#fbcfe8" letter-spacing="1">PAYGATE MEMBER</text>
+              <text x="170" y="438" font-family="system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff">PAYGATE PRO USER</text>
+
+              <text x="410" y="432" font-family="system-ui, sans-serif" font-size="22" font-weight="900" font-style="italic" fill="#ffffff">VISA</text>
             </g>
 
-            <!-- Background Mountains -->
-            <path d="M 0 450 L 100 320 L 220 440 L 380 290 L 500 420 L 500 600 L 0 600 Z" fill="url(#mountainBack)"/>
-
-            <!-- Foreground Mountains -->
-            <path d="M 0 480 L 140 360 L 280 500 L 440 340 L 500 410 L 500 600 L 0 600 Z" fill="url(#mountainFront)"/>
-
-            <!-- Rocket Launching Group -->
-            <g class="rocket-launch-group">
-              <!-- Rocket Fire Trail -->
-              <path class="rocket-flame" d="M 235 340 Q 250 420 250 480 Q 250 420 265 340 Z" fill="url(#fireGrad)"/>
-
-              <!-- Rocket Tail Wings -->
-              <path d="M 215 310 L 235 290 L 235 340 Z" fill="url(#rocketWing)"/>
-              <path d="M 285 310 L 265 290 L 265 340 Z" fill="url(#rocketWing)"/>
-
-              <!-- Rocket Main Body -->
-              <path d="M 235 240 Q 250 160 250 160 Q 250 160 265 240 L 265 330 L 235 330 Z" fill="url(#rocketBody)"/>
-              
-              <!-- Rocket Tip Nose Cone -->
-              <path d="M 238 230 Q 250 150 250 150 Q 250 150 262 230 Z" fill="#ea580c"/>
-
-              <!-- Rocket Window Porthole -->
-              <circle cx="250" cy="235" r="14" fill="#1e293b" stroke="#ea580c" stroke-width="3"/>
-              <circle cx="250" cy="235" r="10" fill="#38bdf8"/>
-              <circle cx="247" cy="232" r="3" fill="#ffffff"/>
-
-              <!-- Rocket Metal Stripes -->
-              <line x1="235" y1="280" x2="265" y2="280" stroke="#7c2d12" stroke-width="4"/>
+            <!-- Floating 3D Gold Coins (Animation Node) -->
+            <g class="coin-float-1">
+              <circle cx="120" cy="180" r="28" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="2"/>
+              <text x="120" y="188" font-family="sans-serif" font-size="22" font-weight="900" fill="#713f12" text-anchor="middle">₫</text>
             </g>
 
-            <!-- Rolling Launch Smoke Clouds at Bottom -->
-            <g class="launch-smoke">
-              <circle cx="160" cy="530" r="65" fill="#f8fafc" opacity="0.95"/>
-              <circle cx="230" cy="510" r="75" fill="#ffffff"/>
-              <circle cx="310" cy="520" r="70" fill="#f1f5f9" opacity="0.95"/>
-              <circle cx="100" cy="550" r="60" fill="#e2e8f0" opacity="0.9"/>
-              <circle cx="380" cy="540" r="65" fill="#e2e8f0" opacity="0.9"/>
+            <g class="coin-float-2">
+              <circle cx="510" cy="190" r="34" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="2.5"/>
+              <text x="510" y="200" font-family="sans-serif" font-size="26" font-weight="900" fill="#713f12" text-anchor="middle">$</text>
             </g>
 
-            <!-- Bottom Ocean Water Blend -->
-            <path d="M 0 550 Q 250 530 500 550 L 500 600 L 0 600 Z" fill="#1e1b4b" opacity="0.8"/>
+            <!-- Glowing Transaction Nodes & Cables -->
+            <g opacity="0.8">
+              <path d="M 120 208 Q 150 250 200 240" fill="none" stroke="#60a5fa" stroke-width="3" stroke-dasharray="6,6"/>
+              <path d="M 510 224 Q 480 270 430 240" fill="none" stroke="#f472b6" stroke-width="3" stroke-dasharray="6,6"/>
+            </g>
           </svg>
         </div>
 
@@ -205,123 +201,103 @@ import { InputComponent } from '../../../shared/components';
 
     .space-auth-container {
       display: flex; justify-content: center; align-items: center;
-      width: 100%; min-height: 88vh; padding: 20px 0;
+      width: 100%; min-height: 90vh; padding: 24px; box-sizing: border-box;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* 2-Column Split Card matching SeedProd Layout */
+    /* Enlarged 2-Column Split Card matching PayGate System Specs */
     .space-auth-card {
-      display: grid; grid-template-columns: 460px 1fr;
-      width: 100%; max-width: 1080px; min-height: 600px;
-      background: #ffffff; border-radius: 20px;
-      border: 1px solid #e2e8f0; overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+      display: grid; grid-template-columns: 500px 1fr;
+      width: 95vw; max-width: 1320px; min-height: 720px; height: 85vh;
+      background: #ffffff; border-radius: 28px;
+      border: 1.5px solid #f3d6e5; overflow: hidden;
+      box-shadow: 0 25px 70px rgba(194, 0, 103, 0.12);
     }
 
-    /* Left Form Panel (Pure Clean White) */
+    /* Left Form Panel */
     .auth-form-side {
-      padding: 44px 48px; display: flex; flex-direction: column;
+      padding: 54px 58px; display: flex; flex-direction: column;
       justify-content: space-between; background: #ffffff;
     }
 
-    .brand-header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-    .logo-box { width: 36px; height: 36px; border-radius: 10px; overflow: hidden; border: 1px solid #f48fb1; }
+    .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .logo-box { width: 42px; height: 42px; border-radius: 12px; overflow: hidden; border: 1.5px solid #f48fb1; box-shadow: 0 4px 12px rgba(194,0,103,0.18); }
     .logo-img { width: 100%; height: 100%; object-fit: cover; }
-    .brand-title { font-size: 1.3rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 6px; }
-    .brand-tag { font-size: 0.65rem; font-weight: 800; background: #c20067; color: #fff; padding: 2px 6px; border-radius: 6px; }
+    .brand-title { font-size: 1.5rem; font-weight: 900; color: #0d2b5c; display: flex; align-items: center; gap: 6px; }
+    .brand-tag { font-size: 0.7rem; font-weight: 900; background: linear-gradient(135deg, #c20067, #0072ce); color: #fff; padding: 3px 8px; border-radius: 8px; }
 
     .form-body { display: flex; flex-direction: column; }
-    .main-title { font-size: 2rem; font-weight: 900; color: #0f172a; margin: 0 0 6px 0; letter-spacing: -0.02em; }
-    .sub-text { font-size: 0.88rem; color: #64748b; margin: 0 0 16px 0; }
-    .highlight-link { color: #ea580c; font-weight: 800; text-decoration: none; }
+    .main-title { font-size: 2.25rem; font-weight: 900; color: #0d2b5c; margin: 0 0 6px 0; letter-spacing: -0.03em; }
+    .sub-text { font-size: 0.95rem; color: #64748b; margin: 0 0 20px 0; }
+    .highlight-link { color: #c20067; font-weight: 800; text-decoration: none; }
     .highlight-link:hover { text-decoration: underline; }
 
-    .quick-demo-row { display: flex; align-items: center; gap: 8px; background: #fff7ed; border: 1px solid #ffedd5; padding: 8px 12px; border-radius: 10px; }
-    .demo-tag { font-size: 0.75rem; font-weight: 800; color: #c2410c; }
-    .btn-demo-pill { background: #ffffff; border: 1px solid #fdba74; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 800; color: #ea580c; cursor: pointer; transition: all 0.15s; }
-    .btn-demo-pill:hover { background: #ea580c; color: #fff; }
-    .btn-demo-pill.admin { color: #0284c7; border-color: #7dd3fc; }
-    .btn-demo-pill.admin:hover { background: #0284c7; color: #fff; }
+    .quick-demo-row { display: flex; align-items: center; gap: 10px; background: #fff0f6; border: 1px solid #f8bbd0; padding: 10px 16px; border-radius: 12px; }
+    .demo-tag { font-size: 0.8rem; font-weight: 800; color: #0d2b5c; }
+    .btn-demo-pill { background: #ffffff; border: 1px solid #f48fb1; border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
+    .btn-demo-pill:hover { background: #c20067; color: #fff; }
+    .btn-demo-pill.admin { color: #0072ce; border-color: #93c5fd; }
+    .btn-demo-pill.admin:hover { background: #0072ce; color: #fff; }
 
-    .pure-form { display: flex; flex-direction: column; gap: 16px; }
+    .pure-form { display: flex; flex-direction: column; gap: 18px; }
     .form-field { display: flex; flex-direction: column; }
 
-    .form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 4px; }
-    .remember-label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #475569; font-weight: 600; }
-    .remember-label input { accent-color: #ea580c; width: 16px; height: 16px; cursor: pointer; }
-    .forgot-link { color: #ea580c; font-weight: 700; text-decoration: none; }
+    .form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; margin-top: 4px; }
+    .remember-label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569; font-weight: 600; }
+    .remember-label input { accent-color: #c20067; width: 18px; height: 18px; cursor: pointer; }
+    .forgot-link { color: #c20067; font-weight: 700; text-decoration: none; }
     .forgot-link:hover { text-decoration: underline; }
 
-    /* Orange Rocket Launch Submit Button */
-    .btn-rocket-submit {
-      height: 48px; width: 100%; border: none; border-radius: 10px;
-      background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
-      color: #ffffff; font-weight: 900; font-size: 1rem; cursor: pointer;
-      box-shadow: 0 8px 20px rgba(234, 88, 12, 0.35);
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); margin-top: 8px;
+    /* Pink-Blue Unified PayGate Submit Button */
+    .btn-paygate-submit {
+      height: 52px; width: 100%; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
+      color: #ffffff; font-weight: 900; font-size: 1.05rem; cursor: pointer;
+      box-shadow: 0 10px 24px rgba(194, 0, 103, 0.28);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); margin-top: 10px;
     }
-    .btn-rocket-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(234, 88, 12, 0.45); }
-    .btn-rocket-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-paygate-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(194, 0, 103, 0.4); }
+    .btn-paygate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .loading-span { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
-    .error-msg-banner { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; margin-top: 10px; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .error-msg-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; margin-top: 10px; }
 
-    .form-footer { font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin-top: 20px; }
+    .form-footer { font-size: 0.8rem; color: #94a3b8; line-height: 1.5; margin-top: 24px; }
     .legal-link { color: #64748b; text-decoration: none; }
 
-    /* Right Space Illustration Panel */
+    /* Right PayGate Illustration Panel */
     .space-illustration-side {
-      position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0726;
+      position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b1329;
     }
     .space-scene { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    /* CSS Animations for Space Scene */
-    .rocket-launch-group {
-      animation: rocketHover 3s ease-in-out infinite alternate;
-    }
-    .rocket-flame {
-      animation: flameFlicker 0.15s ease-in-out infinite alternate;
-      transform-origin: center top;
-    }
-    .launch-smoke {
-      animation: smokePuff 2s ease-in-out infinite alternate;
-    }
-    .stars-group circle {
-      animation: starTwinkle 2s ease-in-out infinite alternate;
-    }
-    .drifting-clouds {
-      animation: cloudDrift 20s linear infinite;
-    }
+    /* PayGate Graphic Animations */
+    .card-float-group { animation: cardBobbing 4s ease-in-out infinite alternate; }
+    .coin-float-1 { animation: coinFloat 3s ease-in-out infinite alternate; }
+    .coin-float-2 { animation: coinFloat 3.5s ease-in-out 0.5s infinite alternate; }
+    .stars-group circle { animation: starTwinkle 2.5s ease-in-out infinite alternate; }
 
-    @keyframes rocketHover {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-14px); }
+    @keyframes cardBobbing {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-16px) rotate(1.5deg); }
     }
-    @keyframes flameFlicker {
-      0% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
-      100% { transform: scaleY(1.15) scaleX(0.92); opacity: 1; }
-    }
-    @keyframes smokePuff {
-      0% { transform: scale(1); opacity: 0.9; }
-      100% { transform: scale(1.04); opacity: 1; }
+    @keyframes coinFloat {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-12px) scale(1.05); }
     }
     @keyframes starTwinkle {
-      0% { opacity: 0.3; }
+      0% { opacity: 0.2; }
       100% { opacity: 1; }
-    }
-    @keyframes cloudDrift {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-60px); }
     }
 
     .mt-16 { margin-top: 16px; }
-    .mt-20 { margin-top: 20px; }
+    .mt-24 { margin-top: 24px; }
 
-    @media (max-width: 860px) {
-      .space-auth-card { grid-template-columns: 1fr; }
+    @media (max-width: 980px) {
+      .space-auth-card { grid-template-columns: 1fr; height: auto; min-height: auto; }
       .space-illustration-side { display: none; }
-      .auth-form-side { padding: 32px 24px; }
+      .auth-form-side { padding: 36px 28px; }
     }
   `]
 })
@@ -347,7 +323,7 @@ export class LoginComponent {
   usernameError = computed(() => {
     const ctrl = this.form.get('username');
     if (ctrl?.touched && ctrl?.errors) {
-      if (ctrl.errors['required']) return 'Email address or username is required';
+      if (ctrl.errors['required']) return 'Username or email is required';
     }
     return '';
   });
