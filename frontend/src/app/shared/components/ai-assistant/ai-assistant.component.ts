@@ -569,7 +569,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
 
   formatMessageText(text: string): SafeHtml {
     if (!text || text === 'null' || text === 'undefined' || text.trim() === '') {
-      return this.sanitizer.bypassSecurityTrustHtml('Dữ liệu tài khoản của bạn đã được ghi nhận. Vui lòng thử hỏi lại hoặc bấm phím chức năng bên dưới!');
+      return '';
     }
     const formatted = text
       // Strip markdown tables entirely (lines starting with | )

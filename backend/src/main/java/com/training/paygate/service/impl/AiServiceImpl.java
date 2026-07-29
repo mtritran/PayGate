@@ -329,10 +329,10 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("4. Guide users smoothly to the correct feature (Vaults, Loans, Bills, TopUp, Transfers, Vouchers, Admin) based on their question.\n");
 
         List<String> candidateModels = List.of(
-                "openrouter/auto",
+                "google/gemini-2.0-flash-lite-preview-02-05:free",
                 "meta-llama/llama-3.3-70b-instruct:free",
                 "qwen/qwen-2.5-72b-instruct:free",
-                "google/gemini-2.0-flash-exp:free"
+                "openrouter/auto"
         );
 
         for (String modelName : candidateModels) {
@@ -351,35 +351,60 @@ public class AiServiceImpl implements AiService {
     }
 
     private String buildSmartFallbackReply(String prompt, String context) {
-        String lower = prompt != null ? prompt.toLowerCase() : "";
+        String lower = prompt != null ? prompt.toLowerCase().trim() : "";
+        String balanceStr = "";
         
-        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance")) {
-            if (context != null && context.contains("Available Main Balance:")) {
-                String balLine = extractLine(context, "Available Main Balance:");
-                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là " + balLine.replace("Available Main Balance:", "").trim() + ".";
-            }
+        if (context != null && context.contains("Available Main Balance:")) {
+            balanceStr = extractLine(context, "Available Main Balance:").replace("Available Main Balance:", "").trim();
+        } else {
             List<Account> accounts = accountRepository.findAll();
             if (!accounts.isEmpty()) {
-                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là " + formatVnd(accounts.get(0).getBalance()) + ".";
+                balanceStr = formatVnd(accounts.get(0).getBalance());
             }
-            return "Số dư ví PayGate của bạn đang được cập nhật realtime.";
-        }
-        
-        if (lower.contains("hũ") || lower.contains("tiết kiệm") || lower.contains("vault")) {
-            if (context.contains("SAVINGS VAULTS")) {
-                return "Hệ thống ghi nhận bạn đang có các hũ tiết kiệm khả dụng. Bạn có thể bấm nút bên dưới để truy cập danh sách hũ chi tiết.";
-            }
-            return "Bạn hiện chưa có hũ tiết kiệm nào. Bạn có thể mở hũ tiết kiệm mới ngay trên ứng dụng.";
-        }
-        
-        if (lower.contains("vay") || lower.contains("nợ") || lower.contains("loan")) {
-            if (context.contains("CONSUMER LOANS & CREDIT")) {
-                return "Hệ thống ghi nhận thông tin khoản vay tiêu dùng của bạn. Bạn có thể bấm nút xem khoản vay bên dưới để kiểm tra chi tiết dư nợ và lịch trả.";
-            }
-            return "Bạn hiện không có khoản vay tiêu dùng nào đang hoạt động.";
         }
 
-        return "Dữ liệu ví PayGate của bạn đã được ghi nhận. Bạn có thể sử dụng các phím chức năng bên dưới để thao tác nhanh!";
+        // 1. Balance queries
+        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance")) {
+            if (!balanceStr.isEmpty()) {
+                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là **" + balanceStr + "**.";
+            }
+            return "Số dư ví PayGate của bạn đang được cập nhật realtime trên hệ thống.";
+        }
+        
+        // 2. Savings Vault queries
+        if (lower.contains("hũ") || lower.contains("tiết kiệm") || lower.contains("vault")) {
+            if (context != null && context.contains("SAVINGS VAULTS") && !context.contains("No active savings vaults")) {
+                return "Hệ thống ghi nhận bạn đang có các hũ tiết kiệm khả dụng. Bạn có thể bấm nút bên dưới để truy cập danh sách hũ chi tiết.";
+            }
+            return "Bạn hiện chưa có hũ tiết kiệm nào. Hãy mở hũ tiết kiệm mới để tích lũy tài chính ngay hôm nay!";
+        }
+        
+        // 3. Loan queries
+        if (lower.contains("vay") || lower.contains("nợ") || lower.contains("loan")) {
+            if (context != null && context.contains("CONSUMER LOANS & CREDIT") && !context.contains("No consumer loans on record")) {
+                return "Hệ thống ghi nhận thông tin khoản vay tiêu dùng của bạn. Bạn có thể bấm nút xem khoản vay bên dưới để kiểm tra chi tiết dư nợ.";
+            }
+            return "Bạn hiện không có khoản vay tiêu dùng nào đang hoạt động. Hạn mức khả dụng đăng ký mới lên tới 50.000.000 VND.";
+        }
+
+        // 4. Greetings & General conversation (hi, hello, chào, giúp, bạn là ai, etc.)
+        if (lower.matches(".*(hi|hello|chào|xin chào|giúp|helo|alo|ơi|là ai|ai đó).*") || lower.length() <= 5) {
+            StringBuilder reply = new StringBuilder();
+            reply.append("Xin chào! Tôi là **PayGate AI Assistant** — trợ lý tài chính thông minh của bạn. ");
+            if (!balanceStr.isEmpty()) {
+                reply.append("Số dư hiện tại của bạn là **").append(balanceStr).append("**. ");
+            }
+            reply.append("Tôi có thể giúp bạn kiểm tra Hũ tiết kiệm, Khoản vay, Hóa đơn hoặc Chuyển tiền nhanh chóng!");
+            return reply.toString();
+        }
+
+        StringBuilder defaultReply = new StringBuilder();
+        defaultReply.append("Xin chào! Tôi đã nhận được yêu cầu của bạn. ");
+        if (!balanceStr.isEmpty()) {
+            defaultReply.append("Số dư ví PayGate của bạn hiện là **").append(balanceStr).append("**. ");
+        }
+        defaultReply.append("Bạn có thể bấm vào các nút gợi ý bên dưới để thực hiện giao dịch nhanh!");
+        return defaultReply.toString();
     }
 
     private String extractLine(String text, String prefix) {
