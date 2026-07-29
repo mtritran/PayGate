@@ -32,9 +32,8 @@ import { InputComponent } from '../../../shared/components';
             <h1 class="main-title">Sign In</h1>
             <p class="sub-text">Don't have an account yet? <a routerLink="/register" class="highlight-link">Create PayGate Account ➔</a></p>
 
-            <!-- Quick Demo Login Buttons -->
+            <!-- Quick Fill Buttons -->
             <div class="quick-demo-row">
-              <span class="demo-tag">Quick Demo Login:</span>
               <div class="demo-btn-group">
                 <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User Demo</button>
                 <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin Demo</button>
@@ -221,10 +220,9 @@ import { InputComponent } from '../../../shared/components';
     .highlight-link { color: #c20067; font-weight: 800; text-decoration: none; }
     .highlight-link:hover { text-decoration: underline; }
 
-    .quick-demo-row { display: flex; align-items: center; justify-content: space-between; background: #fff0f6; border: 1.5px solid #f8bbd0; padding: 12px 18px; border-radius: 14px; margin-bottom: 26px; }
-    .demo-tag { font-size: 0.85rem; font-weight: 800; color: #0d2b5c; }
-    .demo-btn-group { display: flex; gap: 10px; }
-    .btn-demo-pill { background: #ffffff; border: 1.5px solid #f48fb1; border-radius: 10px; padding: 6px 14px; font-size: 0.82rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
+    .quick-demo-row { display: flex; align-items: center; justify-content: center; background: #fff0f6; border: 1.5px solid #f8bbd0; padding: 10px 16px; border-radius: 14px; margin-bottom: 26px; }
+    .demo-btn-group { display: flex; gap: 12px; width: 100%; justify-content: center; }
+    .btn-demo-pill { flex: 1; text-align: center; background: #ffffff; border: 1.5px solid #f48fb1; border-radius: 10px; padding: 8px 14px; font-size: 0.85rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
     .btn-demo-pill:hover { background: #c20067; color: #fff; transform: translateY(-1px); }
     .btn-demo-pill.admin { color: #0072ce; border-color: #93c5fd; }
     .btn-demo-pill.admin:hover { background: #0072ce; color: #fff; transform: translateY(-1px); }
