@@ -30,247 +30,284 @@ import { NotificationService } from '../../core/services/notification.service';
             <img src="assets/PayGate_Logo.jpg" alt="PayGate Logo" class="brand-logo-img">
           </div>
           <div class="brand-text" *ngIf="!collapsed()">
-            <div class="brand-title">PayGate</div>
-            <div class="brand-subtitle">Payment Gateway</div>
+            <div class="brand-title">PayGate <span class="brand-badge">PRO</span></div>
+            <div class="brand-subtitle">Smart Payment & Credit</div>
           </div>
         </div>
 
         <!-- Navigation -->
         <nav class="nav-wrapper" aria-label="Main navigation">
           <ul class="nav-list" role="list">
+            <!-- Section Header: Overview -->
+            <div class="nav-section-label" *ngIf="!collapsed()">TỔNG QUAN</div>
+
             <!-- 1. Dashboard (Top level) -->
             <li class="nav-item">
               <a class="nav-link nav-top-link" routerLink="/accounts/dashboard" routerLinkActive="active" title="Dashboard">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
+                <div class="nav-icon-box icon-box-navy">
+                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                </div>
                 <span class="nav-title" *ngIf="!collapsed()">Dashboard</span>
               </a>
             </li>
 
+            <!-- Section Header: Financial Services -->
+            <div class="nav-section-label" *ngIf="!collapsed()">DỊCH VỤ TÀI CHÍNH</div>
+
             <!-- 2. Wallet & Account Group -->
-            <li class="nav-group">
+            <li class="nav-group" [class.is-expanded]="isGroupOpen('wallet')">
               <button type="button" class="nav-group-header" (click)="toggleGroup('wallet')" [title]="collapsed() ? 'Wallet & Account' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12V7H5a2 2 0 01-2-2V3a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2" />
-                    <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
-                    <path d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-pink">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 12V7H5a2 2 0 01-2-2V3a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2" />
+                      <path d="M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" />
+                      <path d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Wallet & Account</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('wallet')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('wallet') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/accounts/me" routerLinkActive="active" title="My Account">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">My Account</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up Wallet">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Top Up Wallet</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/vaults" routerLinkActive="active" title="Savings Vault">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Savings Vault</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('wallet') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/accounts/me" routerLinkActive="active" title="My Account">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">My Account</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/accounts/topup" routerLinkActive="active" title="Top Up Wallet">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Top Up Wallet</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/vaults" routerLinkActive="active" title="Savings Vault">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Savings Vault</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
             <!-- 3. Transfers & History Group -->
-            <li class="nav-group">
+            <li class="nav-group" [class.is-expanded]="isGroupOpen('transfers')">
               <button type="button" class="nav-group-header" (click)="toggleGroup('transfers')" [title]="collapsed() ? 'Transfers & History' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-blue">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Transfers & History</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('transfers')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('transfers') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Payment">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Send Payment</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/transactions/history" routerLinkActive="active" title="Transactions">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Transactions</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('transfers') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/transactions/pay" routerLinkActive="active" title="Send Payment">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Send Payment</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/transactions/history" routerLinkActive="active" title="Transactions">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Transactions</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
             <!-- 4. Bills & Payments Group -->
-            <li class="nav-group">
+            <li class="nav-group" [class.is-expanded]="isGroupOpen('bills')">
               <button type="button" class="nav-group-header" (click)="toggleGroup('bills')" [title]="collapsed() ? 'Bills & Payments' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-teal">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Bills & Payments</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('bills')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('bills') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/bills/pay" routerLinkActive="active" title="Pay Bills">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Pay Bills</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/recurring-payments" routerLinkActive="active" title="Recurring & Bills">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Recurring & Bills</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/bills/saved" routerLinkActive="active" title="Saved Bills">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Saved Bills</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('bills') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/bills/pay" routerLinkActive="active" title="Pay Bills">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Pay Bills</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/recurring-payments" routerLinkActive="active" title="Recurring & Bills">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Recurring & Bills</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/bills/saved" routerLinkActive="active" title="Saved Bills">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Saved Bills</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
             <!-- 5. Financial Services Group -->
-            <li class="nav-group">
+            <li class="nav-group" [class.is-expanded]="isGroupOpen('finance')">
               <button type="button" class="nav-group-header" (click)="toggleGroup('finance')" [title]="collapsed() ? 'Financial Services' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-pink">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Financial Services</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('finance')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('finance') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/loans" routerLinkActive="active" title="Consumer Loans">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Consumer Loans</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('finance') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/loans" routerLinkActive="active" title="Consumer Loans">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Consumer Loans</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
             <!-- 6. Promotions & Business Group -->
-            <li class="nav-group">
+            <li class="nav-group" [class.is-expanded]="isGroupOpen('promo')">
               <button type="button" class="nav-group-header" (click)="toggleGroup('promo')" [title]="collapsed() ? 'Promotions & Business' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-purple">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Promotions & Business</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('promo')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('promo') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/vouchers" routerLinkActive="active" title="Voucher Store">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Voucher Store</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/merchant/register" routerLinkActive="active" title="Merchant Partner">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Merchant Partner</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('promo') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/vouchers" routerLinkActive="active" title="Voucher Store">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Voucher Store</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/merchant/register" routerLinkActive="active" title="Merchant Partner">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Merchant Partner</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
+            <!-- Section Header: Admin (Only for ADMIN role) -->
+            <div class="nav-section-label" *ngIf="isAdmin() && !collapsed()">QUẢN TRỊ VIÊN</div>
+
             <!-- 7. Admin Group (Only for ADMIN role) -->
-            <li class="nav-group" *ngIf="isAdmin()">
+            <li class="nav-group" *ngIf="isAdmin()" [class.is-expanded]="isGroupOpen('admin')">
               <button type="button" class="nav-group-header admin-header" (click)="toggleGroup('admin')" [title]="collapsed() ? 'Admin Portal' : ''">
                 <div class="group-header-left">
-                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
+                  <div class="nav-icon-box icon-box-navy">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
                   <span class="nav-title" *ngIf="!collapsed()">Admin Portal</span>
                 </div>
                 <svg class="chevron-icon" [class.chevron-open]="isGroupOpen('admin')" *ngIf="!collapsed()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
-              <ul class="nav-sub-list" *ngIf="isGroupOpen('admin') && !collapsed()">
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/admin/dashboard" routerLinkActive="active" title="Overview">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Overview</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/admin/merchants" routerLinkActive="active" title="Merchants">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Merchants</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/users" routerLinkActive="active" title="Users">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Users</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/admin/ledger" routerLinkActive="active" title="Ledger">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Ledger</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/admin/webhooks" routerLinkActive="active" title="Webhook Logs">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Webhook Logs</span>
-                  </a>
-                </li>
-                <li class="nav-sub-item">
-                  <a class="nav-sub-link" routerLink="/admin/vouchers" routerLinkActive="active" title="Vouchers">
-                    <span class="sub-dot"></span>
-                    <span class="nav-sub-title">Vouchers</span>
-                  </a>
-                </li>
-              </ul>
+              <div class="sub-tree-wrapper" *ngIf="isGroupOpen('admin') && !collapsed()">
+                <ul class="nav-sub-list">
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/admin/dashboard" routerLinkActive="active" title="Overview">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Overview</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/admin/merchants" routerLinkActive="active" title="Merchants">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Merchants</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/users" routerLinkActive="active" title="Users">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Users</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/admin/ledger" routerLinkActive="active" title="Ledger">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Ledger</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/admin/webhooks" routerLinkActive="active" title="Webhook Logs">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Webhook Logs</span>
+                    </a>
+                  </li>
+                  <li class="nav-sub-item">
+                    <a class="nav-sub-link" routerLink="/admin/vouchers" routerLinkActive="active" title="Vouchers">
+                      <span class="sub-dot"></span>
+                      <span class="nav-sub-title">Vouchers</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </li>
 
             <!-- Collapse/Expand Sidebar Toggle -->
             <li class="nav-item nav-collapse-item">
               <button type="button" class="nav-link nav-collapse-btn" (click)="toggleCollapse()" [title]="collapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!collapsed()">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="collapsed()">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-                <span class="nav-title" *ngIf="!collapsed()">Collapse Sidebar</span>
+                <div class="nav-icon-box icon-box-gray">
+                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!collapsed()">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                  <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="collapsed()">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
+                <span class="nav-title" *ngIf="!collapsed()">Thu gọn Menu</span>
               </button>
             </li>
           </ul>
@@ -353,19 +390,20 @@ import { NotificationService } from '../../core/services/notification.service';
       transition: margin-left var(--transition-normal);
     }
 
-    /* Sidenav */
+    /* Sidenav Container */
     .sidenav {
       position: fixed;
       top: 0;
       left: 0;
       height: 100vh;
       width: var(--sidebar-width);
-      background-color: var(--color-bg-secondary);
-      border-right: 1px solid var(--color-border-primary);
+      background: linear-gradient(180deg, #ffffff 0%, #fcf8fa 50%, #f4f8fc 100%);
+      border-right: 1px solid rgba(226, 232, 240, 0.8);
       display: flex;
       flex-direction: column;
       z-index: var(--z-fixed);
       transition: width var(--transition-normal), transform var(--transition-normal);
+      box-shadow: 4px 0 24px rgba(13, 43, 92, 0.04);
     }
 
     .sidenav-collapsed {
@@ -376,7 +414,8 @@ import { NotificationService } from '../../core/services/notification.service';
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
       z-index: var(--z-sticky);
     }
 
@@ -384,10 +423,10 @@ import { NotificationService } from '../../core/services/notification.service';
     .brand-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px 16px;
-      border-bottom: 1px solid var(--color-border-primary);
-      min-height: 64px;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      min-height: 72px;
       box-sizing: border-box;
     }
 
@@ -397,23 +436,27 @@ import { NotificationService } from '../../core/services/notification.service';
     }
 
     .brand-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(0, 0, 0, 0.06);
+      box-shadow: 0 6px 16px rgba(194, 0, 103, 0.18);
+      border: 1.5px solid rgba(244, 114, 182, 0.3);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .brand-logo:hover {
+      transform: scale(1.04);
     }
 
     .brand-logo-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 12px;
     }
 
     .brand-text {
@@ -424,25 +467,55 @@ import { NotificationService } from '../../core/services/notification.service';
     }
 
     .brand-title {
-      font-weight: var(--font-weight-bold);
+      font-weight: 900;
       font-size: 1.15rem;
-      color: var(--color-text-primary);
+      color: #0d2b5c;
       line-height: 1.2;
       white-space: nowrap;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
+      color: #ffffff;
+      padding: 2px 6px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
     }
 
     .brand-subtitle {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-tertiary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
       white-space: nowrap;
     }
 
-    /* Navigation */
+    /* Navigation Wrapper & Scrollbar */
     .nav-wrapper {
       flex: 1;
-      padding: 12px 10px;
+      padding: 14px 12px;
       overflow-y: auto;
+    }
+    .nav-wrapper::-webkit-scrollbar {
+      width: 4px;
+    }
+    .nav-wrapper::-webkit-scrollbar-thumb {
+      background: #f472b6;
+      border-radius: 999px;
+    }
+
+    .nav-section-label {
+      font-size: 0.68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #94a3b8;
+      letter-spacing: 0.08em;
+      padding: 14px 12px 6px 12px;
     }
 
     .nav-list {
@@ -451,103 +524,82 @@ import { NotificationService } from '../../core/services/notification.service';
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
-    .nav-item {
+    /* Icon Box Badges */
+    .nav-icon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.22s ease;
+    }
+    .nav-icon-box svg {
+      width: 17px;
+      height: 17px;
+      transition: stroke 0.2s ease;
+    }
+
+    .icon-box-navy { background: #eef6ff; color: #0d2b5c; border: 1px solid #dbeafe; }
+    .icon-box-pink { background: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; }
+    .icon-box-blue { background: #e3f2fd; color: #0072ce; border: 1px solid #bbdefb; }
+    .icon-box-teal { background: #e6fffa; color: #0d9488; border: 1px solid #99f6e4; }
+    .icon-box-purple { background: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+    .icon-box-gray { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+    /* Nav Item & Parent Group Header */
+    .nav-item, .nav-group {
       margin-bottom: 2px;
     }
 
-    .nav-top-link {
-      font-weight: 800;
-      color: #0d2b5c;
-    }
-
-    .nav-link {
+    .nav-link, .nav-group-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      color: #475569;
-      font-size: 0.88rem;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      white-space: nowrap;
+      justify-content: space-between;
       width: 100%;
-      border: none;
+      padding: 8px 12px;
+      border-radius: 14px;
+      color: #334155;
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
       background: transparent;
       cursor: pointer;
       box-sizing: border-box;
       font-family: inherit;
     }
 
-    .sidenav-collapsed .nav-link {
+    .sidenav-collapsed .nav-link,
+    .sidenav-collapsed .nav-group-header {
       justify-content: center;
-      padding: 10px 0;
+      padding: 8px 0;
     }
 
-    .nav-link:hover {
-      background-color: #fff0f6;
+    .nav-link:hover, .nav-group-header:hover {
+      background: rgba(255, 240, 246, 0.7);
+      border-color: rgba(248, 187, 208, 0.5);
       color: #c20067;
+      transform: translateX(2px);
     }
 
     .nav-link.active {
-      background-color: #fff0f6;
+      background: linear-gradient(135deg, #fff0f6 0%, #eef6ff 100%);
+      border-color: #f8bbd0;
       color: #c20067;
-      font-weight: 900;
-      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.1);
+      box-shadow: 0 4px 16px rgba(194, 0, 103, 0.12);
     }
-
-    .nav-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: #64748b;
-      transition: color 0.2s ease;
-    }
-
-    .nav-link:hover .nav-icon,
-    .nav-link.active .nav-icon {
-      color: #c20067;
-    }
-
-    .nav-title {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    /* Accordion Nav Groups */
-    .nav-group {
-      margin-bottom: 2px;
-    }
-
-    .nav-group-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 10px 14px;
-      border: none;
-      background: transparent;
-      color: #0d2b5c;
-      font-weight: 800;
-      font-size: 0.88rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: inherit;
-    }
-
-    .sidenav-collapsed .nav-group-header {
-      justify-content: center;
-      padding: 10px 0;
-    }
-
-    .nav-group-header:hover {
-      background: #fff0f6;
-      color: #c20067;
+    .nav-link.active .icon-box-navy,
+    .nav-link.active .icon-box-pink {
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.3);
     }
 
     .group-header-left {
@@ -559,8 +611,8 @@ import { NotificationService } from '../../core/services/notification.service';
     .chevron-icon {
       width: 16px;
       height: 16px;
-      color: #64748b;
-      transition: transform 0.22s ease, color 0.2s ease;
+      color: #94a3b8;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
     }
 
     .chevron-open {
@@ -568,14 +620,35 @@ import { NotificationService } from '../../core/services/notification.service';
       color: #c20067;
     }
 
-    /* Sub-list Indentation & Styling */
+    /* Sub-Tree Hierarchy Wrapper */
+    .sub-tree-wrapper {
+      position: relative;
+      margin-left: 26px;
+      padding-left: 12px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+      border-left: 2px solid #e2e8f0;
+      animation: slideDown 0.24s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .nav-sub-list {
       list-style: none;
-      padding: 4px 0 6px 0;
+      padding: 0;
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     .nav-sub-item {
@@ -586,42 +659,49 @@ import { NotificationService } from '../../core/services/notification.service';
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px 8px 34px; /* 34px left padding for ~20px indentation */
+      padding: 8px 14px;
       color: #475569;
       font-weight: 600;
       font-size: 0.84rem;
       text-decoration: none;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-      border-left: 3px solid transparent;
+      border-radius: 12px;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid transparent;
     }
 
     .nav-sub-link:hover {
       color: #c20067;
       background: #fff0f6;
+      border-color: #f8bbd0;
+      transform: translateX(4px);
     }
 
     .nav-sub-link.active {
       color: #c20067;
-      background: #fff0f6;
+      background: linear-gradient(135deg, #fff0f6 0%, #eef6ff 100%);
       font-weight: 800;
-      border-left-color: #c20067;
-      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.08);
+      border-color: #f8bbd0;
+      box-shadow: 0 4px 14px rgba(194, 0, 103, 0.12);
+      transform: translateX(4px);
     }
 
     .sub-dot {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #cbd5e1;
-      transition: all 0.2s ease;
+      transition: all 0.22s ease;
       flex-shrink: 0;
     }
 
-    .nav-sub-link.active .sub-dot,
+    .nav-sub-link.active .sub-dot {
+      background: #c20067;
+      box-shadow: 0 0 8px rgba(194, 0, 103, 0.6);
+      transform: scale(1.4);
+    }
     .nav-sub-link:hover .sub-dot {
       background: #c20067;
-      transform: scale(1.4);
+      transform: scale(1.3);
     }
 
     .admin-header {
