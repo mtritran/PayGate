@@ -253,3 +253,26 @@
 .mat-mdc-raised-button.mat-primary:hover {
   --mdc-protected-background-color: var(--color-primary-700) !important;
 }
+
+/* ==========================================================================
+   GLOBAL FULLSCREEN MODAL BACKDROP OVERRIDE (Cover Entire Screen & Top Header)
+   ========================================================================== */
+.modal-overlay,
+.modal-backdrop,
+.confirm-modal-overlay,
+.pin-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99999 !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
