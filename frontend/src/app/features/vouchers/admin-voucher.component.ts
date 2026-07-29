@@ -607,7 +607,7 @@ import { NotificationService } from '../../core/services/notification.service';
       background: var(--color-bg-secondary);
       border-radius: var(--radius-xl);
       box-shadow: var(--shadow-xl);
-      z-index: var(--z-modal);
+      z-index: 100000;
       animation: slide-up 200ms ease-out;
       display: flex;
       flex-direction: column;

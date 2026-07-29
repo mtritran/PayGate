@@ -29,35 +29,49 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     @RabbitListener(queues = "${rabbitmq.queue.notification:notification.queue}")
     @Transactional
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
+        if (event == null) {
+            log.info("[LOYALTY] Ignored null payment event");
+            return;
+        }
+
         log.info("[LOYALTY] Received PaymentCompletedEvent for ref: {}", event.transactionRef());
 
-        if (event == null || !"COMPLETED".equalsIgnoreCase(event.status())) {
-            log.info("[LOYALTY] Ignored non-completed event or null payload");
-            return;
-        }
-
-        if (event.userId() == null) {
-            log.warn("[LOYALTY] Event missing userId, skipping points calculation for ref: {}", event.transactionRef());
-            return;
-        }
-
-        // Idempotency check: Don't earn points twice for the same transactionRef
-        if (event.transactionRef() != null && pointTransactionRepository.existsByTransactionRef(event.transactionRef())) {
-            log.info("[LOYALTY] Points already earned for transactionRef: {}, skipping.", event.transactionRef());
+        if (!"COMPLETED".equalsIgnoreCase(event.status())) {
+            log.info("[LOYALTY] Ignored non-completed event for ref: {}", event.transactionRef());
             return;
         }
 
         TransactionType type = event.transactionType() != null ? event.transactionType() : TransactionType.PAYMENT;
-        int points = calculatePoints(type, event.amount());
+        earnPoints(event.userId(), event.amount(), event.transactionRef(), type);
+    }
 
-        if (points <= 0) {
-            log.info("[LOYALTY] Calculated points <= 0 for amount: {} and type: {}", event.amount(), type);
+    @Override
+    @Transactional
+    public void earnPoints(Long userId, BigDecimal amount, String transactionRef) {
+        earnPoints(userId, amount, transactionRef, TransactionType.PAYMENT);
+    }
+
+    private void earnPoints(Long userId, BigDecimal amount, String transactionRef, TransactionType type) {
+        if (userId == null) {
+            log.warn("[LOYALTY] Missing userId, skipping points calculation for ref: {}", transactionRef);
             return;
         }
 
-        User user = userRepository.findById(event.userId()).orElse(null);
+        if (transactionRef != null && pointTransactionRepository.existsByTransactionRef(transactionRef)) {
+            log.info("[LOYALTY] Points already earned for transactionRef: {}, skipping.", transactionRef);
+            return;
+        }
+
+        int points = calculatePoints(type, amount);
+
+        if (points <= 0) {
+            log.info("[LOYALTY] Calculated points <= 0 for amount: {} and type: {}", amount, type);
+            return;
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
         if (user == null) {
-            log.warn("[LOYALTY] User not found with id: {}, skipping points.", event.userId());
+            log.warn("[LOYALTY] User not found with id: {}, skipping points.", userId);
             return;
         }
 
@@ -65,12 +79,12 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .user(user)
                 .points(points)
                 .type(PointTransactionType.EARN)
-                .description("Tích điểm từ giao dịch " + (event.transactionRef() != null ? event.transactionRef() : ""))
-                .transactionRef(event.transactionRef())
+                .description("Tich diem tu giao dich " + (transactionRef != null ? transactionRef : ""))
+                .transactionRef(transactionRef)
                 .build();
 
         pointTransactionRepository.save(pointTransaction);
-        log.info("[LOYALTY] Earned {} points for user: {} on transactionRef: {}", points, user.getId(), event.transactionRef());
+        log.info("[LOYALTY] Earned {} points for user: {} on transactionRef: {}", points, user.getId(), transactionRef);
     }
 
     private int calculatePoints(TransactionType type, BigDecimal amount) {

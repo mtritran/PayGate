@@ -14,6 +14,7 @@ import {
   LinkBillRequest
 } from '../../../core/services/bill.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { VoucherService, UserVoucherResponse } from '../../../core/services/voucher.service';
 import { PinModalComponent } from '../../../shared/components/pin-modal/pin-modal.component';
 
 
@@ -179,6 +180,29 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
             <span class="bill-badge" [class.unpaid]="bill.status === 'UNPAID'" [class.paid]="bill.status === 'PAID'">
               {{ bill.status === 'UNPAID' ? 'Unpaid' : '✓ Paid' }}
             </span>
+            <div
+              *ngIf="bill.status === 'UNPAID'"
+              class="voucher-dropdown">
+              <button class="voucher-trigger" type="button" (click)="toggleVoucherMenu(bill.billId)">
+                <span>{{ selectedVoucherLabel(bill) }}</span>
+                <mat-icon>expand_more</mat-icon>
+              </button>
+              <div class="voucher-menu" *ngIf="openVoucherBillId() === bill.billId">
+                <button class="voucher-option" type="button" (click)="clearVoucherSelection(bill.billId)">
+                  <span class="voucher-main">No voucher</span>
+                </button>
+                <button
+                  *ngFor="let voucher of myVouchers()"
+                  class="voucher-option"
+                  type="button"
+                  [class.disabled]="!isVoucherUsable(voucher, bill)"
+                  [disabled]="!isVoucherUsable(voucher, bill)"
+                  (click)="selectVoucherForBill(bill.billId, voucher.voucherCode)">
+                  <span class="voucher-main">{{ voucherOptionLabel(voucher, bill) }}</span>
+                  <span class="voucher-sub">Cần {{ voucher.pointsRequired | number }} điểm để đổi voucher này</span>
+                </button>
+              </div>
+            </div>
             <button
               *ngIf="bill.status === 'UNPAID'"
               class="btn btn-primary btn-sm btn-pay-now"
@@ -196,6 +220,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
         <h3>Payment Successful</h3>
         <div class="receipt-rows">
           <div><span>Transaction Ref</span><b>{{ lastPaid()!.transactionRef }}</b></div>
+          <div *ngIf="lastPaid()!.discountAmount > 0"><span>Discount</span><b>-{{ lastPaid()!.discountAmount | currency:'VND':'symbol':'1.0-0' }}</b></div>
           <div><span>Amount</span><b>{{ lastPaid()!.paidAmount | currency:'VND':'symbol':'1.0-0' }}</b></div>
           <div><span>Time</span><b>{{ lastPaid()!.paidAt | date:'dd/MM/yyyy HH:mm' }}</b></div>
         </div>
@@ -303,6 +328,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       </div>
     </div>
   </div>
+</div>
 
   <!-- OTP Security Modal -->
   <app-pin-modal
@@ -311,7 +337,6 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     (confirmed)="onPinConfirmed($event)"
     (cancelled)="showPinModal.set(false)"
   ></app-pin-modal>
-</div>
   `,
   styles: [`
     .hub-page { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
@@ -398,6 +423,30 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     .bill-badge { padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .bill-badge.unpaid { background: #fef3c7; color: #92400e; }
     .bill-badge.paid { background: #fff0f6; color: #c20067; }
+    .voucher-dropdown { position: relative; width: 260px; }
+    .voucher-trigger {
+      width: 100%; min-height: 36px; padding: 0 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border: 1.5px solid #e5e7eb; border-radius: 8px;
+      font-size: 12px; outline: none; background: #fff; color: #374151; cursor: pointer;
+    }
+    .voucher-trigger:focus { border-color: #c20067; box-shadow: 0 0 0 3px rgba(194,0,103,0.1); }
+    .voucher-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+    .voucher-trigger mat-icon { font-size: 18px; width: 18px; height: 18px; flex: 0 0 auto; }
+    .voucher-menu {
+      position: absolute; right: 0; top: calc(100% + 4px); z-index: 20;
+      width: 100%; max-height: 260px; overflow-y: auto;
+      background: #fff; border: 1px solid #d1d5db; box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+    .voucher-option {
+      width: 100%; padding: 10px 12px; border: 0; border-bottom: 1px solid #f3f4f6;
+      display: flex; flex-direction: column; gap: 3px; text-align: left;
+      background: #fff; color: #374151; cursor: pointer;
+    }
+    .voucher-option:hover:not(:disabled) { background: #fff0f6; }
+    .voucher-option.disabled { opacity: 0.45; cursor: not-allowed; }
+    .voucher-main { font-size: 13px; line-height: 18px; }
+    .voucher-sub { font-size: 11px; line-height: 15px; color: #dc2626; font-weight: 600; }
     .btn-pay-now { min-width: 160px; }
 
     /* Receipt */
@@ -534,6 +583,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 export class BillPayComponent implements OnInit {
   private bill = inject(BillService);
   private notify = inject(NotificationService);
+  private vouchers = inject(VoucherService);
 
   // Tabs
   activeTab = signal<Tab>('services');
@@ -554,6 +604,7 @@ export class BillPayComponent implements OnInit {
   payingBillId = signal<number | null>(null);
   lastPaid = signal<BillPayResponse | null>(null);
   payError = signal<string | null>(null);
+  myVouchers = signal<UserVoucherResponse[]>([]);
 
   // Link modal
   showLinkModal = signal(false);
@@ -584,6 +635,14 @@ export class BillPayComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSubscriptions();
+    this.loadMyVouchers();
+  }
+
+  private loadMyVouchers(): void {
+    this.vouchers.getMyVouchers().subscribe({
+      next: res => this.myVouchers.set(res.data ?? []),
+      error: () => this.myVouchers.set([])
+    });
   }
 
   private loadSubscriptions(): void {
@@ -604,6 +663,7 @@ export class BillPayComponent implements OnInit {
   selectSub(sub: BillSubscriptionResponse): void {
     this.selectedSub.set(sub);
     this.lastPaid.set(null);
+    this.selectedVoucherCodes.set({});
     this.loadBillsForSub(sub.id);
   }
 
@@ -641,8 +701,18 @@ export class BillPayComponent implements OnInit {
 
   showPinModal = signal(false);
   pendingBillToPay = signal<BillLookupResponse | null>(null);
+  selectedVoucherCodes = signal<Record<number, string>>({});
+  openVoucherBillId = signal<number | null>(null);
 
   payBill(bill: BillLookupResponse): void {
+    const code = this.selectedVoucherCodeFor(bill.billId);
+    if (code) {
+      const voucher = this.myVouchers().find(v => v.voucherCode === code);
+      if (!voucher || !this.isVoucherUsable(voucher, bill)) {
+        this.notify.warning('Selected voucher is not available for this bill');
+        return;
+      }
+    }
     this.pendingBillToPay.set(bill);
     // Open OTP modal — auto-sends OTP email on open
     this.showPinModal.set(true);
@@ -661,11 +731,14 @@ export class BillPayComponent implements OnInit {
     this.payingBillId.set(bill.billId);
     this.lastPaid.set(null);
     this.payError.set(null);
-    this.bill.pay({ billId: bill.billId }).subscribe({
+    const code = this.selectedVoucherCodeFor(bill.billId).trim();
+    this.bill.pay({ billId: bill.billId, voucherCode: code || undefined }).subscribe({
       next: res => {
         this.payingBillId.set(null);
         this.lastPaid.set(res.data ?? null);
+        this.setSelectedVoucherCode(bill.billId, '');
         this.notify.success('Payment successful!');
+        this.loadMyVouchers();
         const sub = this.selectedSub();
         if (sub) this.loadBillsForSub(sub.id);
       },
@@ -681,6 +754,7 @@ export class BillPayComponent implements OnInit {
   goToBills(sub: BillSubscriptionResponse): void {
     this.selectedSub.set(sub);
     this.activeTab.set('bills');
+    this.selectedVoucherCodes.set({});
     this.loadBillsForSub(sub.id);
   }
 
@@ -792,5 +866,59 @@ export class BillPayComponent implements OnInit {
       MINUTELY: 'Every Minute', DAILY: 'Daily', WEEKLY: 'Weekly', MONTHLY: 'Monthly'
     };
     return map[f] ?? f;
+  }
+
+  isVoucherUsable(voucher: UserVoucherResponse, bill: BillLookupResponse): boolean {
+    return this.voucherDisabledReason(voucher, bill) === null;
+  }
+
+  selectedVoucherCodeFor(billId: number): string {
+    return this.selectedVoucherCodes()[billId] ?? '';
+  }
+
+  setSelectedVoucherCode(billId: number, voucherCode: string): void {
+    this.selectedVoucherCodes.update(current => ({ ...current, [billId]: voucherCode }));
+  }
+
+  toggleVoucherMenu(billId: number): void {
+    this.openVoucherBillId.update(current => current === billId ? null : billId);
+  }
+
+  clearVoucherSelection(billId: number): void {
+    this.setSelectedVoucherCode(billId, '');
+    this.openVoucherBillId.set(null);
+  }
+
+  selectVoucherForBill(billId: number, voucherCode: string): void {
+    this.setSelectedVoucherCode(billId, voucherCode);
+    this.openVoucherBillId.set(null);
+  }
+
+  selectedVoucherLabel(bill: BillLookupResponse): string {
+    const code = this.selectedVoucherCodeFor(bill.billId);
+    const voucher = this.myVouchers().find(v => v.voucherCode === code);
+    return voucher ? this.voucherOptionLabel(voucher, bill) : 'No voucher';
+  }
+
+  voucherOptionLabel(voucher: UserVoucherResponse, bill: BillLookupResponse): string {
+    const discount = new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(voucher.discountAmount);
+    const reason = this.voucherDisabledReason(voucher, bill);
+    return `${voucher.voucherCode} - ${voucher.title} (-${discount})${reason ? ' - ' + reason : ''}`;
+  }
+
+  private voucherDisabledReason(voucher: UserVoucherResponse, bill: BillLookupResponse): string | null {
+    if (voucher.status !== 'AVAILABLE') return voucher.status === 'USED' ? 'Used' : 'Expired';
+    if (voucher.expiresAt && new Date(voucher.expiresAt) < new Date()) return 'Expired';
+    if (bill.amount < (voucher.minOrderAmount ?? 0)) return 'Below min order';
+    if (!this.isVoucherApplicableForBill(voucher.applicableType)) return 'Not for bills';
+    return null;
+  }
+
+  private isVoucherApplicableForBill(applicableType: string): boolean {
+    return applicableType === 'ALL' || applicableType === 'BILL_PAYMENT' || applicableType === 'PAYMENT';
   }
 }
