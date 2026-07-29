@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
       <header class="auth-header">
         <div class="auth-brand">
           <div class="auth-brand-logo">
-            <img src="assets/logo.png" alt="PayGate Logo" class="auth-logo-img">
+            <img src="assets/PayGate_Logo.jpg" alt="PayGate Logo" class="auth-logo-img">
           </div>
           <div class="auth-brand-text">
             <div class="auth-brand-title">PayGate</div>
@@ -110,22 +110,23 @@ import { CommonModule } from '@angular/common';
     }
 
     .auth-brand-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .auth-logo-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 12px;
+      border-radius: 14px;
     }
 
     .auth-brand-title {

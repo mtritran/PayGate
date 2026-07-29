@@ -26,7 +26,7 @@ import { NotificationService } from '../../core/services/notification.service';
         <!-- Brand Header -->
         <div class="brand-header">
           <div class="brand-logo" (click)="collapsed() && toggleCollapse()" [title]="collapsed() ? 'Expand sidebar' : ''">
-            <img src="assets/logo.png" alt="PayGate Logo" class="brand-logo-img">
+            <img src="assets/PayGate_Logo.jpg" alt="PayGate Logo" class="brand-logo-img">
           </div>
           <div class="brand-text" *ngIf="!collapsed()">
             <div class="brand-title">PayGate</div>
@@ -361,21 +361,23 @@ import { NotificationService } from '../../core/services/notification.service';
     }
 
     .brand-logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.06);
     }
 
     .brand-logo-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 10px;
+      border-radius: 12px;
     }
 
     .brand-text {
@@ -387,7 +389,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
     .brand-title {
       font-weight: var(--font-weight-bold);
-      font-size: 1.05rem;
+      font-size: 1.15rem;
       color: var(--color-text-primary);
       line-height: 1.2;
       white-space: nowrap;
