@@ -46,6 +46,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.training.paygate.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -60,6 +62,7 @@ public class VaultServiceImpl implements VaultService {
     private final AccountService accountService;
     private final VaultMapper vaultMapper;
     private final AmqpTemplate amqpTemplate;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -166,6 +169,15 @@ public class VaultServiceImpl implements VaultService {
             log.warn("Could not publish PaymentCompletedEvent for vault deposit: {}", e.getMessage());
         }
 
+        // Save real-time notification for vault deposit
+        try {
+            String depMsg = String.format("Bạn đã tích lũy vào Heo Đất '%s' số tiền +%,.0f VND. Giao dịch: %s.",
+                    vault.getName(), request.amount().doubleValue(), tx.getTransactionRef());
+            notificationService.createNotification(user.getId(), "Tích lũy Heo Đất thành công", depMsg, "VAULT_DEPOSIT");
+        } catch (Exception ne) {
+            log.error("Failed to create vault deposit notification: {}", ne.getMessage());
+        }
+
         return new VaultTransactionResponse(tx.getTransactionRef(), request.amount(), locked.vault.getBalance(), vault.getStatus().name());
     }
 
@@ -193,6 +205,15 @@ public class VaultServiceImpl implements VaultService {
                 TransactionType.VAULT_WITHDRAW, request.description());
         saveLedger(tx.getId(), locked.vault, locked.user, request.amount());
         evictAfterCommit(locked.user.getId(), locked.vault.getId());
+
+        // Save real-time notification for vault withdrawal
+        try {
+            String withMsg = String.format("Bạn đã rút tiền từ Heo Đất '%s' số tiền -%,.0f VND về ví. Giao dịch: %s.",
+                    vault.getName(), request.amount().doubleValue(), tx.getTransactionRef());
+            notificationService.createNotification(user.getId(), "Rút tiền Heo Đất thành công", withMsg, "VAULT_WITHDRAW");
+        } catch (Exception ne) {
+            log.error("Failed to create vault withdraw notification: {}", ne.getMessage());
+        }
 
         return new VaultTransactionResponse(tx.getTransactionRef(), request.amount(), locked.vault.getBalance(), vault.getStatus().name());
     }

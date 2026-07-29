@@ -40,6 +40,8 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.training.paygate.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -52,6 +54,7 @@ public class AccountServiceImpl implements AccountService {
         private final BalanceCacheService balanceCacheService;
         private final AccountMapper accountMapper;
         private final VaultRepository vaultRepository;
+        private final NotificationService notificationService;
 
         @Override
         @Transactional
@@ -196,6 +199,18 @@ public class AccountServiceImpl implements AccountService {
             });
         } else {
             balanceCacheService.evictBalance(evictedAccountId);
+        }
+
+        // Save real-time notification
+        try {
+            if (lockedUser.getOwnerType() == OwnerType.USER) {
+                String topUpMsg = String.format("Tài khoản của bạn đã được nạp +%,.0f VND. Giao dịch: %s. Nội dung: %s",
+                        transaction.getAmount().doubleValue(), transaction.getTransactionRef(),
+                        transaction.getDescription() != null ? transaction.getDescription() : "");
+                notificationService.createNotification(lockedUser.getOwnerId(), "Nạp tiền thành công", topUpMsg, "TOPUP");
+            }
+        } catch (Exception ne) {
+            ne.printStackTrace();
         }
 
         return new TransactionResponse(

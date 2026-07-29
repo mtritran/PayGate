@@ -54,6 +54,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.training.paygate.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -72,6 +74,7 @@ public class BillServiceImpl implements BillService {
     private final BalanceCacheService balanceCacheService;
     private final BillProviderClient billProviderClient;
     private final AmqpTemplate amqpTemplate;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -258,6 +261,15 @@ public class BillServiceImpl implements BillService {
             log.info("[BILL PAYMENT] Published PaymentCompletedEvent for txRef {}", transaction.getTransactionRef());
         } catch (Exception e) {
             log.warn("Could not publish PaymentCompletedEvent for bill payment: {}", e.getMessage());
+        }
+
+        // Save real-time notification for bill payment
+        try {
+            String billMsg = String.format("Thanh toán thành công hóa đơn %s (Mã KH: %s). Số tiền: -%,.0f VND. Giao dịch: %s.",
+                    provider.getName(), bill.getCustomerCode(), paidAmount.doubleValue(), transaction.getTransactionRef());
+            notificationService.createNotification(user.getId(), "Thanh toán hóa đơn thành công", billMsg, "BILL_PAYMENT");
+        } catch (Exception ne) {
+            log.error("Failed to create bill payment notification: {}", ne.getMessage());
         }
 
         return new BillPayResponse(

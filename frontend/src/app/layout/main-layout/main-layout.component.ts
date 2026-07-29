@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
@@ -8,6 +8,7 @@ import { AvatarComponent } from '../../shared/components/avatar/avatar.component
 import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-assistant.component';
 
 import { NotificationService } from '../../core/services/notification.service';
+import { RealtimeNotificationService, NotificationItem } from '../../core/services/realtime-notification.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -37,6 +38,49 @@ import { NotificationService } from '../../core/services/notification.service';
 
 
         <div class="header-right">
+          <!-- Notification Bell Container -->
+          <div class="notification-container" (click)="$event.stopPropagation()">
+            <button class="notification-btn" (click)="toggleDropdown($event)" title="Thông báo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+              <span class="notification-badge" *ngIf="unreadCount() > 0">{{ unreadCount() }}</span>
+            </button>
+            
+            <!-- Notification Dropdown Menu -->
+            <div class="notification-dropdown" *ngIf="showDropdown()">
+              <div class="dropdown-header">
+                <h3>Thông báo</h3>
+                <button class="btn-mark-all" (click)="markAllAsRead($event)" *ngIf="unreadCount() > 0">
+                  Đọc tất cả
+                </button>
+              </div>
+              <div class="dropdown-body">
+                <div class="no-notifications" *ngIf="notifications().length === 0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+                  </svg>
+                  <p>Không có thông báo mới</p>
+                </div>
+                <div class="notification-list" *ngIf="notifications().length > 0">
+                  <div 
+                    *ngFor="let item of notifications()" 
+                    class="notification-item" 
+                    [class.unread]="!item.read"
+                    (click)="markAsRead(item, $event)"
+                  >
+                    <span class="item-badge-dot" *ngIf="!item.read"></span>
+                    <div class="item-content">
+                      <div class="item-title">{{ item.title }}</div>
+                      <div class="item-message">{{ item.message }}</div>
+                      <div class="item-time">{{ item.createdAt | date:'HH:mm dd/MM/yyyy' }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <pg-avatar
             [name]="getDisplayName()"
             size="sm"
@@ -182,6 +226,210 @@ import { NotificationService } from '../../core/services/notification.service';
       gap: 10px;
       flex-shrink: 0;
     }
+    
+    /* Notification container and button */
+    .notification-container {
+      position: relative;
+      display: inline-block;
+    }
+    .notification-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+    .notification-btn:hover {
+      background: #fff0f6;
+      color: #c20067;
+      border-color: #f8bbd0;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.08);
+    }
+    .notification-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    .notification-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4);
+      animation: pulse-ring-badge 2s infinite;
+    }
+
+    @keyframes pulse-ring-badge {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Notification Dropdown */
+    .notification-dropdown {
+      position: absolute;
+      top: 48px;
+      right: -80px;
+      width: 320px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+      border: 1px solid #f1f5f9;
+      z-index: 1010;
+      overflow: hidden;
+      animation: fadeInDropdown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeInDropdown {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fafafc;
+    }
+    .dropdown-header h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .btn-mark-all {
+      background: none;
+      border: none;
+      color: #c20067;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .btn-mark-all:hover {
+      background: #fff0f6;
+    }
+
+    .dropdown-body {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    /* Scrollbar */
+    .dropdown-body::-webkit-scrollbar {
+      width: 5px;
+    }
+    .dropdown-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .dropdown-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .no-notifications {
+      padding: 40px 20px;
+      text-align: center;
+      color: #94a3b8;
+    }
+    .no-notifications svg {
+      width: 32px;
+      height: 32px;
+      margin-bottom: 8px;
+      opacity: 0.4;
+    }
+    .no-notifications p {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* Notification Items */
+    .notification-list {
+      display: flex;
+      flex-direction: column;
+    }
+    .notification-item {
+      padding: 14px 18px;
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+      text-align: left;
+    }
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+    .notification-item:hover {
+      background: #f8fafc;
+    }
+    .notification-item.unread {
+      background: #fff8fb;
+    }
+    .notification-item.unread:hover {
+      background: #fff0f6;
+    }
+    
+    .item-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #c20067;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    
+    .item-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .item-title {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .notification-item.unread .item-title {
+      color: #c20067;
+    }
+    .item-message {
+      font-size: 0.775rem;
+      color: #475569;
+      line-height: 1.4;
+    }
+    .item-time {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
     .header-user-info {
       display: flex;
       flex-direction: column;
@@ -243,8 +491,33 @@ export class MainLayoutComponent {
   authService = inject(AuthService);
   private router = inject(Router);
   private notification = inject(NotificationService);
+  realtimeNotification = inject(RealtimeNotificationService);
+
+  showDropdown = signal(false);
+  notifications = this.realtimeNotification.notifications;
+  unreadCount = this.realtimeNotification.unreadCount;
 
   isAdmin = computed(() => this.authService.getRole() === 'ADMIN' || this.authService.getRole() === 'ROLE_ADMIN');
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showDropdown.set(false);
+  }
+
+  toggleDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showDropdown.update(v => !v);
+  }
+
+  markAsRead(item: NotificationItem, event: Event): void {
+    event.stopPropagation();
+    this.realtimeNotification.markAsRead(item);
+  }
+
+  markAllAsRead(event: Event): void {
+    event.stopPropagation();
+    this.realtimeNotification.markAllAsRead();
+  }
 
   getDisplayName(): string {
     const user = this.authService.getUsername();

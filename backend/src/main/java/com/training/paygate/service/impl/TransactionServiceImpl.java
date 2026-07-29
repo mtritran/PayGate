@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.training.paygate.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -57,6 +59,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -251,6 +254,25 @@ public class TransactionServiceImpl implements TransactionService {
             }
         } catch (Exception be) {
             log.warn("Auto save beneficiary failed: {}", be.getMessage());
+        }
+
+        // Save real-time notifications
+        try {
+            // Notify Sender
+            String senderMsg = String.format("Tài khoản của bạn đã bị trừ -%,.0f VND. Giao dịch: %s. Nội dung: %s",
+                    transaction.getAmount().doubleValue(), transaction.getTransactionRef(),
+                    transaction.getDescription() != null ? transaction.getDescription() : "");
+            notificationService.createNotification(user.getId(), "Giao dịch chuyển tiền", senderMsg, "PAYMENT_SENT");
+
+            // Notify Recipient if it's a User account
+            if (lockedDest.getOwnerType() == OwnerType.USER) {
+                String recipientMsg = String.format("Tài khoản của bạn đã được cộng +%,.0f VND từ %s. Giao dịch: %s. Nội dung: %s",
+                        transaction.getAmount().doubleValue(), user.getUsername(), transaction.getTransactionRef(),
+                        transaction.getDescription() != null ? transaction.getDescription() : "");
+                notificationService.createNotification(lockedDest.getOwnerId(), "Nhận được tiền", recipientMsg, "PAYMENT_RECEIVED");
+            }
+        } catch (Exception ne) {
+            log.error("Failed to create real-time notification: {}", ne.getMessage());
         }
 
         return mapToResponse(transaction);
@@ -453,6 +475,17 @@ public class TransactionServiceImpl implements TransactionService {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
         } catch (Exception e) {
             log.warn("Could not publish Refund PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
+        }
+
+        // Save refund notification
+        try {
+            if (originalPayer != null) {
+                String refundMsg = String.format("Bạn đã được hoàn +%,.0f VND cho giao dịch: %s. Giao dịch hoàn tiền: %s.",
+                        refundTx.getAmount().doubleValue(), originalRef, refundTx.getTransactionRef());
+                notificationService.createNotification(originalPayer.getId(), "Hoàn tiền giao dịch", refundMsg, "REFUND");
+            }
+        } catch (Exception ne) {
+            log.error("Failed to create refund notification: {}", ne.getMessage());
         }
 
         return mapToResponse(refundTx);
