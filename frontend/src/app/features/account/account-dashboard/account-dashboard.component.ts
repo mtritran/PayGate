@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Subscription, timer } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -746,8 +747,14 @@ export class AccountDashboardComponent implements OnInit {
     private snackBar: MatSnackBar
   ) { }
 
+  private pollingSubscription: Subscription | null = null;
+
   ngOnInit(): void {
     this.loadDashboardData();
+    // SWR Realtime Polling: Automatically revalidate Dashboard data every 5 seconds ngầm
+    this.pollingSubscription = timer(5000, 5000).subscribe(() => {
+      this.revalidateDashboardData();
+    });
   }
 
   isAdmin(): boolean {
@@ -776,6 +783,29 @@ export class AccountDashboardComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+    }
+  }
+
+  private revalidateDashboardData(): void {
+    this.rewardService.getMyPoints().subscribe({
+      next: (res) => { if (res.success) this.rewardPoints = res.data; },
+      error: () => {}
+    });
+
+    this.accountService.getAccountMe().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.account = res.data;
+          this.loadRecentTransactions(res.data.id, true);
+        }
+      },
+      error: () => {}
+    });
+  }
+
   private loadDashboardData(): void {
     this.loading = true;
     this.rewardService.getMyPoints().subscribe({
@@ -800,7 +830,7 @@ export class AccountDashboardComponent implements OnInit {
     });
   }
 
-  private loadRecentTransactions(accountId: number): void {
+  private loadRecentTransactions(accountId: number, isSilent = false): void {
     this.accountService.getAccountHistory(accountId, 0, 50).subscribe({
       next: (res) => {
         if (res.success && res.data) {

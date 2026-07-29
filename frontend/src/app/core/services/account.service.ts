@@ -44,6 +44,17 @@ export class AccountService {
   constructor(private http: HttpClient) {
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', () => this.refreshAccountState());
+      
+      // SWR Realtime Polling: Automatically revalidate account balance & linked banks every 5 seconds ngầm
+      import('rxjs').then(({ timer, switchMap, catchError, of }) => {
+        timer(0, 5000).pipe(
+          switchMap(() => this.getAccountMe().pipe(catchError(() => of(null))))
+        ).subscribe();
+
+        timer(0, 8000).pipe(
+          switchMap(() => this.getLinkedBanks().pipe(catchError(() => of(null))))
+        ).subscribe();
+      });
     }
   }
 

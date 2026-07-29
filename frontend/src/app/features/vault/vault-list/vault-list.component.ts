@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Subscription, timer } from 'rxjs';
 import { VaultResponse, VaultService } from '../vault.service';
 
 @Component({
@@ -285,9 +286,10 @@ import { VaultResponse, VaultService } from '../vault.service';
     @media (max-width: 520px) { .vault-hero { border-radius: 20px; padding: 22px; } .primary-btn { width: 100%; } .soft-pill { width: 100%; justify-content: center; } .money-row { flex-direction: column; align-items: flex-start; } .money-row span { text-align: left; } }
   `]
 })
-export class VaultListComponent implements OnInit {
+export class VaultListComponent implements OnInit, OnDestroy {
   vaults: VaultResponse[] = [];
   loading = true;
+  private pollingSub: Subscription | null = null;
 
   constructor(private vaultService: VaultService) { }
 
@@ -315,6 +317,21 @@ export class VaultListComponent implements OnInit {
       },
       error: () => this.loading = false
     });
+
+    // SWR Realtime Polling ngầm 5s/lần cho Hũ Tiết Kiệm
+    this.pollingSub = timer(5000, 5000).subscribe(() => {
+      this.vaultService.getAll().subscribe({
+        next: res => {
+          if (res.data) this.vaults = res.data;
+        }
+      });
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollingSub) {
+      this.pollingSub.unsubscribe();
+    }
   }
 
   barProgress(vault: VaultResponse): number {
