@@ -6,6 +6,7 @@ import { ApiResponse } from '../models/api-response.model';
 
 export interface AiChatRequest {
   prompt: string;
+  userId?: number;
 }
 
 export interface AiChatResponse {
@@ -13,7 +14,7 @@ export interface AiChatResponse {
   modelUsed: string;
   suggestedAmount?: number;
   suggestedRecipient?: string;
-  action?: string; // 'TOPUP' | 'TRANSFER' | 'VIEW_TRANSACTIONS' | 'VIEW_BALANCE'
+  action?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,7 +23,17 @@ export class AiService {
 
   constructor(private http: HttpClient) {}
 
-  chat(prompt: string): Observable<ApiResponse<AiChatResponse>> {
-    return this.http.post<ApiResponse<AiChatResponse>>(`${this.apiUrl}/chat`, { prompt });
+  chat(prompt: string, userId?: number): Observable<ApiResponse<AiChatResponse>> {
+    let targetUserId = userId;
+    if (!targetUserId && typeof localStorage !== 'undefined') {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed.id) targetUserId = parsed.id;
+        }
+      } catch {}
+    }
+    return this.http.post<ApiResponse<AiChatResponse>>(`${this.apiUrl}/chat`, { prompt, userId: targetUserId });
   }
 }

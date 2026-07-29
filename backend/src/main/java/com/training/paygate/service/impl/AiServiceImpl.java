@@ -62,7 +62,7 @@ public class AiServiceImpl implements AiService {
 
         String financialContext = "";
         try {
-            financialContext = buildFinancialContext(username);
+            financialContext = buildFinancialContext(request.getUserId(), username);
         } catch (Exception e) {
             log.warn("Failed to build financial context for user={}: {}", username, e.getMessage());
         }
@@ -101,19 +101,26 @@ public class AiServiceImpl implements AiService {
     /**
      * Build deep comprehensive financial & system context for the logged in user across ALL features.
      */
-    private String buildFinancialContext(String username) {
-        if (username == null) return "";
-
+    private String buildFinancialContext(Long reqUserId, String username) {
         try {
-            Optional<com.training.paygate.entity.User> userOpt = userRepository.findByUsername(username);
-            if (userOpt.isEmpty()) {
-                List<com.training.paygate.entity.User> users = userRepository.findAllByUsernameIgnoreCase(username);
-                if (!users.isEmpty()) {
-                    userOpt = Optional.of(users.get(0));
+            Optional<User> userOpt = Optional.empty();
+
+            if (reqUserId != null) {
+                userOpt = userRepository.findById(reqUserId);
+            }
+
+            if (userOpt.isEmpty() && username != null) {
+                userOpt = userRepository.findByUsername(username);
+                if (userOpt.isEmpty()) {
+                    List<User> users = userRepository.findAllByUsernameIgnoreCase(username);
+                    if (!users.isEmpty()) {
+                        userOpt = Optional.of(users.get(0));
+                    }
                 }
             }
+
             if (userOpt.isEmpty()) {
-                log.warn("User not found by username={}", username);
+                log.warn("User not found by reqUserId={} username={}", reqUserId, username);
                 return "";
             }
 
