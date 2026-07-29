@@ -150,6 +150,6 @@ export class PaygateQrService {
   getFallbackQrImageUrl(accountNumber: string, accountName: string, amount: number = 0, note: string = ''): string {
     const payload = this.encodePayload(accountNumber, accountName, amount, note);
     const encodedPayload = encodeURIComponent(payload);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=340x340&data=${encodedPayload}&color=059669&bgcolor=ffffff&margin=1`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=340x340&data=${encodedPayload}&color=c20067&bgcolor=ffffff&margin=1`;
   }
 }

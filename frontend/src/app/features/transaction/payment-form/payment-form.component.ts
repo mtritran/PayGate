@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -516,17 +516,17 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
 
     .paygate-form-page { display: flex; flex-direction: column; gap: 28px; max-width: 1180px; margin: 0 auto; width: 100%; color: #0f172a; padding: 0; }
     
-    .header-tag { font-size: 0.72rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-    .form-header-group h2 { font-size: 2rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.025em; }
-    .subtitle { font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.6; }
-    
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; padding: 44px 52px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.06), 0 2px 10px -2px rgba(0,0,0,0.03); }
-    
+    .header-tag { font-size: 0.72rem; font-weight: 800; color: #c20067; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .form-header-group h2 { font-size: 2rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.025em; color: #0d2b5c; }
+    .subtitle { font-size: 0.95rem; color: #94a3b8; margin: 0; line-height: 1.6; }
+
+    .content-card { background: #ffffff; border: 1px solid #f3d6e5; border-radius: 24px; padding: 44px 52px; box-shadow: 0 8px 24px rgba(194,0,103,.04); }
+
     /* Balance Strip */
-    .balance-strip { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #047857; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid #a7f3d0; }
+    .balance-strip { background: linear-gradient(135deg, #fff0f6 0%, #fce4ec 100%); color: #c20067; padding: 14px 18px; border-radius: 12px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid #f8bbd0; }
     .balance-strip-left { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-    .wallet-icon { width: 18px; height: 18px; color: #059669; }
-    .balance-amount { font-size: 1.1rem; font-weight: 800; color: #059669; }
+    .wallet-icon { width: 18px; height: 18px; color: #c20067; }
+    .balance-amount { font-size: 1.1rem; font-weight: 800; color: #c20067; }
 
     /* Custom Inputs */
     .custom-form { display: flex; flex-direction: column; gap: 18px; }
@@ -540,7 +540,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .wide-qr-modal { max-width: 680px; }
 
     .modal-header-vqr {
-      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       padding: 20px 24px; color: #ffffff; display: flex; justify-content: space-between; align-items: center;
     }
     .modal-badge-pill {
@@ -557,7 +557,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 14px;
       font-size: 0.82rem; color: #0f172a; outline: none; background: #f8fafc; resize: none; box-sizing: border-box;
     }
-    .qr-textarea:focus { border-color: #059669; background: #ffffff; }
+    .qr-textarea:focus { border-color: #c20067; background: #ffffff; }
 
     .sample-qr-section { display: flex; flex-direction: column; gap: 8px; }
     .sample-title { font-size: 0.7rem; font-weight: 800; color: #64748b; letter-spacing: 0.05em; }
@@ -567,14 +567,14 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
       cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;
     }
-    .sample-qr-card:hover { border-color: #059669; background: #ecfdf5; }
+    .sample-qr-card:hover { border-color: #c20067; background: #fff0f6; }
     .sample-avatar {
-      width: 38px; height: 38px; border-radius: 10px; background: #059669; color: #ffffff;
+      width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,#c20067,#0072ce); color: #ffffff;
       font-size: 0.78rem; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .sample-detail { display: flex; flex-direction: column; gap: 2px; }
     .s-name { font-size: 0.85rem; color: #0f172a; }
-    .s-acc { font-size: 0.75rem; color: #059669; font-weight: 700; }
+    .s-acc { font-size: 0.75rem; color: #c20067; font-weight: 700; }
     .s-note { font-size: 0.72rem; color: #64748b; }
 
     .modal-footer-pad {
@@ -582,7 +582,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       display: flex; justify-content: flex-end; gap: 12px;
     }
     .btn-cancel-light { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 8px 18px; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; }
-    .btn-submit-emerald { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 12px; padding: 8px 20px; font-size: 0.88rem; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 3px 10px rgba(5,150,105,0.3); }
+    .btn-submit-emerald { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); border: none; border-radius: 12px; padding: 8px 20px; font-size: 0.88rem; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 3px 10px rgba(194,0,103,0.3); }
 
     /* Layout My QR Modal */
     .grid-qr-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
@@ -591,28 +591,28 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
     }
     .paygate-brand-banner { display: flex; flex-direction: column; align-items: center; }
-    .pg-logo-bold { font-size: 1.1rem; font-weight: 900; color: #059669; }
-    .pg-logo-bold i { font-style: italic; color: #1d4ed8; }
-    .pg-verified { font-size: 0.65rem; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px; }
+    .pg-logo-bold { font-size: 1.1rem; font-weight: 900; color: #c20067; }
+    .pg-logo-bold i { font-style: italic; color: #0072ce; }
+    .pg-verified { font-size: 0.65rem; font-weight: 800; background: #fff0f6; color: #c20067; padding: 2px 8px; border-radius: 10px; }
 
-    .my-qr-img-frame { width: 170px; height: 170px; background: #ffffff; border: 2px solid #a7f3d0; border-radius: 16px; padding: 6px; box-shadow: 0 6px 18px rgba(5,150,105,0.15); }
+    .my-qr-img-frame { width: 170px; height: 170px; background: #ffffff; border: 2px solid #f8bbd0; border-radius: 16px; padding: 6px; box-shadow: 0 6px 18px rgba(194,0,103,0.15); }
     .my-qr-img { width: 100%; height: 100%; object-fit: contain; }
     .my-acc-badge { display: flex; flex-direction: column; gap: 2px; }
     .acc-title { font-size: 0.85rem; font-weight: 800; color: #0f172a; }
-    .acc-code { font-size: 0.95rem; font-weight: 900; color: #059669; }
+    .acc-code { font-size: 0.95rem; font-weight: 900; color: #c20067; }
 
     .my-qr-config-box { display: flex; flex-direction: column; gap: 10px; }
     .modal-input-sm { width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0 12px; font-size: 0.85rem; color: #0f172a; outline: none; background: #f8fafc; box-sizing: border-box; }
-    .modal-input-sm:focus { border-color: #059669; background: #ffffff; }
+    .modal-input-sm:focus { border-color: #c20067; background: #ffffff; }
 
     .copy-actions-group { display: flex; flex-direction: column; gap: 8px; }
     .btn-copy-chip-full {
-      width: 100%; height: 38px; background: #059669; color: #ffffff; border: none; border-radius: 10px;
+      width: 100%; height: 38px; background: #c20067; color: #ffffff; border: none; border-radius: 10px;
       font-size: 0.8rem; font-weight: 800; cursor: pointer; transition: background 0.15s;
     }
-    .btn-copy-chip-full:hover { background: #047857; }
-    .btn-copy-chip-full.btn-outline { background: #ffffff; border: 1px solid #059669; color: #059669; }
-    .btn-copy-chip-full.btn-outline:hover { background: #ecfdf5; }
+    .btn-copy-chip-full:hover { background: #a00055; }
+    .btn-copy-chip-full.btn-outline { background: #ffffff; border: 1px solid #c20067; color: #c20067; }
+    .btn-copy-chip-full.btn-outline:hover { background: #fff0f6; }
 
     .beneficiaries-chips-bar {
       display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
@@ -620,16 +620,16 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .beneficiaries-chips-bar::-webkit-scrollbar { display: none; }
     .beneficiary-chip {
       display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;
+      background: #ffffff; border: 1px solid #f3d6e5; border-radius: 12px;
       cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
     }
-    .beneficiary-chip:hover { border-color: #059669; background: #ecfdf5; }
-    .beneficiary-chip.active { border-color: #059669; background: #059669; color: #fff; }
+    .beneficiary-chip:hover { border-color: #f8bbd0; background: #fff0f6; }
+    .beneficiary-chip.active { border-color: #c20067; background: #c20067; color: #fff; }
     .chip-avatar {
-      width: 26px; height: 26px; border-radius: 50%; background: #e2e8f0;
+      width: 26px; height: 26px; border-radius: 50%; background: #f3d6e5;
       color: #334155; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
     }
-    .beneficiary-chip.active .chip-avatar { background: #047857; color: #fff; }
+    .beneficiary-chip.active .chip-avatar { background: #a00055; color: #fff; }
     .chip-info { display: flex; flex-direction: column; text-align: left; }
     .chip-name { font-size: 0.78rem; font-weight: 700; line-height: 1.2; }
     .chip-acc { font-size: 0.68rem; opacity: 0.85; }
@@ -639,7 +639,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     
     .input-wrapper { position: relative; display: flex; align-items: center; }
     .input-icon { position: absolute; left: 12px; width: 18px; height: 18px; color: #94a3b8; pointer-events: none; }
-    .currency-prefix { position: absolute; left: 14px; font-weight: 700; color: #059669; font-size: 1.05rem; pointer-events: none; }
+    .currency-prefix { position: absolute; left: 14px; font-weight: 700; color: #c20067; font-size: 1.05rem; pointer-events: none; }
     
     .form-input {
       width: 100%;
@@ -648,30 +648,30 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       font-size: 0.9rem;
       font-weight: 600;
       color: #0f172a;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background-color: #fffafc;
+      border: 1px solid #f3d6e5;
       border-radius: 10px;
       outline: none;
       transition: all 0.15s;
       box-sizing: border-box;
     }
     .form-input.has-prefix { padding-left: 36px; }
-    .form-input:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
-    .form-input.readonly-input { background-color: #f1f5f9; color: #475569; padding-right: 44px; }
+    .form-input:focus { border-color: #c20067; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(194, 0, 103, 0.1); }
+    .form-input.readonly-input { background-color: #fff0f6; color: #475569; padding-right: 44px; }
 
     /* Lookup Card */
     .lookup-card { padding: 14px 16px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 4px; }
-    .loading-card { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; flex-direction: row; align-items: center; gap: 10px; }
-    .spinner-sm { width: 16px; height: 16px; border: 2px solid #e2e8f0; border-top-color: #059669; border-radius: 50%; animation: spin 0.7s linear infinite; }
-    
-    .success-card { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
-    .error-card { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; font-weight: 600; }
-    
-    .verified-badge { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; color: #059669; }
-    .recipient-name { font-size: 1.15rem; font-weight: 800; color: #065f46; margin-top: 2px; }
+    .loading-card { background: #fffafc; border: 1px solid #f3d6e5; color: #64748b; flex-direction: row; align-items: center; gap: 10px; }
+    .spinner-sm { width: 16px; height: 16px; border: 2px solid #f3d6e5; border-top-color: #c20067; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
-    .btn-refresh-key { position: absolute; right: 8px; width: 30px; height: 30px; border: none; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #059669; border: 1px solid #e2e8f0; }
-    .btn-refresh-key:hover { background-color: #ecfdf5; }
+    .success-card { background: #fff0f6; border: 1px solid #f8bbd0; color: #c20067; }
+    .error-card { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; font-weight: 600; }
+
+    .verified-badge { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; color: #c20067; }
+    .recipient-name { font-size: 1.15rem; font-weight: 800; color: #0d2b5c; margin-top: 2px; }
+
+    .btn-refresh-key { position: absolute; right: 8px; width: 30px; height: 30px; border: none; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #c20067; border: 1px solid #f3d6e5; }
+    .btn-refresh-key:hover { background-color: #fff0f6; }
     .btn-refresh-key svg { width: 14px; height: 14px; }
 
     .form-error { font-size: 0.78rem; color: #ef4444; font-weight: 600; }
@@ -684,15 +684,15 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       height: 46px;
       border: none;
       border-radius: 10px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
       font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+      box-shadow: 0 4px 14px rgba(194, 0, 103, 0.3);
       transition: all 0.2s;
     }
-    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-1.5px); box-shadow: 0 6px 18px rgba(194, 0, 103, 0.4); }
     .btn-emerald-submit:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     
     .btn-cancel-link { color: #64748b; font-weight: 600; font-size: 0.875rem; text-decoration: none; padding: 0 12px; }
@@ -716,11 +716,11 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     }
     
     .modal-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 22px; position: relative; }
-    .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #a7f3d0; }
+    .modal-icon-badge { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #fff0f6 0%, #fce4ec 100%); color: #c20067; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #f8bbd0; }
     .modal-icon-badge svg { width: 24px; height: 24px; }
     
     .modal-header-text { flex: 1; }
-    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #059669; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    .modal-tag { font-size: 0.68rem; font-weight: 800; color: #c20067; letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
     .modal-header h3 { margin: 0 0 2px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
     .modal-desc { margin: 0; font-size: 0.825rem; color: #64748b; }
     
@@ -728,18 +728,18 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .btn-close:hover { color: #0f172a; background-color: #f1f5f9; }
 
     /* Receipt Card */
-    .receipt-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .receipt-box { background: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
     .receipt-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; }
     .receipt-label { color: #64748b; font-weight: 500; }
     .receipt-val { color: #0f172a; font-weight: 700; }
-    .font-large { font-size: 1rem; color: #059669; }
-    .text-emerald { color: #059669; font-weight: 800; font-size: 1.15rem; }
+    .font-large { font-size: 1rem; color: #c20067; }
+    .text-emerald { color: #c20067; font-weight: 800; font-size: 1.15rem; }
 
     .receipt-divider { height: 1px; border-top: 1px dashed #cbd5e1; margin: 4px 0; }
 
     .key-box { display: flex; flex-direction: column; gap: 4px; }
     .key-title { font-size: 0.72rem; color: #64748b; font-weight: 700; letter-spacing: 0.03em; }
-    .key-string { font-size: 0.78rem; font-weight: 700; color: #059669; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; word-break: break-all; }
+    .key-string { font-size: 0.78rem; font-weight: 700; color: #c20067; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #f3d6e5; word-break: break-all; }
 
     /* Actions Bar */
     .modal-actions-bar { display: flex; gap: 12px; align-items: center; }
@@ -750,9 +750,9 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .btn-edit-outline:hover:not(:disabled) { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
 
     .btn-confirm-emerald {
-      flex: 1; height: 44px; border: none; border-radius: 10px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); transition: all 0.2s;
+      flex: 1; height: 44px; border: none; border-radius: 10px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 14px rgba(194, 0, 103, 0.3); transition: all 0.2s;
     }
-    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4); }
+    .btn-confirm-emerald:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(194, 0, 103, 0.4); }
     .btn-confirm-emerald:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
     
     .spinner-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -792,44 +792,44 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     }
     .qr-card-left {
       display: flex; flex-direction: column; align-items: center; gap: 10px;
-      min-width: 160px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-      border-radius: 12px; border: 1px solid #a7f3d0;
+      min-width: 160px; padding: 16px; background: linear-gradient(135deg, #fff0f6 0%, #ffe1ef 100%);
+      border-radius: 12px; border: 1px solid #f8bbd0;
     }
     .qr-brand-row { display: flex; align-items: center; gap: 6px; }
-    .qr-brand-name { font-size: 0.95rem; font-weight: 900; color: #059669; }
+    .qr-brand-name { font-size: 0.95rem; font-weight: 900; color: #c20067; }
     .qr-brand-name i { font-style: italic; color: #1d4ed8; }
-    .qr-verified-pill { font-size: 0.6rem; font-weight: 800; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 8px; }
-    .qr-img-wrap { width: 140px; height: 140px; background: #fff; border: 2px solid #a7f3d0; border-radius: 12px; padding: 6px; }
+    .qr-verified-pill { font-size: 0.6rem; font-weight: 800; background: #fff0f6; color: #c20067; padding: 2px 7px; border-radius: 8px; }
+    .qr-img-wrap { width: 140px; height: 140px; background: #fff; border: 2px solid #f8bbd0; border-radius: 12px; padding: 6px; }
     .qr-inline-img { width: 100%; height: 100%; object-fit: contain; }
     .qr-acc-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .qr-acc-name { font-size: 0.82rem; font-weight: 800; color: #0f172a; text-align: center; }
-    .qr-acc-number { font-size: 0.85rem; font-weight: 900; color: #059669; font-family: monospace; }
+    .qr-acc-number { font-size: 0.85rem; font-weight: 900; color: #c20067; font-family: monospace; }
 
     .qr-card-right { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
     .qr-info-head { font-size: 1rem; font-weight: 800; color: #0f172a; }
     .qr-info-desc { font-size: 0.85rem; color: #475569; margin: 0; line-height: 1.6; }
     .qr-live-badge {
       display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700;
-      background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 8px; padding: 4px 10px;
+      background: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; border-radius: 8px; padding: 4px 10px;
     }
-    .dot-live { width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
+    .dot-live { width: 7px; height: 7px; background: #c20067; border-radius: 50%; display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     .qr-step-list { display: flex; flex-direction: column; gap: 8px; }
     .qr-step { display: flex; align-items: flex-start; gap: 10px; font-size: 0.83rem; color: #475569; }
-    .step-num { width: 22px; height: 22px; border-radius: 50%; background: #059669; color: #fff; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; background: #c20067; color: #fff; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 
     /* Accept Mode (one-click QR flow) */
     .accept-card { padding: 24px 22px; display: flex; flex-direction: column; gap: 18px; }
     .accept-loading { display: flex; align-items: center; gap: 10px; padding: 18px; justify-content: center; color: #475569; font-weight: 600; }
-    .accept-receiver { display: flex; align-items: center; gap: 14px; padding: 16px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%); border: 1px solid #a7f3d0; border-radius: 14px; }
-    .accept-avatar { width: 52px; height: 52px; border-radius: 50%; background: #059669; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; flex-shrink: 0; }
+    .accept-receiver { display: flex; align-items: center; gap: 14px; padding: 16px; background: linear-gradient(135deg, #fff0f6 0%, #fffafc 100%); border: 1px solid #f8bbd0; border-radius: 14px; }
+    .accept-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg,#c20067,#0072ce); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.1rem; flex-shrink: 0; }
     .accept-receiver-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
-    .accept-receiver-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
-    .accept-receiver-acc { font-size: 0.85rem; color: #059669; font-weight: 700; }
-    .accept-amount-block { text-align: center; padding: 22px 16px; background: #fff; border: 2px dashed #10b981; border-radius: 14px; }
+    .accept-receiver-name { font-size: 1.05rem; font-weight: 800; color: #0d2b5c; }
+    .accept-receiver-acc { font-size: 0.85rem; color: #c20067; font-weight: 700; }
+    .accept-amount-block { text-align: center; padding: 22px 16px; background: #fff; border: 2px dashed #f8bbd0; border-radius: 14px; }
     .accept-amount-label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    .accept-amount-value { font-size: 2.1rem; font-weight: 900; color: #047857; letter-spacing: -0.02em; }
-    .accept-note-row { display: flex; gap: 8px; font-size: 0.9rem; padding: 10px 14px; background: #f8fafc; border-radius: 10px; }
+    .accept-amount-value { font-size: 2.1rem; font-weight: 900; color: #c20067; letter-spacing: -0.02em; }
+    .accept-note-row { display: flex; gap: 8px; font-size: 0.9rem; padding: 10px 14px; background: #fffafc; border-radius: 10px; }
     .accept-note-label { color: #64748b; font-weight: 600; }
     .accept-note-val { color: #0f172a; font-weight: 600; }
     .accept-warning { padding: 12px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #b91c1c; font-size: 0.88rem; font-weight: 600; }
@@ -837,54 +837,54 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .btn-accept-large { font-size: 1rem; padding: 14px 28px; flex: 1; }
 
     /* Tab Switcher */
-    .tab-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 18px; }
+    .tab-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px; background: #fff0f6; border: 1px solid #f3d6e5; border-radius: 18px; }
     .tab-btn { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: transparent; border: 1.5px solid transparent; border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.2s ease; color: #475569; }
     .tab-btn:hover { background: rgba(255,255,255,0.7); }
-    .tab-btn.active { background: #ffffff; border-color: #a7f3d0; box-shadow: 0 4px 16px -4px rgba(5,150,105,0.2); color: #0f172a; }
-    .tab-btn.active .tab-icon { transform: scale(1.1); color: #059669; }
+    .tab-btn.active { background: #ffffff; border-color: #f8bbd0; box-shadow: 0 4px 16px -4px rgba(194,0,103,0.15); color: #0f172a; }
+    .tab-btn.active .tab-icon { transform: scale(1.1); color: #c20067; }
     .tab-icon { font-size: 1.6rem; width: 22px; height: 22px; line-height: 1; flex-shrink: 0; }
     .tab-label-block { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
     .tab-label-block strong { font-size: 0.95rem; font-weight: 800; color: inherit; }
     .tab-label-block small { font-size: 0.75rem; color: #94a3b8; }
-    .tab-btn.active .tab-label-block small { color: #059669; font-weight: 600; }
+    .tab-btn.active .tab-label-block small { color: #c20067; font-weight: 600; }
 
     /* Receive Tab Card */
     .receive-card { padding: 44px 52px; display: flex; flex-direction: column; gap: 36px; }
     .receive-header-row { display: flex; align-items: flex-start; gap: 16px; }
     .receive-title-tag { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .qr-verified-pill { font-size: 0.65rem; font-weight: 800; background: linear-gradient(135deg, #dcfce7, #a7f3d0); color: #15803d; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
-    .receive-brand-name { font-size: 0.9rem; font-weight: 900; color: #059669; }
-    .receive-brand-name i { font-style: italic; color: #1d4ed8; }
-    .receive-title { font-size: 1.7rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.02em; }
-    .receive-desc { font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.65; max-width: 600px; }
+    .qr-verified-pill { font-size: 0.65rem; font-weight: 800; background: linear-gradient(135deg, #fff0f6, #f8bbd0); color: #c20067; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; }
+    .receive-brand-name { font-size: 0.9rem; font-weight: 900; color: #c20067; }
+    .receive-brand-name i { font-style: italic; color: #0072ce; }
+    .receive-title { font-size: 1.7rem; font-weight: 800; color: #0d2b5c; margin: 0 0 8px 0; letter-spacing: -0.02em; }
+    .receive-desc { font-size: 0.95rem; color: #94a3b8; margin: 0; line-height: 1.65; max-width: 600px; }
     .receive-body { display: grid; grid-template-columns: 360px 1fr; gap: 52px; align-items: flex-start; }
     @media (max-width: 860px) { .receive-body { grid-template-columns: 1fr; } }
     .receive-qr-wrap {
       display: flex; flex-direction: column; align-items: center; gap: 20px;
       padding: 28px 24px;
-      background: linear-gradient(145deg, #ecfdf5 0%, #f0fdfa 60%, #e0f2fe 100%);
-      border: 2px solid #a7f3d0; border-radius: 24px;
-      box-shadow: 0 12px 40px -8px rgba(5,150,105,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+      background: linear-gradient(145deg, #fff0f6 0%, #fffafc 60%, #eef6ff 100%);
+      border: 2px solid #f8bbd0; border-radius: 24px;
+      box-shadow: 0 12px 40px -8px rgba(194,0,103,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
     }
-    .receive-qr-canvas { width: 300px; height: 300px; border-radius: 16px; background: #fff; display: block; box-shadow: 0 6px 28px -4px rgba(0,0,0,0.12); }
+    .receive-qr-canvas { width: 300px; height: 300px; border-radius: 16px; background: #fff; display: block; box-shadow: 0 6px 28px -4px rgba(194,0,103,0.08); }
     .receive-qr-owner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .receive-qr-owner .qr-acc-name { font-size: 1rem; font-weight: 800; color: #0f172a; text-align: center; }
-    .receive-qr-owner .qr-acc-number { font-size: 1rem; font-weight: 900; color: #059669; font-family: monospace; letter-spacing: 0.04em; }
+    .receive-qr-owner .qr-acc-name { font-size: 1rem; font-weight: 800; color: #0d2b5c; text-align: center; }
+    .receive-qr-owner .qr-acc-number { font-size: 1rem; font-weight: 900; color: #c20067; font-family: monospace; letter-spacing: 0.04em; }
     .receive-config { display: flex; flex-direction: column; gap: 18px; }
     .form-label { font-size: 0.75rem; font-weight: 700; color: #475569; letter-spacing: 0.06em; text-transform: uppercase; }
-    .custom-input { padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; color: #0f172a; background: #fafafa; transition: 0.15s; width: 100%; }
-    .custom-input:focus { outline: none; border-color: #10b981; background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+    .custom-input { padding: 14px 16px; border: 1.5px solid #f3d6e5; border-radius: 12px; font-size: 0.95rem; color: #0f172a; background: #fffafc; transition: 0.15s; width: 100%; box-sizing:border-box; }
+    .custom-input:focus { outline: none; border-color: #c20067; background: #fff; box-shadow: 0 0 0 3px rgba(194,0,103,0.1); }
     .receive-link-row { display: flex; align-items: stretch; gap: 10px; }
-    .receive-link-input { flex: 1; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #f8fafc; color: #334155; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
-    .receive-link-input:focus { outline: none; border-color: #059669; background: #fff; }
-    .btn-copy { display: flex; align-items: center; gap: 7px; padding: 13px 20px; background: #059669; color: #fff; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-    .btn-copy:hover { background: #047857; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(5,150,105,0.3); }
+    .receive-link-input { flex: 1; padding: 13px 14px; border: 1.5px solid #f3d6e5; border-radius: 12px; background: #fffafc; color: #334155; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; }
+    .receive-link-input:focus { outline: none; border-color: #c20067; background: #fff; }
+    .btn-copy { display: flex; align-items: center; gap: 7px; padding: 13px 20px; background: linear-gradient(135deg,#c20067,#0072ce); color: #fff; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+    .btn-copy:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(194,0,103,0.3); }
     .receive-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-share, .btn-download { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 16px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 0.88rem; font-weight: 700; color: #374151; cursor: pointer; transition: all 0.18s; }
-    .btn-share:hover, .btn-download:hover { border-color: #10b981; background: #f0fdf4; color: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.12); }
-    .receive-note { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #475569; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1.5px solid #bae6fd; border-radius: 14px; padding: 16px 18px; line-height: 1.6; }
+    .btn-share, .btn-download { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 16px; background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 12px; font-size: 0.88rem; font-weight: 700; color: #374151; cursor: pointer; transition: all 0.18s; }
+    .btn-share:hover, .btn-download:hover { border-color: #f8bbd0; background: #fff0f6; color: #c20067; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(194,0,103,0.1); }
+    .receive-note { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #475569; background: linear-gradient(135deg, #fff0f6, #eef6ff); border: 1.5px solid #f8bbd0; border-radius: 14px; padding: 16px 18px; line-height: 1.6; }
     .receive-note svg { margin-top: 2px; }
-    .receive-note strong { color: #059669; font-weight: 700; }
+    .receive-note strong { color: #c20067; font-weight: 700; }
   `]
 })
 export class PaymentFormComponent implements OnInit, OnDestroy {
@@ -929,7 +929,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     private notification: NotificationService,
     private router: Router,
     private route: ActivatedRoute,
-    private paygateQrService: PaygateQrService
+    private paygateQrService: PaygateQrService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -1006,8 +1007,9 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     this.myQrImageUrl = this.paygateQrService.generateQrImageUrl(
       this.myAccountNumber, this.myAccountName, this.myQrCustomAmount, note
     );
-    // Draw QR on canvas with PayGate logo
-    setTimeout(() => this.drawQrWithLogo(this.myQrImageUrl), 50);
+    // Ensure Angular renders the canvas before attempting to draw on it
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => this.drawQrWithLogo(this.myQrImageUrl));
   }
 
   /** Draw QR image on canvas and overlay PayGate logo in center */
@@ -1037,8 +1039,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       ctx.roundRect((size - logoSize - 8) / 2, (size - logoSize - 8) / 2, logoSize + 8, logoSize + 8, 14);
       ctx.fill();
 
-      // Emerald rounded rect logo
-      ctx.fillStyle = '#059669';
+      // Pink rounded rect logo
+      ctx.fillStyle = '#c20067';
       ctx.beginPath();
       ctx.roundRect((size - logoSize) / 2, (size - logoSize) / 2, logoSize, logoSize, 12);
       ctx.fill();
@@ -1071,7 +1073,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     };
     qrImg.onerror = () => {
       ctx.clearRect(0, 0, size, size);
-      ctx.fillStyle = '#f0fdf4';
+      ctx.fillStyle = '#fff0f6';
       ctx.fillRect(0, 0, size, size);
     };
     qrImg.src = qrUrl;

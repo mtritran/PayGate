@@ -46,19 +46,54 @@ import { NotificationService } from '../../../core/services/notification.service
         <div class="hero-art" aria-hidden="true">
           <svg viewBox="0 0 330 250">
             <defs>
-              <linearGradient id="detailPig" x1="40" y1="34" x2="280" y2="210">
-                <stop stop-color="#ff9dce"/>
-                <stop offset="1" stop-color="#df1f76"/>
+              <linearGradient id="detailPig2" x1="20" y1="30" x2="300" y2="210">
+                <stop offset="0%" stop-color="#ffd6e7"/>
+                <stop offset="50%" stop-color="#ffb8d0"/>
+                <stop offset="100%" stop-color="#f48fb1"/>
+              </linearGradient>
+              <radialGradient id="detailBelly" cx="0.5" cy="0.45" r="0.5">
+                <stop offset="0%" stop-color="#fff5f9" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#ffb8d0" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="detailCoin" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffe68f"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+              <linearGradient id="detailNose" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f06292"/>
+                <stop offset="100%" stop-color="#c20067"/>
               </linearGradient>
             </defs>
-            <circle cx="73" cy="84" r="22" fill="#fff1f7"/>
-            <rect x="130" y="26" width="76" height="22" rx="11" fill="#ffd166"/>
-            <path d="M62 132c0-55 52-91 128-91 61 0 107 27 124 68 15-5 27 2 28 18 1 18-13 29-32 29-17 39-61 63-120 63-16 0-32-2-46-6l-22 25H89l7-40c-22-16-34-39-34-66z" fill="url(#detailPig)"/>
-            <path d="M88 93c-7-28 5-53 29-70l26 42" fill="#ff7abb"/>
-            <circle cx="239" cy="112" r="8" fill="#65143e"/>
-            <ellipse cx="292" cy="137" rx="24" ry="19" fill="#ffb0d3"/>
-            <circle cx="284" cy="137" r="4" fill="#65143e"/>
-            <circle cx="300" cy="137" r="4" fill="#65143e"/>
+            <!-- Ears -->
+            <ellipse cx="90" cy="68" rx="24" ry="28" fill="#f48fb1" transform="rotate(-18 90 68)"/>
+            <ellipse cx="90" cy="72" rx="14" ry="18" fill="#ec407a" opacity="0.5" transform="rotate(-18 90 72)"/>
+            <ellipse cx="226" cy="68" rx="24" ry="28" fill="#f48fb1" transform="rotate(18 226 68)"/>
+            <ellipse cx="226" cy="72" rx="14" ry="18" fill="#ec407a" opacity="0.5" transform="rotate(18 226 72)"/>
+            <!-- Body -->
+            <path d="M68 132 c0-46 42-78 107-78 52 0 94 20 110 54 11-4 22 2 23 12 1 14-10 24-28 24-16 34-56 54-110 54-14 0-28-2-41-5l-18 20h-30l6-34c-18-15-28-33-28-52z" fill="url(#detailPig2)"/>
+            <!-- Belly -->
+            <ellipse cx="165" cy="126" rx="76" ry="30" fill="url(#detailBelly)"/>
+            <!-- Tail -->
+            <path d="M48 120 c-12-6-18 10-4 16 8 3 16-1 14-8" fill="none" stroke="#f48fb1" stroke-width="7" stroke-linecap="round"/>
+            <!-- Legs -->
+            <rect x="106" y="200" width="28" height="16" rx="8" fill="url(#detailPig2)"/>
+            <rect x="198" y="200" width="28" height="16" rx="8" fill="url(#detailPig2)"/>
+            <ellipse cx="120" cy="218" rx="20" ry="6" fill="#e88ba8"/>
+            <ellipse cx="212" cy="218" rx="20" ry="6" fill="#e88ba8"/>
+            <!-- Coin -->
+            <rect x="126" y="16" width="68" height="20" rx="10" fill="url(#detailCoin)"/>
+            <text x="160" y="30" font-family="Arial,sans-serif" font-size="13" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
+            <!-- Eye -->
+            <ellipse cx="206" cy="106" rx="8" ry="10" fill="#fff"/>
+            <circle cx="208" cy="106" r="5" fill="#380e1f"/>
+            <circle cx="210" cy="103.5" r="1.8" fill="#fff"/>
+            <!-- Blush -->
+            <ellipse cx="192" cy="120" rx="12" ry="6" fill="#ec407a" opacity="0.12"/>
+            <!-- Snout -->
+            <ellipse cx="248" cy="128" rx="18" ry="14" fill="url(#detailNose)"/>
+            <circle cx="240" cy="127" r="3" fill="#380e1f" opacity="0.5"/>
+            <circle cx="256" cy="127" r="3" fill="#380e1f" opacity="0.5"/>
+            <ellipse cx="248" cy="124" rx="10" ry="3.5" fill="#fff" opacity="0.15"/>
           </svg>
         </div>
       </section>
@@ -177,10 +212,18 @@ import { NotificationService } from '../../../core/services/notification.service
       display: flex;
       flex-direction: column;
       gap: 18px;
-      color: #24142f;
+      color: #0f172a;
     }
-    .back-link { width: fit-content; color: #be185d; text-decoration: none; font-weight: 900; }
-    .detail-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); gap: 20px; overflow: hidden; border-radius: 28px; padding: 30px; background: radial-gradient(circle at 84% 20%, rgba(255,255,255,.92), transparent 30%), linear-gradient(135deg, #fff7fb 0%, #ffe1ef 48%, #e9fbf1 100%); border: 1px solid rgba(244,114,182,.24); box-shadow: 0 24px 60px rgba(190, 24, 93, .12); }
+    .back-link { width: fit-content; color: #c20067; text-decoration: none; font-weight: 800; }
+    .back-link:hover { color: #e00077; }
+    .detail-hero {
+      display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); gap: 20px;
+      overflow: hidden; border-radius: 28px; padding: 30px;
+      background: radial-gradient(circle at 80% 15%, rgba(255,255,255,.95), transparent 30%),
+                  linear-gradient(135deg, #fff7fb 0%, #ffe1ef 40%, #fff5f9 70%, #f0f4ff 100%);
+      border: 1px solid rgba(244,114,182,.25);
+      box-shadow: 0 16px 48px rgba(194,0,103,.08);
+    }
     .hero-main { min-width: 0; }
     .hero-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     h1 {
@@ -193,46 +236,53 @@ import { NotificationService } from '../../../core/services/notification.service
       word-break: break-word;
     }
     p { margin: 0; color: #475569; font-size: 0.98rem; font-weight: 500; line-height: 1.5; }
-    .status { display: inline-flex; width: fit-content; border-radius: 999px; padding: 7px 14px; background: rgba(255,255,255,.85); color: #c20067; font-size: .8rem; font-weight: 800; border: 1px solid rgba(216,27,96,.3); }
+    .status { display: inline-flex; width: fit-content; border-radius: 999px; padding: 7px 14px; background: rgba(255,255,255,.9); color: #c20067; font-size: .8rem; font-weight: 800; border: 1px solid rgba(244,114,182,.3); }
     .status.done { color: #0072ce; background: #e3f2fd; border-color: #bbdefb; }
     .status.closed { color: #475569; background: #f1f5f9; border-color: #cbd5e1; }
     button { font: inherit; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; box-shadow: none; }
-    .edit-btn { border: 1px solid rgba(216,27,96,.25); border-radius: 999px; background: rgba(255,255,255,.85); color: #c20067; padding: 8px 15px; font-weight: 800; box-shadow: 0 10px 20px rgba(194,0,103,.08); }
+    button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .edit-btn { border: 1px solid rgba(244,114,182,.3); border-radius: 999px; background: rgba(255,255,255,.9); color: #c20067; padding: 8px 15px; font-weight: 800; transition: all .15s; }
+    .edit-btn:hover { background: #fff0f6; }
     .amount-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
-    .amount-row div, .quick-stats div, .panel, .action-panel, .closed-panel { background: #fff; border: 1px solid #f3d6e5; box-shadow: 0 14px 34px rgba(99, 24, 75, .07); }
-    .amount-row div { border-radius: 18px; padding: 16px; }
+    .amount-row div, .quick-stats div, .panel, .action-panel, .closed-panel { background: #fff; border: 1px solid #fce4ec; box-shadow: 0 8px 24px rgba(194,0,103,.04); }
+    .amount-row div { border-radius: 18px; padding: 16px; transition: all .2s ease; }
+    .amount-row div:hover { border-color: #f8bbd0; }
     .amount-row span, .quick-stats span, .panel-head span, .closed-panel span { display: block; color: #64748b; font-weight: 800; font-size: .75rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
     .amount-row strong { color: #c20067; font-size: clamp(1.25rem, 2.5vw, 1.7rem); font-weight: 900; letter-spacing: -0.01em; }
-    .progress-track { height: 14px; background: rgba(248, 215, 231, .9); border-radius: 999px; overflow: hidden; margin: 22px 0 10px; }
+    .progress-track { height: 14px; background: #fce4ec; border-radius: 999px; overflow: hidden; margin: 22px 0 10px; }
     .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c20067, #0072ce); }
     .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; color: #64748b; font-size: .9rem; font-weight: 700; }
     .hero-art { display: flex; align-items: center; justify-content: center; min-height: 220px; }
-    .hero-art svg { width: min(100%, 330px); filter: drop-shadow(0 22px 30px rgba(190, 24, 93, .22)); }
+    .hero-art svg { width: min(100%, 330px); filter: drop-shadow(0 16px 24px rgba(194,0,103,.12)); }
     .quick-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    .quick-stats div { border-radius: 18px; padding: 18px; }
+    .quick-stats div { border-radius: 18px; padding: 18px; transition: all .2s ease; }
+    .quick-stats div:hover { border-color: #f8bbd0; }
     .quick-stats strong { color: #0d2b5c; font-size: 1.25rem; font-weight: 900; letter-spacing: -0.01em; }
     .action-dock { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .dock-btn { min-height: 96px; border: 0; border-radius: 22px; padding: 20px; text-align: left; color: #fff; box-shadow: 0 18px 36px rgba(99, 24, 75, .12); }
+    .dock-btn { min-height: 96px; border: 0; border-radius: 22px; padding: 20px; text-align: left; color: #fff; box-shadow: 0 12px 28px rgba(194,0,103,.12); transition: all .2s cubic-bezier(.16,1,.3,1); }
+    .dock-btn:hover { transform: translateY(-2px); }
     .dock-btn span { display: block; font-weight: 800; opacity: .92; margin-bottom: 8px; font-size: 0.85rem; letter-spacing: 0.03em; text-transform: uppercase; }
     .dock-btn strong { display: block; font-size: 1.55rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; }
     .dock-btn.deposit { background: linear-gradient(135deg, #c20067, #0072ce); }
-    .dock-btn.withdraw { background: linear-gradient(135deg, #0f766e, #22c55e); }
+    .dock-btn.withdraw { background: linear-gradient(135deg, #0d2b5c, #0072ce); }
     .action-panel, .closed-panel { border-radius: 22px; padding: 22px; }
     .panel-head, .closed-panel { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
     h2 { margin: 0; color: #0d2b5c; font-size: 1.35rem; font-weight: 900; line-height: 1.25; letter-spacing: -0.01em; }
-    .icon-btn { width: 38px; height: 38px; border: 1px solid #f3d6e5; border-radius: 50%; background: #fff7fb; color: #be185d; font-size: 1.4rem; line-height: 1; box-shadow: none; }
+    .icon-btn { width: 38px; height: 38px; border: 1px solid #fce4ec; border-radius: 50%; background: #fffafc; color: #c20067; font-size: 1.4rem; line-height: 1; box-shadow: none; cursor: pointer; }
+    .icon-btn:hover { background: #fff0f6; }
     .form-grid { display: grid; grid-template-columns: minmax(0, .45fr) minmax(0, .55fr); gap: 12px; margin: 18px 0 14px; }
     .edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 14px; }
-    label { display: flex; flex-direction: column; gap: 8px; color: #4b2540; font-weight: 900; }
-    input, textarea { width: 100%; box-sizing: border-box; border: 1px solid #edc6d9; border-radius: 14px; padding: 13px 14px; font: inherit; color: #24142f; background: #fffafd; }
+    label { display: flex; flex-direction: column; gap: 8px; color: #0d2b5c; font-weight: 800; }
+    input, textarea { width: 100%; box-sizing: border-box; border: 1px solid #f3c2da; border-radius: 14px; padding: 13px 14px; font: inherit; color: #0f172a; background: #fffafd; }
     textarea { resize: vertical; min-height: 96px; }
-    input:focus, textarea:focus { outline: 3px solid rgba(233,30,99,.16); border-color: #e91e63; background: #fff; }
-    .submit-btn, .closed-panel button { width: 100%; border: 0; border-radius: 15px; min-height: 46px; background: linear-gradient(135deg, #e91e63, #b5179e); color: white; padding: 12px 18px; font-weight: 900; box-shadow: 0 12px 26px rgba(233, 30, 99, .22); }
-    .withdraw-submit { background: linear-gradient(135deg, #0f766e, #22c55e); }
-    .closed-panel button { width: auto; min-width: 170px; background: linear-gradient(135deg, #f59e0b, #e91e63); }
-    .close-btn { align-self: flex-start; border: 1px solid #fecaca; border-radius: 15px; min-height: 46px; background: #fef2f2; color: #dc2626; padding: 12px 18px; font-weight: 900; box-shadow: none; }
-    .panel { border-radius: 18px; padding: 24px; color: #7b5870; font-weight: 800; }
+    input:focus, textarea:focus { outline: 3px solid rgba(194,0,103,.12); border-color: #c20067; background: #fff; }
+    .submit-btn, .closed-panel button { width: 100%; border: 0; border-radius: 15px; min-height: 46px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: white; padding: 12px 18px; font-weight: 800; box-shadow: 0 8px 22px rgba(194,0,103,.25); transition: all .2s ease; }
+    .submit-btn:hover:not(:disabled), .closed-panel button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(194,0,103,.35); }
+    .withdraw-submit { background: linear-gradient(135deg, #0d2b5c, #0072ce); }
+    .closed-panel button { width: auto; min-width: 170px; background: linear-gradient(135deg, #0072ce, #c20067); }
+    .close-btn { align-self: flex-start; border: 1px solid #fecaca; border-radius: 15px; min-height: 46px; background: #fef2f2; color: #dc2626; padding: 12px 18px; font-weight: 800; box-shadow: none; transition: all .15s; }
+    .close-btn:hover { background: #fee2e2; }
+    .panel { border-radius: 18px; padding: 24px; color: #64748b; font-weight: 800; }
     @media (max-width: 900px) { .detail-hero, .action-dock { grid-template-columns: 1fr; } .quick-stats { grid-template-columns: 1fr; } }
     @media (max-width: 620px) { .detail-hero { border-radius: 20px; padding: 22px; } .amount-row, .form-grid, .edit-grid { grid-template-columns: 1fr; } .meta, .panel-head, .closed-panel { flex-direction: column; align-items: flex-start; } .close-btn, .closed-panel button { width: 100%; } }
   `]

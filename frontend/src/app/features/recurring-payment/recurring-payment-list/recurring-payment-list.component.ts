@@ -332,9 +332,9 @@ import {
     .title-icon-box {
       width: 48px;
       height: 48px;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #059669;
+      background: #fff0f6;
+      border: 1px solid #f8bbd0;
+      color: #c20067;
       border-radius: 14px;
       display: flex;
       align-items: center;
@@ -359,7 +359,7 @@ import {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #059669;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
       border: none;
       padding: 11px 20px;
@@ -367,12 +367,12 @@ import {
       font-weight: 700;
       font-size: 0.9rem;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.2);
       transition: all 0.2s ease;
     }
     .btn-create svg { width: 18px; height: 18px; }
     .btn-create:hover {
-      background: #047857;
+      opacity: 0.9;
       transform: translateY(-1px);
     }
 
@@ -397,10 +397,10 @@ import {
     .stat-label { font-size: 0.72rem; color: #64748b; font-weight: 800; letter-spacing: 0.05em; }
     .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
     .total-dot { background: #64748b; }
-    .active-dot { background: #059669; }
+    .active-dot { background: #c20067; }
     .paused-dot { background: #d97706; }
     .stat-value { font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1; }
-    .active-card .stat-value { color: #059669; }
+    .active-card .stat-value { color: #c20067; }
     .paused-card .stat-value { color: #d97706; }
 
     /* Minimalist Table */
@@ -471,8 +471,8 @@ import {
       white-space: nowrap;
     }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .status-badge.active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-    .status-badge.active .status-dot { background: #059669; }
+    .status-badge.active { background: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; }
+    .status-badge.active .status-dot { background: #c20067; }
     .status-badge.paused { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
     .status-badge.paused .status-dot { background: #d97706; }
     .status-badge.completed { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
@@ -497,7 +497,7 @@ import {
       transition: all 0.15s ease;
     }
     .btn-action svg { width: 14px; height: 14px; }
-    .btn-detail:hover { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .btn-detail:hover { background: #fff0f6; color: #c20067; border-color: #f8bbd0; }
     .btn-delete { padding: 6px 10px; }
     .btn-delete:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
@@ -573,7 +573,7 @@ import {
     .detail-item.full-width { grid-column: span 2; }
     .detail-label { font-size: 0.7rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; }
     .detail-value { font-size: 0.95rem; font-weight: 700; color: #0f172a; }
-    .amount-highlight { font-size: 1.3rem; color: #059669; font-family: ui-monospace, monospace; }
+    .amount-highlight { font-size: 1.3rem; color: #c20067; font-family: ui-monospace, monospace; }
     .font-mono { font-family: ui-monospace, monospace; }
     .text-desc { color: #475569; font-weight: 500; }
 
@@ -595,10 +595,10 @@ import {
       background: #ffffff;
       color: #334155;
     }
-    .btn-modal.btn-run { background: #059669; color: #ffffff; border-color: #059669; }
-    .btn-modal.btn-run:hover { background: #047857; }
+    .btn-modal.btn-run { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; border-color: transparent; }
+    .btn-modal.btn-run:hover { opacity: 0.9; }
     .btn-modal.btn-pause { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-    .btn-modal.btn-resume { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .btn-modal.btn-resume { background: #fff0f6; color: #c20067; border-color: #f8bbd0; }
     .btn-modal.btn-log { background: #f1f5f9; color: #0f172a; }
     .btn-modal.btn-delete { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 

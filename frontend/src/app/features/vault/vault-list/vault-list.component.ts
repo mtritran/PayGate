@@ -21,29 +21,59 @@ import { VaultResponse, VaultService } from '../vault.service';
         </div>
 
         <div class="pig-wrap" aria-hidden="true">
-          <svg class="pig" viewBox="0 0 360 260" role="img">
+          <svg class="pig" viewBox="0 0 360 270" role="img">
             <defs>
-              <linearGradient id="pigBody" x1="40" y1="40" x2="300" y2="220">
-                <stop stop-color="#ff8fc7"/>
-                <stop offset="1" stop-color="#ff4fa3"/>
+              <linearGradient id="pigBody2" x1="40" y1="30" x2="300" y2="220">
+                <stop offset="0%" stop-color="#ffd6e7"/>
+                <stop offset="50%" stop-color="#ffb8d0"/>
+                <stop offset="100%" stop-color="#f48fb1"/>
               </linearGradient>
-              <linearGradient id="coinGold" x1="0" y1="0" x2="1" y2="1">
-                <stop stop-color="#ffe08a"/>
-                <stop offset="1" stop-color="#ffb020"/>
+              <radialGradient id="pigBelly2" cx="0.5" cy="0.45" r="0.5">
+                <stop offset="0%" stop-color="#fff5f9" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#ffb8d0" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="coinGold2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffe68f"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </linearGradient>
+              <linearGradient id="noseGrad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f06292"/>
+                <stop offset="100%" stop-color="#c20067"/>
               </linearGradient>
             </defs>
-            <circle cx="86" cy="80" r="26" fill="#fff1f7"/>
-            <circle cx="293" cy="54" r="18" fill="#fff1f7"/>
-            <rect x="145" y="22" width="70" height="22" rx="11" fill="url(#coinGold)"/>
-            <path d="M74 136c0-58 55-96 136-96 65 0 114 28 132 72 16-6 28 1 29 18 1 19-12 31-33 31-18 42-65 68-128 68-17 0-34-2-49-6l-24 27h-36l7-43c-22-16-34-41-34-71z" fill="url(#pigBody)"/>
-            <path d="M98 98c-7-30 5-57 31-75l28 45" fill="#ff7abb"/>
-            <circle cx="254" cy="118" r="8" fill="#7c1049"/>
-            <ellipse cx="311" cy="143" rx="25" ry="20" fill="#ffb0d3"/>
-            <circle cx="303" cy="143" r="4" fill="#7c1049"/>
-            <circle cx="319" cy="143" r="4" fill="#7c1049"/>
-            <rect x="135" y="72" width="102" height="12" rx="6" fill="#bf1b69" opacity=".38"/>
-            <path d="M118 229h36v20h-36zM235 229h36v20h-36z" fill="#d93683"/>
-            <path d="M53 131c-20-9-26 16-7 24 13 6 25-2 22-13" fill="none" stroke="#d93683" stroke-width="12" stroke-linecap="round"/>
+            <!-- Ears -->
+            <ellipse cx="100" cy="72" rx="28" ry="32" fill="#f48fb1" transform="rotate(-20 100 72)"/>
+            <ellipse cx="100" cy="76" rx="16" ry="20" fill="#ec407a" opacity="0.5" transform="rotate(-20 100 76)"/>
+            <ellipse cx="248" cy="72" rx="28" ry="32" fill="#f48fb1" transform="rotate(20 248 72)"/>
+            <ellipse cx="248" cy="76" rx="16" ry="20" fill="#ec407a" opacity="0.5" transform="rotate(20 248 76)"/>
+            <!-- Body -->
+            <path d="M72 140 c0-52 45-86 118-86 58 0 102 22 120 58 12-4 24 2 25 14 1 15-11 26-30 26 -17 36-60 58-118 58 -15 0-30-2-44-5 l-20 22 h-32 l6-36 c-20-16-30-36-30-58z" fill="url(#pigBody2)"/>
+            <!-- Belly -->
+            <ellipse cx="180" cy="132" rx="82" ry="34" fill="url(#pigBelly2)"/>
+            <!-- Tail -->
+            <path d="M52 128 c-14-6-20 12-5 18 10 4 18-1 16-9" fill="none" stroke="#f48fb1" stroke-width="8" stroke-linecap="round"/>
+            <!-- Legs -->
+            <rect x="116" y="216" width="30" height="18" rx="9" fill="url(#pigBody2)"/>
+            <rect x="216" y="216" width="30" height="18" rx="9" fill="url(#pigBody2)"/>
+            <ellipse cx="131" cy="236" rx="22" ry="7" fill="#e88ba8"/>
+            <ellipse cx="231" cy="236" rx="22" ry="7" fill="#e88ba8"/>
+            <!-- Coin -->
+            <rect x="138" y="18" width="72" height="22" rx="11" fill="url(#coinGold2)"/>
+            <text x="174" y="34" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#92400e" text-anchor="middle">$</text>
+            <!-- Progress bar -->
+            <rect x="130" y="88" width="100" height="10" rx="5" fill="#fce4ec" opacity="0.7"/>
+            <rect x="130" y="88" width="60" height="10" rx="5" fill="url(#coinGold2)"/>
+            <!-- Eye -->
+            <ellipse cx="224" cy="112" rx="9" ry="11" fill="#fff"/>
+            <circle cx="226" cy="112" r="5.5" fill="#380e1f"/>
+            <circle cx="228" cy="109.5" r="2" fill="#fff"/>
+            <!-- Blush -->
+            <ellipse cx="210" cy="128" rx="14" ry="7" fill="#ec407a" opacity="0.12"/>
+            <!-- Snout -->
+            <ellipse cx="270" cy="136" rx="20" ry="16" fill="url(#noseGrad2)"/>
+            <circle cx="262" cy="135" r="3.5" fill="#380e1f" opacity="0.5"/>
+            <circle cx="278" cy="135" r="3.5" fill="#380e1f" opacity="0.5"/>
+            <ellipse cx="270" cy="131" rx="12" ry="4" fill="#fff" opacity="0.15"/>
           </svg>
         </div>
       </section>
@@ -112,7 +142,14 @@ import { VaultResponse, VaultService } from '../vault.service';
       gap: 22px;
       color: #0f172a;
     }
-    .vault-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 24px; overflow: hidden; border-radius: 28px; padding: 34px; background: radial-gradient(circle at 82% 18%, rgba(255,255,255,.9), transparent 28%), linear-gradient(135deg, #fff7fb 0%, #ffe1ef 46%, #e9fbf1 100%); border: 1px solid rgba(244,114,182,.24); box-shadow: 0 24px 60px rgba(190, 24, 93, .12); }
+    .vault-hero {
+      position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 24px;
+      overflow: hidden; border-radius: 28px; padding: 34px;
+      background: radial-gradient(circle at 80% 15%, rgba(255,255,255,.95), transparent 30%),
+                  linear-gradient(135deg, #fff7fb 0%, #ffe1ef 40%, #fff5f9 70%, #f0f4ff 100%);
+      border: 1px solid rgba(244,114,182,.25);
+      box-shadow: 0 16px 48px rgba(194,0,103,.08);
+    }
     .hero-copy { position: relative; z-index: 1; max-width: 680px; }
     .eyebrow { color: #c20067; font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
     h1 {
@@ -138,27 +175,32 @@ import { VaultResponse, VaultService } from '../vault.service';
       line-height: 1.5;
     }
     .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 24px; }
-    .primary-btn { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: white; padding: 12px 22px; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.01em; text-decoration: none; box-shadow: 0 8px 22px rgba(194, 0, 103, 0.3); cursor: pointer; transition: all 0.25s; }
-    .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.4); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); }
-    .soft-pill { display: inline-flex; align-items: center; min-height: 38px; border-radius: 999px; padding: 8px 16px; background: rgba(255,255,255,.85); color: #c20067; font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(216,27,96,.25); }
+    .primary-btn { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: white; padding: 12px 22px; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.01em; text-decoration: none; box-shadow: 0 8px 22px rgba(194, 0, 103, 0.25); cursor: pointer; transition: all 0.25s cubic-bezier(.16,1,.3,1); }
+    .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.35); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); }
+    .soft-pill { display: inline-flex; align-items: center; min-height: 38px; border-radius: 999px; padding: 8px 16px; background: rgba(255,255,255,.9); color: #c20067; font-weight: 800; font-size: 0.85rem; border: 1px solid rgba(244,114,182,.3); }
     .pig-wrap { display: flex; align-items: center; justify-content: center; min-height: 210px; }
-    .pig { width: min(100%, 360px); filter: drop-shadow(0 22px 30px rgba(190, 24, 93, .22)); }
+    .pig { width: min(100%, 360px); filter: drop-shadow(0 16px 24px rgba(194,0,103,.12)); }
     .stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    .stat-tile, .panel, .empty-state, .vault-card { background: #ffffff; border: 1px solid #f3d6e5; box-shadow: 0 14px 34px rgba(99, 24, 75, .07); }
-    .stat-tile { border-radius: 18px; padding: 18px; }
+    .stat-tile, .panel, .empty-state, .vault-card { background: #ffffff; border: 1px solid #fce4ec; box-shadow: 0 8px 24px rgba(194,0,103,.04); }
+    .stat-tile { border-radius: 18px; padding: 18px; transition: all .2s ease; }
+    .stat-tile:hover { border-color: #f8bbd0; box-shadow: 0 12px 28px rgba(194,0,103,.06); }
     .stat-tile span { display: block; color: #64748b; font-weight: 800; font-size: .75rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
     .stat-tile strong { color: #0d2b5c; font-weight: 900; font-size: clamp(1.15rem, 2vw, 1.5rem); letter-spacing: -0.01em; }
     .stat-tile.accent { background: linear-gradient(135deg, #fff0f6 0%, #eef6ff 100%); }
     .panel { border-radius: 18px; padding: 24px; color: #64748b; font-weight: 800; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; border-radius: 24px; padding: 42px 24px; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; border-radius: 24px; padding: 42px 24px; border-color: #fce4ec; background: linear-gradient(180deg,#fffafc,#fff); }
     .empty-state h2 { margin: 0; font-size: 1.5rem; font-weight: 900; color: #0d2b5c; letter-spacing: -0.01em; }
     .empty-state p { margin: 0; max-width: 460px; color: #64748b; font-weight: 500; line-height: 1.5; }
-    .mini-pig { width: 82px; height: 62px; border-radius: 42px 48px 36px 36px; background: linear-gradient(135deg, #ff8fc7, #e91e63); box-shadow: inset -10px -8px 0 rgba(190,24,93,.18), 0 14px 30px rgba(233,30,99,.18); }
+    .mini-pig { width: 82px; height: 62px; border-radius: 42px 48px 36px 36px; background: linear-gradient(135deg, #ff8fc7, #e91e63); box-shadow: inset -10px -8px 0 rgba(190,24,93,.12), 0 14px 30px rgba(233,30,99,.12); }
     .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(286px, 1fr)); gap: 18px; }
-    .vault-card { display: flex; flex-direction: column; min-height: 250px; color: inherit; text-decoration: none; border-radius: 22px; padding: 20px; transition: transform .18s ease, box-shadow .18s ease; }
-    .vault-card:hover { transform: translateY(-3px); box-shadow: 0 20px 42px rgba(190, 24, 93, .13); }
+    .vault-card {
+      display: flex; flex-direction: column; min-height: 250px; color: inherit; text-decoration: none;
+      border-radius: 22px; padding: 20px;
+      transition: all .25s cubic-bezier(.16,1,.3,1);
+    }
+    .vault-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 16px 36px rgba(194,0,103,.08); border-color: #f8bbd0; }
     .card-head, .money-row, .meta-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-    .coin-mark { position: relative; width: 54px; height: 46px; border-radius: 24px 28px 24px 22px; background: linear-gradient(135deg, #ffd166, #d99a2b); box-shadow: inset -9px -10px 0 rgba(151,87,17,.15), 0 10px 18px rgba(217,154,43,.2); }
+    .coin-mark { position: relative; width: 54px; height: 46px; border-radius: 24px 28px 24px 22px; background: linear-gradient(135deg, #ffd166, #d99a2b); box-shadow: inset -9px -10px 0 rgba(151,87,17,.1), 0 10px 18px rgba(217,154,43,.15); }
     .coin-mark::before { content: ''; position: absolute; left: 8px; top: -7px; width: 18px; height: 18px; border-radius: 6px 14px 6px 10px; background: #f5b942; transform: rotate(-28deg); }
     .coin-mark::after { content: ''; position: absolute; left: 6px; top: 5px; width: 24px; height: 24px; border-radius: 50%; background: #fff6d8; box-shadow: 35px 15px 0 -8px #f6c25b; }
     h3 { margin: 18px 0 6px; color: #0f172a; font-size: 1.1rem; font-weight: 800; line-height: 1.35; }
@@ -169,7 +211,7 @@ import { VaultResponse, VaultService } from '../vault.service';
     .money-row { align-items: flex-end; margin-top: auto; padding-top: 18px; }
     .money-row strong { color: #c20067; font-size: 1.4rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em; }
     .money-row span { color: #64748b; font-size: .85rem; font-weight: 700; text-align: right; }
-    .progress-track { height: 12px; background: #f8d7e7; border-radius: 999px; overflow: hidden; margin: 14px 0 10px; }
+    .progress-track { height: 12px; background: #fce4ec; border-radius: 999px; overflow: hidden; margin: 14px 0 10px; }
     .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c20067, #0072ce); }
     .meta-row, .over-target { color: #64748b; font-size: .85rem; font-weight: 700; }
     .over-target { margin-top: 8px; color: #c20067; font-weight: 800; }

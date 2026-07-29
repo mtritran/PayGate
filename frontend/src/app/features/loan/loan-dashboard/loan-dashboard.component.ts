@@ -30,7 +30,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       </div>
 
       <!-- Quick Summary Cards -->
-      <div class="stats-grid">
+      <div class="stats-grid stagger-children">
         <div class="stat-card">
           <div class="stat-icon icon-emerald">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
@@ -75,8 +75,10 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       </div>
 
       <!-- Loading State -->
-      <div *ngIf="loading()" class="loading-box">
-        <span class="spinner-sm"></span> Đang tải dữ liệu khoản vay...
+      <div *ngIf="loading()" class="skeleton-loan">
+        <div class="sk-loan-grid">
+          <div *ngFor="let _ of [1,2,3]" class="skeleton" style="height:260px; border-radius:22px"></div>
+        </div>
       </div>
 
       <!-- MY LOANS LIST -->
@@ -92,7 +94,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
           <button class="btn-primary-apply" (click)="openApplyModal()">Đăng ký vay ngay</button>
         </div>
 
-        <div class="loans-grid" *ngIf="myLoans().length > 0">
+        <div class="loans-grid stagger-children" *ngIf="myLoans().length > 0">
           <div *ngFor="let loan of myLoans()" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
             <div class="card-top">
               <div>
@@ -155,7 +157,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
 
       <!-- ADMIN LOANS LIST -->
       <div *ngIf="!loading() && activeTab() === 'admin-loans' && isAdmin()">
-        <div class="loans-grid">
+        <div class="loans-grid stagger-children">
           <div *ngFor="let loan of adminLoans()" class="loan-card admin-card">
             <div class="card-top">
               <div>
@@ -370,12 +372,19 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     </div>
   `,
   styles: [`
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+
+    .skeleton-loan { display:flex; flex-direction:column; gap:20px; }
+    .sk-loan-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px; }
+
     .loan-container {
       font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
       max-width: 1180px;
       margin: 0 auto;
       display: flex; flex-direction: column; gap: 28px;
       color: #0f172a;
+      animation: fadeInUp 0.5s ease-out both;
     }
 
     /* Hero Header */
@@ -388,6 +397,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       display: flex; justify-content: space-between; align-items: center; gap: 24px;
       border: 1px solid rgba(244,114,182,.24);
       box-shadow: 0 24px 60px rgba(190, 24, 93, .12);
+      animation: fadeInUp 0.6s ease-out both;
     }
     .header-badge {
       font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em;
@@ -420,10 +430,12 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       display: flex; align-items: center; gap: 10px;
       background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; border: none; border-radius: 14px;
       padding: 14px 26px; font-size: 0.92rem; font-weight: 800; cursor: pointer;
-      white-space: nowrap; transition: all 0.25s ease;
+      white-space: nowrap; transition: all 0.25s cubic-bezier(.16,1,.3,1);
       box-shadow: 0 8px 22px rgba(194, 0, 103, 0.3);
+      animation: scaleIn .5s .3s ease-out both, pulseGlow 2s ease-in-out infinite;
     }
-    .btn-apply-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.4); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); }
+    .btn-apply-hero:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 28px rgba(194, 0, 103, 0.4); background: linear-gradient(135deg, #e00077 0%, #0084eb 100%); animation:scaleIn .5s .3s ease-out both; }
+    .btn-apply-hero:active { transform: scale(0.96); }
 
     /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -460,9 +472,10 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .loan-card {
       background: #ffffff; border: 1px solid #f3d6e5; border-radius: 22px;
       padding: 24px; display: flex; flex-direction: column; gap: 18px;
-      box-shadow: 0 14px 34px rgba(99, 24, 75, .07); transition: transform .18s ease, box-shadow .18s ease;
+      box-shadow: 0 14px 34px rgba(99, 24, 75, .07);
+      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease, border-color .25s ease;
     }
-    .loan-card:hover { transform: translateY(-3px); box-shadow: 0 20px 42px rgba(190, 24, 93, .13); }
+    .loan-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 42px rgba(190, 24, 93, .13); border-color: #c20067; }
     .border-active { border-color: #c20067; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
     .loan-ref { font-size: 0.75rem; color: #64748b; font-weight: 800; letter-spacing: 0.04em; }
@@ -490,22 +503,28 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       border-radius: 14px; font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s ease;
       box-shadow: 0 8px 22px rgba(194, 0, 103, 0.25);
     }
-    .btn-detail:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(194, 0, 103, 0.35); }
+    .btn-detail:hover { transform: translateY(-1px) scale(1.01); box-shadow: 0 12px 26px rgba(194, 0, 103, 0.35); }
+    .btn-detail:active { transform: scale(0.97); }
 
     /* Admin actions */
     .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .btn-approve { padding: 12px; background: #0072ce; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 114, 206, 0.25); }
-    .btn-reject { padding: 12px; background: #ef4444; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
+    .btn-approve { padding: 12px; background: #0072ce; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 114, 206, 0.25); transition:all .2s ease; }
+    .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 114, 206, 0.35); }
+    .btn-reject { padding: 12px; background: #ef4444; color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; transition:all .2s ease; }
+    .btn-reject:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35); }
 
     /* Modals */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
       z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;
+      animation: fadeIn 0.2s ease-out both;
     }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
     .modal-card {
       background: #fff; border-radius: 26px; width: 100%; max-width: 580px; padding: 36px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
       border: 1px solid #f3d6e5;
+      animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     .wide-modal { max-width: 760px; }
     .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
@@ -549,10 +568,11 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .schedule-unpaid { background: #fff0f6; color: #c20067; }
 
     /* Empty state */
-    .empty-state { text-align: center; padding: 60px 20px; background: #fff; border-radius: 24px; border: 1.5px dashed #f3d6e5; }
+    .empty-state { text-align: center; padding: 60px 20px; background: #fff; border-radius: 24px; border: 1.5px dashed #f3d6e5; animation:scaleIn .4s cubic-bezier(.16,1,.3,1) both; }
     .empty-icon { width: 80px; height: 80px; background: #fff0f6; color: #c20067; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
     .btn-primary-apply { padding: 14px 28px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; margin-top: 16px; box-shadow: 0 8px 22px rgba(194,0,103,0.3); }
     /* Offered Banner & Action Buttons */
+    @keyframes pulseGlow { 0%,100%{box-shadow:0 8px 22px rgba(194,0,103,0.3)} 50%{box-shadow:0 12px 32px rgba(194,0,103,0.45)} }
     .offered-banner {
       background: linear-gradient(135deg, #fff0f6 0%, #eef6ff 100%);
       border: 1.5px solid #f8bbd0; border-radius: 18px; padding: 20px;

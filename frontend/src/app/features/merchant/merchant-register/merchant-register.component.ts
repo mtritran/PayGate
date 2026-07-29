@@ -18,9 +18,9 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
       <!-- Portal Top Hero Header -->
       <div class="portal-hero">
         <div class="hero-content">
-          <div class="hero-badge">ENTERPRISE GATEWAY PORTAL</div>
-          <h1 class="hero-title">Merchant Partner & API Integration Center</h1>
-          <p class="hero-subtitle">Quản lý tài khoản doanh nghiệp, khai thác API Key bảo mật và tích hợp Cổng thanh toán PayGate.</p>
+          <div class="hero-badge">🚀 ENTERPRISE GATEWAY PORTAL</div>
+          <h1 class="hero-title">Merchant Partner &amp; API Integration Center</h1>
+          <p class="hero-subtitle">Đăng ký tài khoản doanh nghiệp, quản lý API Key bảo mật và tích hợp Cổng thanh toán PayGate vào website của bạn chỉ với vài dòng code.</p>
         </div>
         
         <!-- Navigation Tabs -->
@@ -113,7 +113,8 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             </div>
 
             <button type="submit" class="btn-submit-emerald" [disabled]="registerForm.invalid || submitting">
-              {{ submitting ? 'Đang gửi đăng ký...' : 'Gửi Đơn Đăng Ký Merchant ↗' }}
+              <svg *ngIf="submitting" class="spinner-xs-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+              {{ submitting ? 'Đang gửi đăng ký...' : 'Gửi Đơn Đăng Ký Merchant  →' }}
             </button>
           </form>
         </div>
@@ -182,47 +183,120 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="card-title-group">
             <div class="icon-box">🚀</div>
             <div>
-              <h3>Tài Liệu Tích Hợp Chi Tiết (Full API Documentation)</h3>
-              <p class="card-desc">Tài liệu kỹ thuật quy định cấu trúc Request, Response, Mã lỗi & Luồng xử lý giao dịch.</p>
+              <h3>Tài Liệu Tích Hợp Chi Tiết</h3>
+              <p class="card-desc">Tài liệu hướng dẫn kỹ thuật — cấu trúc Request, Response, mã lỗi và luồng xử lý giao dịch. Tích hợp PayGate vào website của bạn trong 5 phút.</p>
+            </div>
+          </div>
+
+          <!-- Integration Overview -->
+          <div class="docs-overview mt-20">
+            <div class="overview-item">
+              <div class="ov-icon ov-icon-endpoint">⚡</div>
+              <div>
+                <strong>Base URL</strong>
+                <code class="code-inline">http://localhost:8080/api/v1</code>
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="ov-icon ov-icon-auth">🔐</div>
+              <div>
+                <strong>Authentication</strong>
+                <span>API Key (truyền trong body)</span>
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="ov-icon ov-icon-format">📄</div>
+              <div>
+                <strong>Format</strong>
+                <span>JSON — Content-Type: application/json</span>
+              </div>
+            </div>
+            <div class="overview-item">
+              <div class="ov-icon ov-icon-time">⏱️</div>
+              <div>
+                <strong>Session Timeout</strong>
+                <span>15 phút kể từ khi tạo paymentUrl</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Start Guide -->
+          <div class="guide-card mt-24">
+            <div class="guide-header">
+              <span class="guide-step-num">1</span>
+              <div>
+                <h4>Hướng Dẫn Tích Hợp Nhanh (5 bước)</h4>
+                <p>Thực hiện tuần tự theo các bước dưới đây để hoàn tất tích hợp</p>
+              </div>
+            </div>
+            <div class="guide-steps">
+              <div class="guide-step">
+                <div class="gs-badge">B1</div>
+                <div class="gs-text"><strong>Đăng ký Merchant</strong> — Điền form ở tab <strong>Hồ Sơ Doanh Nghiệp</strong>, chờ Admin phê duyệt.</div>
+              </div>
+              <div class="guide-step">
+                <div class="gs-badge">B2</div>
+                <div class="gs-text"><strong>Lấy API Key</strong> — Sau khi được duyệt, copy Secret Key tại tab <strong>API Integration Keys</strong>.</div>
+              </div>
+              <div class="guide-step">
+                <div class="gs-badge">B3</div>
+                <div class="gs-text"><strong>Gọi API tạo đơn hàng</strong> — Gửi <code>POST /api/v1/checkout/create</code> từ server của bạn với API Key và thông tin đơn hàng.</div>
+              </div>
+              <div class="guide-step">
+                <div class="gs-badge">B4</div>
+                <div class="gs-text"><strong>Redirect khách hàng</strong> — Chuyển hướng trình duyệt đến <code>paymentUrl</code> nhận được từ response.</div>
+              </div>
+              <div class="guide-step">
+                <div class="gs-badge">B5</div>
+                <div class="gs-text"><strong>Nhận callback</strong> — Sau khi thanh toán thành công, khách hàng được redirect về <code>returnUrl</code> của bạn kèm trạng thái.</div>
+              </div>
             </div>
           </div>
 
           <!-- Workflow Visual Steps -->
-          <div class="workflow-steps mt-24">
-            <div class="workflow-card">
-              <div class="step-badge">BƯỚC 1</div>
-              <h4>1. Khởi Tạo Đơn Hàng Thanh Toán</h4>
-              <p>Server của bạn gửi <code>POST /api/v1/checkout/create</code> kèm <code>apiKey</code> và số tiền để nhận <code>paymentUrl</code>.</p>
-            </div>
+          <div class="docs-section mt-28">
+            <h4 class="section-subtitle">🔄 Luồng Xử Lý Giao Dịch (Payment Flow)</h4>
+            <div class="workflow-steps">
+              <div class="workflow-card">
+                <div class="step-badge">BƯỚC 1</div>
+                <h4>1. Khởi Tạo Đơn Hàng</h4>
+                <p>Server của bạn gửi <code>POST /api/v1/checkout/create</code> kèm <code>apiKey</code>, <code>amount</code>, <code>orderId</code> và <code>returnUrl</code> để nhận <code>paymentUrl</code>.</p>
+                <div class="wf-detail">→ Nhận về token CHK_... và paymentUrl có thời hạn 15 phút</div>
+              </div>
 
-            <div class="workflow-card">
-              <div class="step-badge">BƯỚC 2</div>
-              <h4>2. Redirect Khách Hàng Sang PayGate</h4>
-              <p>Chuyển hướng trình duyệt khách hàng sang <code>paymentUrl</code> (VD: <code>http://localhost:4200/checkout?token=CHK_...</code>).</p>
-            </div>
+              <div class="workflow-card">
+                <div class="step-badge">BƯỚC 2</div>
+                <h4>2. Chuyển Hướng Khách Hàng</h4>
+                <p>Server redirect (hoặc trả về link) cho khách hàng truy cập <code>paymentUrl</code> để tiến hành thanh toán trên PayGate.</p>
+                <div class="wf-detail">→ VD: <code>http://localhost:4200/checkout?token=CHK_...</code></div>
+              </div>
 
-            <div class="workflow-card">
-              <div class="step-badge">BƯỚC 3</div>
-              <h4>3. Khách Hàng Nhập OTP Gmail</h4>
-              <p>Khách hàng kiểm tra số tiền, đăng nhập Ví PayGate và nhập mã OTP 6 chữ số gửi về Gmail để xác thực thanh toán.</p>
-            </div>
+              <div class="workflow-card">
+                <div class="step-badge">BƯỚC 3</div>
+                <h4>3. Xác Thực & Thanh Toán</h4>
+                <p>Khách hàng kiểm tra thông tin đơn hàng, đăng nhập Ví PayGate, nhập mã OTP 6 số gửi qua Gmail để xác thực giao dịch.</p>
+                <div class="wf-detail">→ OTP có hiệu lực 5 phút, được gửi đến email đăng ký</div>
+              </div>
 
-            <div class="workflow-card">
-              <div class="step-badge">BƯỚC 4</div>
-              <h4>4. Nhận Trạng Thái Callback</h4>
-              <p>Tiền tự động chuyển về Ví Merchant của bạn. Khách hàng được redirect về <code>returnUrl</code> với trạng thái <code>SUCCESS</code>.</p>
+              <div class="workflow-card">
+                <div class="step-badge">BƯỚC 4</div>
+                <h4>4. Nhận Kết Quả Callback</h4>
+                <p>Tiền tự động chuyển vào Ví Merchant của bạn. Hệ thống redirect khách hàng về <code>returnUrl</code> với tham số trạng thái.</p>
+                <div class="wf-detail">→ Redirect về: <code>{{ returnUrl }}?status=SUCCESS&ref=...</code></div>
+              </div>
             </div>
           </div>
 
           <!-- Parameter Specification Table -->
           <div class="docs-section mt-28">
-            <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Tạo Đơn Hàng (POST /api/v1/checkout/create)</h4>
+            <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Tạo Đơn Hàng</h4>
+            <p class="docs-desc">Gửi POST request đến <code class="code-inline">http://localhost:8080/api/v1/checkout/create</code> với body JSON như sau:</p>
             <div class="table-responsive">
               <table class="docs-table">
                 <thead>
                   <tr>
-                    <th>Trường (Field)</th>
-                    <th>Kiểu dữ liệu</th>
+                    <th>Field</th>
+                    <th>Kiểu</th>
                     <th>Bắt buộc</th>
                     <th>Mô tả chi tiết</th>
                   </tr>
@@ -232,31 +306,31 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                     <td><code>apiKey</code></td>
                     <td><code>String</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Secret API Key riêng của Merchant (Lấy tại Tab API Keys).</td>
+                    <td>Secret API Key của Merchant (lấy tại tab <strong>API Keys</strong>). Tối đa 64 ký tự.</td>
                   </tr>
                   <tr>
                     <td><code>orderId</code></td>
                     <td><code>String</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Mã đơn hàng duy nhất trên hệ thống của bạn (Ví dụ: <code>ORDER_998811</code>).</td>
+                    <td>Mã đơn hàng duy nhất trên hệ thống của bạn — không được trùng lặp. VD: <code>ORDER_998811</code>, <code>INV_202407_001</code></td>
                   </tr>
                   <tr>
                     <td><code>amount</code></td>
                     <td><code>Number</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Số tiền thanh toán tính bằng VND (Tối thiểu <code>1,000</code> VND).</td>
+                    <td>Số tiền VND, tối thiểu <code>1,000</code>. Không hỗ trợ số thập phân. VD: <code>250000</code> = 250,000₫</td>
                   </tr>
                   <tr>
                     <td><code>description</code></td>
                     <td><code>String</code></td>
-                    <td>Tùy chọn</td>
-                    <td>Nội dung hiển thị cho khách hàng khi thanh toán.</td>
+                    <td><span class="badge-opt">Tùy chọn</span></td>
+                    <td>Mô tả hiển thị cho khách khi thanh toán. Max 255 ký tự. VD: <code>"Thanh toán đơn hàng Shopee"</code></td>
                   </tr>
                   <tr>
                     <td><code>returnUrl</code></td>
-                    <td><code>String</code></td>
+                    <td><code>String (URL)</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Đường dẫn Website của bạn để PayGate chuyển hướng về sau khi thanh toán thành công.</td>
+                    <td>URL để redirect khách hàng về sau khi thanh toán xong. Phải bắt đầu bằng <code>https://</code> hoặc <code>http://</code>. VD: <code>https://shopee.vn/checkout/done</code></td>
                   </tr>
                 </tbody>
               </table>
@@ -265,8 +339,11 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 
           <!-- Full Response Structure Section -->
           <div class="docs-section mt-28">
-            <h4 class="section-subtitle">📦 Cấu Trúc Response Trả Về (JSON Response)</h4>
-            <pre class="code-box light-code"><code>&#123;
+            <h4 class="section-subtitle">📦 Cấu Trúc Response Trả Về</h4>
+            <p class="docs-desc">Khi gọi API thành công, bạn nhận được JSON response với cấu trúc như sau:</p>
+            <div class="code-with-label">
+              <span class="code-label">✅ Response thành công (HTTP 200)</span>
+              <pre class="code-box"><code>&#123;
   "success": true,
   "message": "Tạo phiên thanh toán thành công",
   "data": &#123;
@@ -276,40 +353,68 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
   &#125;,
   "timestamp": "2026-07-28T16:15:00.000"
 &#125;</code></pre>
+            </div>
+            <div class="response-fields mt-16">
+              <div class="rf-item"><code>success</code> — <span>Luôn là <code>true</code> nếu request hợp lệ</span></div>
+              <div class="rf-item"><code>data.token</code> — <span>Mã phiên giao dịch duy nhất, dùng để truy vấn trạng thái sau này</span></div>
+              <div class="rf-item"><code>data.paymentUrl</code> — <span>Link redirect khách hàng (có hiệu lực trong 15 phút)</span></div>
+              <div class="rf-item"><code>data.expiresAt</code> — <span>Thời điểm hết hạn của paymentUrl (ISO 8601)</span></div>
+            </div>
+          </div>
+
+          <!-- Error Response -->
+          <div class="docs-section mt-24">
+            <h4 class="section-subtitle">❌ Cấu Trúc Lỗi</h4>
+            <p class="docs-desc">Khi có lỗi, API trả về HTTP 4xx / 5xx với body:</p>
+            <pre class="code-box error-code-box"><code>&#123;
+  "success": false,
+  "message": "API Key của Merchant không hợp lệ",
+  "timestamp": "2026-07-28T16:15:00.000"
+&#125;</code></pre>
           </div>
 
           <!-- Error Codes Specification Table -->
           <div class="docs-section mt-28">
-            <h4 class="section-subtitle">⚠️ Bảng Mã Lỗi Thường Gặp & Cách Xử Lý (Error Handling)</h4>
+            <h4 class="section-subtitle">⚠️ Bảng Mã Lỗi & Cách Xử Lý</h4>
             <div class="table-responsive">
               <table class="docs-table">
                 <thead>
                   <tr>
-                    <th>Mã Lỗi / Error Message</th>
-                    <th>Nguyên nhân gốc</th>
-                    <th>Giải pháp khắc phục</th>
+                    <th>Lỗi (Error Message)</th>
+                    <th>Nguyên nhân</th>
+                    <th>Giải pháp</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>API Key của Merchant không hợp lệ</code></td>
-                    <td>Nhập sai apiKey hoặc chưa tạo Merchant.</td>
-                    <td>Vào tab API Keys để copy đúng apiKey.</td>
+                    <td><code>API Key không hợp lệ</code></td>
+                    <td>apiKey sai hoặc Merchant chưa active</td>
+                    <td>Kiểm tra lại API Key ở tab API Keys, đảm bảo Merchant đã được Admin duyệt</td>
                   </tr>
                   <tr>
-                    <td><code>Tài khoản Merchant hiện đang bị khóa</code></td>
-                    <td>Merchant chưa được Admin phê duyệt.</td>
-                    <td>Liên hệ Admin PayGate để duyệt tài khoản.</td>
+                    <td><code>Merchant đang bị khóa</code></td>
+                    <td>Merchant chưa được phê duyệt hoặc đã bị vô hiệu hóa</td>
+                    <td>Liên hệ Admin PayGate để kiểm tra trạng thái</td>
                   </tr>
                   <tr>
-                    <td><code>Số tiền thanh toán tối thiểu là 1,000 VND</code></td>
-                    <td>Giá trị amount &lt; 1000.</td>
-                    <td>Truyền giá trị amount &gt;= 1000 VND.</td>
+                    <td><code>Số tiền tối thiểu 1,000 VND</code></td>
+                    <td>amount &lt; 1000</td>
+                    <td>Đảm bảo amount &gt;= 1000 VND</td>
+                  </tr>
+                  <tr>
+                    <td><code>orderId đã tồn tại</code></td>
+                    <td>orderId bị trùng với đơn hàng trước đó</td>
+                    <td>Sinh orderId mới (có thể thêm timestamp hoặc ngẫu nhiên)</td>
                   </tr>
                   <tr>
                     <td><code>Phiên thanh toán đã hết hạn</code></td>
-                    <td>Quá 15 phút chưa hoàn tất thanh toán.</td>
-                    <td>Tạo lại đơn thanh toán mới cho khách.</td>
+                    <td>Quá 15 phút kể từ khi tạo</td>
+                    <td>Tạo payment URL mới cho khách hàng</td>
+                  </tr>
+                  <tr>
+                    <td><code>Return URL không hợp lệ</code></td>
+                    <td>URL không đúng định dạng hoặc không phải http/https</td>
+                    <td>Kiểm tra lại returnUrl, phải bắt đầu bằng http:// hoặc https://</td>
                   </tr>
                 </tbody>
               </table>
@@ -321,22 +426,54 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="code-header">
               <div class="code-tabs">
                 <button class="code-tab" [class.active]="selectedLang() === 'curl'" (click)="selectedLang.set('curl')">cURL</button>
-                <button class="code-tab" [class.active]="selectedLang() === 'nodejs'" (click)="selectedLang.set('nodejs')">Node.js (Express)</button>
+                <button class="code-tab" [class.active]="selectedLang() === 'nodejs'" (click)="selectedLang.set('nodejs')">Node.js</button>
                 <button class="code-tab" [class.active]="selectedLang() === 'php'" (click)="selectedLang.set('php')">PHP</button>
                 <button class="code-tab" [class.active]="selectedLang() === 'python'" (click)="selectedLang.set('python')">Python</button>
               </div>
-              <button class="btn-copy-code" (click)="copyText(getCodeSnippet())">📋 Copy Code Mẫu</button>
+              <button class="btn-copy-code" (click)="copyText(getCodeSnippet())">📋 Copy Code</button>
             </div>
 
             <pre class="code-box"><code>{{ getCodeSnippet() }}</code></pre>
+          </div>
+
+          <!-- Tips & Best Practices -->
+          <div class="tips-section mt-24">
+            <div class="tip-card">
+              <div class="tip-icon">🔒</div>
+              <div class="tip-body">
+                <strong>Bảo mật API Key</strong>
+                <p>Không bao giờ nhúng API Key trực tiếp trong code frontend (JavaScript trình duyệt). Luôn lưu trữ ở server-side (file .env, environment variables).</p>
+              </div>
+            </div>
+            <div class="tip-card">
+              <div class="tip-icon">🔄</div>
+              <div class="tip-body">
+                <strong>Idempotency & Trùng lặp</strong>
+                <p>Luôn tạo orderId duy nhất cho mỗi đơn hàng. Nếu cần retry, sử dụng cùng orderId — hệ thống PayGate tự động chống trùng lặp giao dịch.</p>
+              </div>
+            </div>
+            <div class="tip-card">
+              <div class="tip-icon">⏰</div>
+              <div class="tip-body">
+                <strong>Xử lý timeout</strong>
+                <p>Payment URL chỉ có hiệu lực 15 phút. Nếu khách hàng không thanh toán kịp, tạo URL mới. Kiểm tra <code>expiresAt</code> trong response để hiển thị thông báo cho khách.</p>
+              </div>
+            </div>
+            <div class="tip-card">
+              <div class="tip-icon">📞</div>
+              <div class="tip-body">
+                <strong>Webhook Callback</strong>
+                <p>Nếu Merchant có cấu hình Webhook URL, PayGate sẽ gửi POST thông báo realtime khi giao dịch hoàn tất (thành công hoặc thất bại).</p>
+              </div>
+            </div>
           </div>
 
           <div class="swagger-banner mt-24">
             <div class="swagger-info">
               <span class="swagger-icon">⚡</span>
               <div>
-                <strong>Tài liệu API Interactive Swagger UI</strong>
-                <p>Thử nghiệm API trực tiếp trên giao diện Swagger chuẩn OpenAPI 3.0</p>
+                <strong>Tài liệu API Interactive — Swagger UI</strong>
+                <p>Thử nghiệm API trực tiếp trên giao diện Swagger chuẩn OpenAPI 3.0 — kiểm tra request/response ngay trên trình duyệt</p>
               </div>
             </div>
             <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-open-swagger">Mở Swagger UI ↗</a>
@@ -356,102 +493,106 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
     
     /* Hero Banner */
     .portal-hero {
-      background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #059669 100%);
-      color: #ffffff; border-radius: 20px; padding: 32px 36px 0; margin-bottom: 24px;
-      box-shadow: 0 10px 30px -10px rgba(4, 120, 87, 0.3);
+      background: radial-gradient(circle at 80% 10%, rgba(255,255,255,.98), transparent 30%),
+                  linear-gradient(135deg, #fff0f6 0%, #e8f0fe 50%, #fff5f9 100%);
+      color: #0d2b5c; border-radius: 20px; padding: 32px 36px 0; margin-bottom: 24px;
+      box-shadow: 0 8px 28px -6px rgba(194, 0, 103, 0.08);
+      border: 1px solid #f8bbd0;
     }
-    .hero-badge { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #a7f3d0; text-transform: uppercase; margin-bottom: 6px; }
-    .hero-title { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.02em; }
-    .hero-subtitle { font-size: 0.92rem; color: #d1fae5; margin: 0 0 24px; max-width: 680px; line-height: 1.5; }
+    .hero-badge { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #c20067; text-transform: uppercase; margin-bottom: 6px; }
+    .hero-title { font-size: 1.8rem; font-weight: 900; margin: 0 0 6px; letter-spacing: -0.02em; line-height: 1.2; color: #0d2b5c; }
+    .hero-subtitle { font-size: 0.92rem; color: #475569; margin: 0 0 24px; max-width: 680px; line-height: 1.5; }
 
     /* Portal Tabs */
-    .portal-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .portal-tabs { display: flex; gap: 8px; border-bottom: 1px solid #f3d6e5; }
     .portal-tab {
-      padding: 14px 22px; border: none; background: transparent; font-size: 0.92rem; font-weight: 700;
-      color: #a7f3d0; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s;
+      padding: 14px 22px; border: none; background: rgba(255,255,255,0.5); font-size: 0.92rem; font-weight: 700;
+      color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; border-radius: 10px 10px 0 0;
     }
-    .portal-tab.active { color: #ffffff; border-bottom-color: #ffffff; background: rgba(255,255,255,0.1); border-radius: 10px 10px 0 0; }
-    .portal-tab:hover:not(.active) { color: #ffffff; background: rgba(255,255,255,0.05); border-radius: 10px 10px 0 0; }
+    .portal-tab.active { color: #c20067; border-bottom-color: #c20067; background: #ffffff; }
+    .portal-tab:hover:not(.active) { color: #c20067; background: rgba(255,255,255,0.8); }
 
     /* Portal Cards */
-    .portal-card { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 32px; box-shadow: 0 4px 20px -4px rgba(0,0,0,0.04); }
+    .portal-card { background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 20px; padding: 32px; box-shadow: 0 4px 20px -4px rgba(194,0,103,0.04); }
     .card-title-group { display: flex; gap: 14px; align-items: flex-start; }
-    .icon-box { font-size: 32px; background: #ecfdf5; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .card-title-group h3 { font-size: 1.25rem; font-weight: 800; margin: 0 0 4px; color: #0f172a; }
+    .icon-box { font-size: 32px; background: #fff0f6; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-title-group h3 { font-size: 1.25rem; font-weight: 800; margin: 0 0 4px; color: #0d2b5c; }
     .card-desc { font-size: 0.88rem; color: #64748b; margin: 0; }
 
     /* Form & Profile */
     .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 800; }
-    .status-badge.active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .status-badge.active { background: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; }
     .status-badge.pending { background: #fef3c7; color: #b45309; border: 1px solid #fde047; }
     .status-badge.rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
-    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; background: #fffafc; padding: 20px; border-radius: 16px; border: 1px solid #f3d6e5; }
     .info-item { display: flex; flex-direction: column; gap: 4px; }
     .info-label { font-size: 0.72rem; font-weight: 800; color: #64748b; letter-spacing: 0.04em; }
     .info-val { font-size: 0.95rem; color: #0f172a; }
-    .wallet-badge { background: #ecfdf5; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: 700; width: fit-content; }
+    .wallet-badge { background: #fff0f6; color: #c20067; padding: 4px 8px; border-radius: 6px; font-weight: 700; width: fit-content; }
 
     .notice-box { margin-top: 20px; padding: 16px 20px; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; }
-    .notice-box.active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .notice-box.active { background: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; }
     .notice-box.pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
 
     /* API Keys Credentials Box */
     .cred-field { display: flex; flex-direction: column; gap: 6px; }
     .cred-label { font-size: 0.8rem; font-weight: 800; color: #475569; letter-spacing: 0.03em; }
-    .input-copy-group { display: flex; gap: 10px; }
-    .cred-input { flex: 1; height: 48px; padding: 0 16px; border: 1.5px solid #cbd5e1; border-radius: 12px; background: #f8fafc; font-size: 1rem; font-weight: 700; color: #0f172a; }
-    .cred-input.api-key-highlight { color: #059669; background: #f0fdf4; border-color: #a7f3d0; }
-    .btn-copy { padding: 0 20px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .input-copy-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .cred-input { flex: 1; min-width: 200px; height: 48px; padding: 0 16px; border: 1.5px solid #f3c2da; border-radius: 12px; background: #fffafd; font-size: 1rem; font-weight: 700; color: #0f172a; }
+    .cred-input:focus { outline: none; border-color: #c20067; box-shadow: 0 0 0 3px rgba(194,0,103,0.1); }
+    .cred-input.api-key-highlight { color: #c20067; background: #fff0f6; border-color: #f8bbd0; }
+    .btn-copy { padding: 0 20px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
     .btn-copy:hover { background: #e2e8f0; }
-    .btn-copy.primary { background: #059669; color: #ffffff; border: none; }
-    .btn-copy.primary:hover { background: #047857; }
-    .btn-toggle { padding: 0 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; color: #475569; }
+    .btn-copy.primary { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; border: none; }
+    .btn-copy.primary:hover { opacity: 0.9; }
+    .btn-toggle { padding: 0 16px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer; color: #475569; white-space: nowrap; }
     .btn-toggle:hover { background: #f8fafc; }
     .key-security-note { font-size: 0.8rem; color: #64748b; margin-top: 6px; }
 
-    .endpoint-info-card { background: #0f172a; color: #ffffff; padding: 20px; border-radius: 16px; }
+    .endpoint-info-card { background: linear-gradient(135deg, #fff0f6 0%, #f0f4ff 100%); color: #0d2b5c; padding: 24px; border-radius: 16px; border: 1px solid #f8bbd0; }
     .endpoint-header { display: flex; align-items: center; gap: 12px; font-family: monospace; font-size: 0.95rem; }
     .http-badge { padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.78rem; }
-    .http-badge.post { background: #10b981; color: #ffffff; }
-    .endpoint-url { color: #34d399; font-weight: 700; }
-    .endpoint-desc { font-size: 0.82rem; color: #94a3b8; margin: 8px 0 0; }
+    .http-badge.post { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; }
+    .endpoint-url { color: #c20067; font-weight: 700; }
+    .endpoint-desc { font-size: 0.82rem; color: #64748b; margin: 8px 0 0; }
 
     /* Workflow Cards */
     .workflow-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .workflow-card { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; }
-    .step-badge { font-size: 0.68rem; font-weight: 800; color: #059669; background: #ecfdf5; padding: 4px 10px; border-radius: 20px; width: fit-content; margin-bottom: 8px; }
-    .workflow-card h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px; color: #0f172a; }
+    .workflow-card { background: #fffafc; border: 1.5px solid #f3d6e5; border-radius: 16px; padding: 20px; transition: all 0.2s; }
+    .workflow-card:hover { border-color: #f8bbd0; box-shadow: 0 4px 16px rgba(194,0,103,0.06); }
+    .step-badge { font-size: 0.68rem; font-weight: 800; color: #c20067; background: #fff0f6; padding: 4px 10px; border-radius: 20px; width: fit-content; margin-bottom: 8px; }
+    .workflow-card h4 { font-size: 1rem; font-weight: 800; margin: 0 0 6px; color: #0d2b5c; }
     .workflow-card p { font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.5; }
 
     /* Parameter Specification Table */
-    .section-subtitle { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0 0 12px; }
-    .table-responsive { overflow-x: auto; border: 1.5px solid #e2e8f0; border-radius: 14px; }
+    .section-subtitle { font-size: 1rem; font-weight: 800; color: #0d2b5c; margin: 0 0 12px; }
+    .table-responsive { overflow-x: auto; border: 1.5px solid #f3d6e5; border-radius: 14px; }
     .docs-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-    .docs-table th { background: #f8fafc; padding: 12px 16px; font-weight: 800; color: #475569; border-bottom: 1.5px solid #e2e8f0; }
-    .docs-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-    .docs-table code { background: #f1f5f9; color: #059669; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-family: monospace; }
-    .badge-req { background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+    .docs-table th { background: #fff0f6; padding: 12px 16px; font-weight: 800; color: #0d2b5c; border-bottom: 1.5px solid #f3d6e5; }
+    .docs-table td { padding: 14px 16px; border-bottom: 1px solid #fce4ec; color: #334155; }
+    .docs-table code { background: #fff0f6; color: #c20067; padding: 2px 6px; border-radius: 6px; font-weight: 700; font-family: monospace; }
 
     /* Code Snippet Box */
-    .code-snippets-section { background: #0f172a; border-radius: 16px; overflow: hidden; }
+    .code-snippets-section { background: #1e293b; border-radius: 16px; overflow: hidden; border: 1px solid #334155; }
     .code-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #1e293b; border-bottom: 1px solid #334155; }
-    .code-tabs { display: flex; gap: 6px; }
-    .code-tab { padding: 6px 14px; background: transparent; border: none; color: #94a3b8; font-size: 0.82rem; font-weight: 700; border-radius: 8px; cursor: pointer; }
-    .code-tab.active { background: #059669; color: #ffffff; }
+    .code-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .code-tab { padding: 6px 14px; background: transparent; border: none; color: #94a3b8; font-size: 0.82rem; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .code-tab.active { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; }
+    .code-tab:hover:not(.active) { color: #e2e8f0; }
     .btn-copy-code { background: rgba(255,255,255,0.1); color: #ffffff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
     .btn-copy-code:hover { background: rgba(255,255,255,0.2); }
-    .code-box { padding: 20px; margin: 0; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85rem; color: #34d399; overflow-x: auto; line-height: 1.6; }
+    .code-box { padding: 20px; margin: 0; font-family: 'SF Mono', Consolas, monospace; font-size: 0.85rem; color: #e2e8f0; overflow-x: auto; line-height: 1.6; }
 
-    .swagger-banner { display: flex; justify-content: space-between; align-items: center; background: #ecfdf5; border: 1.5px solid #a7f3d0; padding: 20px; border-radius: 16px; }
+    .swagger-banner { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #fff0f6 0%, #f0f4ff 100%); border: 1.5px solid #f8bbd0; padding: 20px; border-radius: 16px; }
     .swagger-info { display: flex; gap: 14px; align-items: center; }
     .swagger-icon { font-size: 28px; }
-    .swagger-info strong { font-size: 0.95rem; color: #047857; display: block; }
-    .swagger-info p { font-size: 0.82rem; color: #059669; margin: 2px 0 0; }
-    .btn-open-swagger { background: #059669; color: #ffffff; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 0.88rem; white-space: nowrap; }
-    .btn-open-swagger:hover { background: #047857; }
+    .swagger-info strong { font-size: 0.95rem; color: #c20067; display: block; }
+    .swagger-info p { font-size: 0.82rem; color: #64748b; margin: 2px 0 0; }
+    .btn-open-swagger { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 0.88rem; white-space: nowrap; transition: all 0.2s; box-shadow: 0 4px 14px rgba(194,0,103,0.2); }
+    .btn-open-swagger:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(194,0,103,0.3); }
 
     .mt-16 { margin-top: 16px; }
     .mt-18 { margin-top: 18px; }
@@ -460,7 +601,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
     .mt-28 { margin-top: 28px; }
     .font-bold { font-weight: 800; }
     .font-mono { font-family: monospace; }
-    .text-emerald { color: #059669; }
+    .text-emerald { color: #c20067; }
     .text-muted { color: #64748b; }
     .warning-banner { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 16px; border-radius: 12px; font-weight: 600; margin-top: 16px; }
 
@@ -468,9 +609,61 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 0.82rem; font-weight: 700; color: #475569; }
     .form-label.required::after { content: ' *'; color: #ef4444; }
-    .form-control { height: 46px; padding: 0 16px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem; }
-    .form-control:focus { outline: none; border-color: #059669; }
-    .btn-submit-emerald { height: 48px; background: #059669; color: #fff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; }
+    .form-control { height: 46px; padding: 0 16px; border: 1.5px solid #f3c2da; border-radius: 10px; font-size: 0.95rem; background: #fffafd; }
+    .form-control:focus { outline: none; border-color: #c20067; box-shadow: 0 0 0 3px rgba(194,0,103,0.1); }
+    .btn-submit-emerald { height: 48px; background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #fff; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px rgba(194,0,103,0.25); transition: all 0.2s; }
+    .btn-submit-emerald:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(194,0,103,0.35); }
+    .btn-submit-emerald:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Overview Bar */
+    .docs-overview { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; background: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; padding: 16px; }
+    .overview-item { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; color: #334155; }
+    .overview-item strong { display: block; color: #0d2b5c; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.03em; margin-bottom: 2px; }
+    .overview-item span, .overview-item code { font-size: 0.85rem; }
+    .ov-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .ov-icon-endpoint { background: #fff0f6; }
+    .ov-icon-auth { background: #eef6ff; }
+    .ov-icon-format { background: #fff0f6; }
+    .ov-icon-time { background: #fffbeb; }
+    .code-inline { background: #fff0f6; color: #c20067; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-family: monospace; font-size: 0.82rem; }
+
+    /* Guide Card */
+    .guide-card { background: #fffafc; border: 1.5px solid #f3d6e5; border-radius: 16px; padding: 20px; }
+    .guide-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+    .guide-step-num { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #c20067, #0072ce); color: #fff; font-weight: 900; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .guide-header h4 { margin: 0 0 2px; font-size: 1rem; font-weight: 800; color: #0d2b5c; }
+    .guide-header p { margin: 0; font-size: 0.82rem; color: #64748b; }
+    .guide-steps { display: flex; flex-direction: column; gap: 10px; }
+    .guide-step { display: flex; align-items: flex-start; gap: 12px; }
+    .gs-badge { width: 30px; height: 24px; border-radius: 6px; background: #fff0f6; color: #c20067; font-weight: 800; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .gs-text { font-size: 0.88rem; color: #475569; line-height: 1.5; }
+    .gs-text strong { color: #0f172a; }
+
+    .docs-desc { font-size: 0.85rem; color: #64748b; margin: -6px 0 14px; line-height: 1.5; }
+    .wf-detail { font-size: 0.78rem; color: #c20067; font-weight: 600; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #f3d6e5; }
+    .badge-req { background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+    .badge-opt { background: #f1f5f9; color: #64748b; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; }
+
+    .code-with-label { margin-top: 4px; }
+    .code-label { display: block; font-size: 0.72rem; font-weight: 800; color: #c20067; background: #fff0f6; padding: 6px 14px; border-radius: 10px 10px 0 0; letter-spacing: 0.03em; }
+    .code-with-label pre { border-radius: 0 0 14px 14px !important; margin-top: 0 !important; }
+    .error-code-box { border: 1px solid #fecaca !important; }
+    .response-fields { display: flex; flex-direction: column; gap: 6px; }
+    .rf-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569; padding: 8px 12px; background: #f8fafc; border-radius: 8px; }
+    .rf-item code { background: #fff0f6; color: #c20067; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-family: monospace; flex-shrink: 0; }
+    .rf-item span { line-height: 1.4; }
+
+    .code-box.light-code { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; border-radius: 14px; margin-top: 8px; }
+
+    /* Tips Section */
+    .tips-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .tip-card { display: flex; gap: 12px; padding: 16px; background: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; }
+    .tip-icon { font-size: 22px; flex-shrink: 0; }
+    .tip-body strong { display: block; font-size: 0.82rem; color: #0d2b5c; margin-bottom: 4px; }
+    .tip-body p { margin: 0; font-size: 0.78rem; color: #64748b; line-height: 1.5; }
+
+    .spinner-xs-inline { animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   `]
 })
 export class MerchantRegisterComponent implements OnInit {

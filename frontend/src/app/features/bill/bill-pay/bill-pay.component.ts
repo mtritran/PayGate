@@ -322,7 +322,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     }
     .header-tag {
       display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 2px;
-      color: #059669; background: #d1fae5; padding: 4px 10px; border-radius: 4px; margin-bottom: 6px;
+      color: #c20067; background: #fff0f6; padding: 4px 10px; border-radius: 4px; margin-bottom: 6px;
     }
     .hub-header h2 { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: #111827; }
     .subtitle { margin: 0; color: #6b7280; font-size: 14px; }
@@ -334,7 +334,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px;
       cursor: pointer; transition: 0.15s;
     }
-    .tab.active { color: #059669; border-bottom-color: #059669; }
+    .tab.active { color: #c20067; border-bottom-color: #c20067; }
     .tab:hover:not(.active) { color: #374151; }
     .tab-badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -346,7 +346,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     /* Subscriptions grid */
     .subs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     .sub-card {
-      --accent: #10b981;
+      --accent: #c20067;
       background: #fff; border: 2px solid #e5e7eb; border-radius: 14px;
       padding: 20px; cursor: pointer; transition: 0.15s;
     }
@@ -355,10 +355,10 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
     .sub-type-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
     .sub-type-icon { font-size: 16px; width: 16px; height: 16px; }
     .sub-status { font-size: 12px; font-weight: 600; }
-    .sub-status.active { color: #059669; }
+    .sub-status.active { color: #c20067; }
     .sub-status.cancelled { color: #9ca3af; }
     .sub-provider { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
-    .sub-customer-code { font-family: 'SF Mono', monospace; font-size: 13px; color: #059669; font-weight: 700; margin-bottom: 2px; }
+    .sub-customer-code { font-family: 'SF Mono', monospace; font-size: 13px; color: #c20067; font-weight: 700; margin-bottom: 2px; }
     .sub-name { font-size: 13px; color: #374151; font-weight: 600; margin-bottom: 2px; }
     .sub-address { font-size: 12px; color: #6b7280; margin-bottom: 8px; }
     .sub-meta { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-bottom: 12px; }
@@ -372,8 +372,8 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       padding: 8px 14px; border: 1.5px solid #e5e7eb; border-radius: 20px;
       font-size: 13px; font-weight: 600; color: #374151; background: #f9fafb; cursor: pointer; transition: 0.15s;
     }
-    .sub-chip.selected { background: #10b981; color: #fff; border-color: #10b981; }
-    .sub-chip:hover:not(.selected) { border-color: #10b981; color: #059669; }
+    .sub-chip.selected { background: #c20067; color: #fff; border-color: #c20067; }
+    .sub-chip:hover:not(.selected) { border-color: #c20067; color: #c20067; }
 
     .bills-header {
       display: flex; justify-content: space-between; align-items: flex-start;
@@ -389,31 +389,31 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       gap: 16px; flex-wrap: wrap;
     }
     .bill-card.unpaid { border-color: #fcd34d; }
-    .bill-card.paid { border-color: #a7f3d0; opacity: 0.8; }
+    .bill-card.paid { border-color: #f8bbd0; opacity: 0.8; }
     .bill-period { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
     .bill-customer { font-size: 13px; color: #374151; }
     .bill-address { font-size: 12px; color: #6b7280; }
     .bill-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-    .bill-amount { font-size: 20px; font-weight: 700; color: #059669; }
+    .bill-amount { font-size: 20px; font-weight: 700; color: #c20067; }
     .bill-badge { padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
     .bill-badge.unpaid { background: #fef3c7; color: #92400e; }
-    .bill-badge.paid { background: #d1fae5; color: #065f46; }
+    .bill-badge.paid { background: #fff0f6; color: #c20067; }
     .btn-pay-now { min-width: 160px; }
 
     /* Receipt */
     .receipt {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      background: linear-gradient(135deg, #fff0f6 0%, #f8bbd0 100%);
       border-radius: 14px; padding: 28px; text-align: center; margin-top: 20px;
     }
     .receipt-icon {
-      font-size: 52px; width: 52px; height: 52px; color: #fff; background: #10b981;
+      font-size: 52px; width: 52px; height: 52px; color: #fff; background: linear-gradient(135deg, #c20067, #0072ce);
       border-radius: 50%; margin-bottom: 10px;
     }
-    .receipt h3 { color: #065f46; margin: 0 0 14px; }
+    .receipt h3 { color: #c20067; margin: 0 0 14px; }
     .receipt-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
     .receipt-rows div { display: flex; justify-content: space-between; max-width: 420px; margin: 0 auto; width: 100%; }
-    .receipt-rows span { color: #047857; }
-    .receipt-rows b { color: #064e3b; font-weight: 700; }
+    .receipt-rows span { color: #c20067; }
+    .receipt-rows b { color: #0d2b5c; font-weight: 700; }
 
     /* Pay error banner */
     .pay-error-banner {
@@ -422,14 +422,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       padding: 12px 16px; margin-bottom: 12px; font-size: 14px; color: #b91c1c;
     }
     .topup-link {
-      color: #059669; font-weight: 700; text-decoration: none; white-space: nowrap;
+      color: #c20067; font-weight: 700; text-decoration: none; white-space: nowrap;
     }
     .topup-link:hover { text-decoration: underline; }
 
     /* Loading / Empty */
     .loading-state { display: flex; align-items: center; gap: 12px; padding: 32px; color: #6b7280; }
     .spinner {
-      width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #10b981;
+      width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #c20067;
       border-radius: 50%; animation: spin 0.6s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -446,14 +446,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-primary { background: #10b981; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #059669; }
+    .btn-primary { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #fff; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
     .btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
     .btn-secondary:hover:not(:disabled) { background: #e5e7eb; }
     .btn-link { padding: 10px 18px; font-size: 14px; }
     .btn-sm { padding: 7px 14px; font-size: 13px; }
-    .btn-pay { background: #10b981; color: #fff; }
-    .btn-pay:hover:not(:disabled) { background: #059669; }
+    .btn-pay { background: #c20067; color: #fff; }
+    .btn-pay:hover:not(:disabled) { background: #a00055; }
     .btn-cancel { background: #fee2e2; color: #991b1b; }
     .btn-cancel:hover:not(:disabled) { background: #fecaca; }
 
@@ -479,7 +479,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
 
     .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
     .type-card {
-      --accent: #10b981;
+      --accent: #c20067;
       background: #fff; border: 2px solid #e5e7eb; border-radius: 10px;
       padding: 16px 8px; cursor: pointer; transition: 0.15s;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -496,18 +496,18 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151;
       transition: 0.15s;
     }
-    .provider-chip:hover { border-color: #10b981; color: #059669; }
-    .provider-chip.selected { background: #10b981; color: #fff; border-color: #10b981; }
+    .provider-chip:hover { border-color: #c20067; color: #c20067; }
+    .provider-chip.selected { background: #c20067; color: #fff; border-color: #c20067; }
 
     .back-row { margin-bottom: 16px; }
-    .btn-back { background: none; border: none; color: #059669; font-weight: 700; font-size: 14px; cursor: pointer; padding: 0; }
+    .btn-back { background: none; border: none; color: #c20067; font-weight: 700; font-size: 14px; cursor: pointer; padding: 0; }
 
     .mode-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
     .mode-btn {
       flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;
       background: #f9fafb; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; transition: 0.15s;
     }
-    .mode-btn.active { border-color: #10b981; background: #f0fdf4; color: #065f46; }
+    .mode-btn.active { border-color: #c20067; background: #fff0f6; color: #c20067; }
     .mode-hint { font-size: 12px; color: #6b7280; margin-bottom: 16px; padding: 8px 12px; background: #f9fafb; border-radius: 6px; }
 
     .form-fields { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
@@ -516,14 +516,14 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       padding: 10px 14px; font-size: 14px; border: 1.5px solid #d1d5db; border-radius: 8px;
       font-family: inherit; width: 100%; box-sizing: border-box;
     }
-    .input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+    .input:focus { outline: none; border-color: #c20067; box-shadow: 0 0 0 3px rgba(194,0,103,0.15); }
 
     .freq-chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .freq-chip {
       padding: 7px 14px; border: 1.5px solid #e5e7eb; border-radius: 20px;
       font-size: 12px; font-weight: 600; color: #374151; background: #f9fafb; cursor: pointer; transition: 0.15s;
     }
-    .freq-chip.selected { background: #10b981; color: #fff; border-color: #10b981; }
+    .freq-chip.selected { background: #c20067; color: #fff; border-color: #c20067; }
 
     .modal-error { margin-bottom: 12px; padding: 10px 14px; background: #fee2e2; color: #b91c1c; border-radius: 8px; font-size: 13px; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }

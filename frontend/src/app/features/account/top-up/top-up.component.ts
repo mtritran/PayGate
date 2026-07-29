@@ -572,19 +572,19 @@ export interface AvailableBankOption {
     .mt-20 { margin-top: 20px; }
     .mt-24 { margin-top: 24px; }
 
-    .header-tag { font-size: 0.75rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-    .page-header h2 { font-size: 2.1rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; }
-    .subtitle { font-size: 0.975rem; color: #64748b; margin: 0; }
+    .header-tag { font-size: 0.75rem; font-weight: 800; color: #c20067; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .page-header h2 { font-size: 2.1rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em; color: #0d2b5c; }
+    .subtitle { font-size: 0.975rem; color: #94a3b8; margin: 0; }
 
     .topup-grid { display: grid; grid-template-columns: 1.05fr 1.25fr; gap: 40px; width: 100%; max-width: 1280px; }
-    .content-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 28px; padding: 38px 42px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.05); }
+    .content-card { background: #ffffff; border: 1px solid #f3d6e5; border-radius: 28px; padding: 38px 42px; box-shadow: 0 6px 24px -6px rgba(194,0,103,0.04); }
 
-    .hero-tag { font-size: 0.75rem; font-weight: 800; color: #059669; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .hero-tag { font-size: 0.75rem; font-weight: 800; color: #c20067; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 2px; }
     .card-title { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
     .status-chip { font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 12px; }
-    .status-chip.active { background-color: #dcfce7; color: #15803d; border: 1px solid #a7f3d0; }
+    .status-chip.active { background-color: #fff0f6; color: #c20067; border: 1px solid #f8bbd0; }
 
-    .metallic-visa-card { color: #ffffff; border-radius: 22px; padding: 34px; position: relative; overflow: hidden; box-shadow: 0 14px 32px rgba(15, 23, 42, 0.2); transition: background 0.3s ease; }
+    .metallic-visa-card { color: #ffffff; border-radius: 22px; padding: 34px; position: relative; overflow: hidden; box-shadow: 0 14px 32px rgba(194,0,103,0.15); transition: background 0.3s ease; }
     .card-top-row { display: flex; justify-content: space-between; align-items: center; }
     .visa-brand-logo { display: flex; align-items: center; gap: 10px; }
     .paygate-brand { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
@@ -601,42 +601,43 @@ export interface AvailableBankOption {
     .card-holder-name { font-size: 1.1rem; font-weight: 800; color: #ffffff; margin-top: 4px; }
     .expiry-date { font-size: 1.05rem; font-weight: 800; color: #ffffff; margin-top: 4px; }
 
-    .wallet-balance-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
-    .field-label { font-size: 0.825rem; font-weight: 700; color: #64748b; }
-    .balance-display { font-size: 2.35rem; font-weight: 800; color: #0f172a; margin-top: 4px; }
+    .wallet-balance-box { background: #fffafc; border: 1px solid #f3d6e5; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+    .field-label { font-size: 0.825rem; font-weight: 700; color: #94a3b8; }
+    .balance-display { font-size: 2.35rem; font-weight: 800; color: #0d2b5c; margin-top: 4px; }
 
-    .after-topup-badge { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 14px 20px; border-radius: 16px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 4px; }
-    .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #047857; }
-    .preview-val { font-size: 1.05rem; font-weight: 800; color: #059669; display: flex; align-items: center; gap: 8px; }
+    .after-topup-badge { background: #fff0f6; border: 1px solid #f8bbd0; padding: 14px 20px; border-radius: 16px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 4px; }
+    .preview-lbl { font-size: 0.8rem; font-weight: 700; color: #c20067; }
+    .preview-val { font-size: 1.05rem; font-weight: 800; color: #c20067; display: flex; align-items: center; gap: 8px; }
 
     /* Mode Selector Bar */
     .mode-selector-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 16px; margin-bottom: 24px; }
     .mode-tab-btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: none; background: transparent; border-radius: 12px; font-size: 0.875rem; font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s; }
     .mode-tab-btn:hover { color: #0f172a; }
-    .mode-tab-btn.active { background: #ffffff; color: #059669; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .mode-tab-btn.active { background: #ffffff; color: #c20067; box-shadow: 0 4px 12px rgba(194,0,103,0.06); }
 
     .custom-topup-form { display: flex; flex-direction: column; gap: 24px; }
-    .section-label { font-size: 0.925rem; font-weight: 700; color: #334155; margin-bottom: 14px; display: block; }
+    .section-label { font-size: 0.925rem; font-weight: 700; color: #475569; margin-bottom: 14px; display: block; }
 
     .preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-    .preset-btn { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 0; font-size: 0.95rem; font-weight: 800; color: #334155; cursor: pointer; transition: all 0.15s; }
-    .preset-btn:hover { border-color: #cbd5e1; background-color: #ffffff; }
-    .preset-btn.active { background-color: #ecfdf5; border-color: #059669; color: #059669; box-shadow: 0 0 0 2px #059669; }
+    .preset-btn { background-color: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; padding: 16px 0; font-size: 0.95rem; font-weight: 800; color: #475569; cursor: pointer; transition: all 0.2s ease; }
+    .preset-btn:hover { border-color: #f8bbd0; background-color: #ffffff; }
+    .preset-btn.active { background-color: #fff0f6; border-color: #c20067; color: #c20067; box-shadow: 0 0 0 2px rgba(194,0,103,0.3); }
 
     .input-wrapper { position: relative; display: flex; align-items: center; }
-    .currency-prefix { position: absolute; left: 18px; font-weight: 800; color: #059669; font-size: 1.35rem; pointer-events: none; }
-    .custom-amount-input { width: 100%; height: 56px; border: 1px solid #cbd5e1; border-radius: 14px; padding: 0 18px 0 46px; font-size: 1.2rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.15s; }
-    .custom-amount-input:focus { border-color: #059669; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15); }
+    .currency-prefix { position: absolute; left: 18px; font-weight: 800; color: #c20067; font-size: 1.35rem; pointer-events: none; }
+    .custom-amount-input { width: 100%; height: 56px; border: 1px solid #f3d6e5; border-radius: 14px; padding: 0 18px 0 46px; font-size: 1.2rem; font-weight: 800; color: #0f172a; background: #ffffff; outline: none; transition: all 0.2s ease; }
+    .custom-amount-input:focus { border-color: #c20067; box-shadow: 0 0 0 4px rgba(194,0,103,0.1); }
     .error-msg { font-size: 0.825rem; color: #ef4444; margin-top: 6px; font-weight: 700; }
 
     .action-btn-group { display: flex; align-items: center; gap: 8px; }
-    .btn-link-bank { background: #ecfdf5; border: 1px solid #059669; border-radius: 8px; padding: 5px 14px; font-size: 0.775rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
-    .btn-link-bank:hover { background-color: #059669; color: #ffffff; }
-    .btn-reset-mock { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 12px; font-size: 0.775rem; font-weight: 700; color: #475569; cursor: pointer; }
+    .btn-link-bank { background: #fff0f6; border: 1px solid #c20067; border-radius: 8px; padding: 5px 14px; font-size: 0.775rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
+    .btn-link-bank:hover { background-color: #c20067; color: #ffffff; }
+    .btn-reset-mock { background: #ffffff; border: 1px solid #f3d6e5; border-radius: 8px; padding: 5px 12px; font-size: 0.775rem; font-weight: 700; color: #64748b; cursor: pointer; }
 
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .method-card { border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
-    .method-card.active { box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.25); }
+    .method-card { border: 1.5px solid #f3d6e5; border-radius: 16px; padding: 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.25s ease; text-align: center; position: relative; }
+    .method-card:hover { border-color: #f8bbd0; }
+    .method-card.active { box-shadow: 0 0 0 3px rgba(194,0,103,0.2); border-color: #c20067 !important; }
     .method-card.insufficient { border-color: #fca5a5 !important; background-color: #fef2f2 !important; }
 
     .btn-unlink { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.06); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 700; color: #64748b; cursor: pointer; }
@@ -648,72 +649,72 @@ export interface AvailableBankOption {
     .method-balance { font-size: 0.72rem; font-weight: 700; }
     .text-danger { color: #dc2626 !important; font-weight: 800 !important; }
 
-    .empty-linked-box { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #f8fafc; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .empty-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; border: 1px solid #e2e8f0; }
+    .empty-linked-box { border: 2px dashed #f3d6e5; border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; background: #fffafc; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .empty-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #ffffff; border: 1px solid #f3d6e5; }
 
     /* VietQR Info Box & Real Generator */
-    .vietqr-info-box { background: linear-gradient(135deg, #eff6ff 0%, #ecfdf5 100%); border: 1px solid #bfdbfe; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .vietqr-info-box { background: linear-gradient(135deg, #fff0f6 0%, #eef6ff 100%); border: 1px solid #f8bbd0; border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
     .vietqr-badge-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
     .vqr-logo-group { display: flex; align-items: center; gap: 8px; }
-    .vqr-logo { font-size: 1.1rem; font-weight: 900; color: #1d4ed8; }
-    .vqr-logo i { font-style: italic; color: #059669; }
-    .vqr-tag { font-size: 0.72rem; font-weight: 800; background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 10px; }
-    .vqr-desc { font-size: 0.85rem; color: #334155; margin: 0; line-height: 1.5; }
+    .vqr-logo { font-size: 1.1rem; font-weight: 900; color: #c20067; }
+    .vqr-logo i { font-style: italic; color: #0072ce; }
+    .vqr-tag { font-size: 0.72rem; font-weight: 800; background: #fff0f6; color: #c20067; padding: 3px 10px; border-radius: 10px; }
+    .vqr-desc { font-size: 0.85rem; color: #475569; margin: 0; line-height: 1.5; }
 
     .btn-toggle-receiver {
-      background: #ffffff; border: 1px solid #1d4ed8; color: #1d4ed8;
+      background: #ffffff; border: 1px solid #c20067; color: #c20067;
       font-size: 0.78rem; font-weight: 800; padding: 6px 14px; border-radius: 12px;
       cursor: pointer; transition: all 0.15s;
     }
-    .btn-toggle-receiver:hover { background: #1d4ed8; color: #ffffff; }
+    .btn-toggle-receiver:hover { background: #c20067; color: #ffffff; }
 
     .receiver-summary-bar {
-      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px;
+      background: #ffffff; border: 1px solid #f3d6e5; border-radius: 14px;
       padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
       margin-top: 4px;
     }
     .rec-bank-logo { display: flex; align-items: center; gap: 12px; }
-    .b-logo-img { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .b-logo-img { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; border: 1px solid #f3d6e5; }
     .b-name { font-size: 0.9rem; color: #0f172a; display: block; }
-    .b-sub { font-size: 0.75rem; color: #64748b; }
+    .b-sub { font-size: 0.75rem; color: #94a3b8; }
     .rec-acc-info { display: flex; flex-direction: column; text-align: right; }
-    .acc-no { font-size: 1rem; font-weight: 800; color: #047857; }
+    .acc-no { font-size: 1rem; font-weight: 800; color: #c20067; }
     .acc-holder { font-size: 0.78rem; font-weight: 700; color: #475569; }
 
     .custom-receiver-card {
-      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 16px;
+      background: #fffafc; border: 1px solid #f3d6e5; border-radius: 16px;
       padding: 18px; display: flex; flex-direction: column; gap: 12px; margin-top: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      box-shadow: 0 4px 12px rgba(194,0,103,0.03);
     }
-    .card-title-sm { font-size: 0.8rem; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-title-sm { font-size: 0.8rem; font-weight: 800; color: #c20067; text-transform: uppercase; letter-spacing: 0.05em; }
     .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .form-field-group { display: flex; flex-direction: column; gap: 4px; }
-    .field-lbl { font-size: 0.75rem; font-weight: 700; color: #475569; }
+    .field-lbl { font-size: 0.75rem; font-weight: 700; color: #64748b; }
     .form-select-bank {
-      width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 10px;
-      padding: 0 10px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc;
+      width: 100%; height: 40px; border: 1px solid #f3d6e5; border-radius: 10px;
+      padding: 0 10px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #fffafc;
     }
     .form-input-compact {
-      width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 10px;
-      padding: 0 12px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #f8fafc; box-sizing: border-box;
+      width: 100%; height: 40px; border: 1px solid #f3d6e5; border-radius: 10px;
+      padding: 0 12px; font-size: 0.85rem; font-weight: 700; color: #0f172a; outline: none; background: #fffafc; box-sizing: border-box;
     }
-    .form-input-compact:focus, .form-select-bank:focus { border-color: #1d4ed8; background: #ffffff; }
+    .form-input-compact:focus, .form-select-bank:focus { border-color: #c20067; background: #ffffff; }
 
     /* Modal Template Selector & EMVCo Payload Box */
-    .qr-template-selector { display: flex; gap: 6px; background: #e2e8f0; padding: 4px; border-radius: 12px; width: 100%; }
+    .qr-template-selector { display: flex; gap: 6px; background: #f3d6e5; padding: 4px; border-radius: 12px; width: 100%; }
     .btn-tpl { flex: 1; border: none; background: transparent; padding: 6px 0; font-size: 0.78rem; font-weight: 800; color: #475569; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
-    .btn-tpl.active { background: #ffffff; color: #047857; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .btn-tpl.active { background: #ffffff; color: #c20067; box-shadow: 0 2px 6px rgba(194,0,103,0.1); }
 
     .bank-head-val { display: flex; align-items: center; gap: 8px; }
     .b-mini-logo { width: 24px; height: 24px; object-fit: contain; }
 
-    .emvco-box { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .emvco-box { background: #fffafc; border: 1px solid #f3d6e5; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
     .emvco-head { display: flex; justify-content: space-between; align-items: center; }
-    .emvco-lbl { font-size: 0.68rem; font-weight: 800; color: #64748b; }
-    .emvco-string { font-size: 0.72rem; font-family: ui-monospace, monospace; color: #0f172a; word-break: break-all; max-height: 48px; overflow-y: auto; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .emvco-lbl { font-size: 0.68rem; font-weight: 800; color: #94a3b8; }
+    .emvco-string { font-size: 0.72rem; font-family: ui-monospace, monospace; color: #0f172a; word-break: break-all; max-height: 48px; overflow-y: auto; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #f3d6e5; }
 
-    .btn-emerald-submit { width: 100%; height: 56px; border: none; border-radius: 16px; color: #ffffff; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); }
-    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45); }
+    .btn-emerald-submit { width: 100%; height: 56px; border: none; border-radius: 16px; color: #ffffff; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(194,0,103,0.35); }
+    .btn-emerald-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(194,0,103,0.45); }
     .btn-emerald-submit:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
@@ -738,8 +739,8 @@ export interface AvailableBankOption {
       padding: 42px 48px;
       width: 100%;
       max-width: 580px;
-      box-shadow: 0 30px 80px -15px rgba(15, 23, 42, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 30px 80px -15px rgba(194, 0, 103, 0.15);
+      border: 1px solid #f3d6e5;
     }
     
     .modal-header {
@@ -815,11 +816,11 @@ export interface AvailableBankOption {
       transition: all 0.15s;
     }
     .modal-input:focus {
-      border-color: #059669;
+      border-color: #c20067;
       background-color: #ffffff;
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+      box-shadow: 0 0 0 4px rgba(194, 0, 103, 0.1);
     }
-    
+
     .form-error {
       font-size: 0.8rem;
       color: #ef4444;
@@ -836,8 +837,8 @@ export interface AvailableBankOption {
       font-size: 0.95rem;
       font-weight: 700;
       color: #0f172a;
-      background-color: #f8fafc;
-      border: 1px solid #cbd5e1;
+      background-color: #fffafc;
+      border: 1px solid #f3d6e5;
       border-radius: 14px;
       outline: none;
       appearance: none;
@@ -845,9 +846,9 @@ export interface AvailableBankOption {
       transition: all 0.15s;
     }
     .custom-select.modal-select:focus {
-      border-color: #059669;
+      border-color: #c20067;
       background-color: #ffffff;
-      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
+      box-shadow: 0 0 0 4px rgba(194, 0, 103, 0.1);
     }
     .select-chevron {
       position: absolute;
@@ -887,18 +888,18 @@ export interface AvailableBankOption {
     .btn-confirm-link {
       height: 50px;
       border: none;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       border-radius: 14px;
       font-weight: 800;
       font-size: 0.975rem;
       color: #ffffff;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35);
+      box-shadow: 0 4px 16px rgba(194, 0, 103, 0.35);
       transition: all 0.15s;
     }
     .btn-confirm-link:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 6px 22px rgba(5, 150, 105, 0.45);
+      box-shadow: 0 6px 22px rgba(194, 0, 103, 0.45);
     }
     .btn-confirm-link:disabled {
       opacity: 0.55;
@@ -917,11 +918,11 @@ export interface AvailableBankOption {
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.25);
+      border: 1px solid #f3d6e5;
     }
-    
+
     .vqr-banner-header {
-      background: linear-gradient(135deg, #064e3b 0%, #047857 60%, #1d4ed8 100%);
+      background: linear-gradient(135deg, #c20067 0%, #a00055 40%, #0072ce 100%);
       padding: 24px 36px;
       display: flex;
       justify-content: space-between;
@@ -935,7 +936,7 @@ export interface AvailableBankOption {
       gap: 6px;
       font-size: 0.78rem;
       font-weight: 800;
-      color: #a7f3d0;
+      color: #f8bbd0;
       background: rgba(255,255,255,0.15);
       border: 1px solid rgba(255,255,255,0.25);
       padding: 4px 14px;
@@ -953,10 +954,10 @@ export interface AvailableBankOption {
     .modal-body-vqr { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: stretch; }
 
     .qr-display-box { display: flex; flex-direction: column; align-items: center; gap: 16px; justify-content: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px 20px; }
-    .qr-image-wrapper { width: 230px; height: 230px; background: #ffffff; padding: 12px; border-radius: 20px; border: 3px solid #a7f3d0; box-shadow: 0 10px 28px rgba(4, 120, 87, 0.15); }
+    .qr-image-wrapper { width: 230px; height: 230px; background: #ffffff; padding: 12px; border-radius: 20px; border: 3px solid #f8bbd0; box-shadow: 0 10px 28px rgba(194,0,103,0.1); }
     .vqr-img { width: 100%; height: 100%; object-fit: contain; }
 
-    .qr-timer-pill { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #047857; background: #ecfdf5; padding: 8px 20px; border-radius: 20px; border: 1px solid #a7f3d0; font-weight: 700; }
+    .qr-timer-pill { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: #c20067; background: #fff0f6; padding: 8px 20px; border-radius: 20px; border: 1px solid #f8bbd0; font-weight: 700; }
 
     .vqr-details-box { display: flex; flex-direction: column; gap: 12px; }
     .detail-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 20px; display: flex; flex-direction: column; gap: 4px; }
@@ -964,14 +965,14 @@ export interface AvailableBankOption {
     
     .d-lbl { font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
     .d-val { font-size: 1rem; color: #0f172a; }
-    .amount-val { font-size: 1.5rem; font-weight: 900; color: #059669; }
+    .amount-val { font-size: 1.5rem; font-weight: 900; color: #c20067; }
     .acc-num { font-size: 1.25rem; font-weight: 800; color: #1e293b; letter-spacing: 0.04em; }
 
     .d-val-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .text-note { color: #047857; font-weight: 900; font-size: 1.05rem; word-break: break-all; }
+    .text-note { color: #c20067; font-weight: 900; font-size: 1.05rem; word-break: break-all; }
 
-    .btn-copy-chip { background: #ffffff; border: 1px solid #059669; border-radius: 8px; padding: 4px 14px; font-size: 0.8rem; font-weight: 800; color: #059669; cursor: pointer; transition: all 0.15s; }
-    .btn-copy-chip:hover { background: #059669; color: #ffffff; }
+    .btn-copy-chip { background: #ffffff; border: 1px solid #c20067; border-radius: 8px; padding: 4px 14px; font-size: 0.8rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
+    .btn-copy-chip:hover { background: #c20067; color: #ffffff; }
 
     .vqr-deep-links-bar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px; }
     .deep-link-label { font-size: 0.875rem; font-weight: 800; color: #334155; }
@@ -979,10 +980,10 @@ export interface AvailableBankOption {
     .app-link-pill { padding: 8px 18px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; color: #ffffff !important; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
     .app-link-pill:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(0,0,0,0.18); }
 
-    .modal-footer-vqr { padding: 22px 36px; background: #ffffff; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 2.5fr; gap: 18px; flex-shrink: 0; }
+    .modal-footer-vqr { padding: 22px 36px; background: #ffffff; border-top: 1px solid #f3d6e5; display: grid; grid-template-columns: 1fr 2.5fr; gap: 18px; flex-shrink: 0; }
     .btn-cancel-modal { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 16px; height: 52px; font-size: 0.95rem; font-weight: 800; color: #475569; cursor: pointer; transition: background 0.15s; }
     .btn-cancel-modal:hover { background: #e2e8f0; }
-    .btn-confirm-vqr { background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; border-radius: 16px; height: 52px; font-size: 1.05rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35); transition: transform 0.15s; }
+    .btn-confirm-vqr { background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); border: none; border-radius: 16px; height: 52px; font-size: 1.05rem; font-weight: 900; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(194,0,103,0.35); transition: transform 0.15s; }
     .btn-confirm-vqr:hover { transform: translateY(-2px); }
 
     /* FULL RESPONSIVE MEDIA QUERIES FOR MEDIUM & SMALL SCREENS (INCLUDING IPHONE SE 375PX) */
@@ -1387,22 +1388,22 @@ export class TopUpComponent implements OnInit, OnDestroy {
 
   getSelectedCardGradient(): string {
     if (this.topUpMode() === 'VIETQR') {
-      return 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 50%, #047857 100%)';
+      return 'linear-gradient(135deg, #c20067 0%, #a00055 40%, #0072ce 100%)';
     }
     if (this.currentSelectedBank) {
       return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
     }
-    return 'linear-gradient(135deg, #047857 0%, #065f46 50%, #064e3b 100%)';
+    return 'linear-gradient(135deg, #c20067 0%, #0d2b5c 50%, #005bb5 100%)';
   }
 
   getSubmitGradient(): string {
     if (this.topUpMode() === 'VIETQR') {
-      return 'linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%)';
+      return 'linear-gradient(135deg, #c20067 0%, #0072ce 100%)';
     }
     if (this.currentSelectedBank) {
       return this.getBankTheme(this.currentSelectedBank.bankName).gradient;
     }
-    return 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+    return 'linear-gradient(135deg, #c20067 0%, #0072ce 100%)';
   }
 
   private initForm(): void {

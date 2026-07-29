@@ -215,9 +215,9 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
     .header-icon-box {
       width: 52px;
       height: 52px;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #059669;
+      background: #fff0f6;
+      border: 1px solid #f8bbd0;
+      color: #c20067;
       border-radius: 16px;
       display: flex;
       align-items: center;
@@ -258,10 +258,10 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
     }
     .tab-btn svg { width: 16px; height: 16px; color: #64748b; }
     .tab-btn.active {
-      background: #059669;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
-      border-color: #059669;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.25);
     }
     .tab-btn.active svg { color: #ffffff; }
 
@@ -291,8 +291,8 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
     }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .pg-input:focus, .pg-select:focus {
-      border-color: #059669;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+      border-color: #c20067;
+      box-shadow: 0 0 0 3px rgba(194, 0, 103, 0.15);
     }
 
     .quick-amounts { display: flex; gap: 8px; margin-top: 10px; }
@@ -338,24 +338,24 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
       padding: 12px 28px;
       border-radius: 12px;
       border: none;
-      background: #059669;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
       font-weight: 700;
       font-size: 0.88rem;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+      box-shadow: 0 4px 14px rgba(194, 0, 103, 0.25);
       transition: all 0.15s ease;
     }
     .btn-submit:hover {
-      background: #047857;
+      opacity: 0.9;
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+      box-shadow: 0 6px 18px rgba(194, 0, 103, 0.35);
     }
     .subs-loading { display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 13px; padding: 12px 0; }
-    .spinner-xs { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #10b981; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; flex-shrink: 0; }
+    .spinner-xs { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #c20067; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .subs-empty { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #6b7280; font-size: 13px; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
-    .link-to-bills { color: #059669; font-weight: 700; text-decoration: none; margin-left: 4px; }
+    .link-to-bills { color: #c20067; font-weight: 700; text-decoration: none; margin-left: 4px; }
     .link-to-bills:hover { text-decoration: underline; }
     .subs-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
     .sub-option {
@@ -363,13 +363,13 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
       padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
       cursor: pointer; background: #fff; transition: 0.15s; gap: 12px;
     }
-    .sub-option:hover { border-color: #10b981; background: #f0fdf4; }
-    .sub-option.selected { border-color: #10b981; background: #ecfdf5; }
+    .sub-option:hover { border-color: #c20067; background: #fff0f6; }
+    .sub-option.selected { border-color: #c20067; background: #ffe1ef; }
     .sub-option-name { font-size: 14px; font-weight: 700; color: #111827; }
-    .sub-option-code { font-size: 12px; font-weight: 700; color: #059669; }
+    .sub-option-code { font-size: 12px; font-weight: 700; color: #c20067; }
     .sub-option-owner { font-size: 12px; color: #6b7280; }
     .sub-option-right { text-align: right; flex-shrink: 0; }
-    .sub-option-amount { font-size: 14px; font-weight: 700; color: #059669; }
+    .sub-option-amount { font-size: 14px; font-weight: 700; color: #c20067; }
     .sub-option-freq { font-size: 11px; color: #9ca3af; }
   `]
 })
