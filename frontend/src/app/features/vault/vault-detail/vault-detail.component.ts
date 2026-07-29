@@ -172,7 +172,13 @@ import { NotificationService } from '../../../core/services/notification.service
     <div class="panel" *ngIf="!vault && loading">Loading vault...</div>
   `,
   styles: [`
-    .vault-detail { display: flex; flex-direction: column; gap: 18px; color: #24142f; }
+    .vault-detail {
+      font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      color: #24142f;
+    }
     .back-link { width: fit-content; color: #be185d; text-decoration: none; font-weight: 900; }
     .detail-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); gap: 20px; overflow: hidden; border-radius: 28px; padding: 30px; background: radial-gradient(circle at 84% 20%, rgba(255,255,255,.92), transparent 30%), linear-gradient(135deg, #fff7fb 0%, #ffe1ef 48%, #e9fbf1 100%); border: 1px solid rgba(244,114,182,.24); box-shadow: 0 24px 60px rgba(190, 24, 93, .12); }
     .hero-main { min-width: 0; }

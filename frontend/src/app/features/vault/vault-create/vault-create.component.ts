@@ -78,7 +78,13 @@ import { NotificationService } from '../../../core/services/notification.service
     </div>
   `,
   styles: [`
-    .vault-form-page { display: flex; flex-direction: column; gap: 18px; color: #24142f; }
+    .vault-form-page {
+      font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      color: #24142f;
+    }
     .back-link { width: fit-content; color: #be185d; text-decoration: none; font-weight: 900; }
     .create-shell { display: grid; grid-template-columns: minmax(290px, .9fr) minmax(0, 1.1fr); gap: 22px; align-items: stretch; }
     .preview-panel, .form-card { border: 1px solid #f3d6e5; border-radius: 26px; background: #fff; box-shadow: 0 18px 48px rgba(99, 24, 75, .08); }

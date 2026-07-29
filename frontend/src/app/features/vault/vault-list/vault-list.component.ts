@@ -105,7 +105,13 @@ import { VaultResponse, VaultService } from '../vault.service';
     </div>
   `,
   styles: [`
-    .vault-page { display: flex; flex-direction: column; gap: 22px; color: #23152f; }
+    .vault-page {
+      font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      color: #23152f;
+    }
     .vault-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 24px; overflow: hidden; border-radius: 28px; padding: 34px; background: radial-gradient(circle at 82% 18%, rgba(255,255,255,.9), transparent 28%), linear-gradient(135deg, #fff7fb 0%, #ffe1ef 46%, #e9fbf1 100%); border: 1px solid rgba(244,114,182,.24); box-shadow: 0 24px 60px rgba(190, 24, 93, .12); }
     .hero-copy { position: relative; z-index: 1; max-width: 680px; }
     .eyebrow { color: #be185d; font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
