@@ -39,7 +39,10 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
             <span>Cập Nhật Realtime</span>
           </button>
           <a routerLink="/admin/ledger" class="btn-ledger-audit pulse-glow">
-            ⚖️ Kiểm Toán Sổ Cái ↗
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Kiểm Toán Sổ Cái ↗</span>
           </a>
         </div>
       </div>
@@ -49,7 +52,11 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
         <div class="kpi-card hover-lift pink">
           <div class="kpi-top">
             <span class="kpi-label">MERCHANT DOANH NGHIỆP</span>
-            <div class="kpi-icon">🏢</div>
+            <div class="kpi-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              </svg>
+            </div>
           </div>
           <div class="kpi-val">{{ totalMerchants }}</div>
           <div class="kpi-sub success">
@@ -60,7 +67,12 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
         <div class="kpi-card hover-lift blue">
           <div class="kpi-top">
             <span class="kpi-label">HỒ SƠ VAY CẦN DUYỆT</span>
-            <div class="kpi-icon">💵</div>
+            <div class="kpi-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="12" rx="2"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+            </div>
           </div>
           <div class="kpi-val text-amber">{{ pendingLoansCount }}</div>
           <div class="kpi-sub warning">
@@ -71,7 +83,11 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
         <div class="kpi-card hover-lift emerald">
           <div class="kpi-top">
             <span class="kpi-label">ĐỐI SOÁT SỔ CÁI KÉP</span>
-            <div class="kpi-icon">⚖️</div>
+            <div class="kpi-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
           </div>
           <div class="kpi-val" [class.text-emerald]="ledgerBalanced" [class.text-rose]="!ledgerBalanced">
             {{ ledgerBalanced ? 'BALANCED' : 'UNBALANCED' }}
@@ -84,7 +100,11 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
         <div class="kpi-card hover-lift purple">
           <div class="kpi-top">
             <span class="kpi-label">TRẠNG THÁI WEBHOOKS</span>
-            <div class="kpi-icon">⚡</div>
+            <div class="kpi-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
           </div>
           <div class="kpi-val text-purple">{{ pendingWebhooks }}</div>
           <div class="kpi-sub muted">
@@ -96,22 +116,22 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <!-- Management Navigation Tabs -->
       <div class="admin-nav-tabs">
         <button class="nav-tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
-          📊 Thống Kê Tổng Quan
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Thống Kê Tổng Quan
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'merchants'" (click)="activeTab = 'merchants'">
-          🏢 Quản Lý Merchant ({{ pendingMerchantsCount }})
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Quản Lý Merchant ({{ pendingMerchantsCount }})
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">
-          💵 Duyệt Vay ({{ pendingLoansCount }})
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><rect x="2" y="6" width="20" height="12" rx="2"/></svg> Duyệt Vay ({{ pendingLoansCount }})
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'ledger'" (click)="activeTab = 'ledger'">
-          ⚖️ Đối Soát Sổ Cái
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Đối Soát Sổ Cái
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
-          🎁 Quản Lý Voucher
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg> Quản Lý Voucher
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'webhooks'" (click)="activeTab = 'webhooks'">
-          ⚡ Webhook Logs
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Webhook Logs
         </button>
       </div>
 
@@ -121,12 +141,14 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
           <!-- Pending Approvals Quick Panel -->
           <div class="admin-card">
             <div class="card-hdr">
-              <h3>⚠️ Cần Xử Lý Ngay (Action Items)</h3>
+              <h3>Cần Xử Lý Ngay (Action Items)</h3>
               <span class="badge-count">{{ pendingLoansCount + pendingMerchantsCount }} mục</span>
             </div>
             <div class="action-items-list">
               <div class="action-item" *ngFor="let loan of pendingLoansList.slice(0, 3)">
-                <div class="ai-icon loan">💵</div>
+                <div class="ai-icon loan">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c20067" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+                </div>
                 <div class="ai-info">
                   <strong>Duyệt khoản vay #{{ loan.loanRef }}</strong>
                   <span>Số tiền: {{ loan.amount | currency:'VND':'symbol':'1.0-0' }} • Kỳ hạn {{ loan.termMonths }} tháng</span>
@@ -135,7 +157,9 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
               </div>
 
               <div class="action-item" *ngFor="let m of pendingMerchantsList.slice(0, 3)">
-                <div class="ai-icon merchant">🏢</div>
+                <div class="ai-icon merchant">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0072ce" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                </div>
                 <div class="ai-info">
                   <strong>Merchant: {{ m.merchantName }}</strong>
                   <span>Mã: {{ m.merchantCode }} • Email: {{ m.contactEmail }}</span>
@@ -144,7 +168,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
               </div>
 
               <div class="empty-action-msg" *ngIf="pendingLoansCount === 0 && pendingMerchantsCount === 0">
-                🎉 Tất cả hồ sơ và Merchant đã được phê duyệt xử lý hoàn tất!
+                Tất cả hồ sơ và Merchant đã được phê duyệt xử lý hoàn tất!
               </div>
             </div>
           </div>
@@ -152,11 +176,13 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
           <!-- Direct Operational Modules Grid -->
           <div class="admin-card">
             <div class="card-hdr">
-              <h3>🛠️ Module Quản Trị Hệ Thống</h3>
+              <h3>Module Quản Trị Hệ Thống</h3>
             </div>
             <div class="modules-quick-grid">
               <div class="module-tile" (click)="activeTab = 'merchants'">
-                <div class="mod-ico pink">🏢</div>
+                <div class="mod-ico pink">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                </div>
                 <div class="mod-info">
                   <strong>Merchant Management</strong>
                   <span>Phê duyệt đối tác, cấp API Key & Cấu hình Webhook</span>
@@ -164,7 +190,9 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
               </div>
 
               <div class="module-tile" (click)="activeTab = 'ledger'">
-                <div class="mod-ico blue">⚖️</div>
+                <div class="mod-ico blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
                 <div class="mod-info">
                   <strong>Double-Entry Ledger Audit</strong>
                   <span>Đối soát dòng tiền giao dịch, kiểm tra số dư bút toán</span>
@@ -172,7 +200,9 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
               </div>
 
               <div class="module-tile" (click)="activeTab = 'vouchers'">
-                <div class="mod-ico yellow">🎁</div>
+                <div class="mod-ico yellow">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg>
+                </div>
                 <div class="mod-info">
                   <strong>Voucher & Ưu Đãi</strong>
                   <span>Tạo mã giảm giá, khuyến mãi cho toàn bộ người dùng</span>
@@ -180,7 +210,9 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
               </div>
 
               <div class="module-tile" (click)="activeTab = 'webhooks'">
-                <div class="mod-ico purple">⚡</div>
+                <div class="mod-ico purple">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
                 <div class="mod-info">
                   <strong>Webhook Logs & Retry</strong>
                   <span>Nhật ký gọi callback, retry giao dịch tự động</span>
@@ -195,7 +227,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <div class="tab-pane" *ngIf="activeTab === 'merchants'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3>🏢 Danh Sách Merchant Doanh Nghiệp ({{ merchantsList.length }})</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c20067" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Danh Sách Merchant Doanh Nghiệp ({{ merchantsList.length }})</h3>
             <a routerLink="/admin/merchants" class="link-more">Xem Quản Lý Chi Tiết ↗</a>
           </div>
           <div class="table-responsive">
@@ -240,7 +272,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <div class="tab-pane" *ngIf="activeTab === 'loans'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3>💵 Phê Duyệt Vay Tiêu Dùng ({{ loansList.length }})</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0072ce" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><rect x="2" y="6" width="20" height="12" rx="2"/></svg> Phê Duyệt Vay Tiêu Dùng ({{ loansList.length }})</h3>
           </div>
           <div class="table-responsive">
             <table class="admin-table">
@@ -285,14 +317,14 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <div class="tab-pane" *ngIf="activeTab === 'ledger'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3>⚖️ Kiểm Toán Sổ Cái Kép (Double-Entry Ledger Integrity)</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Kiểm Toán Sổ Cái Kép (Double-Entry Ledger Integrity)</h3>
             <a routerLink="/admin/ledger" class="btn-primary-sm">Mở Console Sổ Cái Chi Tiết ↗</a>
           </div>
           <div class="ledger-summary-box">
             <div class="ls-item">
               <span>Trạng Thái Cân Bằng:</span>
               <strong [class.text-emerald]="ledgerBalanced" [class.text-rose]="!ledgerBalanced">
-                {{ ledgerBalanced ? '✓ DEBIT == CREDIT (CÂN BẰNG TỐT)' : '❌ LỖI BÚT TOÁN' }}
+                {{ ledgerBalanced ? '✓ DEBIT == CREDIT (CÂN BẰNG TỐT)' : 'LỖI BÚT TOÁN' }}
               </strong>
             </div>
             <p class="ls-desc">Hệ thống tự động thực hiện kiểm toán đối soát giữa tài khoản tổng và các khoản nợ/có của toàn bộ ví người dùng theo thời gian thực.</p>
@@ -304,7 +336,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <div class="tab-pane" *ngIf="activeTab === 'vouchers'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3>🎁 Quản Lý Kho Voucher & Mã Giảm Giá</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> Quản Lý Kho Voucher & Mã Giảm Giá</h3>
             <a routerLink="/admin/vouchers" class="btn-primary-sm">Mở Trang Tạo Voucher Chi Tiết ↗</a>
           </div>
           <p class="ls-desc">Tạo mã giảm giá, khuyến mãi quà tặng cho toàn bộ người dùng ví PayGate PRO.</p>
@@ -315,7 +347,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'we
       <div class="tab-pane" *ngIf="activeTab === 'webhooks'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3>⚡ Nhật Ký Webhook & Trạng Thái Callbacks</h3>
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Nhật Ký Webhook & Trạng Thái Callbacks</h3>
             <a routerLink="/admin/webhooks" class="btn-primary-sm">Xem Nhật Ký Webhook Chi Tiết ↗</a>
           </div>
           <p class="ls-desc">Theo dõi các cuộc gọi Callback HTTP ra ngoài hệ thống đối tác Merchant và cấu hình thời gian Retry tự động.</p>
