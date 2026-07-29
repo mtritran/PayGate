@@ -23,10 +23,13 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // Only handle 401 Unauthorized for token refresh/logout, NOT 403 Forbidden
       if (error.status === 401) {
-        // Avoid infinite refresh loops for auth endpoints
-        if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh') || req.url.includes('/auth/logout')) {
-          authService.clearTokens();
-          router.navigate(['/login']);
+        const isAuthEndpoint = req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh') || req.url.includes('/auth/logout');
+        const currentUrl = router.url;
+        
+        if (isAuthEndpoint || currentUrl.includes('/register') || currentUrl.includes('/login')) {
+          if (!req.url.includes('/auth/refresh')) {
+            authService.clearTokens();
+          }
           return throwError(() => error);
         }
 
@@ -61,13 +64,17 @@ function handle401Error(
           );
         }
         authService.clearTokens();
-        router.navigate(['/login']);
+        if (!router.url.includes('/register') && !router.url.includes('/login')) {
+          router.navigate(['/login']);
+        }
         return throwError(() => error);
       }),
       catchError((refreshErr) => {
         isRefreshing = false;
         authService.clearTokens();
-        router.navigate(['/login']);
+        if (!router.url.includes('/register') && !router.url.includes('/login')) {
+          router.navigate(['/login']);
+        }
         return throwError(() => refreshErr);
       })
     );

@@ -69,6 +69,9 @@ class TransactionServiceTest {
     @Mock
     private AmqpTemplate amqpTemplate;
 
+    @Mock
+    private LoyaltyService loyaltyService;
+
     @InjectMocks
     private TransactionServiceImpl transactionService;
 
@@ -139,6 +142,7 @@ class TransactionServiceTest {
         verify(balanceCacheService).evictBalance(1L);
         verify(balanceCacheService).evictBalance(2L);
         verify(idempotencyCacheService).set(idKey, "TXN-PAY-12345");
+        verify(loyaltyService).earnPoints(1L, BigDecimal.valueOf(100), "TXN-PAY-12345");
         verify(amqpTemplate).convertAndSend(eq("payment.exchange"), eq("payment.completed"), any(PaymentCompletedEvent.class));
     }
 

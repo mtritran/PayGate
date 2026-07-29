@@ -13,4 +13,6 @@ import lombok.NoArgsConstructor;
 public class AiChatRequest {
     @NotBlank(message = "Message cannot be empty")
     private String prompt;
+
+    private Long userId;
 }

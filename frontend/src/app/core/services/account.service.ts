@@ -43,19 +43,32 @@ export class AccountService {
 
   constructor(private http: HttpClient) {
     if (typeof window !== 'undefined') {
-      window.addEventListener('focus', () => this.refreshAccountState());
+      window.addEventListener('focus', () => {
+        if (this.hasToken()) this.refreshAccountState();
+      });
       
-      // SWR Realtime Polling: Automatically revalidate account balance & linked banks every 5 seconds ngầm
+      // SWR Realtime Polling: Automatically revalidate account balance & linked banks ONLY if authenticated
       import('rxjs').then(({ timer, switchMap, catchError, of }) => {
         timer(0, 5000).pipe(
-          switchMap(() => this.getAccountMe().pipe(catchError(() => of(null))))
+          switchMap(() => {
+            if (!this.hasToken()) return of(null);
+            return this.getAccountMe().pipe(catchError(() => of(null)));
+          })
         ).subscribe();
 
         timer(0, 8000).pipe(
-          switchMap(() => this.getLinkedBanks().pipe(catchError(() => of(null))))
+          switchMap(() => {
+            if (!this.hasToken()) return of(null);
+            return this.getLinkedBanks().pipe(catchError(() => of(null)));
+          })
         ).subscribe();
       });
     }
+  }
+
+  private hasToken(): boolean {
+    if (typeof localStorage === 'undefined') return false;
+    return !!localStorage.getItem('access_token');
   }
 
   refreshAccountState(): void {
