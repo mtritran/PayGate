@@ -32,15 +32,7 @@ import { InputComponent } from '../../../shared/components';
             <h1 class="main-title">Sign In</h1>
             <p class="sub-text">Don't have an account yet? <a routerLink="/register" class="highlight-link">Create PayGate Account ➔</a></p>
 
-            <!-- Quick Fill Buttons -->
-            <div class="quick-demo-row">
-              <div class="demo-btn-group">
-                <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User Demo</button>
-                <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin Demo</button>
-              </div>
-            </div>
-
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-16">
               <div class="form-field">
                 <pg-input
                   label="Email Address or Username"
@@ -219,13 +211,6 @@ import { InputComponent } from '../../../shared/components';
     .sub-text { font-size: 1rem; color: #64748b; margin: 0 0 24px 0; line-height: 1.5; }
     .highlight-link { color: #c20067; font-weight: 800; text-decoration: none; }
     .highlight-link:hover { text-decoration: underline; }
-
-    .quick-demo-row { display: flex; align-items: center; justify-content: center; background: #fff0f6; border: 1.5px solid #f8bbd0; padding: 10px 16px; border-radius: 14px; margin-bottom: 26px; }
-    .demo-btn-group { display: flex; gap: 12px; width: 100%; justify-content: center; }
-    .btn-demo-pill { flex: 1; text-align: center; background: #ffffff; border: 1.5px solid #f48fb1; border-radius: 10px; padding: 8px 14px; font-size: 0.85rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
-    .btn-demo-pill:hover { background: #c20067; color: #fff; transform: translateY(-1px); }
-    .btn-demo-pill.admin { color: #0072ce; border-color: #93c5fd; }
-    .btn-demo-pill.admin:hover { background: #0072ce; color: #fff; transform: translateY(-1px); }
 
     .pure-form { display: flex; flex-direction: column; gap: 22px; }
     .form-field { display: flex; flex-direction: column; }
