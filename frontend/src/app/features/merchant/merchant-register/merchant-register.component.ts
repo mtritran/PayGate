@@ -282,7 +282,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                 <div class="step-badge">BƯỚC 4</div>
                 <h4>4. Nhận Kết Quả Callback</h4>
                 <p>Tiền tự động chuyển vào Ví Merchant của bạn. Hệ thống redirect khách hàng về <code>returnUrl</code> với tham số trạng thái.</p>
-                <div class="wf-detail">→ Redirect về: <code>{{ returnUrl }}?status=SUCCESS&ref=...</code></div>
+                <div class="wf-detail">→ Redirect về: <code>returnUrl?status=SUCCESS&ref=...</code></div>
               </div>
             </div>
           </div>
