@@ -111,17 +111,20 @@ export interface ChatMessage {
 
         <!-- Quick Suggestion Chips -->
         <div class="quick-chips-bar" *ngIf="!isThinking()">
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('What is my current wallet balance?')">
-            <span>My Balance</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Số dư hiện tại của tôi là bao nhiêu?')">
+            <span>Kiểm tra Số dư</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('How many recurring payments are active?')">
-            <span>Recurring</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Tôi đang có bao nhiêu hũ tiết kiệm?')">
+            <span>Hũ Tiết Kiệm</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Set up auto-pay for my electricity bill')">
-            <span>Auto Pay Bill</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Các khoản vay của tôi thế nào?')">
+            <span>Khoản Vay Tiêu Dùng</span>
           </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my recent transaction history')">
-            <span>History</span>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Tôi có những hóa đơn tự động nào?')">
+            <span>Thanh Toán Hóa Đơn</span>
+          </button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Xem lịch sử giao dịch gần đây')">
+            <span>Lịch Sử Giao Dịch</span>
           </button>
         </div>
 
@@ -525,23 +528,37 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     const amount: number | undefined = data.suggestedAmount;
     const recipient: string | undefined = data.suggestedRecipient;
 
+    if (action === 'VAULT') {
+      return { text: 'Mở Hũ Tiết Kiệm 🐷', route: '/vaults' };
+    }
+    if (action === 'LOAN') {
+      return { text: 'Xem Khoản Vay & Vay Vốn 💵', route: '/loans' };
+    }
+    if (action === 'VOUCHER') {
+      return { text: 'Kho Voucher & Ưu Đãi 🎁', route: '/vouchers' };
+    }
+    if (action === 'BILL') {
+      return { text: 'Thanh Toán Hóa Đơn ⚡', route: '/bills/pay' };
+    }
+    if (action === 'ADMIN') {
+      return { text: 'Trung Tâm Admin Console 👑', route: '/admin/dashboard' };
+    }
     if (action === 'RECURRING') {
-      return { text: 'Manage Recurring & Bills', route: '/recurring-payments' };
+      return { text: 'Quản Lý Thanh Toán Tự Động', route: '/transactions/recurring' };
     }
     if (action === 'TOPUP') {
-      return { text: 'Nạp tiền ngay', route: '/top-up' };
+      return { text: 'Nạp Tiền Ngay 💳', route: '/accounts/topup' };
     }
     if (action === 'TRANSFER' || (!action && (amount || recipient))) {
       const formattedAmt = amount
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
         : '';
       return {
-        text: formattedAmt ? `Chuyển ngay ${formattedAmt}` : 'Mở form chuyển tiền',
-        route: '/transactions/send',
+        text: formattedAmt ? `Chuyển Ngay ${formattedAmt}` : 'Chuyển Tiền 🚀',
+        route: '/transactions/pay',
         queryParams: { amount, recipient }
       };
     }
-    // VIEW_BALANCE, VIEW_TRANSACTIONS → AI already replied in full, no button needed
     return undefined;
   }
 
