@@ -19,7 +19,7 @@ import { InputComponent } from '../../../shared/components';
     <div class="space-auth-container fade-in-up">
       <div class="space-auth-card">
         
-        <!-- LEFT COLUMN: Clean Minimalist Login Form -->
+        <!-- LEFT COLUMN: Clean Minimalist Spacious Form -->
         <div class="auth-form-side">
           <div class="brand-header">
             <div class="logo-box">
@@ -30,20 +30,22 @@ import { InputComponent } from '../../../shared/components';
 
           <div class="form-body">
             <h1 class="main-title">Sign In</h1>
-            <p class="sub-text">Don't have an account? <a routerLink="/register" class="highlight-link">Create PayGate Account</a></p>
+            <p class="sub-text">Don't have an account yet? <a routerLink="/register" class="highlight-link">Create PayGate Account ➔</a></p>
 
             <!-- Quick Demo Login Buttons -->
-            <div class="quick-demo-row mt-16">
+            <div class="quick-demo-row">
               <span class="demo-tag">Quick Demo Login:</span>
-              <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User</button>
-              <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin</button>
+              <div class="demo-btn-group">
+                <button type="button" class="btn-demo-pill" (click)="fillDemoUser()">👤 User Demo</button>
+                <button type="button" class="btn-demo-pill admin" (click)="fillDemoAdmin()">🛡️ Admin Demo</button>
+              </div>
             </div>
 
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-24">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form">
               <div class="form-field">
                 <pg-input
                   label="Email Address or Username"
-                  placeholder="Enter username or email..."
+                  placeholder="Enter your username or email..."
                   formControlName="username"
                   type="text"
                   autocomplete="username"
@@ -55,7 +57,7 @@ import { InputComponent } from '../../../shared/components';
               <div class="form-field">
                 <pg-input
                   label="Password"
-                  placeholder="Enter password..."
+                  placeholder="Enter your password..."
                   formControlName="password"
                   type="password"
                   autocomplete="current-password"
@@ -68,14 +70,14 @@ import { InputComponent } from '../../../shared/components';
               <div class="form-actions">
                 <label class="remember-label">
                   <input type="checkbox" formControlName="rememberMe" />
-                  <span>Remember Session</span>
+                  <span>Remember session for 30 days</span>
                 </label>
-                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot Password?</a>
+                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot password?</a>
               </div>
 
               <button type="submit" class="btn-paygate-submit" [disabled]="form.invalid || loading()">
-                <span *ngIf="!loading()">Sign In to PayGate ↗</span>
-                <span *ngIf="loading()" class="loading-span"><span class="spinner"></span> Authenticating...</span>
+                <span *ngIf="!loading()">Sign In to PayGate Wallet ↗</span>
+                <span *ngIf="loading()" class="loading-span"><span class="spinner"></span> Authenticating credentials...</span>
               </button>
 
               <div class="error-msg-banner" *ngIf="submitError()">
@@ -85,23 +87,21 @@ import { InputComponent } from '../../../shared/components';
           </div>
 
           <div class="form-footer">
-            <p>© 2026 PayGate Inc. Secure Payment Infrastructure. <br> <a routerLink="/terms" class="legal-link">Terms of Service</a> | <a routerLink="/privacy" class="legal-link">Privacy Policy</a></p>
+            <p>© 2026 PayGate Inc. Enterprise Payment Infrastructure. <br> <a routerLink="/terms" class="legal-link">Terms of Service</a> &nbsp;•&nbsp; <a routerLink="/privacy" class="legal-link">Privacy Policy</a></p>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Animated PayGate System 3D FinTech Graphics -->
+        <!-- RIGHT COLUMN: Animated 3D FinTech PayGate Illustration -->
         <div class="space-illustration-side">
-          <svg class="space-scene" viewBox="0 0 650 700" preserveAspectRatio="xMidYMid slice" role="img">
+          <svg class="space-scene" viewBox="0 0 700 750" preserveAspectRatio="xMidYMid slice" role="img">
             <defs>
-              <!-- PayGate Futuristic Gradient Sky -->
               <linearGradient id="paygateSky" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#0b1329"/>
-                <stop offset="40%" stop-color="#0d2b5c"/>
-                <stop offset="80%" stop-color="#4a0e4e"/>
+                <stop offset="35%" stop-color="#0d2b5c"/>
+                <stop offset="75%" stop-color="#4a0e4e"/>
                 <stop offset="100%" stop-color="#831843"/>
               </linearGradient>
 
-              <!-- Neon Waves Gradient -->
               <linearGradient id="waveFront" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#c20067"/>
                 <stop offset="50%" stop-color="#e11d48"/>
@@ -112,81 +112,70 @@ import { InputComponent } from '../../../shared/components';
                 <stop offset="100%" stop-color="#3b82f6"/>
               </linearGradient>
 
-              <!-- Shiny Gold Coin Gradient -->
               <linearGradient id="goldCoin" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#fef08a"/>
                 <stop offset="50%" stop-color="#eab308"/>
                 <stop offset="100%" stop-color="#854d0e"/>
               </linearGradient>
 
-              <!-- 3D Visa Glass Card Gradient -->
               <linearGradient id="visaCardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffdeeb" stop-opacity="0.9"/>
-                <stop offset="40%" stop-color="#c20067" stop-opacity="0.85"/>
-                <stop offset="85%" stop-color="#0d2b5c" stop-opacity="0.95"/>
+                <stop offset="0%" stop-color="#ffdeeb" stop-opacity="0.95"/>
+                <stop offset="35%" stop-color="#c20067" stop-opacity="0.9"/>
+                <stop offset="80%" stop-color="#0d2b5c" stop-opacity="0.95"/>
                 <stop offset="100%" stop-color="#0072ce" stop-opacity="1"/>
               </linearGradient>
             </defs>
 
-            <!-- Sky Background -->
-            <rect width="650" height="700" fill="url(#paygateSky)"/>
+            <rect width="700" height="750" fill="url(#paygateSky)"/>
 
-            <!-- Floating Binary Data Particles -->
+            <!-- Particles Network -->
             <g class="stars-group">
-              <circle cx="90" cy="100" r="2.5" fill="#f472b6" opacity="0.9"/>
-              <circle cx="180" cy="60" r="3" fill="#60a5fa" opacity="0.85"/>
-              <circle cx="310" cy="110" r="2" fill="#fef08a" opacity="0.95"/>
-              <circle cx="480" cy="70" r="3.5" fill="#f472b6" opacity="0.9"/>
-              <circle cx="580" cy="140" r="2" fill="#60a5fa" opacity="0.8"/>
-              <circle cx="130" cy="220" r="2.5" fill="#ffffff" opacity="0.75"/>
-              <circle cx="520" cy="240" r="3" fill="#fef08a" opacity="0.9"/>
+              <circle cx="100" cy="110" r="3" fill="#f472b6" opacity="0.9"/>
+              <circle cx="200" cy="70" r="3.5" fill="#60a5fa" opacity="0.85"/>
+              <circle cx="340" cy="120" r="2.5" fill="#fef08a" opacity="0.95"/>
+              <circle cx="520" cy="80" r="4" fill="#f472b6" opacity="0.9"/>
+              <circle cx="620" cy="160" r="2.5" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="150" cy="240" r="3" fill="#ffffff" opacity="0.75"/>
+              <circle cx="560" cy="260" r="3.5" fill="#fef08a" opacity="0.9"/>
             </g>
 
             <!-- Background Waves -->
-            <path d="M 0 540 Q 180 420 340 500 T 650 480 L 650 700 L 0 700 Z" fill="url(#waveBack)" opacity="0.45"/>
-            <path d="M 0 580 Q 220 480 420 540 T 650 510 L 650 700 L 0 700 Z" fill="url(#waveFront)" opacity="0.7"/>
+            <path d="M 0 580 Q 200 450 380 540 T 700 510 L 700 750 L 0 750 Z" fill="url(#waveBack)" opacity="0.4"/>
+            <path d="M 0 620 Q 240 510 460 580 T 700 550 L 700 750 L 0 750 Z" fill="url(#waveFront)" opacity="0.65"/>
 
-            <!-- Floating 3D PayGate Card (Central Hero Graphics) -->
+            <!-- Floating 3D PayGate Card -->
             <g class="card-float-group">
-              <!-- Card Shadow -->
-              <rect x="140" y="270" width="370" height="225" rx="24" fill="#000" opacity="0.35" filter="blur(10px)"/>
+              <rect x="145" y="295" width="410" height="250" rx="26" fill="#000" opacity="0.38" filter="blur(14px)"/>
+              <rect x="135" y="265" width="410" height="250" rx="26" fill="url(#visaCardGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="2.5"/>
 
-              <!-- Card Base -->
-              <rect x="130" y="240" width="370" height="225" rx="24" fill="url(#visaCardGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+              <rect x="180" y="320" width="52" height="40" rx="9" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+              <line x1="180" y1="340" x2="232" y2="340" stroke="#ca8a04" stroke-width="1.5"/>
+              <line x1="206" y1="320" x2="206" y2="360" stroke="#ca8a04" stroke-width="1.5"/>
 
-              <!-- Card Chip -->
-              <rect x="170" y="290" width="46" height="36" rx="8" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
-              <line x1="170" y1="308" x2="216" y2="308" stroke="#ca8a04" stroke-width="1.5"/>
-              <line x1="193" y1="290" x2="193" y2="326" stroke="#ca8a04" stroke-width="1.5"/>
+              <path d="M 255 330 A 14 14 0 0 1 255 350 M 264 325 A 20 20 0 0 1 264 355" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
 
-              <!-- Contactless Pay Wave Icon -->
-              <path d="M 235 298 A 12 12 0 0 1 235 318 M 243 294 A 18 18 0 0 1 243 322" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+              <text x="180" y="415" font-family="monospace" font-size="24" font-weight="900" fill="#ffffff" letter-spacing="4">4532 •••• •••• 8892</text>
 
-              <!-- Card Number -->
-              <text x="170" y="375" font-family="monospace" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="4">4532 •••• •••• 8892</text>
+              <text x="180" y="462" font-family="system-ui, sans-serif" font-size="12" font-weight="800" fill="#fbcfe8" letter-spacing="1">PAYGATE MEMBER</text>
+              <text x="180" y="484" font-family="system-ui, sans-serif" font-size="15" font-weight="900" fill="#ffffff">PAYGATE PRO USER</text>
 
-              <!-- Card Holder & Badge -->
-              <text x="170" y="420" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#fbcfe8" letter-spacing="1">PAYGATE MEMBER</text>
-              <text x="170" y="438" font-family="system-ui, sans-serif" font-size="14" font-weight="900" fill="#ffffff">PAYGATE PRO USER</text>
-
-              <text x="410" y="432" font-family="system-ui, sans-serif" font-size="22" font-weight="900" font-style="italic" fill="#ffffff">VISA</text>
+              <text x="445" y="478" font-family="system-ui, sans-serif" font-size="26" font-weight="900" font-style="italic" fill="#ffffff">VISA</text>
             </g>
 
-            <!-- Floating 3D Gold Coins (Animation Node) -->
+            <!-- Floating 3D Gold Coins -->
             <g class="coin-float-1">
-              <circle cx="120" cy="180" r="28" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="2"/>
-              <text x="120" y="188" font-family="sans-serif" font-size="22" font-weight="900" fill="#713f12" text-anchor="middle">₫</text>
+              <circle cx="120" cy="190" r="32" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="2.5"/>
+              <text x="120" y="199" font-family="sans-serif" font-size="24" font-weight="900" fill="#713f12" text-anchor="middle">₫</text>
             </g>
 
             <g class="coin-float-2">
-              <circle cx="510" cy="190" r="34" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="2.5"/>
-              <text x="510" y="200" font-family="sans-serif" font-size="26" font-weight="900" fill="#713f12" text-anchor="middle">$</text>
+              <circle cx="560" cy="200" r="38" fill="url(#goldCoin)" stroke="#fef08a" stroke-width="3"/>
+              <text x="560" y="211" font-family="sans-serif" font-size="28" font-weight="900" fill="#713f12" text-anchor="middle">$</text>
             </g>
 
-            <!-- Glowing Transaction Nodes & Cables -->
-            <g opacity="0.8">
-              <path d="M 120 208 Q 150 250 200 240" fill="none" stroke="#60a5fa" stroke-width="3" stroke-dasharray="6,6"/>
-              <path d="M 510 224 Q 480 270 430 240" fill="none" stroke="#f472b6" stroke-width="3" stroke-dasharray="6,6"/>
+            <g opacity="0.85">
+              <path d="M 120 222 Q 150 275 210 265" fill="none" stroke="#60a5fa" stroke-width="3.5" stroke-dasharray="6,6"/>
+              <path d="M 560 238 Q 520 295 460 265" fill="none" stroke="#f472b6" stroke-width="3.5" stroke-dasharray="6,6"/>
             </g>
           </svg>
         </div>
@@ -201,70 +190,72 @@ import { InputComponent } from '../../../shared/components';
 
     .space-auth-container {
       display: flex; justify-content: center; align-items: center;
-      width: 100%; min-height: 90vh; padding: 24px; box-sizing: border-box;
+      width: 100%; min-height: 92vh; padding: 32px 20px; box-sizing: border-box;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Enlarged 2-Column Split Card matching PayGate System Specs */
+    /* Spacious 2-Column Split Card */
     .space-auth-card {
-      display: grid; grid-template-columns: 500px 1fr;
-      width: 95vw; max-width: 1320px; min-height: 720px; height: 85vh;
-      background: #ffffff; border-radius: 28px;
+      display: grid; grid-template-columns: 560px 1fr;
+      width: 96vw; max-width: 1380px; min-height: 760px; height: 86vh;
+      background: #ffffff; border-radius: 32px;
       border: 1.5px solid #f3d6e5; overflow: hidden;
-      box-shadow: 0 25px 70px rgba(194, 0, 103, 0.12);
+      box-shadow: 0 30px 80px rgba(194, 0, 103, 0.14);
     }
 
-    /* Left Form Panel */
+    /* Left Form Panel - Generous Spacing */
     .auth-form-side {
-      padding: 54px 58px; display: flex; flex-direction: column;
+      padding: 60px 64px; display: flex; flex-direction: column;
       justify-content: space-between; background: #ffffff;
     }
 
-    .brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-    .logo-box { width: 42px; height: 42px; border-radius: 12px; overflow: hidden; border: 1.5px solid #f48fb1; box-shadow: 0 4px 12px rgba(194,0,103,0.18); }
+    .brand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+    .logo-box { width: 46px; height: 46px; border-radius: 14px; overflow: hidden; border: 1.5px solid #f48fb1; box-shadow: 0 4px 14px rgba(194,0,103,0.2); }
     .logo-img { width: 100%; height: 100%; object-fit: cover; }
-    .brand-title { font-size: 1.5rem; font-weight: 900; color: #0d2b5c; display: flex; align-items: center; gap: 6px; }
-    .brand-tag { font-size: 0.7rem; font-weight: 900; background: linear-gradient(135deg, #c20067, #0072ce); color: #fff; padding: 3px 8px; border-radius: 8px; }
+    .brand-title { font-size: 1.65rem; font-weight: 900; color: #0d2b5c; display: flex; align-items: center; gap: 8px; }
+    .brand-tag { font-size: 0.72rem; font-weight: 900; background: linear-gradient(135deg, #c20067, #0072ce); color: #fff; padding: 4px 10px; border-radius: 8px; }
 
     .form-body { display: flex; flex-direction: column; }
-    .main-title { font-size: 2.25rem; font-weight: 900; color: #0d2b5c; margin: 0 0 6px 0; letter-spacing: -0.03em; }
-    .sub-text { font-size: 0.95rem; color: #64748b; margin: 0 0 20px 0; }
+    .main-title { font-size: 2.5rem; font-weight: 900; color: #0d2b5c; margin: 0 0 8px 0; letter-spacing: -0.03em; }
+    .sub-text { font-size: 1rem; color: #64748b; margin: 0 0 24px 0; line-height: 1.5; }
     .highlight-link { color: #c20067; font-weight: 800; text-decoration: none; }
     .highlight-link:hover { text-decoration: underline; }
 
-    .quick-demo-row { display: flex; align-items: center; gap: 10px; background: #fff0f6; border: 1px solid #f8bbd0; padding: 10px 16px; border-radius: 12px; }
-    .demo-tag { font-size: 0.8rem; font-weight: 800; color: #0d2b5c; }
-    .btn-demo-pill { background: #ffffff; border: 1px solid #f48fb1; border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
-    .btn-demo-pill:hover { background: #c20067; color: #fff; }
+    .quick-demo-row { display: flex; align-items: center; justify-content: space-between; background: #fff0f6; border: 1.5px solid #f8bbd0; padding: 12px 18px; border-radius: 14px; margin-bottom: 26px; }
+    .demo-tag { font-size: 0.85rem; font-weight: 800; color: #0d2b5c; }
+    .demo-btn-group { display: flex; gap: 10px; }
+    .btn-demo-pill { background: #ffffff; border: 1.5px solid #f48fb1; border-radius: 10px; padding: 6px 14px; font-size: 0.82rem; font-weight: 800; color: #c20067; cursor: pointer; transition: all 0.15s; }
+    .btn-demo-pill:hover { background: #c20067; color: #fff; transform: translateY(-1px); }
     .btn-demo-pill.admin { color: #0072ce; border-color: #93c5fd; }
-    .btn-demo-pill.admin:hover { background: #0072ce; color: #fff; }
+    .btn-demo-pill.admin:hover { background: #0072ce; color: #fff; transform: translateY(-1px); }
 
-    .pure-form { display: flex; flex-direction: column; gap: 18px; }
+    .pure-form { display: flex; flex-direction: column; gap: 22px; }
     .form-field { display: flex; flex-direction: column; }
 
-    .form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; margin-top: 4px; }
+    .form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.92rem; margin-top: 4px; }
     .remember-label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #475569; font-weight: 600; }
     .remember-label input { accent-color: #c20067; width: 18px; height: 18px; cursor: pointer; }
     .forgot-link { color: #c20067; font-weight: 700; text-decoration: none; }
     .forgot-link:hover { text-decoration: underline; }
 
-    /* Pink-Blue Unified PayGate Submit Button */
+    /* Grand Pink-Blue Submit Button */
     .btn-paygate-submit {
-      height: 52px; width: 100%; border: none; border-radius: 14px;
+      height: 56px; width: 100%; border: none; border-radius: 16px;
       background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
-      color: #ffffff; font-weight: 900; font-size: 1.05rem; cursor: pointer;
-      box-shadow: 0 10px 24px rgba(194, 0, 103, 0.28);
+      color: #ffffff; font-weight: 900; font-size: 1.1rem; cursor: pointer;
+      box-shadow: 0 12px 28px rgba(194, 0, 103, 0.3);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); margin-top: 10px;
     }
-    .btn-paygate-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(194, 0, 103, 0.4); }
+    .btn-paygate-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(194, 0, 103, 0.42); }
     .btn-paygate-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .loading-span { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
-    .error-msg-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; margin-top: 10px; }
+    .loading-span { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .spinner { width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    .error-msg-banner { background: #fee2e2; border: 1.5px solid #fca5a5; color: #b91c1c; padding: 14px 18px; border-radius: 12px; font-size: 0.92rem; font-weight: 700; margin-top: 12px; }
 
-    .form-footer { font-size: 0.8rem; color: #94a3b8; line-height: 1.5; margin-top: 24px; }
-    .legal-link { color: #64748b; text-decoration: none; }
+    .form-footer { font-size: 0.85rem; color: #94a3b8; line-height: 1.6; margin-top: 28px; }
+    .legal-link { color: #64748b; text-decoration: none; font-weight: 600; }
+    .legal-link:hover { color: #c20067; text-decoration: underline; }
 
     /* Right PayGate Illustration Panel */
     .space-illustration-side {
@@ -272,32 +263,28 @@ import { InputComponent } from '../../../shared/components';
     }
     .space-scene { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    /* PayGate Graphic Animations */
-    .card-float-group { animation: cardBobbing 4s ease-in-out infinite alternate; }
+    .card-float-group { animation: cardBobbing 4.5s ease-in-out infinite alternate; }
     .coin-float-1 { animation: coinFloat 3s ease-in-out infinite alternate; }
-    .coin-float-2 { animation: coinFloat 3.5s ease-in-out 0.5s infinite alternate; }
+    .coin-float-2 { animation: coinFloat 3.6s ease-in-out 0.6s infinite alternate; }
     .stars-group circle { animation: starTwinkle 2.5s ease-in-out infinite alternate; }
 
     @keyframes cardBobbing {
       0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(-16px) rotate(1.5deg); }
+      100% { transform: translateY(-18px) rotate(1.5deg); }
     }
     @keyframes coinFloat {
       0% { transform: translateY(0) scale(1); }
-      100% { transform: translateY(-12px) scale(1.05); }
+      100% { transform: translateY(-14px) scale(1.06); }
     }
     @keyframes starTwinkle {
       0% { opacity: 0.2; }
       100% { opacity: 1; }
     }
 
-    .mt-16 { margin-top: 16px; }
-    .mt-24 { margin-top: 24px; }
-
-    @media (max-width: 980px) {
+    @media (max-width: 1080px) {
       .space-auth-card { grid-template-columns: 1fr; height: auto; min-height: auto; }
       .space-illustration-side { display: none; }
-      .auth-form-side { padding: 36px 28px; }
+      .auth-form-side { padding: 40px 32px; }
     }
   `]
 })
