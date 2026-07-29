@@ -32,6 +32,7 @@ export class AuthService {
       tap(res => {
         if (res.success && res.data) {
           this.storeTokens(res.data);
+          this.scheduleBackgroundRefresh();
         }
       })
     );
@@ -56,6 +57,7 @@ export class AuthService {
       tap(res => {
         if (res.success && res.data) {
           this.storeTokens(res.data);
+          this.scheduleBackgroundRefresh();
         }
       })
     );
