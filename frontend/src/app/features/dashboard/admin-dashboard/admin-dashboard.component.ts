@@ -8,7 +8,7 @@ import { WebhookLogService } from '../../../core/services/webhook-log.service';
 import { LoanService, LoanResponse } from '../../../core/services/loan.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
-type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'webhooks';
+type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'webhooks';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -102,10 +102,16 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'webhooks';
           🏢 Quản Lý Merchant ({{ pendingMerchantsCount }})
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">
-          💵 Duyệt Vay Tiêu Dùng ({{ pendingLoansCount }})
+          💵 Duyệt Vay ({{ pendingLoansCount }})
         </button>
         <button class="nav-tab-btn" [class.active]="activeTab === 'ledger'" (click)="activeTab = 'ledger'">
-          ⚖️ Kiểm Toán Sổ Cái
+          ⚖️ Đối Soát Sổ Cái
+        </button>
+        <button class="nav-tab-btn" [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
+          🎁 Quản Lý Voucher
+        </button>
+        <button class="nav-tab-btn" [class.active]="activeTab === 'webhooks'" (click)="activeTab = 'webhooks'">
+          ⚡ Webhook Logs
         </button>
       </div>
 
@@ -149,37 +155,37 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'webhooks';
               <h3>🛠️ Module Quản Trị Hệ Thống</h3>
             </div>
             <div class="modules-quick-grid">
-              <a routerLink="/admin/merchants" class="module-tile">
+              <div class="module-tile" (click)="activeTab = 'merchants'">
                 <div class="mod-ico pink">🏢</div>
                 <div class="mod-info">
                   <strong>Merchant Management</strong>
                   <span>Phê duyệt đối tác, cấp API Key & Cấu hình Webhook</span>
                 </div>
-              </a>
+              </div>
 
-              <a routerLink="/admin/ledger" class="module-tile">
+              <div class="module-tile" (click)="activeTab = 'ledger'">
                 <div class="mod-ico blue">⚖️</div>
                 <div class="mod-info">
                   <strong>Double-Entry Ledger Audit</strong>
                   <span>Đối soát dòng tiền giao dịch, kiểm tra số dư bút toán</span>
                 </div>
-              </a>
+              </div>
 
-              <a routerLink="/admin/vouchers" class="module-tile">
+              <div class="module-tile" (click)="activeTab = 'vouchers'">
                 <div class="mod-ico yellow">🎁</div>
                 <div class="mod-info">
                   <strong>Voucher & Ưu Đãi</strong>
                   <span>Tạo mã giảm giá, khuyến mãi cho toàn bộ người dùng</span>
                 </div>
-              </a>
+              </div>
 
-              <a routerLink="/admin/webhooks" class="module-tile">
+              <div class="module-tile" (click)="activeTab = 'webhooks'">
                 <div class="mod-ico purple">⚡</div>
                 <div class="mod-info">
                   <strong>Webhook Logs & Retry</strong>
                   <span>Nhật ký gọi callback, retry giao dịch tự động</span>
                 </div>
-              </a>
+              </div>
             </div>
           </div>
         </div>
@@ -280,7 +286,7 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'webhooks';
         <div class="admin-card">
           <div class="card-hdr">
             <h3>⚖️ Kiểm Toán Sổ Cái Kép (Double-Entry Ledger Integrity)</h3>
-            <a routerLink="/admin/ledger" class="btn-primary-sm">Truy Cập Console Sổ Cái ↗</a>
+            <a routerLink="/admin/ledger" class="btn-primary-sm">Mở Console Sổ Cái Chi Tiết ↗</a>
           </div>
           <div class="ledger-summary-box">
             <div class="ls-item">
@@ -291,6 +297,28 @@ type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'webhooks';
             </div>
             <p class="ls-desc">Hệ thống tự động thực hiện kiểm toán đối soát giữa tài khoản tổng và các khoản nợ/có của toàn bộ ví người dùng theo thời gian thực.</p>
           </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: VOUCHER MANAGEMENT -->
+      <div class="tab-pane" *ngIf="activeTab === 'vouchers'">
+        <div class="admin-card">
+          <div class="card-hdr">
+            <h3>🎁 Quản Lý Kho Voucher & Mã Giảm Giá</h3>
+            <a routerLink="/admin/vouchers" class="btn-primary-sm">Mở Trang Tạo Voucher Chi Tiết ↗</a>
+          </div>
+          <p class="ls-desc">Tạo mã giảm giá, khuyến mãi quà tặng cho toàn bộ người dùng ví PayGate PRO.</p>
+        </div>
+      </div>
+
+      <!-- TAB 6: WEBHOOK LOGS -->
+      <div class="tab-pane" *ngIf="activeTab === 'webhooks'">
+        <div class="admin-card">
+          <div class="card-hdr">
+            <h3>⚡ Nhật Ký Webhook & Trạng Thái Callbacks</h3>
+            <a routerLink="/admin/webhooks" class="btn-primary-sm">Xem Nhật Ký Webhook Chi Tiết ↗</a>
+          </div>
+          <p class="ls-desc">Theo dõi các cuộc gọi Callback HTTP ra ngoài hệ thống đối tác Merchant và cấu hình thời gian Retry tự động.</p>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/ledger.model';
 
@@ -10,11 +11,19 @@ import { LedgerEntry, LedgerVerificationResponse } from '../../../core/models/le
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     CurrencyPipe,
     DatePipe
   ],
   template: `
     <div class="console-page fade-in-up">
+      <!-- Back to Dashboard Nav Bar -->
+      <div style="margin-bottom: 16px;">
+        <a routerLink="/admin/dashboard" style="display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 12px; padding: 8px 16px; font-weight: 800; font-size: 0.88rem; color: #c20067; text-decoration: none; box-shadow: 0 4px 12px rgba(194,0,103,0.06); transition: all 0.2s;">
+          ← Quay về Bảng Quản Trị Admin Dashboard
+        </a>
+      </div>
+
       <!-- Page Header -->
       <div class="page-header flex-between">
         <div>
