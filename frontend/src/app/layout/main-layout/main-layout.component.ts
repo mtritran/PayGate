@@ -34,42 +34,7 @@ import { NotificationService } from '../../core/services/notification.service';
           </div>
         </div>
 
-        <nav class="header-nav">
-          <a class="header-nav-link" routerLink="/accounts/dashboard" routerLinkActive="active">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            <span>Dashboard</span>
-          </a>
-          <a class="header-nav-link" routerLink="/transactions/history" routerLinkActive="active">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-            <span>Transactions</span>
-          </a>
-          <a class="header-nav-link" routerLink="/vaults" routerLinkActive="active">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
-            <span>Vaults</span>
-          </a>
-          <a class="header-nav-link" routerLink="/merchant/register" routerLinkActive="active">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-            </svg>
-            <span>Merchant</span>
-          </a>
-          <a class="header-nav-link" routerLink="/admin/dashboard" routerLinkActive="active" *ngIf="isAdmin()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span>Admin</span>
-          </a>
-        </nav>
+
 
         <div class="header-right">
           <pg-avatar

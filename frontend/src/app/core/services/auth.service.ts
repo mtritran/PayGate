@@ -125,6 +125,11 @@ export class AuthService {
     return !!this.getToken();
   }
 
+  isAdmin(): boolean {
+    const role = this.getRole();
+    return role === 'ADMIN' || role === 'ROLE_ADMIN';
+  }
+
   clearTokens(): void {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');

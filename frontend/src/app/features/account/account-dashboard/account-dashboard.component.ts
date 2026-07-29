@@ -160,6 +160,86 @@ interface FeatureTile {
           </div>
         </section>
 
+        <!-- ===== CỤM ĐIỀU HƯỚNG TRUNG TÂM (CORE SYSTEM NAVIGATION HUB) ===== -->
+        <section class="sec nav-hub-sec">
+          <div class="sec-hdr">
+            <div>
+              <h2 class="sec-title">Phân Hệ Trung Tâm</h2>
+              <p class="sec-sub">Truy cập nhanh các phân hệ dịch vụ cốt lõi PayGate PRO</p>
+            </div>
+          </div>
+          <div class="nav-hub-grid">
+            <a class="nav-hub-card" routerLink="/accounts/dashboard" routerLinkActive="active-hub">
+              <div class="nav-hub-ico dashboard-gradient">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <div class="nav-hub-content">
+                <span class="nav-hub-title">Dashboard</span>
+                <span class="nav-hub-desc">Tổng quan tài khoản & số dư</span>
+              </div>
+              <div class="nav-hub-arrow">↗</div>
+            </a>
+
+            <a class="nav-hub-card" routerLink="/transactions/history" routerLinkActive="active-hub">
+              <div class="nav-hub-ico txn-gradient">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </div>
+              <div class="nav-hub-content">
+                <span class="nav-hub-title">Transactions</span>
+                <span class="nav-hub-desc">Lịch sử & chuyển tiền nhanh</span>
+              </div>
+              <div class="nav-hub-arrow">↗</div>
+            </a>
+
+            <a class="nav-hub-card" routerLink="/vaults" routerLinkActive="active-hub">
+              <div class="nav-hub-ico vault-gradient">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+              </div>
+              <div class="nav-hub-content">
+                <span class="nav-hub-title">Vaults</span>
+                <span class="nav-hub-desc">Két sắt tiết kiệm mục tiêu</span>
+              </div>
+              <div class="nav-hub-arrow">↗</div>
+            </a>
+
+            <a class="nav-hub-card" routerLink="/merchant/register" routerLinkActive="active-hub">
+              <div class="nav-hub-ico merchant-gradient">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+                </svg>
+              </div>
+              <div class="nav-hub-content">
+                <span class="nav-hub-title">Merchant Portal</span>
+                <span class="nav-hub-desc">Cổng kết nối API thanh toán</span>
+              </div>
+              <div class="nav-hub-arrow">↗</div>
+            </a>
+
+            <a class="nav-hub-card admin-special" routerLink="/admin/dashboard" routerLinkActive="active-hub" *ngIf="isAdmin()">
+              <div class="nav-hub-ico admin-gradient">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <div class="nav-hub-content">
+                <span class="nav-hub-title">Admin Control</span>
+                <span class="nav-hub-desc">Bảng điều khiển quản trị hệ thống</span>
+              </div>
+              <div class="nav-hub-arrow">↗</div>
+            </a>
+          </div>
+        </section>
+
         <!-- ===== TIỆN ÍCH (màu dịu) ===== -->
         <section class="sec">
           <div class="sec-hdr">
@@ -551,11 +631,46 @@ interface FeatureTile {
     .ql-info { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
     .ql-info strong { font-size:.92rem; font-weight:700; color:#0f172a; }
     .ql-info span { font-size:.8rem; color:#a6a6b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .ql-arrow { flex-shrink:0; color:#c20067; transition:all .25s ease; opacity:.5; }
+    /* ===== CORE SYSTEM NAVIGATION HUB ===== */
+    .nav-hub-sec { margin-bottom: 36px; }
+    .nav-hub-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .nav-hub-card {
+      display: flex; align-items: center; gap: 14px; padding: 18px 20px;
+      background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px;
+      text-decoration: none; color: #0f172a; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02); position: relative; overflow: hidden;
+    }
+    .nav-hub-card:hover {
+      transform: translateY(-4px); border-color: #f472b6;
+      box-shadow: 0 12px 30px -6px rgba(194, 0, 103, 0.12);
+    }
+    .nav-hub-card:hover .nav-hub-arrow { transform: translate(3px, -3px); color: #c20067; opacity: 1; }
+
+    .nav-hub-ico {
+      width: 48px; height: 48px; border-radius: 14px; display: flex;
+      align-items: center; justify-content: center; color: #ffffff; flex-shrink: 0;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+    .dashboard-gradient { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
+    .txn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+    .vault-gradient { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+    .merchant-gradient { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+    .admin-gradient { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+
+    .nav-hub-content { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .nav-hub-title { font-size: 0.95rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
+    .nav-hub-desc { font-size: 0.78rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-hub-arrow { font-size: 1.1rem; font-weight: 800; color: #94a3b8; opacity: 0.6; transition: all 0.2s ease; }
+
+    .nav-hub-card.admin-special { border-color: #ddd6fe; background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%); }
 
     /* ---- RWD ---- */
     @media(max-width:1200px) {
+      .nav-hub-grid { grid-template-columns: repeat(2, 1fr); }
       .f-grid, .s-grid { gap:16px; }
+    }
+    @media(max-width:768px) {
+      .nav-hub-grid { grid-template-columns: 1fr; }
     }
     @media(max-width:1024px) {
       .f-grid { grid-template-columns:repeat(4,1fr); gap:14px; }
@@ -633,6 +748,10 @@ export class AccountDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 
   getDisplayName(): string {
