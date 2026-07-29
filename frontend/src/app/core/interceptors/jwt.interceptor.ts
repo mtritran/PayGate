@@ -21,7 +21,8 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 || (error.status === 403 && !req.url.includes('/auth/'))) {
+      // Only handle 401 Unauthorized for token refresh/logout, NOT 403 Forbidden
+      if (error.status === 401) {
         // Avoid infinite refresh loops for auth endpoints
         if (req.url.includes('/auth/login') || req.url.includes('/auth/register') || req.url.includes('/auth/refresh') || req.url.includes('/auth/logout')) {
           authService.clearTokens();

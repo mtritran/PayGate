@@ -782,7 +782,7 @@ export class AccountDashboardComponent implements OnInit {
       next: (res) => {
         if (res.success) this.rewardPoints = res.data;
       },
-      error: (err) => console.error('Failed to fetch reward points on dashboard:', err)
+      error: () => {} // Silent catch for Admin users without points
     });
 
     this.accountService.getAccountMe().subscribe({
