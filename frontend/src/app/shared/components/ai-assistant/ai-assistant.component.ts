@@ -83,7 +83,7 @@ export interface ChatMessage {
               PayGate AI
             </div>
 
-            <div class="bubble-content" [innerHTML]="formatMessageText(msg.text)"></div>
+            <div class="bubble-content" *ngIf="msg.text && msg.text.trim()" [innerHTML]="formatMessageText(msg.text)"></div>
 
             <button
               *ngIf="msg.actionButton"
@@ -569,7 +569,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
 
   formatMessageText(text: string): SafeHtml {
     if (!text || text === 'null' || text === 'undefined' || text.trim() === '') {
-      return '';
+      return this.sanitizer.bypassSecurityTrustHtml('Trợ lý AI đang cập nhật thông tin tài khoản của bạn. Vui lòng bấm vào phím chức năng bên dưới!');
     }
     const formatted = text
       // Strip markdown tables entirely (lines starting with | )

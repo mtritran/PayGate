@@ -67,6 +67,9 @@ public class AiServiceImpl implements AiService {
             log.warn("Failed to build financial context for user={}: {}", username, e.getMessage());
         }
         String replyText = callOpenRouterApi(prompt, financialContext);
+        if (replyText == null || replyText.trim().isEmpty()) {
+            replyText = buildSmartFallbackReply(prompt, financialContext);
+        }
 
         Long suggestedAmount = extractAmount(prompt);
         String suggestedRecipient = extractRecipient(prompt);
