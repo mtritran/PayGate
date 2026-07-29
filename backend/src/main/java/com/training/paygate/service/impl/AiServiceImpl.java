@@ -67,7 +67,7 @@ public class AiServiceImpl implements AiService {
             log.warn("Failed to build financial context for user={}: {}", username, e.getMessage());
         }
         String replyText = callOpenRouterApi(prompt, financialContext);
-        if (replyText == null || replyText.trim().isEmpty()) {
+        if (replyText == null || replyText.trim().isEmpty() || "null".equalsIgnoreCase(replyText.trim()) || "undefined".equalsIgnoreCase(replyText.trim())) {
             replyText = buildSmartFallbackReply(prompt, financialContext);
         }
 
@@ -442,7 +442,10 @@ public class AiServiceImpl implements AiService {
             JsonNode root = objectMapper.readTree(response.getBody());
             JsonNode choices = root.path("choices");
             if (choices.isArray() && choices.size() > 0) {
-                return choices.get(0).path("message").path("content").asText();
+                String content = choices.get(0).path("message").path("content").asText();
+                if (content != null && !content.trim().isEmpty() && !"null".equalsIgnoreCase(content.trim()) && !"undefined".equalsIgnoreCase(content.trim())) {
+                    return content;
+                }
             }
         }
         return null;
