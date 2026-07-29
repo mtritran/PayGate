@@ -15,8 +15,10 @@ import com.training.paygate.enums.LoanScheduleStatus;
 import com.training.paygate.enums.LoanStatus;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.RepayType;
+import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
+import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LoanRepository;
 import com.training.paygate.repository.LoanScheduleRepository;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +51,7 @@ public class LoanServiceImpl implements LoanService {
     private final com.training.paygate.repository.UserRepository userRepository;
     private final TransactionService transactionService;
     private final com.training.paygate.service.EmailService emailService;
+    private final AmqpTemplate amqpTemplate;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
 
@@ -342,6 +346,27 @@ public class LoanServiceImpl implements LoanService {
 
         TransactionResponse txResponse = transactionService.processPayment(repayPaymentReq, borrower.getUsername());
         log.info("[LOAN] Repayment transaction completed: ref {}", txResponse.transactionRef());
+
+        // Publish event để tích điểm cho LOAN_REPAYMENT
+        Account userAccount = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER).orElse(null);
+        PaymentCompletedEvent loanRepayEvent = new PaymentCompletedEvent(
+                txResponse.transactionRef(),
+                null,
+                null,
+                amountToPay,
+                "COMPLETED",
+                borrower.getEmail(),
+                borrower.getUsername(),
+                userAccount != null ? userAccount.getAccountNumber() : null,
+                "Trả nợ khoản vay " + loan.getLoanRef(),
+                TransactionType.LOAN_REPAYMENT,
+                userId);
+        try {
+            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", loanRepayEvent);
+            log.info("[LOAN REPAY] Published PaymentCompletedEvent for txRef {}", txResponse.transactionRef());
+        } catch (Exception e) {
+            log.warn("Could not publish PaymentCompletedEvent for loan repayment: {}", e.getMessage());
+        }
 
         // Update schedule status
         if (request.repayType() == RepayType.NEXT_PERIOD && scheduleToPay != null) {

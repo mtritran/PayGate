@@ -23,6 +23,7 @@ import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.InsufficientBalanceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.VaultMapper;
+import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.TransactionRepository;
@@ -31,6 +32,8 @@ import com.training.paygate.repository.VaultRepository;
 import com.training.paygate.service.AccountService;
 import com.training.paygate.service.VaultService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +48,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VaultServiceImpl implements VaultService {
 
     private final VaultRepository vaultRepository;
@@ -55,6 +59,7 @@ public class VaultServiceImpl implements VaultService {
     private final BalanceCacheService balanceCacheService;
     private final AccountService accountService;
     private final VaultMapper vaultMapper;
+    private final AmqpTemplate amqpTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -139,6 +144,26 @@ public class VaultServiceImpl implements VaultService {
             vault.setStatus(VaultStatus.COMPLETED);
             vault.setCompletedAt(LocalDateTime.now());
             vaultRepository.save(vault);
+        }
+
+        // Publish event để tích điểm cho VAULT_DEPOSIT
+        PaymentCompletedEvent vaultDepositEvent = new PaymentCompletedEvent(
+                tx.getTransactionRef(),
+                null,
+                null,
+                request.amount(),
+                tx.getStatus().name(),
+                user.getEmail(),
+                user.getUsername(),
+                locked.vault.getAccountNumber(),
+                tx.getDescription(),
+                tx.getType(),
+                user.getId());
+        try {
+            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", vaultDepositEvent);
+            log.info("[VAULT DEPOSIT] Published PaymentCompletedEvent for txRef {}", tx.getTransactionRef());
+        } catch (Exception e) {
+            log.warn("Could not publish PaymentCompletedEvent for vault deposit: {}", e.getMessage());
         }
 
         return new VaultTransactionResponse(tx.getTransactionRef(), request.amount(), locked.vault.getBalance(), vault.getStatus().name());

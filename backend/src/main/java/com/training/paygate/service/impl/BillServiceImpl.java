@@ -29,6 +29,7 @@ import com.training.paygate.exception.BillNotFoundException;
 import com.training.paygate.exception.InsufficientBalanceException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.exception.SavedBillLimitException;
+import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.BillProviderRepository;
 import com.training.paygate.repository.BillRepository;
@@ -42,6 +43,7 @@ import com.training.paygate.integration.provider.ProviderBillDto;
 import com.training.paygate.service.BillService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,6 +71,7 @@ public class BillServiceImpl implements BillService {
     private final LedgerEntryRepository ledgerEntryRepository;
     private final BalanceCacheService balanceCacheService;
     private final BillProviderClient billProviderClient;
+    private final AmqpTemplate amqpTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -236,6 +239,26 @@ public class BillServiceImpl implements BillService {
         }
 
         log.info("Bill #{} paid by user {} via txRef {}", bill.getId(), currentUsername, transaction.getTransactionRef());
+
+        // Publish event để tích điểm
+        PaymentCompletedEvent event = new PaymentCompletedEvent(
+                transaction.getTransactionRef(),
+                merchant.getId(),
+                merchant.getWebhookUrl(),
+                transaction.getAmount(),
+                transaction.getStatus().name(),
+                user.getEmail(),
+                user.getUsername(),
+                lockedDest.getAccountNumber(),
+                transaction.getDescription(),
+                transaction.getType(),
+                user.getId());
+        try {
+            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
+            log.info("[BILL PAYMENT] Published PaymentCompletedEvent for txRef {}", transaction.getTransactionRef());
+        } catch (Exception e) {
+            log.warn("Could not publish PaymentCompletedEvent for bill payment: {}", e.getMessage());
+        }
 
         return new BillPayResponse(
                 bill.getId(),

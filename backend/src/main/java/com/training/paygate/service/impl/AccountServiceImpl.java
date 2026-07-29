@@ -309,7 +309,9 @@ public class AccountServiceImpl implements AccountService {
                 new ResourceNotFoundException("PayGate account not found for: " + query));
 
         if (account.getOwnerType() == OwnerType.VAULT) {
-            throw new ResourceNotFoundException("PayGate account not found for: " + query);
+            throw new BadRequestException(
+                "Tài khoản '" + query + "' là một Savings Vault (" + account.getAccountNumber()
+                + "). Vui lòng dùng tính năng Nạp Vault (Deposit) để gửi tiền vào quỹ tiết kiệm.");
         }
 
         Long merchantId = null;

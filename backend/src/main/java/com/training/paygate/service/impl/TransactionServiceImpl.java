@@ -329,11 +329,20 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
 
-        User user = userRepository.findByUsername(currentUsername)
+        User adminUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
-        if (user.getRole() != Role.ADMIN) {
+        if (adminUser.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Only an ADMIN can request a refund");
+        }
+
+        // Determine the original user who paid (owner of source account in original tx)
+        User originalPayer = null;
+        if (originalTx.getSourceAccountId() != null) {
+            Account srcAccount = accountRepository.findById(originalTx.getSourceAccountId()).orElse(null);
+            if (srcAccount != null && srcAccount.getOwnerType() == OwnerType.USER) {
+                originalPayer = userRepository.findById(srcAccount.getOwnerId()).orElse(null);
+            }
         }
 
         // Lock accounts in ascending ID order to prevent deadlock
@@ -433,7 +442,13 @@ public class TransactionServiceImpl implements TransactionService {
                 refundTx.getMerchantId(),
                 merchantWebhookUrl,
                 refundTx.getAmount(),
-                refundTx.getStatus().name());
+                refundTx.getStatus().name(),
+                originalPayer != null ? originalPayer.getEmail() : null,
+                originalPayer != null ? originalPayer.getUsername() : currentUsername,
+                lockedUser.getAccountNumber(),
+                refundTx.getDescription(),
+                refundTx.getType(),
+                originalPayer != null ? originalPayer.getId() : null);
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
         } catch (Exception e) {
