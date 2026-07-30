@@ -21,7 +21,7 @@ export class PaygateQrService {
     const cleanAcc = (accountNumber || '').trim();
     const origin = (typeof window !== 'undefined' && window.location && window.location.origin)
       ? window.location.origin
-      : 'http://localhost:4200';
+      : 'http://localhost:4201';
     
     let url = `${origin}/transactions/transfer?recipient=${encodeURIComponent(cleanAcc)}`;
     if (amount > 0) {

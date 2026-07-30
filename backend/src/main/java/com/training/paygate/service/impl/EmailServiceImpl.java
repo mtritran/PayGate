@@ -1,6 +1,7 @@
 package com.training.paygate.service.impl;
 
 import com.training.paygate.service.EmailService;
+import com.training.paygate.exception.BadRequestException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -361,7 +362,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
     public void sendOtpEmail(
             String recipientEmail,
             String recipientName,
@@ -438,10 +438,14 @@ public class EmailServiceImpl implements EmailService {
             timestamp
         );
 
-        sendMimeEmail(recipientEmail, subject, htmlContent);
+        sendMimeEmail(recipientEmail, subject, htmlContent, true);
     }
 
     private void sendMimeEmail(String to, String subject, String htmlContent) {
+        sendMimeEmail(to, subject, htmlContent, false);
+    }
+
+    private void sendMimeEmail(String to, String subject, String htmlContent, boolean failFast) {
         log.info("[EMAIL NOTIFICATION] Sending email to: '{}' | Subject: '{}'", to, subject);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -454,7 +458,10 @@ public class EmailServiceImpl implements EmailService {
             mailSender.send(message);
             log.info("[EMAIL NOTIFICATION SUCCESS] Email successfully dispatched to '{}'", to);
         } catch (Exception e) {
-            log.warn("[EMAIL NOTIFICATION NOTICE] Could not deliver email via SMTP server ({}). Reason: {}", to, e.getMessage());
+            log.warn("[EMAIL NOTIFICATION NOTICE] Could not deliver email via SMTP server ({}). Reason: {}", to, e.getMessage(), e);
+            if (failFast) {
+                throw new BadRequestException("Could not send OTP email. Check SMTP configuration and recipient email.");
+            }
         }
     }
 

@@ -27,7 +27,7 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
       <header class="top-header">
         <div class="header-left clickable-brand" routerLink="/accounts/dashboard">
           <div class="header-logo">
-            <img src="assets/PayGate_Logo.jpg" alt="PayGate" class="header-logo-img">
+            <img src="assets/PayGate_Logo.png" alt="PayGate" class="header-logo-img">
           </div>
           <div class="header-brand-text">
             <span class="header-brand-title">PayGate <span class="header-brand-badge">PRO</span></span>
@@ -154,13 +154,12 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
     .header-logo {
       width: 38px;
       height: 38px;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(194,0,103,0.18);
-      border: 1px solid rgba(244,114,182,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
-    .header-logo-img { width: 100%; height: 100%; object-fit: cover; }
+    .header-logo-img { width: 100%; height: 100%; object-fit: contain; }
 
     .header-brand-text { display: flex; flex-direction: column; }
     .header-brand-title {

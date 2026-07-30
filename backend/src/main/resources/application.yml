@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/${DB_NAME:training_db}
     username: ${DB_USER:postgres}
-    password: ${DB_PASS:postgres}
+    password: ${DB_PASS:11111111}
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -43,8 +43,8 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:hk864071@gmail.com}
-    password: ${MAIL_PASSWORD:yamo exfu dpok wyva}
+    username: ${MAIL_USERNAME:nhybui2312@gmail.com}
+    password: ${MAIL_PASSWORD:tstl vrtu nykx vwld}
     properties:
       mail:
         smtp:
@@ -89,4 +89,3 @@ paygate:
     base-url: ${PROVIDER_API_BASE_URL:http://localhost:8090}
     connect-timeout-ms: 3000
     read-timeout-ms: 5000
-
