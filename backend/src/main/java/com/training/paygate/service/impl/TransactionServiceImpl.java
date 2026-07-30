@@ -75,11 +75,14 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public TransactionResponse processPayment(PaymentRequest request, String currentUsername) {
-        // Realtime Fraud & Risk Evaluation
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        Long userId = currentUser != null ? currentUser.getId() : null;
+
+        // Realtime Multi-Factor Fraud & Risk Evaluation
         com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult =
-                fraudDetectionService.evaluatePayment(currentUsername, request);
-        if (fraudResult.isSuspicious()) {
-            throw new BadRequestException("CẢNH BÁO AN NINH: " + fraudResult.getReason() + " " + fraudResult.getRecommendation());
+                fraudDetectionService.evaluatePayment(currentUsername, userId, request, "127.0.0.1");
+        if (fraudResult.isSuspicious() && fraudResult.getActionTaken() == com.training.paygate.service.FraudDetectionService.FraudAction.BLOCK_TEMPORARY) {
+            throw new BadRequestException("CẢNH BÁO AN NINH GIAO DỊCH (" + fraudResult.getRiskScore() + "/100): " + fraudResult.getReason());
         }
 
         // 1. Check idempotency key in Redis / DB

@@ -56,12 +56,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Login with username and password", description = "Authenticates user credentials and returns JWT access & refresh tokens.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid username or password")
-    })
-    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+    @Operation(summary = "Authenticate user and issue JWT token")
+    @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "login")
+    public ApiResponse<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
         AuthResponse auth = authService.login(request);
         setRefreshTokenCookie(response, auth.refreshToken(), REFRESH_TOKEN_DURATION_SECONDS);
         return ApiResponse.success("Login successful", auth);
