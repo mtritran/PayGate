@@ -556,10 +556,16 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
       const formattedAmt = amount
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
         : '';
+      const cleanRecipient = (recipient && recipient.trim().length > 1 && !['tôi', 'toi', 'mình', 'minh', 't'].includes(recipient.toLowerCase())) 
+        ? recipient.trim() 
+        : undefined;
       return {
         text: formattedAmt ? `Chuyển Ngay ${formattedAmt}` : 'Chuyển Tiền 🚀',
         route: '/transactions/pay',
-        queryParams: { amount, recipient }
+        queryParams: { 
+          amount: amount || undefined, 
+          recipient: cleanRecipient 
+        }
       };
     }
     return undefined;

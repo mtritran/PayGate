@@ -511,11 +511,21 @@ public class AiServiceImpl implements AiService {
     }
 
     private String extractRecipient(String prompt) {
-        if (prompt == null) return null;
-        Pattern pattern = Pattern.compile("(cho|den|to|account)\\s+([a-zA-Z0-9_-]+)", Pattern.CASE_INSENSITIVE);
+        if (prompt == null || prompt.trim().isEmpty()) return null;
+
+        // Matches: cho/đến/tới/to/account <RecipientNameOrAccount>
+        Pattern pattern = Pattern.compile("(?i)(?:cho|đến|den|tới|toi|to|account)\\s+([\\p{L}0-9._-]+)", Pattern.UNICODE_CHARACTER_CLASS);
         Matcher matcher = pattern.matcher(prompt);
         if (matcher.find()) {
-            return matcher.group(2);
+            String match = matcher.group(1).trim();
+            String lower = match.toLowerCase();
+            // Filter out common pronouns and stop words
+            if (lower.equals("tôi") || lower.equals("toi") || lower.equals("mình") || lower.equals("minh")
+                    || lower.equals("ta") || lower.equals("người") || lower.equals("nguoi")
+                    || lower.equals("ai") || lower.equals("t") || match.length() <= 1) {
+                return null;
+            }
+            return match;
         }
         return null;
     }
