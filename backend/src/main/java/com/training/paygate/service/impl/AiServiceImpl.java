@@ -333,8 +333,10 @@ public class AiServiceImpl implements AiService {
 
         List<String> candidateModels = List.of(
                 "google/gemini-2.0-flash-lite-preview-02-05:free",
-                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemini-2.0-flash-exp:free",
+                "deepseek/deepseek-r1-distill-llama-70b:free",
                 "qwen/qwen-2.5-72b-instruct:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
                 "openrouter/auto"
         );
 
@@ -367,15 +369,15 @@ public class AiServiceImpl implements AiService {
         }
 
         // 1. Balance queries
-        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance")) {
+        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance") || lower.contains("bao nhiêu")) {
             if (!balanceStr.isEmpty()) {
-                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là **" + balanceStr + "**.";
+                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là **" + balanceStr + "**. Trợ lý AI sẵn sàng hỗ trợ các giao dịch tiếp theo!";
             }
             return "Số dư ví PayGate của bạn đang được cập nhật realtime trên hệ thống.";
         }
         
         // 2. Savings Vault queries
-        if (lower.contains("hũ") || lower.contains("tiết kiệm") || lower.contains("vault")) {
+        if (lower.contains("hũ") || lower.contains("tích lũy") || lower.contains("vault")) {
             if (context != null && context.contains("SAVINGS VAULTS") && !context.contains("No active savings vaults")) {
                 return "Hệ thống ghi nhận bạn đang có các hũ tiết kiệm khả dụng. Bạn có thể bấm nút bên dưới để truy cập danh sách hũ chi tiết.";
             }
@@ -453,16 +455,25 @@ public class AiServiceImpl implements AiService {
 
     private Long extractAmount(String prompt) {
         if (prompt == null) return null;
-        Pattern pattern = Pattern.compile("(\\d+)(\\s*k|\\s*000|\\s*tr)?", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(prompt);
+        String cleanPrompt = prompt.replaceAll("[.,]", "").trim();
+        Pattern pattern = Pattern.compile("(\\d+)(\\s*k|\\s*000|\\s*nghìn|\\s*ngan|\\s*ngàn|\\s*tr|\\s*triệu|\\s*trieu|\\s*đ|\\s*đồng|\\s*dong)?", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(cleanPrompt);
         if (matcher.find()) {
             try {
                 long num = Long.parseLong(matcher.group(1));
                 String unit = matcher.group(2);
                 if (unit != null) {
                     unit = unit.trim().toLowerCase();
-                    if (unit.equals("k") || unit.equals("000")) num *= 1000;
-                    else if (unit.equals("tr")) num *= 1_000_000;
+                    if (unit.equals("k") || unit.equals("000") || unit.equals("nghìn") || unit.equals("ngan") || unit.equals("ngàn")) {
+                        num *= 1000;
+                    } else if (unit.equals("tr") || unit.equals("triệu") || unit.equals("trieu")) {
+                        num *= 1_000_000;
+                    }
+                } else {
+                    // Smart convention: in Vietnamese e-wallets, amounts < 1000 (e.g. 500, 200, 100, 50) without explicit 'dong' represent thousands (k)
+                    if (num > 0 && num < 1000 && !cleanPrompt.toLowerCase().contains("đồng") && !cleanPrompt.toLowerCase().contains("dong") && !cleanPrompt.toLowerCase().contains("đ")) {
+                        num *= 1000;
+                    }
                 }
                 return num;
             } catch (NumberFormatException ignored) {}
