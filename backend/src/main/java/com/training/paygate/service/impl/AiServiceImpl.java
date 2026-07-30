@@ -422,7 +422,7 @@ public class AiServiceImpl implements AiService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey.trim());
-        headers.set("HTTP-Referer", "http://localhost:4200");
+        headers.set("HTTP-Referer", "http://localhost:4201");
         headers.set("X-Title", "PayGate AI Assistant");
 
         Map<String, Object> body = Map.of(
