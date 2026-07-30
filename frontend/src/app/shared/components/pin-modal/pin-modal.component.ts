@@ -191,6 +191,8 @@ export class PinModalComponent implements OnChanges {
   @Input() title = 'Xác thực OTP';
   @Input() pinLength = 6;
   @Input() userEmail: string | null = null;
+  @Input() action = 'Xác thực giao dịch';
+  @Input() bypassVerification = false;
   @Output() confirmed = new EventEmitter<string>();
   @Output() pinComplete = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
@@ -219,7 +221,7 @@ export class PinModalComponent implements OnChanges {
     this.otpMessage.set(null);
     this.errorMessage.set(null);
 
-    this.otpService.sendOtp(this.userEmail || undefined).subscribe({
+    this.otpService.sendOtp(this.action).subscribe({
       next: (res: any) => {
         this.isSendingOtp.set(false);
         if (res.success) {
@@ -274,12 +276,17 @@ export class PinModalComponent implements OnChanges {
 
     if (next.length === this.pinLength) {
       const otpCode = next.join('');
-      this.verifyOtp(otpCode);
+      if (this.bypassVerification) {
+        this.confirmed.emit(otpCode);
+        this.pinComplete.emit(otpCode);
+      } else {
+        this.verifyOtp(otpCode);
+      }
     }
   }
 
   verifyOtp(code: string): void {
-    this.otpService.verifyOtp(code).subscribe({
+    this.otpService.verifyOtp(code, this.action).subscribe({
       next: (res: any) => {
         if (res.success) {
           this.confirmed.emit(code);
