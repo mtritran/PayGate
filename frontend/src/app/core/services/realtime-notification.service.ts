@@ -41,7 +41,7 @@ export class RealtimeNotificationService {
       } else {
         this.disconnect();
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   loadInitialData(): void {
