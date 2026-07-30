@@ -24,6 +24,19 @@ app.get('/api/orders', (req, res) => {
     res.json(orders);
 });
 
+// Delete all orders
+app.delete('/api/orders', (req, res) => {
+    orders = [];
+    res.json({ success: true, message: 'All orders cleared' });
+});
+
+// Delete single order
+app.delete('/api/orders/:orderId', (req, res) => {
+    const { orderId } = req.params;
+    orders = orders.filter(o => o.orderId !== orderId);
+    res.json({ success: true, message: 'Order deleted' });
+});
+
 // 2. Buy product & Create Checkout Session with PayGate
 app.post('/api/checkout', async (req, res) => {
     const { productName, price } = req.body;

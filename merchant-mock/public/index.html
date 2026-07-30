@@ -298,6 +298,25 @@
             font-style: italic;
         }
 
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 6px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
         /* Custom Alert */
         .alert {
             background: rgba(16, 185, 129, 0.15);
@@ -370,8 +389,11 @@
     <section class="orders-section">
         <div class="orders-header">
             <h2 class="orders-title">📋 Đơn Hàng Gần Đây</h2>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">
-                🔄 Tự động đồng bộ qua Webhook
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="btn-clear-all" onclick="clearAllOrders()" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">🧹 Xóa Tất Cả</button>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    🔄 Tự động đồng bộ qua Webhook
+                </div>
             </div>
         </div>
 
@@ -385,6 +407,7 @@
                         <th>Mã PayGate Txn</th>
                         <th>Thời Gian Mua</th>
                         <th>Trạng Thái</th>
+                        <th>Hành Động</th>
                     </tr>
                 </thead>
                 <tbody id="orders-body">
@@ -473,6 +496,9 @@
                         <td><span class="txn-ref-label">${txnRef}</span></td>
                         <td>${formattedDate}</td>
                         <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn-delete" onclick="deleteOrder('${order.orderId}')" title="Xóa đơn hàng">🗑️</button>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -501,6 +527,38 @@
         } catch (error) {
             alert('Lỗi kết nối tới mock merchant server.');
             console.error(error);
+        }
+    }
+
+    // 3. Delete single order
+    async function deleteOrder(orderId) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${orderId}?`)) return;
+        try {
+            const response = await fetch(`http://localhost:8082/api/orders/${orderId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            if (data.success) {
+                loadOrders();
+            }
+        } catch (error) {
+            console.error('Error deleting order:', error);
+        }
+    }
+
+    // 4. Clear all orders
+    async function clearAllOrders() {
+        if (!confirm('Bạn có chắc chắn muốn xóa TẤT CẢ đơn hàng?')) return;
+        try {
+            const response = await fetch('http://localhost:8082/api/orders', {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            if (data.success) {
+                loadOrders();
+            }
+        } catch (error) {
+            console.error('Error clearing orders:', error);
         }
     }
 </script>
