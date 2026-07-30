@@ -330,11 +330,14 @@ public class AiServiceImpl implements AiService {
         systemMsg.append("2. When users ask about BALANCE, TRANSACTIONS, SAVINGS VAULTS, LOANS, BILLS, LINKED BANKS, or VOUCHERS, you MUST read the exact numbers from the REAL USER & COMPREHENSIVE SYSTEM DATA above to answer directly. Never say 'I have no data' or 'open the app'.\n");
         systemMsg.append("3. Do NOT use emojis, do NOT generate raw markdown code blocks or complex tables. Answer in clean, elegant business text.\n");
         systemMsg.append("4. Guide users smoothly to the correct feature (Vaults, Loans, Bills, TopUp, Transfers, Vouchers, Admin) based on their question.\n");
+        systemMsg.append("5. STRICT OFF-TOPIC GUARDRAIL: If the user asks about weather, entertainment, jokes, stories, poetry, philosophy, coding, general trivia, or anything non-financial, IMMEDIATELY REFUSE with: 'Tôi là Trợ lý tài chính PayGate AI. Tôi chỉ hỗ trợ các câu hỏi liên quan đến tài khoản, số dư, chuyển tiền, hũ tiết kiệm, khoản vay và dịch vụ PayGate của bạn.' Do not answer off-topic questions under any circumstances.\n");
 
         List<String> candidateModels = List.of(
                 "google/gemini-2.0-flash-lite-preview-02-05:free",
-                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemini-2.0-flash-exp:free",
+                "deepseek/deepseek-r1-distill-llama-70b:free",
                 "qwen/qwen-2.5-72b-instruct:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
                 "openrouter/auto"
         );
 
@@ -366,16 +369,21 @@ public class AiServiceImpl implements AiService {
             }
         }
 
+        // Strict Off-Topic Guardrail Check
+        if (lower.matches(".*(thời tiết|thoi tiet|làm thơ|lam tho|truyện|truyen|kể chuyện|ke truyen|tình yêu|tinh yeu|bói|choi game|thế giới|the gioi|vũ trụ|vu tru|bóng đá|bong da|thời sự|thoi su|ca nhạc|ca nhac|hát|nấu ăn|nau an|bài hát|phim).*")) {
+            return "Tôi là Trợ lý tài chính PayGate AI. Tôi chỉ hỗ trợ các câu hỏi liên quan đến tài khoản, số dư, chuyển tiền, hũ tiết kiệm, khoản vay và dịch vụ PayGate của bạn.";
+        }
+
         // 1. Balance queries
-        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance")) {
+        if (lower.contains("dư") || lower.contains("tiền") || lower.contains("tài khoản") || lower.contains("balance") || lower.contains("bao nhiêu")) {
             if (!balanceStr.isEmpty()) {
-                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là **" + balanceStr + "**.";
+                return "Số dư khả dụng hiện tại trong ví PayGate của bạn là **" + balanceStr + "**. Trợ lý AI sẵn sàng hỗ trợ các giao dịch tiếp theo!";
             }
             return "Số dư ví PayGate của bạn đang được cập nhật realtime trên hệ thống.";
         }
         
         // 2. Savings Vault queries
-        if (lower.contains("hũ") || lower.contains("tiết kiệm") || lower.contains("vault")) {
+        if (lower.contains("hũ") || lower.contains("tích lũy") || lower.contains("vault")) {
             if (context != null && context.contains("SAVINGS VAULTS") && !context.contains("No active savings vaults")) {
                 return "Hệ thống ghi nhận bạn đang có các hũ tiết kiệm khả dụng. Bạn có thể bấm nút bên dưới để truy cập danh sách hũ chi tiết.";
             }
@@ -452,30 +460,72 @@ public class AiServiceImpl implements AiService {
     }
 
     private Long extractAmount(String prompt) {
-        if (prompt == null) return null;
-        Pattern pattern = Pattern.compile("(\\d+)(\\s*k|\\s*000|\\s*tr)?", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(prompt);
-        if (matcher.find()) {
+        if (prompt == null || prompt.trim().isEmpty()) return null;
+
+        // 1. Check for million format (e.g. 3tr, 3 triệu, 3.5tr, 3,5 triệu, 3.000.000)
+        Pattern millionPattern = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*(tr|triệu|trieu)", Pattern.CASE_INSENSITIVE);
+        Matcher millionMatcher = millionPattern.matcher(prompt);
+        if (millionMatcher.find()) {
             try {
-                long num = Long.parseLong(matcher.group(1));
-                String unit = matcher.group(2);
-                if (unit != null) {
-                    unit = unit.trim().toLowerCase();
-                    if (unit.equals("k") || unit.equals("000")) num *= 1000;
-                    else if (unit.equals("tr")) num *= 1_000_000;
-                }
-                return num;
+                String valStr = millionMatcher.group(1).replace(",", ".");
+                double val = Double.parseDouble(valStr);
+                return Math.round(val * 1_000_000);
             } catch (NumberFormatException ignored) {}
         }
+
+        // 2. Check for thousand format (e.g. 500k, 3000k, 500 nghìn, 500 ngàn)
+        Pattern thousandPattern = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*(k|nghìn|ngàn|ngan)", Pattern.CASE_INSENSITIVE);
+        Matcher thousandMatcher = thousandPattern.matcher(prompt);
+        if (thousandMatcher.find()) {
+            try {
+                String valStr = thousandMatcher.group(1).replace(",", ".");
+                double val = Double.parseDouble(valStr);
+                return Math.round(val * 1_000);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // 3. Check for standalone explicit full number (e.g. 3.000.000 or 3,000,000 or 3000000)
+        String digitsOnlyPrompt = prompt.replaceAll("[^0-9]", "");
+        if (digitsOnlyPrompt.length() >= 4) {
+            try {
+                long fullNum = Long.parseLong(digitsOnlyPrompt);
+                if (fullNum >= 1000) {
+                    return fullNum;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // 4. Fallback for standalone small numbers < 1000 without unit (e.g. "chuyển 500 đi", "chuyển 300")
+        Pattern simpleNumPattern = Pattern.compile("\\b(\\d{1,3})\\b");
+        Matcher simpleNumMatcher = simpleNumPattern.matcher(prompt);
+        if (simpleNumMatcher.find()) {
+            try {
+                long num = Long.parseLong(simpleNumMatcher.group(1));
+                if (num > 0 && num < 1000) {
+                    return num * 1000;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         return null;
     }
 
     private String extractRecipient(String prompt) {
-        if (prompt == null) return null;
-        Pattern pattern = Pattern.compile("(cho|den|to|account)\\s+([a-zA-Z0-9_-]+)", Pattern.CASE_INSENSITIVE);
+        if (prompt == null || prompt.trim().isEmpty()) return null;
+
+        // Matches: cho/đến/tới/to/account <RecipientNameOrAccount>
+        Pattern pattern = Pattern.compile("(?i)(?:cho|đến|den|tới|toi|to|account)\\s+([\\p{L}0-9._-]+)", Pattern.UNICODE_CHARACTER_CLASS);
         Matcher matcher = pattern.matcher(prompt);
         if (matcher.find()) {
-            return matcher.group(2);
+            String match = matcher.group(1).trim();
+            String lower = match.toLowerCase();
+            // Filter out common pronouns and stop words
+            if (lower.equals("tôi") || lower.equals("toi") || lower.equals("mình") || lower.equals("minh")
+                    || lower.equals("ta") || lower.equals("người") || lower.equals("nguoi")
+                    || lower.equals("ai") || lower.equals("t") || match.length() <= 1) {
+                return null;
+            }
+            return match;
         }
         return null;
     }
