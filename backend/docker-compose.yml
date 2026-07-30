@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-training_db}
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-11111111}
     ports:
       - "5432:5432"
     volumes:
