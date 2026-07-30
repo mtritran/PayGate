@@ -97,13 +97,6 @@ interface FeatureTile {
                 <span class="pts-num">{{ rewardPoints?.totalPoints || 0 }}</span>
                 <span class="pts-lbl">điểm</span>
               </div>
-              <button class="notif-btn">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
-                </svg>
-                <span class="notif-dot"></span>
-              </button>
             </div>
           </div>
 

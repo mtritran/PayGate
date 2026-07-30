@@ -23,7 +23,7 @@ import { InputComponent } from '../../../shared/components';
         <div class="auth-form-side">
           <div class="brand-header">
             <div class="logo-box">
-              <img src="assets/PayGate_Logo.jpg" alt="PayGate" class="logo-img">
+              <img src="assets/PayGate_Logo.png" alt="PayGate" class="logo-img">
             </div>
             <span class="brand-title">PayGate <span class="brand-tag">PRO</span></span>
           </div>
@@ -213,8 +213,8 @@ import { InputComponent } from '../../../shared/components';
     }
 
     .brand-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-    .logo-box { width: 44px; height: 44px; border-radius: 14px; overflow: hidden; border: 1.5px solid #f48fb1; box-shadow: 0 4px 14px rgba(194,0,103,0.2); }
-    .logo-img { width: 100%; height: 100%; object-fit: cover; }
+    .logo-box { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+    .logo-img { width: 100%; height: 100%; object-fit: contain; }
     .brand-title { font-size: 1.55rem; font-weight: 900; color: #0d2b5c; display: flex; align-items: center; gap: 8px; }
     .brand-tag { font-size: 0.72rem; font-weight: 900; background: linear-gradient(135deg, #c20067, #0072ce); color: #fff; padding: 4px 10px; border-radius: 8px; }
 
