@@ -178,8 +178,18 @@ public class TransactionServiceImpl implements TransactionService {
             log.warn("Auto save beneficiary failed: {}", be.getMessage());
         }
 
-        // 9. Dispatch settlement asynchronously
-        asyncSettlementService.settlePaymentAsync(transaction.getId());
+        // 9. Dispatch settlement asynchronously after transaction commits
+        final Long txId = transaction.getId();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    asyncSettlementService.settlePaymentAsync(txId);
+                }
+            });
+        } else {
+            asyncSettlementService.settlePaymentAsync(txId);
+        }
 
         return mapToResponse(transaction);
     }
