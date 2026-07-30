@@ -74,7 +74,7 @@ import { VaultResponse, VaultService } from '../vault.service';
               <ellipse cx="205" cy="67" rx="15" ry="25" fill="url(#pigDeepPink)"/>
             </g>
 
-            <!-- Back Legs (Tạo độ sâu 3D phía sau) -->
+            <!-- Back Legs (Create độ sâu 3D phía sau) -->
             <rect x="110" y="210" width="38" height="50" rx="19" fill="#be123c"/>
             <rect x="220" y="210" width="38" height="50" rx="19" fill="#be123c"/>
 

@@ -18,11 +18,11 @@ export class OtpService {
 
   constructor(private http: HttpClient) {}
 
-  sendOtp(action: string = 'Xác thực giao dịch'): Observable<ApiResponse<OtpResponse>> {
+  sendOtp(action: string = 'Verify transaction'): Observable<ApiResponse<OtpResponse>> {
     return this.http.post<ApiResponse<OtpResponse>>(`${this.apiUrl}/send`, { action });
   }
 
-  verifyOtp(otpCode: string, action: string = 'Xác thực giao dịch'): Observable<ApiResponse<boolean>> {
+  verifyOtp(otpCode: string, action: string = 'Verify transaction'): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/verify`, { otpCode, action });
   }
 }

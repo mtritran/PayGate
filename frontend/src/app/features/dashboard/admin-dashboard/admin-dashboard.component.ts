@@ -6,498 +6,383 @@ import { Merchant } from '../../../core/models/merchant.model';
 import { LedgerService } from '../../../core/services/ledger.service';
 import { WebhookLogService } from '../../../core/services/webhook-log.service';
 import { LoanService, LoanResponse } from '../../../core/services/loan.service';
+import { TransactionService } from '../../../core/services/transaction.service';
+import { TransactionResponse } from '../../../core/models/transaction.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { User, UserService } from '../../users/user.service';
 
-type AdminTab = 'overview' | 'merchants' | 'loans' | 'ledger' | 'vouchers' | 'webhooks';
+type AdminTab = 'overview' | 'users' | 'merchants' | 'loans' | 'transactions' | 'ledger' | 'vouchers' | 'webhooks';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    CurrencyPipe,
-    DatePipe
-  ],
+  imports: [CommonModule, RouterLink, CurrencyPipe, DatePipe],
   template: `
     <div class="admin-console fade-in-up">
-      <!-- Top Operational Header -->
-      <div class="admin-header">
-        <div class="header-info">
-          <div class="admin-badge">
-            <span class="live-pulse"></span> SYSTEM ADMINISTRATION CONSOLE
-          </div>
-          <h1 class="console-title">Trung Tâm Quản Trị & Thống Kê PayGate</h1>
-          <p class="console-subtitle">Giám sát dòng tiền hệ thống, quản lý tài khoản người dùng, duyệt Merchant & phê duyệt hồ sơ tín dụng.</p>
+      <section class="admin-header">
+        <div>
+          <div class="admin-badge"><span class="live-pulse"></span> SYSTEM OPERATIONS</div>
+          <h1 class="console-title">PayGate Admin Console</h1>
+          <p class="console-subtitle">Monitor platform health, review risk queues, manage users, merchants, vouchers, ledger integrity, and webhook delivery.</p>
         </div>
         <div class="header-actions">
-          <button class="btn-refresh" (click)="loadMetrics()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M23 4v6h-6M1 20v-6h6"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-            <span>Cập Nhật Realtime</span>
-          </button>
-          <a routerLink="/admin/ledger" class="btn-ledger-audit pulse-glow">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span>Kiểm Toán Sổ Cái ↗</span>
-          </a>
+          <button class="btn-secondary" (click)="loadMetrics()">Refresh</button>
+          <a routerLink="/admin/ledger" class="btn-primary">Open Ledger Audit</a>
         </div>
-      </div>
+      </section>
 
-      <!-- 4 Visual KPI Stat Cards -->
-      <div class="kpi-grid stagger-children">
-        <div class="kpi-card hover-lift pink">
-          <div class="kpi-top">
-            <span class="kpi-label">MERCHANT DOANH NGHIỆP</span>
-            <div class="kpi-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="kpi-val">{{ totalMerchants }}</div>
-          <div class="kpi-sub success">
-            <span>{{ pendingMerchantsCount }} doanh nghiệp chờ duyệt</span>
-          </div>
-        </div>
+      <section class="kpi-grid">
+        <button class="kpi-card users" (click)="activeTab = 'users'">
+          <span class="kpi-label">USERS</span>
+          <strong>{{ totalUsers }}</strong>
+          <small>{{ adminUsersCount }} admin accounts</small>
+        </button>
+        <button class="kpi-card merchants" (click)="activeTab = 'merchants'">
+          <span class="kpi-label">MERCHANTS</span>
+          <strong>{{ totalMerchants }}</strong>
+          <small>{{ pendingMerchantsCount }} pending review</small>
+        </button>
+        <button class="kpi-card loans" (click)="activeTab = 'loans'">
+          <span class="kpi-label">LOAN QUEUE</span>
+          <strong>{{ pendingLoansCount }}</strong>
+          <small>{{ pendingLoansAmount | currency:'VND':'symbol':'1.0-0' }} awaiting decision</small>
+        </button>
+        <button class="kpi-card ledger" (click)="activeTab = 'ledger'">
+          <span class="kpi-label">LEDGER</span>
+          <strong [class.danger]="!ledgerBalanced">{{ ledgerBalanced ? 'BALANCED' : 'ISSUE' }}</strong>
+          <small>Double-entry integrity</small>
+        </button>
+        <button class="kpi-card transactions" (click)="activeTab = 'transactions'">
+          <span class="kpi-label">TRANSACTIONS</span>
+          <strong>{{ totalTransactions }}</strong>
+          <small>{{ failedTransactionsCount }} failed events</small>
+        </button>
+        <button class="kpi-card webhooks" (click)="activeTab = 'webhooks'">
+          <span class="kpi-label">WEBHOOKS</span>
+          <strong>{{ pendingWebhooks }}</strong>
+          <small>retrying callbacks</small>
+        </button>
+      </section>
 
-        <div class="kpi-card hover-lift blue">
-          <div class="kpi-top">
-            <span class="kpi-label">HỒ SƠ VAY CẦN DUYỆT</span>
-            <div class="kpi-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="6" width="20" height="12" rx="2"/>
-                <circle cx="12" cy="12" r="2"/>
-              </svg>
-            </div>
-          </div>
-          <div class="kpi-val text-amber">{{ pendingLoansCount }}</div>
-          <div class="kpi-sub warning">
-            <span>{{ pendingLoansAmount | currency:'VND':'symbol':'1.0-0' }} chờ giải ngân</span>
-          </div>
-        </div>
+      <nav class="admin-nav-tabs">
+        <button [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">Overview</button>
+        <button [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">Users</button>
+        <button [class.active]="activeTab === 'merchants'" (click)="activeTab = 'merchants'">Merchants</button>
+        <button [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">Loans</button>
+        <button [class.active]="activeTab === 'transactions'" (click)="activeTab = 'transactions'">Transactions</button>
+        <button [class.active]="activeTab === 'ledger'" (click)="activeTab = 'ledger'">Ledger</button>
+        <button [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">Vouchers</button>
+        <button [class.active]="activeTab === 'webhooks'" (click)="activeTab = 'webhooks'">Webhooks</button>
+      </nav>
 
-        <div class="kpi-card hover-lift emerald">
-          <div class="kpi-top">
-            <span class="kpi-label">ĐỐI SOÁT SỔ CÁI KÉP</span>
-            <div class="kpi-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="kpi-val" [class.text-emerald]="ledgerBalanced" [class.text-rose]="!ledgerBalanced">
-            {{ ledgerBalanced ? 'BALANCED' : 'UNBALANCED' }}
-          </div>
-          <div class="kpi-sub success">
-            <span>Debit == Credit (Toàn vẹn 100%)</span>
-          </div>
-        </div>
-
-        <div class="kpi-card hover-lift purple">
-          <div class="kpi-top">
-            <span class="kpi-label">TRẠNG THÁI WEBHOOKS</span>
-            <div class="kpi-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-            </div>
-          </div>
-          <div class="kpi-val text-purple">{{ pendingWebhooks }}</div>
-          <div class="kpi-sub muted">
-            <span>Outbound HTTP Callbacks</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Management Navigation Tabs -->
-      <div class="admin-nav-tabs">
-        <button class="nav-tab-btn" [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Thống Kê Tổng Quan
-        </button>
-        <button class="nav-tab-btn" [class.active]="activeTab === 'merchants'" (click)="activeTab = 'merchants'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Quản Lý Merchant ({{ pendingMerchantsCount }})
-        </button>
-        <button class="nav-tab-btn" [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><rect x="2" y="6" width="20" height="12" rx="2"/></svg> Duyệt Vay ({{ pendingLoansCount }})
-        </button>
-        <button class="nav-tab-btn" [class.active]="activeTab === 'ledger'" (click)="activeTab = 'ledger'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Đối Soát Sổ Cái
-        </button>
-        <button class="nav-tab-btn" [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg> Quản Lý Voucher
-        </button>
-        <button class="nav-tab-btn" [class.active]="activeTab === 'webhooks'" (click)="activeTab = 'webhooks'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Webhook Logs
-        </button>
-      </div>
-
-      <!-- TAB 1: OVERVIEW & SYSTEM MONITORING -->
-      <div class="tab-pane" *ngIf="activeTab === 'overview'">
+      <section class="tab-pane" *ngIf="activeTab === 'overview'">
         <div class="overview-grid">
-          <!-- Pending Approvals Quick Panel -->
           <div class="admin-card">
             <div class="card-hdr">
-              <h3>Cần Xử Lý Ngay (Action Items)</h3>
-              <span class="badge-count">{{ pendingLoansCount + pendingMerchantsCount }} mục</span>
+              <h3>Review Queue</h3>
+              <span class="badge-count">{{ pendingLoansCount + pendingMerchantsCount }} open</span>
             </div>
             <div class="action-items-list">
               <div class="action-item" *ngFor="let loan of pendingLoansList.slice(0, 3)">
-                <div class="ai-icon loan">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c20067" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
-                </div>
+                <div class="ai-icon loan">LN</div>
                 <div class="ai-info">
-                  <strong>Duyệt khoản vay #{{ loan.loanRef }}</strong>
-                  <span>Số tiền: {{ loan.amount | currency:'VND':'symbol':'1.0-0' }} • Kỳ hạn {{ loan.termMonths }} tháng</span>
+                  <strong>Loan {{ loan.loanRef }}</strong>
+                  <span>{{ loan.amount | currency:'VND':'symbol':'1.0-0' }} · {{ loan.termMonths }} months · {{ loan.interestRate }}% annual</span>
                 </div>
-                <button class="btn-quick-act approve" (click)="approveLoan(loan.id)">Duyệt Vay</button>
+                <button class="btn-quick-act approve" (click)="approveLoan(loan.id)">Approve</button>
               </div>
-
               <div class="action-item" *ngFor="let m of pendingMerchantsList.slice(0, 3)">
-                <div class="ai-icon merchant">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0072ce" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                </div>
+                <div class="ai-icon merchant">MR</div>
                 <div class="ai-info">
-                  <strong>Merchant: {{ m.merchantName }}</strong>
-                  <span>Mã: {{ m.merchantCode }} • Email: {{ m.contactEmail }}</span>
+                  <strong>{{ m.merchantName || m.name }}</strong>
+                  <span>{{ m.merchantCode }} · {{ m.contactEmail }}</span>
                 </div>
-                <button class="btn-quick-act approve" (click)="approveMerchant(m.id)">Duyệt Merchant</button>
+                <button class="btn-quick-act approve" (click)="approveMerchant(m.id)">Approve</button>
               </div>
-
               <div class="empty-action-msg" *ngIf="pendingLoansCount === 0 && pendingMerchantsCount === 0">
-                Tất cả hồ sơ và Merchant đã được phê duyệt xử lý hoàn tất!
+                No pending merchant or loan approvals.
               </div>
             </div>
           </div>
 
-          <!-- Direct Operational Modules Grid -->
           <div class="admin-card">
-            <div class="card-hdr">
-              <h3>Module Quản Trị Hệ Thống</h3>
-            </div>
+            <div class="card-hdr"><h3>System Modules</h3></div>
             <div class="modules-quick-grid">
-              <div class="module-tile" (click)="activeTab = 'merchants'">
-                <div class="mod-ico pink">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                </div>
-                <div class="mod-info">
-                  <strong>Merchant Management</strong>
-                  <span>Phê duyệt đối tác, cấp API Key & Cấu hình Webhook</span>
-                </div>
-              </div>
-
-              <div class="module-tile" (click)="activeTab = 'ledger'">
-                <div class="mod-ico blue">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <div class="mod-info">
-                  <strong>Double-Entry Ledger Audit</strong>
-                  <span>Đối soát dòng tiền giao dịch, kiểm tra số dư bút toán</span>
-                </div>
-              </div>
-
-              <div class="module-tile" (click)="activeTab = 'vouchers'">
-                <div class="mod-ico yellow">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg>
-                </div>
-                <div class="mod-info">
-                  <strong>Voucher & Ưu Đãi</strong>
-                  <span>Tạo mã giảm giá, khuyến mãi cho toàn bộ người dùng</span>
-                </div>
-              </div>
-
-              <div class="module-tile" (click)="activeTab = 'webhooks'">
-                <div class="mod-ico purple">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                </div>
-                <div class="mod-info">
-                  <strong>Webhook Logs & Retry</strong>
-                  <span>Nhật ký gọi callback, retry giao dịch tự động</span>
-                </div>
-              </div>
+              <button class="module-tile" (click)="activeTab = 'users'"><span>US</span><strong>User Directory</strong><small>Create, edit, disable, and audit platform accounts.</small></button>
+              <button class="module-tile" (click)="activeTab = 'merchants'"><span>MR</span><strong>Merchant Review</strong><small>Approve partners and control merchant activation.</small></button>
+              <button class="module-tile" (click)="activeTab = 'transactions'"><span>TX</span><strong>Transaction Monitor</strong><small>Inspect platform payments and issue refunds.</small></button>
+              <button class="module-tile" (click)="activeTab = 'ledger'"><span>LG</span><strong>Ledger Audit</strong><small>Verify debit and credit consistency.</small></button>
+              <button class="module-tile" (click)="activeTab = 'vouchers'"><span>VC</span><strong>Voucher Operations</strong><small>Manage rewards and promotional inventory.</small></button>
+              <button class="module-tile" (click)="activeTab = 'webhooks'"><span>WH</span><strong>Webhook Delivery</strong><small>Track callback retry status.</small></button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 2: MERCHANTS MANAGEMENT -->
-      <div class="tab-pane" *ngIf="activeTab === 'merchants'">
+      <section class="tab-pane" *ngIf="activeTab === 'users'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c20067" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Danh Sách Merchant Doanh Nghiệp ({{ merchantsList.length }})</h3>
-            <a routerLink="/admin/merchants" class="link-more">Xem Quản Lý Chi Tiết ↗</a>
+            <h3>User Directory ({{ totalUsers }})</h3>
+            <a routerLink="/users" class="link-more">Open full user management</a>
           </div>
           <div class="table-responsive">
             <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Doanh Nghiệp</th>
-                  <th>Mã Merchant</th>
-                  <th>Contact Email</th>
-                  <th>Ví Merchant</th>
-                  <th>Trạng Thái</th>
-                  <th>Thao Tác</th>
+              <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let u of usersList">
+                  <td><strong>{{ u.fullName || u.username }}</strong><small>#{{ u.id }} · {{ u.username }}</small></td>
+                  <td>{{ u.email }}</td>
+                  <td><span class="status-chip admin-role">{{ u.role }}</span></td>
+                  <td><span class="status-chip" [class.active]="u.active" [class.rejected]="!u.active">{{ u.active ? 'ACTIVE' : 'INACTIVE' }}</span></td>
+                  <td>{{ u.createdAt | date:'MMM d, y HH:mm' }}</td>
                 </tr>
-              </thead>
+                <tr *ngIf="usersList.length === 0"><td colspan="5" class="empty-cell">No users found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-pane" *ngIf="activeTab === 'merchants'">
+        <div class="admin-card">
+          <div class="card-hdr">
+            <h3>Merchant Applications ({{ merchantsList.length }})</h3>
+            <a routerLink="/admin/merchants" class="link-more">Open merchant management</a>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>Business</th><th>Merchant Code</th><th>Contact</th><th>Wallet</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 <tr *ngFor="let m of merchantsList">
-                  <td class="font-mono">#{{ m.id }}</td>
-                  <td><strong>{{ m.merchantName }}</strong></td>
+                  <td><strong>{{ m.merchantName || m.name }}</strong><small>Tax code: {{ m.taxCode || 'N/A' }}</small></td>
                   <td><code class="code-pill">{{ m.merchantCode }}</code></td>
                   <td>{{ m.contactEmail }}</td>
-                  <td><span class="badge-wallet">PAYGATE-MERCHANT-{{ m.id }}</span></td>
-                  <td>
-                    <span class="status-chip" [class.active]="m.status === 'ACTIVE'" [class.pending]="m.status === 'PENDING'">
-                      {{ m.status }}
-                    </span>
-                  </td>
+                  <td><span class="badge-wallet">{{ m.accountNumber || ('PAYGATE-MERCHANT-' + m.id) }}</span></td>
+                  <td><span class="status-chip" [class.active]="m.status === 'ACTIVE'" [class.pending]="m.status === 'PENDING'" [class.rejected]="m.status === 'REJECTED'">{{ m.status }}</span></td>
                   <td>
                     <div class="act-btns">
-                      <button *ngIf="m.status === 'PENDING'" class="btn-sm approve" (click)="approveMerchant(m.id)">Phê Duyệt</button>
-                      <button *ngIf="m.status === 'ACTIVE'" class="btn-sm reject" (click)="rejectMerchant(m.id)">Khóa</button>
+                      <button *ngIf="m.status === 'PENDING'" class="btn-sm approve" (click)="approveMerchant(m.id)">Approve</button>
+                      <button *ngIf="m.status === 'PENDING'" class="btn-sm reject" (click)="rejectMerchant(m.id)">Reject</button>
                     </div>
                   </td>
                 </tr>
+                <tr *ngIf="merchantsList.length === 0"><td colspan="6" class="empty-cell">No merchant applications found.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 3: LOANS APPROVAL WORKSPACE -->
-      <div class="tab-pane" *ngIf="activeTab === 'loans'">
+      <section class="tab-pane" *ngIf="activeTab === 'loans'">
         <div class="admin-card">
-          <div class="card-hdr">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0072ce" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><rect x="2" y="6" width="20" height="12" rx="2"/></svg> Phê Duyệt Vay Tiêu Dùng ({{ loansList.length }})</h3>
-          </div>
+          <div class="card-hdr"><h3>Loan Approval Queue ({{ loansList.length }})</h3></div>
           <div class="table-responsive">
             <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Mã Hồ Sơ</th>
-                  <th>Số Tiền Vay</th>
-                  <th>Kỳ Hạn</th>
-                  <th>Lãi Suất</th>
-                  <th>Trả Mỗi Kỳ</th>
-                  <th>Trạng Thái</th>
-                  <th>Hành Động</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Reference</th><th>Amount</th><th>Term</th><th>Rate</th><th>Monthly Due</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 <tr *ngFor="let loan of loansList">
-                  <td class="font-mono"><strong>{{ loan.loanRef }}</strong></td>
+                  <td><strong>{{ loan.loanRef }}</strong><small>{{ loan.createdAt | date:'MMM d, y HH:mm' }}</small></td>
                   <td class="font-bold text-pink">{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</td>
-                  <td>{{ loan.termMonths }} tháng</td>
-                  <td>{{ loan.interestRate }}%/năm</td>
+                  <td>{{ loan.termMonths }} months</td>
+                  <td>{{ loan.interestRate }}% annual</td>
                   <td>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</td>
-                  <td>
-                    <span class="status-chip" [class.active]="loan.status === 'ACTIVE' || loan.status === 'PAID_OFF'" [class.pending]="loan.status === 'PENDING_APPROVAL'" [class.rejected]="loan.status === 'REJECTED'">
-                      {{ loan.status }}
-                    </span>
-                  </td>
+                  <td><span class="status-chip" [class.active]="loan.status === 'ACTIVE' || loan.status === 'PAID_OFF'" [class.pending]="loan.status === 'PENDING_APPROVAL'" [class.rejected]="loan.status === 'REJECTED'">{{ loan.status }}</span></td>
                   <td>
                     <div class="act-btns" *ngIf="loan.status === 'PENDING_APPROVAL'">
-                      <button class="btn-sm approve" (click)="approveLoan(loan.id)">Duyệt Giải Ngân</button>
-                      <button class="btn-sm reject" (click)="rejectLoan(loan.id)">Từ Chối</button>
+                      <button class="btn-sm approve" (click)="approveLoan(loan.id)">Approve</button>
+                      <button class="btn-sm reject" (click)="rejectLoan(loan.id)">Reject</button>
                     </div>
-                    <span *ngIf="loan.status !== 'PENDING_APPROVAL'" class="text-muted text-xs">Đã xử lý</span>
+                    <span *ngIf="loan.status !== 'PENDING_APPROVAL'" class="text-muted text-xs">Reviewed</span>
                   </td>
                 </tr>
+                <tr *ngIf="loansList.length === 0"><td colspan="7" class="empty-cell">No loan records found.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 4: LEDGER & AUDIT -->
-      <div class="tab-pane" *ngIf="activeTab === 'ledger'">
+      <section class="tab-pane" *ngIf="activeTab === 'transactions'">
+        <div class="admin-card">
+          <div class="card-hdr"><h3>Transaction Monitor ({{ totalTransactions }})</h3></div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead><tr><th>Reference</th><th>Type</th><th>Amount</th><th>Source</th><th>Destination</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let tx of transactionsList">
+                  <td><code class="code-pill">{{ tx.transactionRef }}</code></td>
+                  <td>{{ tx.type }}</td>
+                  <td class="font-bold">{{ tx.amount | currency:'VND':'symbol':'1.0-0' }}</td>
+                  <td>#{{ tx.sourceAccountId }}</td>
+                  <td>#{{ tx.destAccountId }}</td>
+                  <td><span class="status-chip" [class.active]="tx.status === 'COMPLETED'" [class.pending]="tx.status === 'PENDING' || tx.status === 'PROCESSING'" [class.rejected]="tx.status === 'FAILED' || tx.status === 'EXPIRED'">{{ tx.status }}</span></td>
+                  <td>{{ tx.createdAt | date:'MMM d, y HH:mm' }}</td>
+                  <td><button *ngIf="tx.status === 'COMPLETED'" class="btn-sm reject" (click)="refund(tx.transactionRef)">Refund</button></td>
+                </tr>
+                <tr *ngIf="transactionsList.length === 0"><td colspan="8" class="empty-cell">No transactions found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-pane" *ngIf="activeTab === 'ledger'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Kiểm Toán Sổ Cái Kép (Double-Entry Ledger Integrity)</h3>
-            <a routerLink="/admin/ledger" class="btn-primary-sm">Mở Console Sổ Cái Chi Tiết ↗</a>
+            <h3>Double-Entry Ledger Integrity</h3>
+            <a routerLink="/admin/ledger" class="btn-primary-sm">Open detailed ledger console</a>
           </div>
           <div class="ledger-summary-box">
-            <div class="ls-item">
-              <span>Trạng Thái Cân Bằng:</span>
-              <strong [class.text-emerald]="ledgerBalanced" [class.text-rose]="!ledgerBalanced">
-                {{ ledgerBalanced ? '✓ DEBIT == CREDIT (CÂN BẰNG TỐT)' : 'LỖI BÚT TOÁN' }}
-              </strong>
-            </div>
-            <p class="ls-desc">Hệ thống tự động thực hiện kiểm toán đối soát giữa tài khoản tổng và các khoản nợ/có của toàn bộ ví người dùng theo thời gian thực.</p>
+            <span>Balance status</span>
+            <strong [class.text-emerald]="ledgerBalanced" [class.text-rose]="!ledgerBalanced">
+              {{ ledgerBalanced ? 'Debit equals credit' : 'Ledger mismatch detected' }}
+            </strong>
+            <p>Use this module to verify bookkeeping consistency across PayGate settlement, wallet, top-up, refund, and merchant payment flows.</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 5: VOUCHER MANAGEMENT -->
-      <div class="tab-pane" *ngIf="activeTab === 'vouchers'">
+      <section class="tab-pane" *ngIf="activeTab === 'vouchers'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> Quản Lý Kho Voucher & Mã Giảm Giá</h3>
-            <a routerLink="/admin/vouchers" class="btn-primary-sm">Mở Trang Tạo Voucher Chi Tiết ↗</a>
+            <h3>Voucher Operations</h3>
+            <a routerLink="/admin/vouchers" class="btn-primary-sm">Open voucher catalog</a>
           </div>
-          <p class="ls-desc">Tạo mã giảm giá, khuyến mãi quà tặng cho toàn bộ người dùng ví PayGate PRO.</p>
+          <p class="ls-desc">Create and maintain reward vouchers available to PayGate users. This is an admin catalog, not the user redemption shop.</p>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 6: WEBHOOK LOGS -->
-      <div class="tab-pane" *ngIf="activeTab === 'webhooks'">
+      <section class="tab-pane" *ngIf="activeTab === 'webhooks'">
         <div class="admin-card">
           <div class="card-hdr">
-            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Nhật Ký Webhook & Trạng Thái Callbacks</h3>
-            <a routerLink="/admin/webhooks" class="btn-primary-sm">Xem Nhật Ký Webhook Chi Tiết ↗</a>
+            <h3>Webhook Delivery Logs</h3>
+            <a routerLink="/admin/webhooks" class="btn-primary-sm">Open webhook logs</a>
           </div>
-          <p class="ls-desc">Theo dõi các cuộc gọi Callback HTTP ra ngoài hệ thống đối tác Merchant và cấu hình thời gian Retry tự động.</p>
+          <p class="ls-desc">Inspect merchant callback delivery, retrying jobs, and failed outbound HTTP notifications.</p>
         </div>
-      </div>
-
+      </section>
     </div>
   `,
   styles: [`
-    .fade-in-up { animation: fadeInUp 0.4s ease-out both; }
-
-    .admin-console { display: flex; flex-direction: column; gap: 24px; font-family: 'Inter', system-ui, sans-serif; color: #0d2b5c; }
-
-    /* Top Operational Header */
+    .fade-in-up { animation: fadeInUp 0.32s ease-out both; }
+    .admin-console { display:flex; flex-direction:column; gap:24px; color:#0f172a; font-family:'Inter', system-ui, sans-serif; }
     .admin-header {
-      background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 24px;
-      padding: 32px; display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 10px 30px rgba(194, 0, 103, 0.05);
+      display:flex; justify-content:space-between; align-items:center; gap:24px; padding:28px;
+      background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%); border:1px solid #e2e8f0; border-radius:16px;
+      box-shadow:0 10px 30px rgba(15,23,42,.05);
     }
-    .admin-badge {
-      display: inline-flex; align-items: center; gap: 8px; font-size: 0.72rem; font-weight: 900;
-      color: #c20067; background: #fff0f6; border: 1px solid #f8bbd0; padding: 4px 12px; border-radius: 20px;
-      letter-spacing: 0.06em; margin-bottom: 8px;
+    .admin-badge { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px; background:#eef6ff; color:#0072ce; font-size:.72rem; font-weight:900; letter-spacing:.06em; }
+    .live-pulse { width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981; }
+    .console-title { margin:10px 0 4px; color:#0d2b5c; font-size:1.8rem; font-weight:900; letter-spacing:-.02em; }
+    .console-subtitle { margin:0; color:#64748b; font-size:.9rem; max-width:760px; line-height:1.5; }
+    .header-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn-secondary, .btn-primary, .btn-primary-sm {
+      min-height:38px; display:inline-flex; align-items:center; justify-content:center; padding:0 16px; border-radius:10px;
+      font-weight:800; font-size:.84rem; text-decoration:none; cursor:pointer;
     }
-    .live-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; }
-    .console-title { font-size: 1.85rem; font-weight: 900; margin: 0 0 4px; color: #0d2b5c; letter-spacing: -0.02em; }
-    .console-subtitle { font-size: 0.9rem; color: #64748b; margin: 0; }
-
-    .header-actions { display: flex; gap: 12px; align-items: center; }
-    .btn-refresh {
-      background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 18px;
-      font-weight: 800; font-size: 0.88rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s;
-    }
-    .btn-refresh:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
-    .btn-ledger-audit {
-      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%); color: #ffffff;
-      padding: 12px 22px; border-radius: 12px; font-weight: 800; font-size: 0.92rem; text-decoration: none;
-      box-shadow: 0 6px 20px rgba(194,0,103,0.25); transition: all 0.2s;
-    }
-    .btn-ledger-audit:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(194,0,103,0.35); }
-
-    /* 4 Visual KPI Stat Cards */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .btn-secondary { background:#fff; color:#334155; border:1px solid #cbd5e1; }
+    .btn-primary, .btn-primary-sm { background:#0d2b5c; color:#fff; border:0; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:14px; }
     .kpi-card {
-      background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 20px; padding: 22px;
-      box-shadow: 0 4px 20px rgba(194,0,103,0.04); display: flex; flex-direction: column; gap: 8px; transition: all 0.2s;
+      text-align:left; padding:18px; min-height:126px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; cursor:pointer;
+      display:flex; flex-direction:column; justify-content:space-between; transition:transform .18s, box-shadow .18s, border-color .18s;
     }
-    .kpi-top { display: flex; justify-content: space-between; align-items: center; }
-    .kpi-label { font-size: 0.72rem; font-weight: 900; color: #64748b; letter-spacing: 0.04em; }
-    .kpi-icon { font-size: 24px; width: 42px; height: 42px; border-radius: 12px; background: #fff0f6; display: flex; align-items: center; justify-content: center; }
-    .kpi-val { font-size: 1.8rem; font-weight: 900; color: #0d2b5c; letter-spacing: -0.02em; }
-    .kpi-sub { font-size: 0.78rem; font-weight: 700; color: #64748b; }
-
-    /* Navigation Tabs */
-    .admin-nav-tabs { display: flex; gap: 10px; border-bottom: 2px solid #f3d6e5; padding-bottom: 2px; }
-    .nav-tab-btn {
-      padding: 12px 22px; background: transparent; border: none; font-size: 0.92rem; font-weight: 800;
-      color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; border-radius: 10px 10px 0 0;
+    .kpi-card:hover { transform:translateY(-3px); box-shadow:0 16px 32px rgba(15,23,42,.08); border-color:#f48fb1; }
+    .kpi-card strong { font-size:1.35rem; color:#0d2b5c; font-weight:900; }
+    .kpi-card small { color:#64748b; font-size:.75rem; font-weight:700; }
+    .kpi-label { color:#94a3b8; font-size:.68rem; font-weight:900; letter-spacing:.08em; }
+    .kpi-card.users { border-top:4px solid #0072ce; }
+    .kpi-card.merchants { border-top:4px solid #c20067; }
+    .kpi-card.loans { border-top:4px solid #d97706; }
+    .kpi-card.ledger { border-top:4px solid #10b981; }
+    .kpi-card.transactions { border-top:4px solid #6366f1; }
+    .kpi-card.webhooks { border-top:4px solid #7c3aed; }
+    .admin-nav-tabs { display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid #e2e8f0; padding-bottom:8px; }
+    .admin-nav-tabs button {
+      min-height:38px; padding:0 14px; border:1px solid transparent; border-radius:10px; background:transparent; color:#64748b;
+      font-size:.84rem; font-weight:800; cursor:pointer;
     }
-    .nav-tab-btn.active { color: #c20067; border-bottom-color: #c20067; background: #ffffff; }
-    .nav-tab-btn:hover:not(.active) { color: #0d2b5c; background: rgba(255,255,255,0.6); }
-
-    /* Admin Cards & Panes */
-    .admin-card { background: #ffffff; border: 1.5px solid #f3d6e5; border-radius: 20px; padding: 24px; box-shadow: 0 4px 20px rgba(194,0,103,0.04); }
-    .card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    .card-hdr h3 { margin: 0; font-size: 1.15rem; font-weight: 900; color: #0d2b5c; }
-    .badge-count { background: #fff0f6; color: #c20067; font-size: 0.75rem; font-weight: 900; padding: 4px 10px; border-radius: 12px; border: 1px solid #f8bbd0; }
-
-    .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .action-items-list { display: flex; flex-direction: column; gap: 12px; }
-    .action-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; background: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; }
-    .ai-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .ai-icon.loan { background: #fff0f6; }
-    .ai-icon.merchant { background: #eef6ff; }
-    .ai-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-    .ai-info strong { font-size: 0.88rem; color: #0d2b5c; }
-    .ai-info span { font-size: 0.78rem; color: #64748b; }
-    .btn-quick-act { padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 800; border: none; cursor: pointer; }
-    .btn-quick-act.approve { background: #c20067; color: #ffffff; }
-    .btn-quick-act.approve:hover { background: #a00055; }
-
-    .modules-quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .module-tile { display: flex; gap: 12px; align-items: flex-start; padding: 16px; background: #fffafc; border: 1px solid #f3d6e5; border-radius: 14px; text-decoration: none; transition: all 0.2s; }
-    .module-tile:hover { border-color: #f8bbd0; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(194,0,103,0.08); }
-    .mod-ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-    .mod-ico.pink { background: #fff0f6; }
-    .mod-ico.blue { background: #eef6ff; }
-    .mod-ico.yellow { background: #fffbeb; }
-    .mod-ico.purple { background: #f3e8ff; }
-    .mod-info strong { font-size: 0.9rem; color: #0d2b5c; display: block; margin-bottom: 2px; }
-    .mod-info span { font-size: 0.78rem; color: #64748b; line-height: 1.4; }
-
-    /* Tables */
-    .table-responsive { overflow-x: auto; border: 1px solid #f3d6e5; border-radius: 14px; }
-    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-    .admin-table th { background: #fff0f6; padding: 12px 16px; font-weight: 800; color: #0d2b5c; border-bottom: 1.5px solid #f3d6e5; }
-    .admin-table td { padding: 14px 16px; border-bottom: 1px solid #fce4ec; color: #334155; }
-    .code-pill { background: #fff0f6; color: #c20067; padding: 2px 6px; border-radius: 6px; font-family: monospace; font-weight: 700; }
-    .badge-wallet { background: #eef6ff; color: #0072ce; font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
-    .status-chip { font-size: 0.72rem; font-weight: 900; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; }
-    .status-chip.active { background: #dcfce7; color: #047857; }
-    .status-chip.pending { background: #fef3c7; color: #b45309; }
-    .status-chip.rejected { background: #fee2e2; color: #b91c1c; }
-
-    .act-btns { display: flex; gap: 6px; }
-    .btn-sm { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; border: none; cursor: pointer; }
-    .btn-sm.approve { background: #c20067; color: #fff; }
-    .btn-sm.reject { background: #ef4444; color: #fff; }
-
-    .ledger-summary-box { background: #fffafc; border: 1.5px solid #f3d6e5; border-radius: 16px; padding: 24px; }
-    .ls-item { font-size: 1.1rem; display: flex; gap: 10px; align-items: center; }
-    .ls-desc { font-size: 0.88rem; color: #64748b; margin: 10px 0 0; line-height: 1.5; }
-
-    .text-emerald { color: #10b981 !important; }
-    .text-amber { color: #d97706 !important; }
-    .text-rose { color: #e11d48 !important; }
-    .text-pink { color: #c20067 !important; }
-    .text-purple { color: #7c3aed !important; }
-    .font-mono { font-family: monospace; }
-    .font-bold { font-weight: 800; }
-    .link-more { color: #c20067; font-weight: 800; text-decoration: none; font-size: 0.88rem; }
-    .empty-action-msg { font-size: 0.88rem; color: #10b981; font-weight: 800; text-align: center; padding: 20px; }
-
-    @media (max-width: 1080px) {
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .overview-grid { grid-template-columns: 1fr; }
+    .admin-nav-tabs button.active { background:#fff0f6; border-color:#f8bbd0; color:#c20067; }
+    .overview-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .admin-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:22px; box-shadow:0 8px 24px rgba(15,23,42,.04); }
+    .card-hdr { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:16px; }
+    .card-hdr h3 { margin:0; color:#0d2b5c; font-size:1.08rem; font-weight:900; }
+    .badge-count { background:#fff0f6; color:#c20067; border:1px solid #f8bbd0; padding:4px 10px; border-radius:999px; font-size:.72rem; font-weight:900; }
+    .action-items-list { display:flex; flex-direction:column; gap:10px; }
+    .action-item { display:flex; align-items:center; gap:12px; padding:13px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; }
+    .ai-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:900; flex-shrink:0; }
+    .ai-icon.loan { background:#fff7ed; color:#d97706; }
+    .ai-icon.merchant { background:#fff0f6; color:#c20067; }
+    .ai-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .ai-info strong, .module-tile strong { color:#0d2b5c; font-size:.88rem; }
+    .ai-info span, .module-tile small { color:#64748b; font-size:.76rem; line-height:1.4; }
+    .modules-quick-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .module-tile {
+      text-align:left; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:14px; cursor:pointer;
+      display:grid; grid-template-columns:38px 1fr; gap:10px; align-items:start;
     }
+    .module-tile span { grid-row:span 2; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#eef6ff; color:#0072ce; font-weight:900; font-size:.72rem; }
+    .module-tile:hover { border-color:#f48fb1; background:#fff; }
+    .table-responsive { overflow-x:auto; border:1px solid #e2e8f0; border-radius:12px; }
+    .admin-table { width:100%; border-collapse:collapse; text-align:left; font-size:.84rem; }
+    .admin-table th { padding:12px 14px; background:#f8fafc; color:#64748b; font-size:.68rem; font-weight:900; letter-spacing:.06em; text-transform:uppercase; border-bottom:1px solid #e2e8f0; }
+    .admin-table td { padding:13px 14px; border-bottom:1px solid #f1f5f9; color:#334155; vertical-align:middle; }
+    .admin-table td small { display:block; color:#94a3b8; font-size:.72rem; margin-top:3px; }
+    .code-pill { background:#f1f5f9; color:#0d2b5c; border-radius:7px; padding:3px 7px; font-family:monospace; font-weight:800; }
+    .badge-wallet { background:#eef6ff; color:#0072ce; border-radius:7px; padding:3px 7px; font-size:.72rem; font-weight:800; }
+    .status-chip { display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; background:#f1f5f9; color:#475569; font-size:.7rem; font-weight:900; white-space:nowrap; }
+    .status-chip.active { background:#dcfce7; color:#047857; }
+    .status-chip.pending { background:#fef3c7; color:#b45309; }
+    .status-chip.rejected { background:#fee2e2; color:#b91c1c; }
+    .status-chip.admin-role { background:#eef6ff; color:#0072ce; }
+    .act-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .btn-sm, .btn-quick-act { border:0; border-radius:8px; padding:6px 10px; font-size:.74rem; font-weight:900; cursor:pointer; }
+    .approve { background:#c20067; color:#fff; }
+    .reject { background:#ef4444; color:#fff; }
+    .ledger-summary-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:6px; }
+    .ledger-summary-box span, .ls-desc { color:#64748b; font-size:.86rem; line-height:1.5; }
+    .ledger-summary-box strong { font-size:1.2rem; color:#0d2b5c; }
+    .link-more { color:#c20067; font-weight:900; text-decoration:none; font-size:.82rem; }
+    .empty-action-msg, .empty-cell { color:#64748b; text-align:center; padding:22px !important; font-weight:700; }
+    .font-bold { font-weight:900; }
+    .text-pink { color:#c20067; }
+    .text-emerald { color:#047857 !important; }
+    .text-rose, .danger { color:#b91c1c !important; }
+    .text-muted { color:#94a3b8; }
+    .text-xs { font-size:.74rem; }
+    @media(max-width:1200px) { .kpi-grid { grid-template-columns:repeat(3,1fr); } .overview-grid { grid-template-columns:1fr; } }
+    @media(max-width:760px) { .admin-header { flex-direction:column; align-items:flex-start; } .kpi-grid, .modules-quick-grid { grid-template-columns:1fr; } }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   activeTab: AdminTab = 'overview';
 
+  totalUsers = 0;
+  adminUsersCount = 0;
   totalMerchants = 0;
   pendingMerchantsCount = 0;
   pendingLoansCount = 0;
   pendingLoansAmount = 0;
+  totalTransactions = 0;
+  failedTransactionsCount = 0;
   ledgerBalanced = true;
   pendingWebhooks = 0;
   loading = true;
 
+  usersList: User[] = [];
   merchantsList: Merchant[] = [];
   pendingMerchantsList: Merchant[] = [];
   loansList: LoanResponse[] = [];
   pendingLoansList: LoanResponse[] = [];
+  transactionsList: TransactionResponse[] = [];
 
   constructor(
+    private userService: UserService,
     private merchantService: MerchantService,
     private ledgerService: LedgerService,
     private webhookLogService: WebhookLogService,
     private loanService: LoanService,
+    private transactionService: TransactionService,
     private notification: NotificationService
   ) {}
 
@@ -508,7 +393,16 @@ export class AdminDashboardComponent implements OnInit {
   loadMetrics(): void {
     this.loading = true;
 
-    // 1. Fetch Merchants
+    this.userService.getAll(0, 50).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.usersList = res.data.content;
+          this.totalUsers = res.data.totalElements;
+          this.adminUsersCount = this.usersList.filter(u => u.role === 'ADMIN' || u.role === 'ROLE_ADMIN').length;
+        }
+      }
+    });
+
     this.merchantService.getAll(0, 50).subscribe({
       next: (res) => {
         if (res.success && res.data) {
@@ -520,7 +414,6 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
 
-    // 2. Fetch Loans for Admin
     this.loanService.getAllLoansForAdmin(0, 50).subscribe({
       next: (res) => {
         if (res.success && res.data) {
@@ -532,21 +425,25 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
 
-    // 3. Ledger Audit Status
-    this.ledgerService.verifyLedger().subscribe({
+    this.transactionService.getMyTransactions({ page: 0, size: 50, sortBy: 'createdAt', sortDir: 'DESC' }).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          this.ledgerBalanced = res.data.balanced;
+          this.transactionsList = res.data.content;
+          this.totalTransactions = res.data.totalElements;
+          this.failedTransactionsCount = this.transactionsList.filter(tx => tx.status === 'FAILED' || tx.status === 'EXPIRED').length;
         }
       }
     });
 
-    // 4. Webhooks
+    this.ledgerService.verifyLedger().subscribe({
+      next: (res) => {
+        if (res.success && res.data) this.ledgerBalanced = res.data.balanced;
+      }
+    });
+
     this.webhookLogService.getLogs(0, 1, 'RETRYING').subscribe({
       next: (res) => {
-        if (res.success && res.data) {
-          this.pendingWebhooks = res.data.totalElements;
-        }
+        if (res.success && res.data) this.pendingWebhooks = res.data.totalElements;
         this.loading = false;
       },
       error: () => this.loading = false
@@ -557,7 +454,7 @@ export class AdminDashboardComponent implements OnInit {
     this.merchantService.approveMerchant(id).subscribe({
       next: (res) => {
         if (res.success) {
-          this.notification.success('Đã phê duyệt Merchant thành công!');
+          this.notification.success('Merchant approved successfully.');
           this.loadMetrics();
         }
       }
@@ -565,10 +462,10 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   rejectMerchant(id: number): void {
-    this.merchantService.rejectMerchant(id).subscribe({
+    this.merchantService.rejectMerchant(id, 'Rejected from Admin Console').subscribe({
       next: (res) => {
         if (res.success) {
-          this.notification.success('Đã vô hiệu hóa Merchant!');
+          this.notification.success('Merchant rejected.');
           this.loadMetrics();
         }
       }
@@ -576,10 +473,10 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   approveLoan(id: number): void {
-    this.loanService.approveLoan(id, 'Đã phê duyệt qua Admin Console').subscribe({
+    this.loanService.approveLoan(id, 'Approved from Admin Console').subscribe({
       next: (res) => {
         if (res.success) {
-          this.notification.success('Đã duyệt giải ngân khoản vay thành công!');
+          this.notification.success('Loan approved successfully.');
           this.loadMetrics();
         }
       }
@@ -587,10 +484,21 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   rejectLoan(id: number): void {
-    this.loanService.rejectLoan(id, 'Hồ sơ vay chưa đủ điều kiện').subscribe({
+    this.loanService.rejectLoan(id, 'Loan application rejected by Admin Console').subscribe({
       next: (res) => {
         if (res.success) {
-          this.notification.success('Đã từ chối khoản vay.');
+          this.notification.success('Loan rejected.');
+          this.loadMetrics();
+        }
+      }
+    });
+  }
+
+  refund(ref: string): void {
+    this.transactionService.refund(ref).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.notification.success('Transaction refund created.');
           this.loadMetrics();
         }
       }

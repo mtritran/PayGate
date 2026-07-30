@@ -96,7 +96,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
         <div class="sub-address" *ngIf="sub.address">{{ sub.address }}</div>
         <div class="sub-meta">
           <span>Frequency: {{ frequencyLabel(sub.frequency) }}</span>
-          <span>~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/kỳ</span>
+          <span>~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/period</span>
         </div>
 
         <div class="sub-actions">
@@ -166,7 +166,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
         <!-- Pay error banner -->
         <div class="pay-error-banner" *ngIf="payError()">
           <mat-icon>warning</mat-icon> <span>{{ payError() }}</span>
-          <a routerLink="/topup" class="topup-link">Nạp tiền ngay →</a>
+          <a routerLink="/topup" class="topup-link">Top up ngay →</a>
         </div>
 
         <div *ngFor="let bill of subBills()" class="bill-card" [class.unpaid]="bill.status === 'UNPAID'" [class.paid]="bill.status === 'PAID'">
@@ -199,7 +199,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
                   [disabled]="!isVoucherUsable(voucher, bill)"
                   (click)="selectVoucherForBill(bill.billId, voucher.voucherCode)">
                   <span class="voucher-main">{{ voucherOptionLabel(voucher, bill) }}</span>
-                  <span class="voucher-sub">Cần {{ voucher.pointsRequired | number }} điểm để đổi voucher này</span>
+                  <span class="voucher-sub">Requires {{ voucher.pointsRequired | number }} points to redeem</span>
                 </button>
               </div>
             </div>
@@ -321,7 +321,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
       <div class="modal-error" *ngIf="linkError()">{{ linkError() }}</div>
 
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="closeLinkModal()">Huỷ</button>
+        <button class="btn btn-secondary" (click)="closeLinkModal()">Cancel</button>
         <button class="btn btn-primary" [disabled]="linking()" (click)="submitLink()">
           {{ linking() ? 'Linking…' : (linkMode === 'LINK_EXISTING' ? 'Link Account' : 'Register & Link') }}
         </button>
@@ -333,7 +333,7 @@ const TYPE_META: Record<BillType, { label: string; icon: string; color: string; 
   <!-- OTP Security Modal -->
   <app-pin-modal
     [isOpen]="showPinModal()"
-    [title]="'Xác thực OTP thanh toán hóa đơn'"
+    [title]="'OTP Verification thanh toán hóa đơn'"
     (confirmed)="onPinConfirmed($event)"
     (cancelled)="showPinModal.set(false)"
   ></app-pin-modal>
@@ -769,7 +769,7 @@ export class BillPayComponent implements OnInit {
       },
       error: e => {
         this.cancellingId.set(null);
-        this.notify.error(e?.error?.message || 'Huỷ thất bại');
+        this.notify.error(e?.error?.message || 'Cancel thất bại');
       }
     });
   }

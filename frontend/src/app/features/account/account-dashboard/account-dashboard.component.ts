@@ -85,7 +85,7 @@ interface FeatureTile {
             <div class="hero-greeting">
               <span class="greet-emoji">🌤️</span>
               <div>
-                <p class="greet-sub">Chào buổi sáng</p>
+                <p class="greet-sub">Good morning</p>
                 <h1 class="greet-name">{{ getDisplayName() }}</h1>
               </div>
             </div>
@@ -95,7 +95,7 @@ interface FeatureTile {
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
                 <span class="pts-num">{{ rewardPoints?.totalPoints || 0 }}</span>
-                <span class="pts-lbl">điểm</span>
+                <span class="pts-lbl">points</span>
               </div>
             </div>
           </div>
@@ -103,9 +103,9 @@ interface FeatureTile {
           <div class="hero-card">
             <div class="hcard-top">
               <div>
-                <div class="hcard-lbl">Tổng số dư</div>
+                <div class="hcard-lbl">Total balance</div>
                 <div class="hcard-val">{{ (account?.balance || 0) | currency:'VND':'symbol':'1.0-0' }}</div>
-                <div class="hcard-acct" (click)="copyAccNumber()">
+                <div class="hcard-acct" (click)="copyAcSunumber()">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
@@ -121,7 +121,7 @@ interface FeatureTile {
                 </svg>
                 <div class="ring-txt">
                   <span class="ring-pct">75%</span>
-                  <span class="ring-lbl">hạn mức</span>
+                  <span class="ring-lbl">limit</span>
                 </div>
               </div>
             </div>
@@ -132,7 +132,7 @@ interface FeatureTile {
                     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </span>
-                <span>Nạp tiền</span>
+                <span>Top up</span>
               </a>
               <a class="hcard-btn" routerLink="/transactions/pay">
                 <span class="hcard-ico" style="background:#eef6ff;color:#0072ce">
@@ -140,7 +140,7 @@ interface FeatureTile {
                     <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
                   </svg>
                 </span>
-                <span>Chuyển tiền</span>
+                <span>Transfer</span>
               </a>
               <a class="hcard-btn" routerLink="/transactions/history">
                 <span class="hcard-ico" style="background:#f3e8ff;color:#7c3aed">
@@ -148,97 +148,53 @@ interface FeatureTile {
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
                 </span>
-                <span>Lịch sử</span>
+                <span>History</span>
               </a>
             </div>
           </div>
         </section>
 
         <!-- ===== CỤM ĐIỀU HƯỚNG TRUNG TÂM (CORE SYSTEM NAVIGATION HUB) ===== -->
-        <section class="sec nav-hub-sec">
-          <div class="sec-hdr">
-            <div>
-              <h2 class="sec-title">Phân Hệ Trung Tâm</h2>
-              <p class="sec-sub">Truy cập nhanh các phân hệ dịch vụ cốt lõi PayGate PRO</p>
+        <section class="sec merchant-spotlight-sec">
+          <a class="merchant-spotlight" routerLink="/merchant/register">
+            <div class="merchant-visual" aria-hidden="true">
+              <div class="merchant-phone">
+                <div class="merchant-phone-top">
+                  <mat-icon>storefront</mat-icon>
+                  <span>PayGate Merchant</span>
+                </div>
+                <div class="merchant-revenue">+1.250.000&#8363;</div>
+                <div class="merchant-paid">
+                  <mat-icon>verified</mat-icon>
+                  <span>Payment received</span>
+                </div>
+              </div>
+              <div class="merchant-qr">
+                <mat-icon>qr_code_2</mat-icon>
+                <span>QR Pay</span>
+              </div>
             </div>
-          </div>
-          <div class="nav-hub-grid">
-            <a class="nav-hub-card" routerLink="/accounts/dashboard" routerLinkActive="active-hub">
-              <div class="nav-hub-ico dashboard-gradient">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
-                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                </svg>
+            <div class="merchant-copy">
+              <span class="merchant-eyebrow">Merchant Portal</span>
+              <h2>Turn PayGate into a digital cashier for your business</h2>
+              <p>Accept QR payments, share checkout links, and track revenue from one clean workspace.</p>
+              <div class="merchant-benefits">
+                <span><mat-icon>bolt</mat-icon> Instant QR</span>
+                <span><mat-icon>receipt_long</mat-icon> Clear settlement</span>
+                <span><mat-icon>campaign</mat-icon> Fast payment links</span>
               </div>
-              <div class="nav-hub-content">
-                <span class="nav-hub-title">Dashboard</span>
-                <span class="nav-hub-desc">Tổng quan tài khoản & số dư</span>
+              <div class="merchant-actions">
+                <span class="merchant-primary">Register Merchant</span>
+                <span class="merchant-note">Built for online shops, cafes, and service businesses</span>
               </div>
-              <div class="nav-hub-arrow">↗</div>
-            </a>
-
-            <a class="nav-hub-card" routerLink="/transactions/history" routerLinkActive="active-hub">
-              <div class="nav-hub-ico txn-gradient">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </div>
-              <div class="nav-hub-content">
-                <span class="nav-hub-title">Transactions</span>
-                <span class="nav-hub-desc">Lịch sử & chuyển tiền nhanh</span>
-              </div>
-              <div class="nav-hub-arrow">↗</div>
-            </a>
-
-            <a class="nav-hub-card" routerLink="/vaults" routerLinkActive="active-hub">
-              <div class="nav-hub-ico vault-gradient">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-              </div>
-              <div class="nav-hub-content">
-                <span class="nav-hub-title">Vaults</span>
-                <span class="nav-hub-desc">Két sắt tiết kiệm mục tiêu</span>
-              </div>
-              <div class="nav-hub-arrow">↗</div>
-            </a>
-
-            <a class="nav-hub-card" routerLink="/merchant/register" routerLinkActive="active-hub">
-              <div class="nav-hub-ico merchant-gradient">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 12v8H4v-8M22 7H2v5h20V7zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-                </svg>
-              </div>
-              <div class="nav-hub-content">
-                <span class="nav-hub-title">Merchant Portal</span>
-                <span class="nav-hub-desc">Cổng kết nối API thanh toán</span>
-              </div>
-              <div class="nav-hub-arrow">↗</div>
-            </a>
-
-            <a class="nav-hub-card admin-special" routerLink="/admin/dashboard" routerLinkActive="active-hub" *ngIf="isAdmin()">
-              <div class="nav-hub-ico admin-gradient">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <div class="nav-hub-content">
-                <span class="nav-hub-title">Admin Control</span>
-                <span class="nav-hub-desc">Bảng điều khiển quản trị hệ thống</span>
-              </div>
-              <div class="nav-hub-arrow">↗</div>
-            </a>
-          </div>
+            </div>
+          </a>
         </section>
-
         <!-- ===== TIỆN ÍCH (màu dịu) ===== -->
         <section class="sec">
           <div class="sec-hdr">
-            <h2 class="sec-title">Tiện ích</h2>
-            <a class="sec-more" routerLink="/accounts/me">Tất cả
+            <h2 class="sec-title">Utilities</h2>
+            <a class="sec-more" routerLink="/accounts/me">View all
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
@@ -254,9 +210,65 @@ interface FeatureTile {
           </div>
         </section>
 
+        <section class="sec quick-links-sec">
+          <div class="sec-hdr">
+            <h2 class="sec-title">Explore More</h2>
+          </div>
+          <div class="ql-grid stagger-children">
+            <a class="ql-card" routerLink="/vouchers">
+              <div class="ql-ico" style="background:linear-gradient(135deg,#fff0f6,#fce4ec);color:#c20067">
+                <mat-icon>card_giftcard</mat-icon>
+              </div>
+              <div class="ql-info">
+                <strong>Voucher Hub</strong>
+                <span>Redeem points and offers</span>
+              </div>
+              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+            <a class="ql-card" routerLink="/loans">
+              <div class="ql-ico" style="background:linear-gradient(135deg,#eef6ff,#dbeafe);color:#0072ce">
+                <mat-icon>account_balance</mat-icon>
+              </div>
+              <div class="ql-info">
+                <strong>Consumer Loans</strong>
+                <span>Instant disbursement to wallet</span>
+              </div>
+              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+            <a class="ql-card" routerLink="/vaults">
+              <div class="ql-ico" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706">
+                <mat-icon>savings</mat-icon>
+              </div>
+              <div class="ql-info">
+                <strong>Savings Vault</strong>
+                <span>Save toward large goals</span>
+              </div>
+              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+            <a class="ql-card" routerLink="/bills/pay">
+              <div class="ql-ico" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);color:#7c3aed">
+                <mat-icon>receipt</mat-icon>
+              </div>
+              <div class="ql-info">
+                <strong>Bill Payments</strong>
+                <span>Electricity, water, internet, tuition</span>
+              </div>
+              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+          </div>
+        </section>
+
         <!-- ===== TỔNG QUAN TÀI CHÍNH ===== -->
         <section class="sec">
-          <h2 class="sec-title" style="margin-bottom:20px;">Tổng quan tài chính</h2>
+          <h2 class="sec-title" style="margin-bottom:20px;">Financial Overview</h2>
           <div class="s-grid stagger-children">
             <div *ngFor="let stat of quickStats" class="s-card">
               <div class="s-top">
@@ -281,11 +293,11 @@ interface FeatureTile {
         <section class="sec">
           <div class="sec-hdr">
             <div>
-              <h2 class="sec-title">Biến động số dư</h2>
-              <p class="sec-sub">7 ngày qua</p>
+              <h2 class="sec-title">Balance Trend</h2>
+              <p class="sec-sub">Last 7 days</p>
             </div>
             <div class="chart-total">
-              <span class="ct-label">Tổng giao dịch</span>
+              <span class="ct-label">Total transactions</span>
               <strong class="ct-val">{{ totalVolume | currency:'VND':'symbol':'1.0-0' }}</strong>
             </div>
           </div>
@@ -318,13 +330,13 @@ interface FeatureTile {
                     <title>{{ p.day }}: {{ p.amount | currency:'VND':'symbol':'1.0-0' }}</title>
                   </circle>
                 </g>
-                <text x="70" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T2</text>
-                <text x="170" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T3</text>
-                <text x="270" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T4</text>
-                <text x="370" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T5</text>
-                <text x="470" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T6</text>
-                <text x="570" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">T7</text>
-                <text x="670" y="218" font-size="12" fill="#94a3b8" text-anchor="end">CN</text>
+                <text x="70" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Mon</text>
+                <text x="170" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Tue</text>
+                <text x="270" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Wed</text>
+                <text x="370" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Thu</text>
+                <text x="470" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Fri</text>
+                <text x="570" y="218" font-size="12" fill="#94a3b8" text-anchor="middle">Sat</text>
+                <text x="670" y="218" font-size="12" fill="#94a3b8" text-anchor="end">Sun</text>
               </svg>
             </div>
           </div>
@@ -334,10 +346,10 @@ interface FeatureTile {
         <section class="sec">
           <div class="sec-hdr">
             <div>
-              <h2 class="sec-title">Giao dịch gần đây</h2>
-              <p class="sec-sub">{{ (recentTransactions?.length || 0) }} giao dịch</p>
+              <h2 class="sec-title">Recent Transactions</h2>
+              <p class="sec-sub">{{ (recentTransactions.length || 0) }} transactions</p>
             </div>
-            <a class="sec-more" routerLink="/transactions/history">Xem tất cả
+            <a class="sec-more" routerLink="/transactions/history">View all
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
@@ -359,74 +371,18 @@ interface FeatureTile {
                   {{ (tx.type === 'TOPUP' ? '+' : '-') + (tx.amount | currency:'VND':'symbol':'1.0-0') }}
                 </span>
                 <span class="tx-status" [class.tx-success]="tx.status === 'COMPLETED'" [class.tx-failed]="tx.status === 'FAILED'">
-                  {{ tx.status === 'COMPLETED' ? 'Thành công' : tx.status === 'FAILED' ? 'Thất bại' : tx.status }}
+                  {{ tx.status === 'COMPLETED' ? 'Completed' : tx.status === 'FAILED' ? 'Failed' : tx.status }}
                 </span>
               </div>
             </div>
             <div *ngIf="(!recentTransactions || recentTransactions.length === 0)" class="tx-empty">
               <mat-icon style="font-size:40px;width:40px;height:40px;color:#f8bbd0">receipt_long</mat-icon>
-              <p>Chưa có giao dịch nào</p>
+              <p>No transactions yet</p>
             </div>
           </div>
         </section>
 
         <!-- ===== TRUY CẬP NHANH (Quick Links) ===== -->
-        <section class="sec quick-links-sec">
-          <div class="sec-hdr">
-            <h2 class="sec-title">Khám phá thêm</h2>
-          </div>
-          <div class="ql-grid stagger-children">
-            <a class="ql-card" routerLink="/vouchers">
-              <div class="ql-ico" style="background:linear-gradient(135deg,#fff0f6,#fce4ec);color:#c20067">
-                <mat-icon>card_giftcard</mat-icon>
-              </div>
-              <div class="ql-info">
-                <strong>Kho Voucher</strong>
-                <span>Đổi điểm thưởng & ưu đãi</span>
-              </div>
-              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </a>
-            <a class="ql-card" routerLink="/loans">
-              <div class="ql-ico" style="background:linear-gradient(135deg,#eef6ff,#dbeafe);color:#0072ce">
-                <mat-icon>account_balance</mat-icon>
-              </div>
-              <div class="ql-info">
-                <strong>Vay tiêu dùng</strong>
-                <span>Giải ngân tức thì về ví</span>
-              </div>
-              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </a>
-            <a class="ql-card" routerLink="/vaults">
-              <div class="ql-ico" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#d97706">
-                <mat-icon>savings</mat-icon>
-              </div>
-              <div class="ql-info">
-                <strong>Savings Vault</strong>
-                <span>Tích lũy cho mục tiêu lớn</span>
-              </div>
-              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </a>
-            <a class="ql-card" routerLink="/bills/pay">
-              <div class="ql-ico" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);color:#7c3aed">
-                <mat-icon>receipt</mat-icon>
-              </div>
-              <div class="ql-info">
-                <strong>Thanh toán hóa đơn</strong>
-                <span>Điện, nước, internet, học phí</span>
-              </div>
-              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </a>
-          </div>
-        </section>
-
       </div>
     </div>
   `,
@@ -535,7 +491,77 @@ interface FeatureTile {
     .sec-more { display:flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:#c20067; text-decoration:none; transition:all .25s ease; }
     .sec-more:hover { gap:12px; color:#e00077; }
 
-    /* ---- TIỆN ÍCH GRID (thoáng, hồng) ---- */
+    .merchant-spotlight-sec { margin-top:-18px; margin-bottom:46px; }
+    .merchant-spotlight {
+      display:grid; grid-template-columns:minmax(280px,.86fr) minmax(0,1.14fr); gap:30px;
+      align-items:center; text-decoration:none; color:#13213a;
+      background:linear-gradient(135deg, #fff0f7 0%, #eef6ff 48%, #ecfdf5 100%);
+      border-radius:28px; padding:30px; overflow:hidden; position:relative;
+      box-shadow:0 24px 62px rgba(194,0,103,.12), 0 10px 28px rgba(0,114,206,.08);
+      border:1px solid #f3d6e5;
+      transition:transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease;
+    }
+    .merchant-spotlight::before {
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(90deg, rgba(194,0,103,.08), transparent 38%, rgba(22,163,74,.08));
+      pointer-events:none;
+    }
+    .merchant-spotlight:hover {
+      transform:translateY(-5px);
+      box-shadow:0 34px 78px rgba(194,0,103,.16), 0 16px 36px rgba(0,114,206,.12);
+    }
+    .merchant-visual { position:relative; min-height:210px; display:flex; align-items:center; justify-content:center; z-index:1; }
+    .merchant-phone {
+      width:min(250px,100%); min-height:184px; border-radius:26px; padding:18px;
+      background:linear-gradient(160deg, #c20067 0%, #ef4b8c 45%, #0072ce 100%);
+      color:#fff; box-shadow:0 18px 42px rgba(194,0,103,.24);
+      display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .merchant-phone-top, .merchant-paid, .merchant-benefits span {
+      display:flex; align-items:center; gap:8px;
+    }
+    .merchant-phone-top { font-size:.78rem; font-weight:800; opacity:.95; }
+    .merchant-phone-top mat-icon, .merchant-paid mat-icon { font-size:19px; width:19px; height:19px; }
+    .merchant-revenue { font-size:1.65rem; font-weight:900; letter-spacing:-.03em; }
+    .merchant-paid {
+      width:max-content; max-width:100%; padding:8px 10px; border-radius:999px;
+      background:rgba(255,255,255,.18); font-size:.74rem; font-weight:800;
+    }
+    .merchant-qr {
+      position:absolute; right:8px; bottom:8px; width:94px; height:94px; border-radius:24px;
+      background:#fff; color:#0d2b5c; border:1px solid #e5edf7;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+      box-shadow:0 18px 36px rgba(13,43,92,.12); font-size:.72rem; font-weight:900;
+    }
+    .merchant-qr mat-icon { font-size:42px; width:42px; height:42px; color:#c20067; }
+    .merchant-copy { position:relative; z-index:1; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+    .merchant-eyebrow {
+      width:max-content; padding:7px 12px; border-radius:999px;
+      background:#ffffff; border:1px solid #f3d6e5;
+      color:#c20067; font-size:.72rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase;
+      margin-bottom:14px; box-shadow:0 8px 20px rgba(194,0,103,.06);
+    }
+    .merchant-copy h2 {
+      margin:0 0 10px; max-width:760px; font-size:1.72rem; line-height:1.16;
+      font-weight:900; letter-spacing:-.025em; color:#0d2b5c;
+    }
+    .merchant-copy p {
+      margin:0; max-width:680px; color:#546179; font-size:.94rem; line-height:1.55; font-weight:600;
+    }
+    .merchant-benefits { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .merchant-benefits span {
+      min-height:34px; padding:0 12px; border-radius:999px; background:#ffffff;
+      border:1px solid #e5edf7; color:#334155; font-size:.75rem; font-weight:800;
+    }
+    .merchant-benefits mat-icon { font-size:17px; width:17px; height:17px; color:#0072ce; }
+    .merchant-actions { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:22px; }
+    .merchant-primary {
+      display:inline-flex; align-items:center; justify-content:center; min-height:42px;
+      padding:0 18px; border-radius:14px; background:#c20067; color:#fff;
+      font-size:.86rem; font-weight:900; box-shadow:0 12px 26px rgba(194,0,103,.2);
+    }
+    .merchant-note { color:#64748b; font-size:.78rem; font-weight:700; }
+/* ---- TIỆN ÍCH GRID (thoáng, hồng) ---- */
     .f-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
     .f-card {
       display:flex; flex-direction:column; align-items:center; gap:16px;
@@ -607,7 +633,7 @@ interface FeatureTile {
     .tx-empty { display:flex; flex-direction:column; align-items:center; gap:12px; padding:48px 24px; color:#a6a6b8; }
 
     /* ---- KHÁM PHÁ THÊM (thoáng) ---- */
-    .quick-links-sec { margin-bottom:0; }
+    .quick-links-sec { margin-bottom:52px; }
     .ql-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
     .ql-card {
       display:flex; align-items:center; gap:16px;
@@ -660,10 +686,16 @@ interface FeatureTile {
 
     /* ---- RWD ---- */
     @media(max-width:1200px) {
+      .merchant-spotlight { grid-template-columns:1fr; }
       .nav-hub-grid { grid-template-columns: repeat(2, 1fr); }
       .f-grid, .s-grid { gap:16px; }
     }
     @media(max-width:768px) {
+      .merchant-spotlight { padding:24px; border-radius:22px; }
+      .merchant-copy h2 { font-size:1.35rem; }
+      .merchant-visual { min-height:190px; }
+      .merchant-phone { min-height:170px; }
+      .merchant-benefits { gap:8px; }
       .nav-hub-grid { grid-template-columns: 1fr; }
     }
     @media(max-width:1024px) {
@@ -720,14 +752,14 @@ export class AccountDashboardComponent implements OnInit {
   rewardPoints: PointsResponse | null = null;
 
   featureTiles: FeatureTile[] = [
-    { icon: 'send', label: 'Chuyển tiền', route: '/transactions/pay', gradient: 'linear-gradient(135deg,#f8bbd0,#c20067)' },
-    { icon: 'add_circle', label: 'Nạp tiền', route: '/accounts/topup', gradient: 'linear-gradient(135deg,#bbdefb,#0072ce)' },
-    { icon: 'receipt', label: 'Thanh toán', route: '/bills/pay', gradient: 'linear-gradient(135deg,#f8bbd0,#a00055)' },
+    { icon: 'send', label: 'Transfer', route: '/transactions/pay', gradient: 'linear-gradient(135deg,#f8bbd0,#c20067)' },
+    { icon: 'add_circle', label: 'Top up', route: '/accounts/topup', gradient: 'linear-gradient(135deg,#bbdefb,#0072ce)' },
+    { icon: 'receipt', label: 'Pay bills', route: '/bills/pay', gradient: 'linear-gradient(135deg,#f8bbd0,#a00055)' },
     { icon: 'savings', label: 'Vault', route: '/vaults', gradient: 'linear-gradient(135deg,#fde68a,#d97706)' },
-    { icon: 'account_balance', label: 'Vay vốn', route: '/loans', gradient: 'linear-gradient(135deg,#bbdefb,#005bb5)' },
+    { icon: 'account_balance', label: 'Loans', route: '/loans', gradient: 'linear-gradient(135deg,#bbdefb,#005bb5)' },
     { icon: 'card_giftcard', label: 'Voucher', route: '/vouchers', gradient: 'linear-gradient(135deg,#f8bbd0,#ec407a)' },
-    { icon: 'swap_horiz', label: 'Lịch sử', route: '/transactions/history', gradient: 'linear-gradient(135deg,#c7d2fe,#6366f1)' },
-    { icon: 'settings', label: 'Cài đặt', route: '/accounts/me', gradient: 'linear-gradient(135deg,#e2e8f0,#64748b)' },
+    { icon: 'swap_horiz', label: 'History', route: '/transactions/history', gradient: 'linear-gradient(135deg,#c7d2fe,#6366f1)' },
+    { icon: 'settings', label: 'Profile', route: '/accounts/me', gradient: 'linear-gradient(135deg,#e2e8f0,#64748b)' },
   ];
 
   quickStats: any[] = [];
@@ -760,19 +792,19 @@ export class AccountDashboardComponent implements OnInit {
     return user.split('@')[0];
   }
 
-  copyAccNumber(): void {
+  copyAcSunumber(): void {
     const num = this.account?.accountNumber || 'PAY0000000001';
     navigator.clipboard.writeText(num);
-    this.snackBar.open('Đã sao chép số tài khoản', 'OK', { duration: 2000 });
+    this.snackBar.open('Account number copied', 'OK', { duration: 2000 });
   }
 
   txLabel(type: string): string {
     switch(type) {
-      case 'TOPUP': return 'Nạp tiền';
-      case 'TRANSFER_IN': return 'Nhận chuyển tiền';
-      case 'TRANSFER_OUT': return 'Chuyển tiền';
-      case 'PAYMENT': return 'Thanh toán';
-      default: return type || 'Giao dịch';
+      case 'TOPUP': return 'Top up';
+      case 'TRANSFER_IN': return 'Transfer received';
+      case 'TRANSFER_OUT': return 'Transfer sent';
+      case 'PAYMENT': return 'Payment';
+      default: return type || 'Transaction';
     }
   }
 
@@ -836,10 +868,10 @@ export class AccountDashboardComponent implements OnInit {
           const totalIn = content.filter(t => t.type === 'TOPUP').reduce((s,t) => s + (t.amount||0), 0);
           const totalOut = content.filter(t => t.type !== 'TOPUP').reduce((s,t) => s + (t.amount||0), 0);
           this.quickStats = [
-            { icon: 'trending_up', label: 'Tổng thu nhập', value: totalIn.toLocaleString('vi-VN') + '₫', change: '+12%', positive: true, bg: '#fff0f6', color: '#c20067' },
-            { icon: 'trending_down', label: 'Tổng chi tiêu', value: totalOut.toLocaleString('vi-VN') + '₫', change: '+5%', positive: false, bg: '#f1f5f9', color: '#64748b' },
-            { icon: 'swap_horiz', label: 'Giao dịch', value: String(this.totalTransactionsCount), change: 'Live', positive: true, bg: '#eef6ff', color: '#0072ce' },
-            { icon: 'account_balance_wallet', label: 'Số dư', value: (this.account?.balance || 0).toLocaleString('vi-VN') + '₫', change: 'Active', positive: true, bg: '#fef3c7', color: '#d97706' },
+            { icon: 'trending_up', label: 'Income', value: totalIn.toLocaleString('vi-VN') + '₫', change: '+12%', positive: true, bg: '#fff0f6', color: '#c20067' },
+            { icon: 'trending_down', label: 'Spending', value: totalOut.toLocaleString('vi-VN') + '₫', change: '+5%', positive: false, bg: '#f1f5f9', color: '#64748b' },
+            { icon: 'swap_horiz', label: 'Transactions', value: String(this.totalTransactionsCount), change: 'Live', positive: true, bg: '#eef6ff', color: '#0072ce' },
+            { icon: 'account_balance_wallet', label: 'Balance', value: (this.account?.balance || 0).toLocaleString('vi-VN') + '₫', change: 'Active', positive: true, bg: '#fef3c7', color: '#d97706' },
           ];
         }
         this.loading = false;

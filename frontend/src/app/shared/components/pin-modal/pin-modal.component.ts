@@ -20,7 +20,7 @@ import { NotificationService } from '../../../core/services/notification.service
             </svg>
           </div>
           <h3 class="pin-title">{{ title }}</h3>
-          <p class="pin-subtitle">Mã xác thực OTP (6 chữ số) đã được gửi đến Email của bạn</p>
+          <p class="pin-subtitle">A 6-digit OTP has been sent to your email</p>
         </div>
 
         <!-- OTP Status Message Banner -->
@@ -31,7 +31,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
         <div class="otp-sent-banner loading-banner" *ngIf="isSendingOtp() && !otpMessage()">
           <span class="banner-icon">⏳</span>
-          <div class="banner-text">Đang tạo & gửi mã OTP về Email...</div>
+          <div class="banner-text">Creating and sending OTP to email...</div>
         </div>
 
         <!-- 6-Digit Real Number Boxes Display -->
@@ -66,7 +66,7 @@ import { NotificationService } from '../../../core/services/notification.service
             [disabled]="resendCountdown() > 0 || isSendingOtp()"
             (click)="requestEmailOtp()"
           >
-            {{ isSendingOtp() ? 'Đang gửi Email...' : (resendCountdown() > 0 ? ('Gửi lại OTP (' + resendCountdown() + 's)') : '🔄 Gửi lại mã OTP mới') }}
+            {{ isSendingOtp() ? 'Sending email...' : (resendCountdown() > 0 ? ('Resend OTP (' + resendCountdown() + 's)') : '🔄 Resend new OTP') }}
           </button>
         </div>
       </div>
@@ -188,7 +188,7 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class PinModalComponent implements OnChanges {
   @Input() isOpen = false;
-  @Input() title = 'Xác thực OTP';
+  @Input() title = 'OTP Verification';
   @Input() pinLength = 6;
   @Input() userEmail: string | null = null;
   @Output() confirmed = new EventEmitter<string>();
@@ -223,15 +223,15 @@ export class PinModalComponent implements OnChanges {
       next: (res: any) => {
         this.isSendingOtp.set(false);
         if (res.success) {
-          this.otpMessage.set(res.message || 'Mã OTP đã được gửi đến Email của bạn.');
+          this.otpMessage.set(res.message || 'OTP has been sent to your email.');
           this.startResendCountdown(60);
         } else {
-          this.errorMessage.set(res.message || 'Không thể gửi OTP.');
+          this.errorMessage.set(res.message || 'Unable to send OTP.');
         }
       },
       error: (err: any) => {
         this.isSendingOtp.set(false);
-        const msg = err.error?.message || 'Lỗi kết nối gửi mã OTP.';
+        const msg = err.error?.message || 'Connection error while sending OTP.';
         this.errorMessage.set(msg);
       }
     });
@@ -285,11 +285,11 @@ export class PinModalComponent implements OnChanges {
           this.confirmed.emit(code);
           this.pinComplete.emit(code);
         } else {
-          this.handleVerifyFailure(res.message || 'Mã OTP không chính xác');
+          this.handleVerifyFailure(res.message || 'Invalid OTP code');
         }
       },
       error: (err: any) => {
-        const msg = err.error?.message || 'Mã OTP không đúng hoặc đã hết hạn';
+        const msg = err.error?.message || 'OTP is invalid or expired';
         this.handleVerifyFailure(msg);
       }
     });

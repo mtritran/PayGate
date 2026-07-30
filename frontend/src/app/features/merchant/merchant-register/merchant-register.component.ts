@@ -20,7 +20,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
         <div class="hero-content">
           <div class="hero-badge">🚀 ENTERPRISE GATEWAY PORTAL</div>
           <h1 class="hero-title">Merchant Partner &amp; API Integration Center</h1>
-          <p class="hero-subtitle">Đăng ký tài khoản doanh nghiệp, quản lý API Key bảo mật và tích hợp Cổng thanh toán PayGate vào website của bạn chỉ với vài dòng code.</p>
+          <p class="hero-subtitle">Register a business account, manage secure API keys, and integrate PayGate checkout into your website with a few lines of code.</p>
         </div>
         
         <!-- Navigation Tabs -->
@@ -30,7 +30,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             [class.active]="activeTab() === 'profile'"
             (click)="activeTab.set('profile')"
           >
-            🏢 Hồ Sơ Doanh Nghiệp
+            🏢 Business Profile
           </button>
           <button
             class="portal-tab"
@@ -44,7 +44,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             [class.active]="activeTab() === 'docs'"
             (click)="activeTab.set('docs')"
           >
-            📖 Tài Liệu Tích Hợp & Code Mẫu
+            📖 Integration Docs & Sample Code
           </button>
         </div>
       </div>
@@ -56,65 +56,65 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="card-header-row">
             <div class="status-badge" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
               <span class="status-dot"></span>
-              TRẠNG THÁI: {{ existingMerchant.status || (existingMerchant.active ? 'ACTIVE' : 'PENDING') }}
+              STATUS: {{ existingMerchant.status || (existingMerchant.active ? 'ACTIVE' : 'PENDING') }}
             </div>
-            <span class="date-text">Ngày đăng ký: {{ existingMerchant.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            <span class="date-text">Registered at: {{ existingMerchant.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
 
           <div class="info-grid">
             <div class="info-item">
-              <span class="info-label">TÊN DOANH NGHIỆP / CỬA HÀNG</span>
+              <span class="info-label">BUSINESS / STORE NAME</span>
               <div class="info-val font-bold">{{ existingMerchant.merchantName }}</div>
             </div>
             <div class="info-item">
-              <span class="info-label">MÃ DOANH NGHIỆP (MERCHANT CODE)</span>
+              <span class="info-label">MERCHANT CODE (MERCHANT CODE)</span>
               <div class="info-val font-mono text-emerald">{{ existingMerchant.merchantCode }}</div>
             </div>
             <div class="info-item">
               <span class="info-label">WEBHOOK NOTIFICATION ENDPOINT</span>
-              <div class="info-val font-mono text-muted">{{ existingMerchant.webhookUrl || 'Chưa cấu hình' }}</div>
+              <div class="info-val font-mono text-muted">{{ existingMerchant.webhookUrl || 'Not configured' }}</div>
             </div>
             <div class="info-item" *ngIf="existingMerchant.accountNumber">
-              <span class="info-label">SỐ VÍ DOANH NGHIỆP PAYGATE</span>
+              <span class="info-label">PAYGATE BUSINESS WALLET</span>
               <code class="wallet-badge font-mono">{{ existingMerchant.accountNumber }}</code>
             </div>
           </div>
 
           <div class="notice-box" [ngClass]="existingMerchant.status?.toLowerCase() || 'pending'">
             <div *ngIf="existingMerchant.status === 'PENDING' || (!existingMerchant.active && existingMerchant.status !== 'REJECTED')">
-              ⏳ <strong>Đang chờ Admin phê duyệt:</strong> Hồ sơ của bạn đang được kiểm tra. Ngay sau khi approved, API Key sẽ hoạt động 100%.
+              ⏳ <strong>Pending Admin approval:</strong> Your profile is under review. Once approved, the API key will become fully active.
             </div>
             <div *ngIf="existingMerchant.status === 'ACTIVE' || existingMerchant.active">
-              ✅ <strong>Đã hoạt động:</strong> Tài khoản Merchant của bạn đã được kích hoạt. Hãy sang tab <strong>API Integration Keys</strong> để lấy API Key tích hợp.
+              ✅ <strong>Active:</strong> Your merchant account is active. Go to the <strong>API Integration Keys</strong> tab to get your integration API key.
             </div>
             <div *ngIf="existingMerchant.status === 'REJECTED'">
-              ❌ <strong>Bị từ chối:</strong> Đơn đăng ký Merchant bị từ chối. Vui lòng liên hệ Admin.
+              ❌ <strong>Rejected:</strong> Your merchant application was rejected. Please contact Admin.
             </div>
           </div>
         </div>
 
         <!-- Registration Form if No Merchant Profile -->
         <div *ngIf="!existingMerchant && !loading" class="portal-card">
-          <div class="card-title">Đăng Ký Tài Khoản Doanh Nghiệp (Merchant Partner)</div>
+          <div class="card-title">Register Business Account (Merchant Partner)</div>
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="portal-form mt-20">
             <div class="form-group">
-              <label class="form-label required">Tên Công Ty / Thương Hiệu Cửa Hàng</label>
-              <input type="text" class="form-control" formControlName="merchantName" placeholder="Ví dụ: Shopee Vietnam Co., Ltd">
+              <label class="form-label required">Company / Store Brand Name</label>
+              <input type="text" class="form-control" formControlName="merchantName" placeholder="Example: Shopee Vietnam Co., Ltd">
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Mã Doanh Nghiệp Duy Nhất (Merchant Code)</label>
-              <input type="text" class="form-control font-mono" formControlName="merchantCode" placeholder="Ví dụ: SHOPEE_STORE">
+              <label class="form-label required">Unique Merchant Code (Merchant Code)</label>
+              <input type="text" class="form-control font-mono" formControlName="merchantCode" placeholder="Example: SHOPEE_STORE">
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Webhook Callback URL (Nhận thông báo tự động)</label>
-              <input type="url" class="form-control font-mono" formControlName="webhookUrl" placeholder="Ví dụ: https://api.shopee.vn/v1/webhooks/paygate">
+              <label class="form-label required">Webhook Callback URL</label>
+              <input type="url" class="form-control font-mono" formControlName="webhookUrl" placeholder="Example: https://api.shopee.vn/v1/webhooks/paygate">
             </div>
 
             <button type="submit" class="btn-submit-emerald" [disabled]="registerForm.invalid || submitting">
               <svg *ngIf="submitting" class="spinner-xs-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
-              {{ submitting ? 'Đang gửi đăng ký...' : 'Gửi Đơn Đăng Ký Merchant  →' }}
+              {{ submitting ? 'Submitting application...' : 'Submit Merchant Application  →' }}
             </button>
           </form>
         </div>
@@ -126,19 +126,19 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="card-title-group">
             <div class="icon-box">🔑</div>
             <div>
-              <h3>Khóa Tích Hợp API (Merchant Credentials)</h3>
-              <p class="card-desc">API Key này bảo mật cao và đại diện cho doanh nghiệp của bạn khi khởi tạo giao dịch thanh toán.</p>
+              <h3>API Integration Keys (Merchant Credentials)</h3>
+              <p class="card-desc">This secure API key represents your business when creating payment transactions.</p>
             </div>
           </div>
 
           <div *ngIf="!existingMerchant" class="warning-banner">
-            ⚠️ Bạn chưa đăng ký tài khoản Merchant. Vui lòng đăng ký ở tab <strong>Hồ Sơ Doanh Nghiệp</strong> trước.
+            ⚠️ Bạn chưa đăng ký tài loans Merchant. Please đăng ký ở tab <strong>Business Profile</strong> tab first.
           </div>
 
           <div *ngIf="existingMerchant" class="credentials-container mt-20">
             <!-- Merchant Code Field -->
             <div class="cred-field">
-              <label class="cred-label">MERCHANT CODE (Mã định danh):</label>
+              <label class="cred-label">MERCHANT CODE (Identifier):</label>
               <div class="input-copy-group">
                 <input type="text" readonly [value]="existingMerchant.merchantCode" class="cred-input font-mono">
                 <button class="btn-copy" (click)="copyText(existingMerchant.merchantCode)">📋 Copy</button>
@@ -147,7 +147,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 
             <!-- API Key Field -->
             <div class="cred-field mt-18">
-              <label class="cred-label">SECRET API KEY (Khóa kết nối bảo mật):</label>
+              <label class="cred-label">SECRET API KEY (Secure connection key):</label>
               <div class="input-copy-group">
                 <input
                   [type]="showRawKey() ? 'text' : 'password'"
@@ -156,13 +156,13 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                   class="cred-input font-mono api-key-highlight"
                 >
                 <button class="btn-toggle" (click)="showRawKey.set(!showRawKey())">
-                  {{ showRawKey() ? '👁️ Ẩn Key' : '👁️ Hiển Thị Key' }}
+                  {{ showRawKey() ? '👁️ Hide Key' : '👁️ Show Key' }}
                 </button>
                 <button class="btn-copy primary" [disabled]="!rawApiKey()" (click)="copyText(rawApiKey())">
                   📋 Copy API Key
                 </button>
               </div>
-              <p class="key-security-note">🔒 <strong>Bảo mật:</strong> Lưu trữ API Key này trên Server của bạn (file <code>.env</code>). Không chia sẻ công khai!</p>
+              <p class="key-security-note">🔒 <strong>Security:</strong> Store this API key on your server (file <code>.env</code>). Do not share it publicly!</p>
             </div>
 
             <!-- API Gateway Endpoint Info Box -->
@@ -171,7 +171,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                 <span class="http-badge post">POST</span>
                 <span class="endpoint-url">http://localhost:8080/api/v1/checkout/create</span>
               </div>
-              <p class="endpoint-desc">Endpoint chính dùng để gọi khởi tạo đơn hàng thanh toán từ Server của bạn.</p>
+              <p class="endpoint-desc">Primary endpoint used by your server to create payment orders.</p>
             </div>
           </div>
         </div>
@@ -183,8 +183,8 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <div class="card-title-group">
             <div class="icon-box">🚀</div>
             <div>
-              <h3>Tài Liệu Tích Hợp Chi Tiết</h3>
-              <p class="card-desc">Tài liệu hướng dẫn kỹ thuật — cấu trúc Request, Response, mã lỗi và luồng xử lý giao dịch. Tích hợp PayGate vào website của bạn trong 5 phút.</p>
+              <h3>Detailed Integration Docs</h3>
+              <p class="card-desc">Technical guide — request and response structure, error codes, and transaction flow. Integrate PayGate into your website in 5 minutes.</p>
             </div>
           </div>
 
@@ -201,7 +201,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
               <div class="ov-icon ov-icon-auth">🔐</div>
               <div>
                 <strong>Authentication</strong>
-                <span>API Key (truyền trong body)</span>
+                <span>API Key (sent in request body)</span>
               </div>
             </div>
             <div class="overview-item">
@@ -215,7 +215,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
               <div class="ov-icon ov-icon-time">⏱️</div>
               <div>
                 <strong>Session Timeout</strong>
-                <span>15 phút kể từ khi tạo paymentUrl</span>
+                <span>15 minutes after paymentUrl creation</span>
               </div>
             </div>
           </div>
@@ -225,14 +225,14 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="guide-header">
               <span class="guide-step-num">1</span>
               <div>
-                <h4>Hướng Dẫn Tích Hợp Nhanh (5 bước)</h4>
-                <p>Thực hiện tuần tự theo các bước dưới đây để hoàn tất tích hợp</p>
+                <h4>Quick Integration Guide (5 bước)</h4>
+                <p>Follow these steps to complete the integration</p>
               </div>
             </div>
             <div class="guide-steps">
               <div class="guide-step">
                 <div class="gs-badge">B1</div>
-                <div class="gs-text"><strong>Đăng ký Merchant</strong> — Điền form ở tab <strong>Hồ Sơ Doanh Nghiệp</strong>, chờ Admin phê duyệt.</div>
+                <div class="gs-text"><strong>Đăng ký Merchant</strong> — Fill in the form in <strong>Business Profile</strong>, wait for Admin approval.</div>
               </div>
               <div class="guide-step">
                 <div class="gs-badge">B2</div>
@@ -259,7 +259,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="workflow-steps">
               <div class="workflow-card">
                 <div class="step-badge">BƯỚC 1</div>
-                <h4>1. Khởi Tạo Đơn Hàng</h4>
+                <h4>1. Khởi Create Đơn Hàng</h4>
                 <p>Server của bạn gửi <code>POST /api/v1/checkout/create</code> kèm <code>apiKey</code>, <code>amount</code>, <code>orderId</code> và <code>returnUrl</code> để nhận <code>paymentUrl</code>.</p>
                 <div class="wf-detail">→ Nhận về token CHK_... và paymentUrl có thời hạn 15 phút</div>
               </div>
@@ -274,7 +274,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
               <div class="workflow-card">
                 <div class="step-badge">BƯỚC 3</div>
                 <h4>3. Xác Thực & Thanh Toán</h4>
-                <p>Khách hàng kiểm tra thông tin đơn hàng, đăng nhập Ví PayGate, nhập mã OTP 6 số gửi qua Gmail để xác thực giao dịch.</p>
+                <p>Customer kiểm tra thông tin đơn hàng, đăng nhập Ví PayGate, nhập mã OTP 6 số gửi qua Gmail để xác thực giao dịch.</p>
                 <div class="wf-detail">→ OTP có hiệu lực 5 phút, được gửi đến email đăng ký</div>
               </div>
 
@@ -289,7 +289,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 
           <!-- Parameter Specification Table -->
           <div class="docs-section mt-28">
-            <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Tạo Đơn Hàng</h4>
+            <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Create Đơn Hàng</h4>
             <p class="docs-desc">Gửi POST request đến <code class="code-inline">http://localhost:8080/api/v1/checkout/create</code> với body JSON như sau:</p>
             <div class="table-responsive">
               <table class="docs-table">
@@ -312,19 +312,19 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                     <td><code>orderId</code></td>
                     <td><code>String</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Mã đơn hàng duy nhất trên hệ thống của bạn — không được trùng lặp. VD: <code>ORDER_998811</code>, <code>INV_202407_001</code></td>
+                    <td>Order ID duy nhất trên hệ thống của bạn — không được trùng lặp. VD: <code>ORDER_998811</code>, <code>INV_202407_001</code></td>
                   </tr>
                   <tr>
                     <td><code>amount</code></td>
                     <td><code>Number</code></td>
                     <td><span class="badge-req">Bắt buộc</span></td>
-                    <td>Số tiền VND, tối thiểu <code>1,000</code>. Không hỗ trợ số thập phân. VD: <code>250000</code> = 250,000₫</td>
+                    <td>Amount VND, tối thiểu <code>1,000</code>. Không hỗ trợ số thập phân. VD: <code>250000</code> = 250,000₫</td>
                   </tr>
                   <tr>
                     <td><code>description</code></td>
                     <td><code>String</code></td>
                     <td><span class="badge-opt">Tùy chọn</span></td>
-                    <td>Mô tả hiển thị cho khách khi thanh toán. Max 255 ký tự. VD: <code>"Thanh toán đơn hàng Shopee"</code></td>
+                    <td>Mô tả hiển thị cho khách khi thanh toán. Max 255 ký tự. VD: <code>"Payment đơn hàng Shopee"</code></td>
                   </tr>
                   <tr>
                     <td><code>returnUrl</code></td>
@@ -345,7 +345,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
               <span class="code-label success-label">✅ Response thành công (HTTP 200)</span>
               <pre class="code-box dark-soft-box"><code>&#123;
   <span class="json-key">"success"</span>: <span class="json-bool">true</span>,
-  <span class="json-key">"message"</span>: <span class="json-str">"Tạo phiên thanh toán thành công"</span>,
+  <span class="json-key">"message"</span>: <span class="json-str">"Create phiên thanh toán thành công"</span>,
   <span class="json-key">"data"</span>: &#123;
     <span class="json-key">"token"</span>: <span class="json-str">"CHK_3EF6DF2E73B9469093B97BFD47177875"</span>,
     <span class="json-key">"paymentUrl"</span>: <span class="json-str">"http://localhost:4200/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875"</span>,
@@ -355,22 +355,22 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 &#125;</code></pre>
             </div>
             <div class="response-fields mt-16">
-              <div class="rf-item"><code>success</code> — <span>Luôn là <code>true</code> nếu request hợp lệ</span></div>
-              <div class="rf-item"><code>data.token</code> — <span>Mã phiên giao dịch duy nhất, dùng để truy vấn trạng thái sau này</span></div>
-              <div class="rf-item"><code>data.paymentUrl</code> — <span>Link redirect khách hàng (có hiệu lực trong 15 phút)</span></div>
-              <div class="rf-item"><code>data.expiresAt</code> — <span>Thời điểm hết hạn của paymentUrl (ISO 8601)</span></div>
+              <div class="rf-item"><code>success</code> — <span>Always <code>true</code> when the request is valid</span></div>
+              <div class="rf-item"><code>data.token</code> — <span>Unique session token used for later status lookup</span></div>
+              <div class="rf-item"><code>data.paymentUrl</code> — <span>Customer redirect link (valid for 15 minutes)</span></div>
+              <div class="rf-item"><code>data.expiresAt</code> — <span>paymentUrl expiry timestamp (ISO 8601)</span></div>
             </div>
           </div>
 
           <!-- Error Response -->
           <div class="docs-section mt-24">
-            <h4 class="section-subtitle">❌ Cấu Trúc Lỗi</h4>
-            <p class="docs-desc">Khi có lỗi, API trả về HTTP 4xx / 5xx với body:</p>
+            <h4 class="section-subtitle">❌ Error Structure</h4>
+            <p class="docs-desc">When an error occurs, the API returns HTTP 4xx / 5xx with this body:</p>
             <div class="code-with-label">
-              <span class="code-label error-label">❌ Response Lỗi (HTTP 4xx / 5xx)</span>
+              <span class="code-label error-label">❌ Error Response (HTTP 4xx / 5xx)</span>
               <pre class="code-box dark-soft-box error-code-box"><code>&#123;
   <span class="json-key">"success"</span>: <span class="json-bool">false</span>,
-  <span class="json-key">"message"</span>: <span class="json-str">"API Key của Merchant không hợp lệ"</span>,
+  <span class="json-key">"message"</span>: <span class="json-str">"Invalid merchant API key"</span>,
   <span class="json-key">"timestamp"</span>: <span class="json-str">"2026-07-28T16:15:00.000"</span>
 &#125;</code></pre>
             </div>
@@ -378,46 +378,46 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
 
           <!-- Error Codes Specification Table -->
           <div class="docs-section mt-28">
-            <h4 class="section-subtitle">⚠️ Bảng Mã Lỗi & Cách Xử Lý</h4>
+            <h4 class="section-subtitle">⚠️ Error Codes & Handling</h4>
             <div class="table-responsive">
               <table class="docs-table">
                 <thead>
                   <tr>
-                    <th>Lỗi (Error Message)</th>
-                    <th>Nguyên nhân</th>
-                    <th>Giải pháp</th>
+                    <th>Error Message</th>
+                    <th>Cause</th>
+                    <th>Solution</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>API Key không hợp lệ</code></td>
-                    <td>apiKey sai hoặc Merchant chưa active</td>
-                    <td>Kiểm tra lại API Key ở tab API Keys, đảm bảo Merchant đã được Admin duyệt</td>
+                    <td><code>Invalid API key</code></td>
+                    <td>apiKey is wrong or Merchant is not active</td>
+                    <td>Check the API key and make sure the Merchant has been approved</td>
                   </tr>
                   <tr>
-                    <td><code>Merchant đang bị khóa</code></td>
-                    <td>Merchant chưa được phê duyệt hoặc đã bị vô hiệu hóa</td>
-                    <td>Liên hệ Admin PayGate để kiểm tra trạng thái</td>
+                    <td><code>Merchant is locked</code></td>
+                    <td>Merchant is not approved or has been disabled</td>
+                    <td>Contact PayGate Admin to check status</td>
                   </tr>
                   <tr>
-                    <td><code>Số tiền tối thiểu 1,000 VND</code></td>
+                    <td><code>Minimum amount is 1,000 VND</code></td>
                     <td>amount &lt; 1000</td>
-                    <td>Đảm bảo amount &gt;= 1000 VND</td>
+                    <td>Make sure amount &gt;= 1000 VND</td>
                   </tr>
                   <tr>
-                    <td><code>orderId đã tồn tại</code></td>
-                    <td>orderId bị trùng với đơn hàng trước đó</td>
-                    <td>Sinh orderId mới (có thể thêm timestamp hoặc ngẫu nhiên)</td>
+                    <td><code>orderId already exists</code></td>
+                    <td>orderId duplicates a previous order</td>
+                    <td>Generate a new orderId (you can add a timestamp or random suffix)</td>
                   </tr>
                   <tr>
-                    <td><code>Phiên thanh toán đã hết hạn</code></td>
-                    <td>Quá 15 phút kể từ khi tạo</td>
-                    <td>Tạo payment URL mới cho khách hàng</td>
+                    <td><code>Payment session expired</code></td>
+                    <td>More than 15 minutes after creation</td>
+                    <td>Create a new payment URL for the customer</td>
                   </tr>
                   <tr>
-                    <td><code>Return URL không hợp lệ</code></td>
-                    <td>URL không đúng định dạng hoặc không phải http/https</td>
-                    <td>Kiểm tra lại returnUrl, phải bắt đầu bằng http:// hoặc https://</td>
+                    <td><code>Invalid return URL</code></td>
+                    <td>URL is malformed or not http/https</td>
+                    <td>Check returnUrl; it must start with http:// or https://</td>
                   </tr>
                 </tbody>
               </table>
@@ -444,29 +444,29 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="tip-card">
               <div class="tip-icon">🔒</div>
               <div class="tip-body">
-                <strong>Bảo mật API Key</strong>
-                <p>Không bao giờ nhúng API Key trực tiếp trong code frontend (JavaScript trình duyệt). Luôn lưu trữ ở server-side (file .env, environment variables).</p>
+                <strong>Security API Key</strong>
+                <p>Never embed API keys directly in frontend code (browser JavaScript). Always store it server-side (file .env, environment variables).</p>
               </div>
             </div>
             <div class="tip-card">
               <div class="tip-icon">🔄</div>
               <div class="tip-body">
-                <strong>Idempotency & Trùng lặp</strong>
-                <p>Luôn tạo orderId duy nhất cho mỗi đơn hàng. Nếu cần retry, sử dụng cùng orderId — hệ thống PayGate tự động chống trùng lặp giao dịch.</p>
+                <strong>Idempotency & Duplicates</strong>
+                <p>Always create a unique orderId for each order. If retrying, reuse the same orderId; PayGate prevents duplicate transactions.</p>
               </div>
             </div>
             <div class="tip-card">
               <div class="tip-icon">⏰</div>
               <div class="tip-body">
-                <strong>Xử lý timeout</strong>
-                <p>Payment URL chỉ có hiệu lực 15 phút. Nếu khách hàng không thanh toán kịp, tạo URL mới. Kiểm tra <code>expiresAt</code> trong response để hiển thị thông báo cho khách.</p>
+                <strong>Timeout handling</strong>
+                <p>Payment URLs are valid for 15 minutes. Create a new URL if the customer does not pay in time. Check <code>expiresAt</code> in the response to notify the customer.</p>
               </div>
             </div>
             <div class="tip-card">
               <div class="tip-icon">📞</div>
               <div class="tip-body">
                 <strong>Webhook Callback</strong>
-                <p>Nếu Merchant có cấu hình Webhook URL, PayGate sẽ gửi POST thông báo realtime khi giao dịch hoàn tất (thành công hoặc thất bại).</p>
+                <p>If the Merchant has a Webhook URL, PayGate sends a realtime POST when the transaction completes (successfully or unsuccessfully).</p>
               </div>
             </div>
           </div>
@@ -475,11 +475,11 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="swagger-info">
               <span class="swagger-icon">⚡</span>
               <div>
-                <strong>Tài liệu API Interactive — Swagger UI</strong>
-                <p>Thử nghiệm API trực tiếp trên giao diện Swagger chuẩn OpenAPI 3.0 — kiểm tra request/response ngay trên trình duyệt</p>
+                <strong>Interactive API Docs - Swagger UI</strong>
+                <p>Test APIs directly in the OpenAPI 3.0 Swagger UI and inspect request/response in the browser</p>
               </div>
             </div>
-            <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-open-swagger">Mở Swagger UI ↗</a>
+            <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-open-swagger">Open Swagger UI ↗</a>
           </div>
         </div>
       </div>
@@ -734,7 +734,7 @@ export class MerchantRegisterComponent implements OnInit {
   copyText(val: string): void {
     if (!val) return;
     navigator.clipboard.writeText(val);
-    this.notification.success('Đã sao chép vào bộ nhớ tạm!');
+    this.notification.success('Copied to clipboard!');
   }
 
   getCodeSnippet(): string {
@@ -821,14 +821,14 @@ print("Redirecting to:", payment_url)`;
       next: (res: any) => {
         this.submitting = false;
         if (res && res.data) {
-          this.notification.success('Gửi yêu cầu đăng ký Merchant thành công!');
+          this.notification.success('Merchant registration request submitted!');
           this.existingMerchant = res.data;
           this.loadApiKey();
         }
       },
       error: (err: any) => {
         this.submitting = false;
-        this.notification.error(err?.error?.message || 'Không thể đăng ký Merchant');
+        this.notification.error(err?.error?.message || 'Unable to register Merchant');
       }
     });
   }

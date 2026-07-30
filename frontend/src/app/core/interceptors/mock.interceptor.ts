@@ -258,7 +258,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         status: 404,
         body: {
           success: false,
-          message: 'Không tìm thấy tài khoản nhận tiền với Số điện thoại / Số tài khoản chính xác này.'
+          message: 'Recipient account not found for this exact phone number / account number.'
         }
       })).pipe(delay(200));
     }
@@ -323,7 +323,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
           id: 4,
           merchantCode: 'AN_BINH_STORE',
           taxCode: '0109998881',
-          merchantName: 'Hộ Kinh Doanh An Bình Store (Doanh nghiệp nhỏ)',
+          merchantName: 'An Binh Store Small Business',
           representativeName: 'Nguyen Van An',
           contactPhone: '0988776655',
           contactEmail: 'anbinh@smallshop.vn',
@@ -361,7 +361,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
       const approved = merchantsList.find((m: any) => m.id === approveId);
       return of(new HttpResponse({
         status: 200,
-        body: { success: true, message: 'Phê duyệt doanh nghiệp thành công!', data: approved }
+        body: { success: true, message: 'Business approved successfully!', data: approved }
       })).pipe(delay(200));
     }
 
@@ -379,7 +379,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
       const rejected = merchantsList.find((m: any) => m.id === rejectId);
       return of(new HttpResponse({
         status: 200,
-        body: { success: true, message: 'Đã từ chối đơn đăng ký doanh nghiệp!', data: rejected }
+        body: { success: true, message: 'Business registration rejected!', data: rejected }
       })).pipe(delay(200));
     }
 
@@ -408,7 +408,7 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
         status: 201,
         body: {
           success: true,
-          message: 'Đăng ký doanh nghiệp thành công! Đang chờ Admin xét duyệt.',
+          message: 'Business registration submitted. Pending Admin review.',
           data: newMerch
         }
       })).pipe(delay(250));

@@ -56,7 +56,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
               <path d="M14 14h3v3m0 4h4m-4-4v4m-7 0h3"/>
             </svg>
             <span class="tab-label-block">
-              <strong>Nhận qua QR</strong>
+              <strong>Receive via QR</strong>
               <small>Generate QR for others to scan</small>
             </span>
           </button>
@@ -105,12 +105,12 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             </div>
 
             <div class="accept-amount-block">
-              <span class="accept-amount-label">Số tiền chuyển</span>
+              <span class="accept-amount-label">Transfer amount</span>
               <strong class="accept-amount-value">{{ paymentForm.value.amount | currency:'VND':'symbol':'1.0-0' }}</strong>
             </div>
 
             <div class="accept-note-row" *ngIf="paymentForm.value.description">
-              <span class="accept-note-label">Lời nhắn:</span>
+              <span class="accept-note-label">Message:</span>
               <span class="accept-note-val">{{ paymentForm.value.description }}</span>
             </div>
 
@@ -126,7 +126,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
 
             <div class="accept-actions">
               <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" [disabled]="submitting">
-                Chỉnh sửa
+                Edit
               </button>
               <button
                 type="button"
@@ -148,7 +148,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             {{ lookupError }}
             <button type="button" class="btn-cancel-link" (click)="exitAcceptMode()" style="margin-top: 12px; display: inline-block;">
-              Về form nhập tay
+              Back to manual form
             </button>
           </div>
         </div>
@@ -394,7 +394,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                  </svg> Chia sẻ link
+                  </svg> Share link
                 </button>
                 <button type="button" class="btn-download" (click)="downloadQr()">
                   <!-- Download icon -->
@@ -486,7 +486,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <!-- OTP Modal for Transaction Security -->
       <app-pin-modal
         [isOpen]="showPinModal"
-        [title]="'Xác thực OTP Chuyển tiền'"
+        [title]="'OTP Verification Transfer'"
         (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal = false"
       ></app-pin-modal>
@@ -1130,10 +1130,10 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   sharePaymentLink(): void {
     const link = this.getMyPaymentLink();
     if (!link) return;
-    const title = `Chuyển tiền cho ${this.myAccountName || this.myAccountNumber}`;
+    const title = `Transfer cho ${this.myAccountName || this.myAccountNumber}`;
     const text = this.myQrCustomAmount > 0
-      ? `Gửi ${this.myQrCustomAmount.toLocaleString('vi-VN')} VND qua PayGate`
-      : `Chuyển tiền qua PayGate`;
+      ? `Send ${this.myQrCustomAmount.toLocaleString('vi-VN')} VND via PayGate`
+      : `Transfer qua PayGate`;
     if ((navigator as any).share) {
       (navigator as any).share({ title, text, url: link }).catch(() => {});
     } else {
