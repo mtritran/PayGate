@@ -11,6 +11,7 @@ import com.training.paygate.entity.LedgerEntry;
 import com.training.paygate.entity.Merchant;
 import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
+import com.training.paygate.enums.AccountStatus;
 import com.training.paygate.enums.EntryType;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.Role;
@@ -27,6 +28,7 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.LoyaltyService;
+import com.training.paygate.service.NotificationService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +46,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.training.paygate.service.NotificationService;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -62,6 +62,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
     private final LoyaltyService loyaltyService;
     private final NotificationService notificationService;
+    private final AsyncSettlementService asyncSettlementService;
 
     @Override
     @Transactional
@@ -125,135 +126,50 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
 
-        // 5. Lock accounts in ascending ID order to prevent deadlock
-        Long firstId = Math.min(sourceAccount.getId(), destAccount.getId());
-        Long secondId = Math.max(sourceAccount.getId(), destAccount.getId());
+        if (sourceAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("Source account is not active");
+        }
+        if (destAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("Destination account is not active");
+        }
+        if (sourceAccount.getBalance().compareTo(request.amount()) < 0) {
+            throw new InsufficientBalanceException(
+                    "Insufficient balance in account: " + sourceAccount.getAccountNumber());
+        }
 
-        Account firstLocked = accountRepository.findByIdForUpdate(firstId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", firstId));
-        Account secondLocked = accountRepository.findByIdForUpdate(secondId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
-
-        Account lockedSource = firstLocked.getId().equals(sourceAccount.getId()) ? firstLocked : secondLocked;
-        Account lockedDest = firstLocked.getId().equals(destAccount.getId()) ? firstLocked : secondLocked;
-
-        // 5.1 Re-check idempotency key AFTER acquiring locks to prevent concurrent
-        // duplicate payments
+        // 5. Re-check idempotency key AFTER validating the source/destination accounts to prevent concurrent duplicates
         Transaction concurrentTx = transactionRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null);
         if (concurrentTx != null) {
             idempotencyCacheService.set(request.idempotencyKey(), concurrentTx.getTransactionRef());
             return mapToResponse(concurrentTx);
         }
 
-        // 5.2 Validate account active status
-        if (lockedSource.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
-            throw new BadRequestException("Source account is not active");
-        }
-        if (lockedDest.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
-            throw new BadRequestException("Destination account is not active");
-        }
-
-        // 6. Validate balance
-        if (lockedSource.getBalance().compareTo(request.amount()) < 0) {
-            throw new InsufficientBalanceException(
-                    "Insufficient balance in account: " + lockedSource.getAccountNumber());
-        }
-
-        // 7. Update balances
-        lockedSource.setBalance(lockedSource.getBalance().subtract(request.amount()));
-        lockedDest.setBalance(lockedDest.getBalance().add(request.amount()));
-
-        accountRepository.save(lockedSource);
-        accountRepository.save(lockedDest);
-
-        // 8. Save Transaction
+        // 6. Save Transaction as pending and dispatch settlement to background
         Transaction transaction = Transaction.builder()
                 .transactionRef("TXN-PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .idempotencyKey(request.idempotencyKey())
-                .sourceAccountId(lockedSource.getId())
-                .destAccountId(lockedDest.getId())
+                .sourceAccountId(sourceAccount.getId())
+                .destAccountId(destAccount.getId())
                 .amount(request.amount())
                 .currency("VND")
                 .type(TransactionType.PAYMENT)
-                .status(TransactionStatus.COMPLETED)
+                .status(TransactionStatus.PENDING)
                 .merchantId(request.merchantId())
                 .description(request.description())
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        if (lockedSource.getOwnerType() == OwnerType.USER && lockedDest.getOwnerType() == OwnerType.MERCHANT) {
-            loyaltyService.earnPoints(user.getId(), transaction.getAmount(), transaction.getTransactionRef());
-        }
-
-        // 9. Save Ledger Entries
-        LedgerEntry debitEntry = LedgerEntry.builder()
-                .transactionId(transaction.getId())
-                .accountId(lockedSource.getId())
-                .entryType(EntryType.DEBIT)
-                .amount(request.amount())
-                .balanceAfter(lockedSource.getBalance())
-                .build();
-
-        LedgerEntry creditEntry = LedgerEntry.builder()
-                .transactionId(transaction.getId())
-                .accountId(lockedDest.getId())
-                .entryType(EntryType.CREDIT)
-                .amount(request.amount())
-                .balanceAfter(lockedDest.getBalance())
-                .build();
-
-        ledgerEntryRepository.save(debitEntry);
-        ledgerEntryRepository.save(creditEntry);
-
-        // 10. Write to Idempotency Cache
+        // 7. Write to Idempotency Cache
         idempotencyCacheService.set(request.idempotencyKey(), transaction.getTransactionRef());
 
-        // 11. Evict balances from cache AFTER successful transaction commit
-        final Long sourceIdToEvict = lockedSource.getId();
-        final Long destIdToEvict = lockedDest.getId();
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    balanceCacheService.evictBalance(sourceIdToEvict);
-                    balanceCacheService.evictBalance(destIdToEvict);
-                }
-            });
-        } else {
-            balanceCacheService.evictBalance(sourceIdToEvict);
-            balanceCacheService.evictBalance(destIdToEvict);
-        }
-
-        // 12. Publish Completed Event to RabbitMQ (triggers both WebhookConsumer and
-        // NotificationConsumer via RabbitMQ topic routing)
-        PaymentCompletedEvent event = new PaymentCompletedEvent(
-                transaction.getTransactionRef(),
-                request.merchantId(),
-                merchantWebhookUrl,
-                transaction.getAmount(),
-                transaction.getStatus().name(),
-                user.getEmail(),
-                user.getUsername(),
-                lockedDest.getAccountNumber(),
-                transaction.getDescription(),
-                transaction.getType(),
-                user.getId());
+        // 8. Auto-save beneficiary contact if transferring to a user account
         try {
-            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
-            log.info(
-                    "[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
-        } catch (Exception e) {
-            log.warn("Could not publish PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
-        }
-
-        // Auto-save beneficiary contact if transferring to a user account
-        try {
-            if (lockedDest.getOwnerType() == OwnerType.USER) {
-                User destUser = userRepository.findById(lockedDest.getOwnerId()).orElse(null);
+            if (destAccount.getOwnerType() == OwnerType.USER) {
+                User destUser = userRepository.findById(destAccount.getOwnerId()).orElse(null);
                 if (destUser != null) {
                     beneficiaryService.autoSaveBeneficiary(
                             user.getId(),
-                            lockedDest.getAccountNumber(),
+                            destAccount.getAccountNumber(),
                             destUser.getFullName() != null ? destUser.getFullName() : destUser.getUsername(),
                             destUser.getId());
                 }
@@ -262,24 +178,8 @@ public class TransactionServiceImpl implements TransactionService {
             log.warn("Auto save beneficiary failed: {}", be.getMessage());
         }
 
-        // Save real-time notifications
-        try {
-            // Notify Sender
-            String senderMsg = String.format("Tài khoản của bạn đã bị trừ -%,.0f VND. Giao dịch: %s. Nội dung: %s",
-                    transaction.getAmount().doubleValue(), transaction.getTransactionRef(),
-                    transaction.getDescription() != null ? transaction.getDescription() : "");
-            notificationService.createNotification(user.getId(), "Giao dịch chuyển tiền", senderMsg, "PAYMENT_SENT");
-
-            // Notify Recipient if it's a User account
-            if (lockedDest.getOwnerType() == OwnerType.USER) {
-                String recipientMsg = String.format("Tài khoản của bạn đã được cộng +%,.0f VND từ %s. Giao dịch: %s. Nội dung: %s",
-                        transaction.getAmount().doubleValue(), user.getUsername(), transaction.getTransactionRef(),
-                        transaction.getDescription() != null ? transaction.getDescription() : "");
-                notificationService.createNotification(lockedDest.getOwnerId(), "Nhận được tiền", recipientMsg, "PAYMENT_RECEIVED");
-            }
-        } catch (Exception ne) {
-            log.error("Failed to create real-time notification: {}", ne.getMessage());
-        }
+        // 9. Dispatch settlement asynchronously
+        asyncSettlementService.settlePaymentAsync(transaction.getId());
 
         return mapToResponse(transaction);
     }

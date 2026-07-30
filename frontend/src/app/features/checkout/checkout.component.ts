@@ -107,7 +107,8 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
               </div>
 
               <!-- Action Buttons -->
-              <div class="checkout-actions">
+              <!-- Action Buttons -->
+              <div class="checkout-actions" *ngIf="!processing()">
                 <button
                   type="button"
                   class="btn-cancel"
@@ -118,11 +119,17 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
                 <button
                   type="button"
                   class="btn-pay-now"
-                  [disabled]="isBalanceInsufficient() || processing()"
+                  [disabled]="isBalanceInsufficient()"
                   (click)="openOtpModal()"
                 >
-                  {{ processing() ? 'Đang xử lý...' : 'Xác thực OTP & Thanh toán' }}
+                  Xác thực OTP & Thanh toán
                 </button>
+              </div>
+
+              <!-- Processing Indicator -->
+              <div *ngIf="processing()" class="processing-indicator" style="margin-top: 20px; text-align: center; background: #ecfdf5; border: 1.5px dashed #34d399; border-radius: 16px; padding: 20px;">
+                <div class="spinner" style="width: 28px; height: 28px; border-width: 2px; margin-bottom: 8px;"></div>
+                <p style="font-size: 0.85rem; font-weight: 700; color: #047857; margin: 0;">Đang xử lý trừ tiền bất đồng bộ... Vui lòng giữ kết nối.</p>
               </div>
             </div>
           </div>
@@ -341,17 +348,43 @@ export class CheckoutComponent implements OnInit {
 
     this.checkoutService.processCheckout(this.token(), otpCode).subscribe({
       next: (res: any) => {
-        this.processing.set(false);
-        if (res.data) {
-          this.notify.success('Thanh toán thành công!');
-          setTimeout(() => {
-            window.location.href = res.data.redirectUrl;
-          }, 1000);
-        }
+        // Start polling checkout session status
+        const pollInterval = setInterval(() => {
+          this.checkoutService.getCheckoutInfo(this.token()).subscribe({
+            next: (infoRes: any) => {
+              const currentStatus = infoRes.data?.status;
+              if (currentStatus === 'SUCCESS') {
+                clearInterval(pollInterval);
+                this.processing.set(false);
+                this.notify.success('Thanh toán thành công!');
+                
+                // Redirect user to merchant returnUrl
+                const finalRedirectUrl = infoRes.data.returnUrl + 
+                  (infoRes.data.returnUrl.includes('?') ? '&' : '?') + 
+                  'status=SUCCESS&orderId=' + infoRes.data.orderId + 
+                  '&transactionRef=' + infoRes.data.transactionRef;
+                
+                setTimeout(() => {
+                  window.location.href = finalRedirectUrl;
+                }, 1500);
+              } else if (currentStatus === 'FAILED' || currentStatus === 'EXPIRED') {
+                clearInterval(pollInterval);
+                this.processing.set(false);
+                this.notify.error('Thanh toán thất bại: Giao dịch không hợp lệ hoặc số dư không đủ.');
+                this.errorMsg.set('Thanh toán thất bại. Vui lòng nạp thêm tiền hoặc kiểm tra lại tài khoản.');
+              }
+            },
+            error: (err: any) => {
+              clearInterval(pollInterval);
+              this.processing.set(false);
+              this.notify.error('Có lỗi xảy ra khi kiểm tra trạng thái thanh toán.');
+            }
+          });
+        }, 1000);
       },
       error: (err: any) => {
         this.processing.set(false);
-        this.notify.error(err?.error?.message || 'Thanh toán thất bại');
+        this.notify.error(err?.error?.message || 'Xác thực OTP thất bại');
       }
     });
   }

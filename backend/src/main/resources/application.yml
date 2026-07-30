@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     open-in-view: false
     properties:
       hibernate:
@@ -64,7 +64,7 @@ openrouter:
   api-url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1/chat/completions}
 
 server:
-  port: 8080
+  port: 8081
 
 springdoc:
   api-docs:

@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface CheckoutSessionRepository extends JpaRepository<CheckoutSession, Long> {
     Optional<CheckoutSession> findByToken(String token);
+    Optional<CheckoutSession> findByTransactionRef(String transactionRef);
 }
