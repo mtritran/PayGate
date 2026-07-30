@@ -46,7 +46,7 @@ public class OtpServiceImpl implements OtpService {
 
         String recipientEmail = user.getEmail();
         if (recipientEmail == null || recipientEmail.isBlank()) {
-            recipientEmail = user.getUsername();
+            throw new BadRequestException("User has no email address to receive OTP.");
         }
 
         // Generate 6-digit cryptographic random OTP code
@@ -54,14 +54,14 @@ public class OtpServiceImpl implements OtpService {
         long ttlSeconds = 300; // 5 minutes
         long expiresAt = Instant.now().getEpochSecond() + ttlSeconds;
 
-        String cacheKey = buildCacheKey(username, action);
-        otpCache.put(cacheKey, new OtpEntry(otpCode, expiresAt));
-
         log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", otpCode, username, action, ttlSeconds);
 
         // Dispatch OTP code to user's real email (Gmail)
         String actionTitle = action != null && !action.isBlank() ? action : "Xác thực giao dịch";
         emailService.sendOtpEmail(recipientEmail, user.getUsername(), otpCode, actionTitle);
+
+        String cacheKey = buildCacheKey(username, action);
+        otpCache.put(cacheKey, new OtpEntry(otpCode, expiresAt));
 
         String maskedEmail = maskEmail(recipientEmail);
         return OtpResponse.builder()
