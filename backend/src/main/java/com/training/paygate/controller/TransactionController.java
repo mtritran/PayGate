@@ -47,6 +47,7 @@ public class TransactionController {
     @PostMapping("/pay")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Process a payment transaction")
+    @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "payment")
     public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, Principal principal) {
         TransactionResponse response = transactionService.processPayment(request, principal.getName());
         return ApiResponse.success("Payment processed successfully", response);

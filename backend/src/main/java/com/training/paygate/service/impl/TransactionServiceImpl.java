@@ -62,6 +62,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
     private final LoyaltyService loyaltyService;
     private final NotificationService notificationService;
+    private final com.training.paygate.service.FraudDetectionService fraudDetectionService;
 
     @Override
     @Transactional
@@ -74,6 +75,13 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public TransactionResponse processPayment(PaymentRequest request, String currentUsername) {
+        // Realtime Fraud & Risk Evaluation
+        com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult =
+                fraudDetectionService.evaluatePayment(currentUsername, request);
+        if (fraudResult.isSuspicious()) {
+            throw new BadRequestException("CẢNH BÁO AN NINH: " + fraudResult.getReason() + " " + fraudResult.getRecommendation());
+        }
+
         // 1. Check idempotency key in Redis / DB
         String cachedRef = idempotencyCacheService.get(request.idempotencyKey());
         if (cachedRef != null) {

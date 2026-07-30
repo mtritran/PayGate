@@ -19,6 +19,7 @@ public class AiController {
     private final AiService aiService;
 
     @PostMapping("/chat")
+    @com.training.paygate.annotation.RateLimit(limit = 15, windowSeconds = 60, key = "ai_chat")
     public ResponseEntity<ApiResponse<AiChatResponse>> chat(
             @Valid @RequestBody AiChatRequest request,
             Principal principal) {
