@@ -23,22 +23,22 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
             <span class="brand-name">PayGate Payment Gateway</span>
           </div>
           <div class="secure-badge">
-            <span>🔒 Bảo mật 256-bit</span>
+            <span>🔒 256-bit security</span>
           </div>
         </div>
 
         <!-- Loading State -->
         <div *ngIf="loading()" class="state-container">
           <div class="spinner"></div>
-          <p>Đang tải thông tin đơn hàng...</p>
+          <p>Loading order information...</p>
         </div>
 
         <!-- Error State -->
         <div *ngIf="errorMsg() && !loading()" class="state-container error-box">
           <div class="error-icon">❌</div>
-          <h3>Không thể thanh toán</h3>
+          <h3>Unable to pay</h3>
           <p>{{ errorMsg() }}</p>
-          <a routerLink="/" class="btn-home">Về trang chủ</a>
+          <a routerLink="/" class="btn-home">Back to home</a>
         </div>
 
         <!-- Checkout Main Content -->
@@ -48,19 +48,19 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
             <div class="merchant-info">
               <div class="merchant-avatar">🏪</div>
               <div>
-                <div class="merchant-tag">THANH TOÁN ĐƠN HÀNG CHO</div>
+                <div class="merchant-tag">PAY ORDER TO</div>
                 <h2 class="merchant-name">{{ info()?.merchantName }}</h2>
-                <div class="order-id">Mã đơn hàng: #{{ info()?.orderId }}</div>
+                <div class="order-id">Order ID: #{{ info()?.orderId }}</div>
               </div>
             </div>
             <div class="amount-box">
-              <div class="amount-label">Số tiền thanh toán</div>
+              <div class="amount-label">Payment amount</div>
               <div class="amount-value">{{ info()?.amount | currency:'VND':'symbol':'1.0-0' }}</div>
             </div>
           </div>
 
           <div class="order-desc" *ngIf="info()?.description">
-            <span class="desc-label">Nội dung:</span> {{ info()?.description }}
+            <span class="desc-label">Description:</span> {{ info()?.description }}
           </div>
 
           <!-- Auth Status & Payment Form -->
@@ -68,21 +68,21 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
             <!-- If Not Logged In -->
             <div *ngIf="!isLoggedIn()" class="login-prompt-box">
               <div class="prompt-header">
-                <h3>Đăng nhập Ví PayGate để thanh toán</h3>
-                <p>Bạn cần đăng nhập tài khoản PayGate để dùng số dư ví</p>
+                <h3>Log in to PayGate Wallet to pay</h3>
+                <p>Log in to your PayGate account to use wallet balance</p>
               </div>
 
               <form [formGroup]="loginForm" (ngSubmit)="onLogin()" class="quick-login-form">
                 <div class="form-group">
-                  <label>Tên đăng nhập / Email</label>
-                  <input type="text" formControlName="username" placeholder="Nhập tên đăng nhập" class="form-control">
+                  <label>Username / Email</label>
+                  <input type="text" formControlName="username" placeholder="Enter username" class="form-control">
                 </div>
                 <div class="form-group">
-                  <label>Mật khẩu</label>
-                  <input type="password" formControlName="password" placeholder="Nhập mật khẩu" class="form-control">
+                  <label>Password</label>
+                  <input type="password" formControlName="password" placeholder="Enter password" class="form-control">
                 </div>
                 <button type="submit" [disabled]="loginForm.invalid || loggingIn()" class="btn-login-submit">
-                  {{ loggingIn() ? 'Đang đăng nhập...' : 'Đăng nhập & Tiếp tục' }}
+                  {{ loggingIn() ? 'Logging in...' : 'Log in & Continue' }}
                 </button>
               </form>
             </div>
@@ -92,17 +92,17 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
               <div class="user-strip">
                 <div class="user-info">
                   <span class="user-avatar">👤</span>
-                  <span class="user-name">Đã đăng nhập: <strong>{{ currentUser() }}</strong></span>
+                  <span class="user-name">Logged in: <strong>{{ currentUser() }}</strong></span>
                 </div>
-                <button class="btn-switch-user" (click)="logout()">Đổi tài khoản</button>
+                <button class="btn-switch-user" (click)="logout()">Switch account</button>
               </div>
 
               <!-- Balance Card -->
               <div class="balance-card" [class.insufficient]="isBalanceInsufficient()">
-                <div class="balance-title">Số dư Ví PayGate khả dụng</div>
+                <div class="balance-title">Available PayGate Wallet balance</div>
                 <div class="balance-amount">{{ (account()?.balance || 0) | currency:'VND':'symbol':'1.0-0' }}</div>
                 <div class="balance-warning" *ngIf="isBalanceInsufficient()">
-                  ⚠️ Số dư không đủ để thanh toán. Vui lòng nạp thêm tiền!
+                  ⚠️ Insufficient balance. Please top up your wallet.
                 </div>
               </div>
 
@@ -113,7 +113,7 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
                   class="btn-cancel"
                   (click)="cancelPayment()"
                 >
-                  Hủy bỏ
+                  Cancel
                 </button>
                 <button
                   type="button"
@@ -121,7 +121,7 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
                   [disabled]="isBalanceInsufficient() || processing()"
                   (click)="openOtpModal()"
                 >
-                  {{ processing() ? 'Đang xử lý...' : 'Xác thực OTP & Thanh toán' }}
+                  {{ processing() ? 'Processing...' : 'OTP Verification & Payment' }}
                 </button>
               </div>
             </div>
@@ -132,7 +132,7 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
       <!-- OTP Security Modal -->
       <app-pin-modal
         [isOpen]="showOtpModal()"
-        title="Xác thực OTP Thanh Toán Đơn Hàng"
+        title="OTP Verification Thanh Toán Đơn Hàng"
         (confirmed)="onOtpConfirmed($event)"
         (cancelled)="showOtpModal.set(false)"
       ></app-pin-modal>
@@ -266,7 +266,7 @@ export class CheckoutComponent implements OnInit {
     this.route.queryParams.subscribe((params: any) => {
       const t = params['token'];
       if (!t) {
-        this.errorMsg.set('Thiếu tham số Token thanh toán');
+        this.errorMsg.set('Missing payment token');
         this.loading.set(false);
         return;
       }
@@ -290,7 +290,7 @@ export class CheckoutComponent implements OnInit {
       },
       error: (err: any) => {
         this.loading.set(false);
-        this.errorMsg.set(err?.error?.message || 'Phiên thanh toán không tồn tại hoặc đã hết hạn');
+        this.errorMsg.set(err?.error?.message || 'Payment session does not exist or has expired');
       }
     });
   }
@@ -309,12 +309,12 @@ export class CheckoutComponent implements OnInit {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.loggingIn.set(false);
-        this.notify.success('Đăng nhập thành công!');
+        this.notify.success('Logged in successfully!');
         this.loadUserAccount();
       },
       error: (err: any) => {
         this.loggingIn.set(false);
-        this.notify.error(err?.error?.message || 'Đăng nhập thất bại');
+        this.notify.error(err?.error?.message || 'Login failed');
       }
     });
   }
@@ -343,7 +343,7 @@ export class CheckoutComponent implements OnInit {
       next: (res: any) => {
         this.processing.set(false);
         if (res.data) {
-          this.notify.success('Thanh toán thành công!');
+          this.notify.success('Payment successful!');
           setTimeout(() => {
             window.location.href = res.data.redirectUrl;
           }, 1000);
@@ -351,7 +351,7 @@ export class CheckoutComponent implements OnInit {
       },
       error: (err: any) => {
         this.processing.set(false);
-        this.notify.error(err?.error?.message || 'Thanh toán thất bại');
+        this.notify.error(err?.error?.message || 'Payment failed');
       }
     });
   }

@@ -30,7 +30,7 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
             <img src="assets/PayGate_Logo.png" alt="PayGate" class="header-logo-img">
           </div>
           <div class="header-brand-text">
-            <span class="header-brand-title">PayGate <span class="header-brand-badge">PRO</span></span>
+            <span class="header-brand-title">PayGate</span>
             <span class="header-brand-sub">Smart Payment & Credit</span>
           </div>
         </div>
@@ -40,7 +40,7 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
         <div class="header-right">
           <!-- Notification Bell Container -->
           <div class="notification-container" (click)="$event.stopPropagation()">
-            <button class="notification-btn" (click)="toggleDropdown($event)" title="Thông báo">
+            <button class="notification-btn" (click)="toggleDropdown($event)" title="Notifications">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
               </svg>
@@ -50,9 +50,9 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
             <!-- Notification Dropdown Menu -->
             <div class="notification-dropdown" *ngIf="showDropdown()">
               <div class="dropdown-header">
-                <h3>Thông báo</h3>
+                <h3>Notifications</h3>
                 <button class="btn-mark-all" (click)="markAllAsRead($event)" *ngIf="unreadCount() > 0">
-                  Đọc tất cả
+                  Mark all read
                 </button>
               </div>
               <div class="dropdown-body">
@@ -60,7 +60,7 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
                   </svg>
-                  <p>Không có thông báo mới</p>
+                  <p>No new notifications</p>
                 </div>
                 <div class="notification-list" *ngIf="notifications().length > 0">
                   <div 
@@ -81,15 +81,17 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
             </div>
           </div>
 
-          <pg-avatar
-            [name]="getDisplayName()"
-            size="sm"
-            class="header-avatar"
-          ></pg-avatar>
+          <button class="header-avatar-btn" routerLink="/accounts/me" title="Profile">
+            <pg-avatar
+              [name]="getDisplayName()"
+              size="sm"
+              class="header-avatar"
+            ></pg-avatar>
+          </button>
           <div class="header-user-info">
             <span class="header-user-name">{{ getDisplayName() }}</span>
           </div>
-          <button class="header-logout-btn" (click)="logout()" title="Logout">
+          <button class="header-logout-btn" (click)="logout()" title="Notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -433,6 +435,25 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
       display: flex;
       flex-direction: column;
     }
+    .header-avatar-btn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+    }
+    .header-avatar-btn:hover,
+    .header-avatar-btn:focus-visible {
+      border-color: #f48fb1;
+      box-shadow: 0 8px 20px rgba(194, 0, 103, 0.14);
+      outline: none;
+    }
     .header-user-name {
       font-size: 0.85rem;
       font-weight: 700;
@@ -505,7 +526,11 @@ export class MainLayoutComponent {
 
   toggleDropdown(event: Event): void {
     event.stopPropagation();
-    this.showDropdown.update(v => !v);
+    const shouldOpen = !this.showDropdown();
+    this.showDropdown.set(shouldOpen);
+    if (shouldOpen && this.unreadCount() > 0) {
+      this.realtimeNotification.markAllAsRead(false);
+    }
   }
 
   markAsRead(item: NotificationItem, event: Event): void {

@@ -45,7 +45,7 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
-              <span>Chuyển Tiền</span>
+              <span>Transfer</span>
             </button>
             <button
               type="button"
@@ -98,18 +98,18 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
 
           <!-- Linked Subscriptions Picker (if BILL) -->
           <div class="form-group" *ngIf="category !== 'TRANSFER'">
-            <label class="form-label">CHỌN DỊCH VỤ ĐÃ LIÊN KẾT <span class="required">*</span></label>
+            <label class="form-label">SELECT LINKED SERVICE <span class="required">*</span></label>
 
             <!-- Loading state -->
             <div *ngIf="loadingSubs()" class="subs-loading">
-              <span class="spinner-xs"></span> Đang tải danh sách dịch vụ...
+              <span class="spinner-xs"></span> Loading linked services...
             </div>
 
             <!-- No subscriptions -->
             <div *ngIf="!loadingSubs() && filteredSubs().length === 0" class="subs-empty">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Chưa có dịch vụ {{ categoryLabel() }} nào được liên kết.
-              <a routerLink="/bills" class="link-to-bills">Đến Quản lý Hóa đơn →</a>
+              No linked {{ categoryLabel() }} nào được liên kết.
+              <a routerLink="/bills" class="link-to-bills">Go to Bill Management →</a>
             </div>
 
             <!-- Subscriptions list -->
@@ -125,7 +125,7 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
                   <div class="sub-option-owner">{{ sub.customerName }}</div>
                 </div>
                 <div class="sub-option-right">
-                  <div class="sub-option-amount">~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/kỳ</div>
+                  <div class="sub-option-amount">~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/period</div>
                   <div class="sub-option-freq">{{ freqLabel(sub.frequency) }}</div>
                 </div>
               </div>
@@ -138,7 +138,7 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
             <input
               type="number"
               class="pg-input font-mono"
-              placeholder="Nhập số tiền (tối thiểu 1,000 VND)"
+              placeholder="Enter amount (tối thiểu 1,000 VND)"
               [(ngModel)]="amount"
               name="amount"
               min="1000"
@@ -183,7 +183,7 @@ import { BillService, BillSubscriptionResponse } from '../../../core/services/bi
 
           <!-- Submit Buttons -->
           <div class="form-actions">
-            <button type="button" class="btn-cancel" (click)="goBack()">Hủy Bỏ</button>
+            <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
             <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
               <span>{{ isSubmitting() ? 'Creating…' : 'Confirm Create Schedule' }}</span>
             </button>
@@ -403,12 +403,12 @@ export class RecurringPaymentFormComponent implements OnInit {
   };
 
   categoryLabel(): string {
-    const map: Record<string, string> = { ELECTRICITY: 'điện', WATER: 'nước', INTERNET: 'internet' };
+    const map: Record<string, string> = { ELECTRICITY: 'electricity', WATER: 'water', INTERNET: 'internet' };
     return map[this.category] ?? '';
   }
 
   freqLabel(f: string): string {
-    const map: Record<string, string> = { MINUTELY: 'Mỗi phút', DAILY: 'Hàng ngày', WEEKLY: 'Hàng tuần', MONTHLY: 'Hàng tháng' };
+    const map: Record<string, string> = { MINUTELY: 'Every minute', DAILY: 'Daily', WEEKLY: 'Weekly', MONTHLY: 'Monthly' };
     return map[f] ?? f;
   }
 
@@ -432,7 +432,7 @@ export class RecurringPaymentFormComponent implements OnInit {
     this.providerCode = sub.providerCode;
     this.billCode = sub.customerCode;
     this.amount = sub.cycleAmount || this.amount;
-    this.description = `Tự động thanh toán ${sub.providerName} - ${sub.customerCode}`;
+    this.description = `Automatic payment ${sub.providerName} - ${sub.customerCode}`;
   }
 
   selectCategory(cat: RecurringCategory): void {
@@ -448,7 +448,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       return;
     }
     if (this.category !== 'TRANSFER' && !this.billCode) {
-      this.errorMsg.set('Vui lòng chọn dịch vụ đã liên kết từ danh sách trên.');
+      this.errorMsg.set('Please select a linked service from the list above.');
       return;
     }
     if (!this.amount || this.amount < 1000) {

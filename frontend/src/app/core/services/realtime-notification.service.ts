@@ -168,7 +168,7 @@ export class RealtimeNotificationService {
     });
   }
 
-  markAllAsRead(): void {
+  markAllAsRead(showToast = true): void {
     if (this.unreadCount() === 0) return;
 
     this.http.post<ApiResponse<void>>(`${this.apiUrl}/read-all`, {}).subscribe({
@@ -179,7 +179,8 @@ export class RealtimeNotificationService {
             list.map(n => ({ ...n, read: true }))
           );
           this.unreadCount.set(0);
-          this.toast.success('Đã đánh dấu đọc tất cả thông báo');
+          if (!showToast) return;
+          this.toast.success('All notifications marked as read');
         }
       }
     });

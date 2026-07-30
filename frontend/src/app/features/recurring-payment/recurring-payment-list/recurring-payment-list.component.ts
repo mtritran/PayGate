@@ -711,7 +711,7 @@ export class RecurringPaymentListComponent implements OnInit {
 
   getCategoryLabel(cat: string): string {
     switch (cat) {
-      case 'TRANSFER': return 'Chuyển Tiền';
+      case 'TRANSFER': return 'Transfer';
       case 'ELECTRICITY': return 'Electricity Bill';
       case 'WATER': return 'Water Bill';
       case 'INTERNET': return 'Internet Bill';
@@ -721,7 +721,7 @@ export class RecurringPaymentListComponent implements OnInit {
 
   getFrequencyLabel(freq: string): string {
     switch (freq) {
-      case 'ONCE': return '1 Lần';
+      case 'ONCE': return 'Once';
       case 'MINUTELY': return 'Every Minute (Test)';
       case 'DAILY': return 'Daily';
       case 'WEEKLY': return 'Weekly';

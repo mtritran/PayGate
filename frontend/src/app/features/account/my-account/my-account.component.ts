@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AccountService } from '../../../core/services/account.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { ProfileService } from '../../../core/services/profile.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
 
@@ -16,6 +19,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     CurrencyPipe,
     DatePipe,
@@ -30,9 +34,9 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
       <!-- Header -->
       <div class="page-header">
         <div>
-          <span class="header-badge">VÍ PAYGATE</span>
-          <h2>Tài khoản của tôi</h2>
-          <p class="subtitle">Quản lý số dư, sao kê giao dịch và thông tin ví PayGate.</p>
+          <span class="header-badge">PAYGATE WALLET</span>
+          <h2>My Account</h2>
+          <p class="subtitle">Manage your balance, transaction statement, wallet profile, and account details.</p>
         </div>
       </div>
 
@@ -41,6 +45,45 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
       </div>
 
       <div *ngIf="!loading">
+        <section class="profile-panel">
+          <div class="profile-main">
+            <label class="profile-avatar" title="Change avatar">
+              <img *ngIf="avatarDataUrl" [src]="avatarDataUrl" alt="Avatar" />
+              <span *ngIf="!avatarDataUrl">{{ profileInitials() }}</span>
+              <input type="file" accept="image/*" (change)="onAvatarSelected($event)" />
+              <em><mat-icon>photo_camera</mat-icon></em>
+            </label>
+            <div class="profile-heading">
+              <span class="profile-kicker">PayGate Profile</span>
+              <h3>{{ profileName || getFallbackName() }}</h3>
+              <p>{{ profileEmail || 'user@paygate.dev' }}</p>
+              <div class="profile-badges">
+                <span><mat-icon>verified_user</mat-icon>{{ userRole || 'USER' }}</span>
+                <span><mat-icon>account_balance_wallet</mat-icon>{{ account?.accountNumber || 'PAY0000000001' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <form class="profile-form" (ngSubmit)="saveProfile()">
+            <label>
+              <span>Display name</span>
+              <input name="profileName" [(ngModel)]="profileName" placeholder="Your name" />
+            </label>
+            <label>
+              <span>Email</span>
+              <input name="profileEmail" [(ngModel)]="profileEmail" type="email" placeholder="email@example.com" />
+            </label>
+            <label>
+              <span>Phone number</span>
+              <input name="profilePhone" [(ngModel)]="profilePhone" placeholder="09xx xxx xxx" />
+            </label>
+            <button type="submit" class="profile-save">
+              <mat-icon>save</mat-icon>
+              <span>Save profile</span>
+            </button>
+          </form>
+        </section>
+
         <!-- Top Row -->
         <div class="top-account-grid">
           <!-- Wallet Card (pink-blue gradient) -->
@@ -51,7 +94,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
             </div>
             <div class="card-upper">
               <div>
-                <div class="field-label">SỐ DƯ KHẢ DỤNG</div>
+                <div class="field-label">AVAILABLE BALANCE</div>
                 <div class="balance-large">{{ (account?.balance || 0) | currency:'VND':'symbol':'1.0-0' }}</div>
               </div>
               <div class="wallet-icon-box">
@@ -60,7 +103,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
             </div>
 
             <div class="card-mid">
-              <div class="field-label">SỐ TÀI KHOẢN</div>
+              <div class="field-label">ACCOUNT NUMBER</div>
               <div class="account-number-row">
                 <span class="acc-num-text">{{ account?.accountNumber || 'PAY0000000001' }}</span>
                 <mat-icon class="copy-icon" (click)="copyAccountNumber()" title="Copy">content_copy</mat-icon>
@@ -69,15 +112,15 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
 
             <div class="card-bottom-meta grid-3">
               <div>
-                <div class="field-label">LOẠI TIỀN</div>
+                <div class="field-label">CURRENCY</div>
                 <div class="meta-val">{{ account?.currency || 'VND' }}</div>
               </div>
               <div>
-                <div class="field-label">TRẠNG THÁI</div>
+                <div class="field-label">STATUS</div>
                 <span class="status-pill pill-active">{{ account?.status || 'ACTIVE' }}</span>
               </div>
               <div>
-                <div class="field-label">CHỦ SỞ HỮU</div>
+                <div class="field-label">OWNER</div>
                 <div class="meta-val">{{ account?.ownerType || 'USER' }}</div>
               </div>
             </div>
@@ -87,7 +130,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
           <div class="quick-card">
             <div class="card-title">
               <mat-icon style="font-size:18px;width:18px;height:18px;color:#c20067">flash_on</mat-icon>
-              Thao tác nhanh
+              Quick actions
             </div>
             <div class="actions-list">
               <a class="q-action primary" routerLink="/transactions/pay">
@@ -96,7 +139,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
                     <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
                   </svg>
                 </span>
-                <span class="q-lbl">Chuyển tiền</span>
+                <span class="q-lbl">Transfer</span>
                 <svg class="q-arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -107,7 +150,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
                     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </span>
-                <span class="q-lbl">Nạp tiền</span>
+                <span class="q-lbl">Top up</span>
                 <svg class="q-arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -118,7 +161,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
                 </span>
-                <span class="q-lbl">Lịch sử giao dịch</span>
+                <span class="q-lbl">Transaction history</span>
                 <svg class="q-arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
@@ -142,20 +185,20 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
         <div class="activity-card">
           <div class="card-title">
             <mat-icon style="font-size:18px;width:18px;height:18px;color:#c20067">receipt_long</mat-icon>
-            Lịch sử giao dịch
-            <span class="tx-count">({{ transactions.length }} giao dịch)</span>
+            Transaction history
+            <span class="tx-count">({{ transactions.length }} transactions)</span>
           </div>
 
           <div class="table-wrap">
             <table class="tx-table">
               <thead>
                 <tr>
-                  <th>Mã GD</th>
-                  <th>Loại</th>
-                  <th>Đối tác</th>
-                  <th>Số tiền</th>
-                  <th>Trạng thái</th>
-                  <th>Thời gian</th>
+                  <th>Reference</th>
+                  <th>Type</th>
+                  <th>Counterparty</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +212,7 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
                     </span>
                   </td>
                   <td>
-                    <span *ngIf="tx.type === 'TOPUP'" class="counterparty">Nội bộ</span>
+                    <span *ngIf="tx.type === 'TOPUP'" class="counterparty">Internal</span>
                     <span *ngIf="tx.type !== 'TOPUP'" class="counterparty mono">{{ (tx.destAccountId || '...') }}</span>
                   </td>
                   <td class="amount" [class.green]="tx.type === 'TOPUP' || tx.type === 'REFUND'" [class.red]="tx.type !== 'TOPUP' && tx.type !== 'REFUND'">
@@ -177,13 +220,13 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
                   </td>
                   <td>
                     <span class="status-pill" [class.pill-completed]="tx.status === 'COMPLETED'" [class.pill-failed]="tx.status === 'FAILED'" [class.pill-pending]="tx.status === 'PENDING'">
-                      {{ tx.status === 'COMPLETED' ? 'Thành công' : tx.status === 'FAILED' ? 'Thất bại' : tx.status }}
+                      {{ tx.status === 'COMPLETED' ? 'Completed' : tx.status === 'FAILED' ? 'Failed' : tx.status }}
                     </span>
                   </td>
                   <td class="date-cell">{{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
                 </tr>
                 <tr *ngIf="transactions.length === 0">
-                  <td colspan="6" class="empty-row">Chưa có giao dịch nào</td>
+                  <td colspan="6" class="empty-row">No transactions yet</td>
                 </tr>
               </tbody>
             </table>
@@ -206,6 +249,55 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
     .page-header h2 { font-size:1.6rem; font-weight:900; margin:0; color:#0d2b5c; letter-spacing:-.01em; }
     .subtitle { font-size:.88rem; color:#a6a6b8; margin:4px 0 0; }
     .spinner-box { display: flex; justify-content: center; padding: 48px; }
+
+    .profile-panel {
+      display:grid; grid-template-columns:minmax(0,.95fr) minmax(320px,1.05fr); gap:24px;
+      align-items:center; background:linear-gradient(135deg,#fff0f6 0%,#eef6ff 52%,#ffffff 100%);
+      border:1px solid #f3d6e5; border-radius:24px; padding:26px;
+      box-shadow:0 12px 34px rgba(194,0,103,.07);
+    }
+    .profile-main { display:flex; align-items:center; gap:20px; min-width:0; }
+    .profile-avatar {
+      position:relative; width:96px; height:96px; border-radius:28px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
+      background:linear-gradient(135deg,#c20067,#0072ce); color:#fff;
+      box-shadow:0 16px 32px rgba(194,0,103,.18);
+    }
+    .profile-avatar img { width:100%; height:100%; object-fit:cover; }
+    .profile-avatar > span { font-size:1.55rem; font-weight:900; letter-spacing:.03em; }
+    .profile-avatar input { display:none; }
+    .profile-avatar em {
+      position:absolute; right:8px; bottom:8px; width:28px; height:28px; border-radius:10px;
+      background:#ffffff; color:#c20067; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 8px 18px rgba(15,23,42,.16); font-style:normal;
+    }
+    .profile-avatar em mat-icon { font-size:17px; width:17px; height:17px; }
+    .profile-heading { min-width:0; }
+    .profile-kicker { font-size:.7rem; font-weight:900; color:#c20067; text-transform:uppercase; letter-spacing:.08em; }
+    .profile-heading h3 { margin:5px 0 3px; font-size:1.35rem; line-height:1.18; color:#0d2b5c; font-weight:900; }
+    .profile-heading p { margin:0; color:#64748b; font-size:.86rem; overflow:hidden; text-overflow:ellipsis; }
+    .profile-badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .profile-badges span {
+      display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px;
+      border-radius:999px; background:#fff; border:1px solid #e5edf7;
+      color:#334155; font-size:.72rem; font-weight:800;
+    }
+    .profile-badges mat-icon { font-size:16px; width:16px; height:16px; color:#0072ce; }
+    .profile-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .profile-form label { display:flex; flex-direction:column; gap:7px; min-width:0; }
+    .profile-form label span { font-size:.72rem; color:#64748b; font-weight:800; }
+    .profile-form input {
+      height:42px; border:1px solid #e2e8f0; border-radius:14px; padding:0 13px;
+      outline:none; background:#fff; color:#0f172a; font-size:.86rem; font-weight:600;
+      transition:border-color .18s, box-shadow .18s;
+    }
+    .profile-form input:focus { border-color:#f48fb1; box-shadow:0 0 0 3px rgba(244,143,177,.16); }
+    .profile-save {
+      align-self:end; height:42px; border:0; border-radius:14px; cursor:pointer;
+      background:#c20067; color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; gap:8px;
+      box-shadow:0 12px 24px rgba(194,0,103,.18);
+    }
+    .profile-save mat-icon { font-size:18px; width:18px; height:18px; }
 
     .top-account-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
 
@@ -309,10 +401,15 @@ import { TransactionResponse } from '../../../core/models/transaction.model';
     .empty-row { text-align:center; padding:36px 16px !important; color:#a6a6b8; font-weight:600; }
 
     @media (max-width:1024px) {
+      .profile-panel { grid-template-columns:1fr; }
       .top-account-grid { grid-template-columns:1fr; gap:20px; }
       .balance-large { font-size:2rem; }
     }
     @media (max-width:768px) {
+      .profile-panel { border-radius:20px; padding:22px; }
+      .profile-main { align-items:flex-start; }
+      .profile-avatar { width:78px; height:78px; border-radius:22px; }
+      .profile-form { grid-template-columns:1fr; }
       .wallet-card { border-radius:20px; padding:24px; }
       .quick-card { border-radius:20px; padding:22px; }
       .activity-card { border-radius:20px; padding:22px; }
@@ -324,30 +421,89 @@ export class MyAccountComponent implements OnInit {
   account: AccountResponse | null = null;
   transactions: TransactionResponse[] = [];
   loading = true;
+  profileName = '';
+  profileEmail = '';
+  profilePhone = '';
+  avatarDataUrl = '';
+  userRole = '';
 
   constructor(
     private accountService: AccountService,
+    private authService: AuthService,
+    private profileService: ProfileService,
     private snackBar: MatSnackBar
   ) {}
 
 
   ngOnInit(): void {
+    this.loadProfile();
+    this.loadProfileFromDb();
     this.loadAccountData();
+  }
+
+  getFallbackName(): string {
+    const username = this.authService.getUsername() || 'User';
+    return username.split('@')[0];
+  }
+
+  profileInitials(): string {
+    const source = this.profileName || this.getFallbackName();
+    return source
+      .split(/[\s._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('') || 'U';
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Avatar file must be an image.', 'OK', { duration: 2200 });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.avatarDataUrl = String(reader.result || '');
+      localStorage.setItem('paygate_profile_avatar', this.avatarDataUrl);
+      this.snackBar.open('Avatar updated.', 'OK', { duration: 1800 });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  saveProfile(): void {
+    localStorage.setItem('paygate_profile_phone', this.profilePhone.trim());
+    this.profileService.updateMe({
+      fullName: this.profileName.trim(),
+      email: this.profileEmail.trim()
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.applyProfile(res.data);
+        }
+        this.snackBar.open('Profile saved.', 'OK', { duration: 2000 });
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.message || 'Unable to save profile.', 'OK', { duration: 2500 });
+      }
+    });
   }
 
   copyAccountNumber(): void {
     const num = this.account?.accountNumber || 'PAY0000000001';
     navigator.clipboard.writeText(num);
-    this.snackBar.open('Đã sao chép số tài khoản!', 'OK', { duration: 2000 });
+    this.snackBar.open('Account number copied.', 'OK', { duration: 2000 });
   }
 
   txLabel(type: string): string {
     switch(type) {
-      case 'TOPUP': return 'Nạp tiền';
-      case 'TRANSFER_IN': return 'Nhận tiền';
-      case 'TRANSFER_OUT': return 'Chuyển tiền';
-      case 'PAYMENT': return 'Thanh toán';
-      case 'REFUND': return 'Hoàn tiền';
+      case 'TOPUP': return 'Top up';
+      case 'TRANSFER_IN': return 'Transfer received';
+      case 'TRANSFER_OUT': return 'Transfer sent';
+      case 'PAYMENT': return 'Payment';
+      case 'REFUND': return 'Refund';
       default: return type || 'GD';
     }
   }
@@ -367,6 +523,33 @@ export class MyAccountComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private loadProfile(): void {
+    const username = this.authService.getUsername() || '';
+    this.userRole = this.authService.getRole() || 'USER';
+    this.profileName = localStorage.getItem('paygate_profile_name') || this.getFallbackName();
+    this.profileEmail = username.includes('@') ? username : '';
+    this.profilePhone = localStorage.getItem('paygate_profile_phone') || '';
+    this.avatarDataUrl = localStorage.getItem('paygate_profile_avatar') || '';
+  }
+
+  private loadProfileFromDb(): void {
+    this.profileService.getMe().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.applyProfile(res.data);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  private applyProfile(profile: { fullName?: string; username?: string; email?: string; role?: string }): void {
+    this.profileName = profile.fullName || profile.username || this.getFallbackName();
+    this.profileEmail = profile.email || '';
+    this.userRole = profile.role || this.userRole;
+    localStorage.setItem('paygate_profile_name', this.profileName);
   }
 
   private loadHistory(accountId: number): void {

@@ -18,14 +18,14 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <div class="loan-header-card">
         <div class="header-content">
           <div class="header-badge">PAYGATE CONSUMER CREDIT</div>
-          <h1>Vay Tiêu Dùng & <span class="highlight-pink">Tín Dụng Nhanh</span></h1>
-          <p>Duyệt tự động, giải ngân tức thì về Ví PayGate. Lãi suất ưu đãi chỉ từ 1%/tháng (12%/năm).</p>
+          <h1>Consumer Loans & <span class="highlight-pink">Fast Credit</span></h1>
+          <p>Automated review, instant disbursement to PayGate Wallet. Preferred interest from 1%/months (12%/year).</p>
         </div>
         <button class="btn-apply-hero" (click)="openApplyModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Tạo Đơn Vay Mới
+          Create New Loan
         </button>
       </div>
 
@@ -36,7 +36,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           </div>
           <div class="stat-info">
-            <span class="stat-label">Hạn mức khả dụng</span>
+            <span class="stat-label">Available limit</span>
             <strong class="stat-value">20,000,000 ₫</strong>
           </div>
         </div>
@@ -46,8 +46,8 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
           <div class="stat-info">
-            <span class="stat-label">Khoản vay đang mở</span>
-            <strong class="stat-value">{{ activeLoansCount() }} khoản</strong>
+            <span class="stat-label">Open loans</span>
+            <strong class="stat-value">{{ activeLoansCount() }} loans</strong>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="stat-info">
-            <span class="stat-label">Tổng dư nợ còn lại</span>
+            <span class="stat-label">Total outstanding balance</span>
             <strong class="stat-value text-amber">{{ totalRemainingAmount() | currency:'VND':'symbol':'1.0-0' }}</strong>
           </div>
         </div>
@@ -66,10 +66,10 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <div class="loan-tab-row">
         <div class="tab-buttons">
           <button class="tab-btn" [class.active]="activeTab() === 'my-loans'" (click)="activeTab.set('my-loans')">
-            Khoản Vay Của Tôi ({{ myLoans().length }})
+            My Loans ({{ myLoans().length }})
           </button>
           <button *ngIf="isAdmin()" class="tab-btn admin-tab" [class.active]="activeTab() === 'admin-loans'" (click)="activeTab.set('admin-loans')">
-            ⚡ Admin Quản Lý Đơn Vay ({{ adminLoans().length }})
+            ⚡ Admin Loan Management ({{ adminLoans().length }})
           </button>
         </div>
       </div>
@@ -89,9 +89,9 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
               <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
             </svg>
           </div>
-          <h3>Bạn chưa có khoản vay nào</h3>
-          <p>Tạo khoản vay tiêu dùng linh hoạt từ 500,000 ₫ đến 20,000,000 ₫ với lãi suất ưu đãi.</p>
-          <button class="btn-primary-apply" (click)="openApplyModal()">Đăng ký vay ngay</button>
+          <h3>You do not have any loans yet</h3>
+          <p>Create loans vay tiêu dùng linh hoạt từ 500,000 ₫ đến 20,000,000 ₫ with preferred interest.</p>
+          <button class="btn-primary-apply" (click)="openApplyModal()">Apply now</button>
         </div>
 
         <div class="loans-grid stagger-children" *ngIf="myLoans().length > 0">
@@ -106,49 +106,49 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
 
             <div class="card-details">
               <div class="detail-item">
-                <span>Kỳ hạn:</span>
-                <strong>{{ loan.termMonths }} tháng</strong>
+                <span>Term:</span>
+                <strong>{{ loan.termMonths }} months</strong>
               </div>
               <div class="detail-item">
-                <span>Trả mỗi kỳ:</span>
+                <span>Payment per period:</span>
                 <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
               <div class="detail-item">
-                <span>Lãi suất:</span>
-                <strong>{{ loan.interestRate }}%/năm</strong>
+                <span>Interest rate:</span>
+                <strong>{{ loan.interestRate }}%/year</strong>
               </div>
               <div class="detail-item">
-                <span>Dư nợ còn lại:</span>
+                <span>Remaining balance:</span>
                 <strong class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
             </div>
 
             <div class="card-reason" *ngIf="loan.reason">
-              <span class="reason-label">Lý do vay:</span> {{ loan.reason }}
+              <span class="reason-label">Loan purpose:</span> {{ loan.reason }}
             </div>
 
             <!-- Offer Acceptance Banner & PDF Actions if status === OFFERED -->
             <div class="offered-banner" *ngIf="loan.status === 'OFFERED'">
-              <div class="offered-title">🎉 Đơn vay của bạn đã được Admin duyệt!</div>
-              <p>Vui lòng xem kỹ file Hợp đồng vay tiêu dùng (PDF 3 trang) bên dưới và nhấn <strong>Ký Hợp Đồng</strong> để hoàn tất giải ngân số tiền <strong>{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</strong> vào Ví PayGate & nhận bản hợp đồng qua Gmail.</p>
+              <div class="offered-title">🎉 Your loan has been approved by Admin!</div>
+              <p>Please review the consumer loan contract (PDF 3 trang) below and click <strong>Sign Contract</strong> to complete disbursement of <strong>{{ loan.amount | currency:'VND':'symbol':'1.0-0' }}</strong> to PayGate Wallet and receive a contract copy by Gmail.</p>
               
               <div class="offered-btn-group">
                 <button class="btn-pdf-preview" (click)="downloadContractPdf(loan.id)">
-                  📄 Xem Hợp Đồng PDF (3 Trang)
+                  📄 View Contract PDF (3 Trang)
                 </button>
                 <button class="btn-accept-contract" (click)="acceptOffer(loan.id)" [disabled]="accepting()">
-                  <span *ngIf="!accepting()">✍️ Đồng Ý & Ký Hợp Đồng</span>
-                  <span *ngIf="accepting()">Đang xử lý giải ngân...</span>
+                  <span *ngIf="!accepting()">✍️ Agree & Sign Contract</span>
+                  <span *ngIf="accepting()">Processing disbursement...</span>
                 </button>
               </div>
             </div>
 
             <div class="card-actions" *ngIf="loan.status !== 'OFFERED'">
               <button class="btn-pdf-outline" (click)="downloadContractPdf(loan.id)" *ngIf="loan.status === 'ACTIVE' || loan.status === 'PAID_OFF'">
-                📄 Tải Hợp Đồng PDF
+                📄 Download Contract PDF
               </button>
               <button class="btn-detail" (click)="viewLoanDetail(loan.id)">
-                Xem lịch trả nợ & Thanh toán →
+                View repayment schedule & pay →
               </button>
             </div>
           </div>
@@ -169,27 +169,27 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
 
             <div class="card-details">
               <div class="detail-item">
-                <span>Kỳ hạn:</span> <strong>{{ loan.termMonths }} tháng</strong>
+                <span>Term:</span> <strong>{{ loan.termMonths }} months</strong>
               </div>
               <div class="detail-item">
-                <span>Trả hàng tháng:</span> <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
+                <span>Monthly payment:</span> <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
               <div class="detail-item">
-                <span>Tổng phải trả:</span> <strong>{{ loan.totalRepayable | currency:'VND':'symbol':'1.0-0' }}</strong>
+                <span>Total payable:</span> <strong>{{ loan.totalRepayable | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
               <div class="detail-item">
-                <span>Ngày tạo:</span> <strong>{{ loan.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                <span>Created at:</span> <strong>{{ loan.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
               </div>
             </div>
 
             <div class="card-reason" *ngIf="loan.reason">
-              <span class="reason-label">Lý do:</span> {{ loan.reason }}
+              <span class="reason-label">Reason:</span> {{ loan.reason }}
             </div>
 
             <!-- Admin action buttons -->
             <div class="admin-actions" *ngIf="loan.status === 'PENDING_APPROVAL'">
-              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Duyệt Đề Nghị Vay</button>
-              <button class="btn-reject" (click)="rejectLoan(loan.id)">✕ Từ Chối</button>
+              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Approve Loan Offer</button>
+              <button class="btn-reject" (click)="rejectLoan(loan.id)">✕ Reject</button>
             </div>
           </div>
         </div>
@@ -199,14 +199,14 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <div *ngIf="showApplyModal()" class="modal-overlay fade-in">
         <div class="modal-card">
           <div class="modal-header">
-            <h2>Tạo Đơn Đăng Ký Vay Tiêu Dùng</h2>
+            <h2>Create Consumer Loan Application</h2>
             <button class="btn-close" (click)="showApplyModal.set(false)">✕</button>
           </div>
 
           <form (ngSubmit)="submitApplyForm()" class="apply-form">
             <!-- Amount Input -->
             <div class="form-group">
-              <label class="form-label">SỐ TIỀN CẦN VAY (VND) <span class="required">*</span></label>
+              <label class="form-label">LOAN AMOUNT (VND) <span class="required">*</span></label>
               <input
                 type="number"
                 class="custom-input font-mono"
@@ -218,47 +218,47 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
                 required
               />
               <div class="amount-presets">
-                <button type="button" class="preset-btn" (click)="applyAmount = 2000000">2 triệu</button>
-                <button type="button" class="preset-btn" (click)="applyAmount = 5000000">5 triệu</button>
-                <button type="button" class="preset-btn" (click)="applyAmount = 10000000">10 triệu</button>
-                <button type="button" class="preset-btn" (click)="applyAmount = 20000000">20 triệu</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 2000000">2 million</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 5000000">5 million</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 10000000">10 million</button>
+                <button type="button" class="preset-btn" (click)="applyAmount = 20000000">20 million</button>
               </div>
             </div>
 
             <!-- Term Months -->
             <div class="form-group">
-              <label class="form-label">KỲ HẠN VAY <span class="required">*</span></label>
+              <label class="form-label">LOAN TERM <span class="required">*</span></label>
               <div class="term-grid">
                 <button
                   type="button"
                   class="term-btn"
                   [class.active]="applyTermMonths === 3"
-                  (click)="applyTermMonths = 3">3 Tháng</button>
+                  (click)="applyTermMonths = 3">3 Months</button>
                 <button
                   type="button"
                   class="term-btn"
                   [class.active]="applyTermMonths === 6"
-                  (click)="applyTermMonths = 6">6 Tháng</button>
+                  (click)="applyTermMonths = 6">6 Months</button>
                 <button
                   type="button"
                   class="term-btn"
                   [class.active]="applyTermMonths === 12"
-                  (click)="applyTermMonths = 12">12 Tháng</button>
+                  (click)="applyTermMonths = 12">12 Months</button>
                 <button
                   type="button"
                   class="term-btn"
                   [class.active]="applyTermMonths === 24"
-                  (click)="applyTermMonths = 24">24 Tháng</button>
+                  (click)="applyTermMonths = 24">24 Months</button>
               </div>
             </div>
 
             <!-- Reason -->
             <div class="form-group">
-              <label class="form-label">LÝ DO VAY (TÙY CHỌN)</label>
+              <label class="form-label">LOAN PURPOSE (OPTIONAL)</label>
               <input
                 type="text"
                 class="custom-input"
-                placeholder="VD: Mua sắm máy tính, sửa chữa nhà cửa, trả học phí..."
+                placeholder="Example: laptop purchase, home repair, tuition..."
                 [(ngModel)]="applyReason"
                 name="applyReason"
               />
@@ -267,24 +267,24 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <!-- Loan Calculation Summary -->
             <div class="calc-box">
               <div class="calc-row">
-                <span>Số tiền gốc:</span>
+                <span>Principal amount:</span>
                 <strong>{{ applyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
               <div class="calc-row">
-                <span>Ước tính trả hàng tháng:</span>
-                <strong class="text-emerald">{{ estimateMonthly() | currency:'VND':'symbol':'1.0-0' }} / tháng</strong>
+                <span>Estimated monthly payment:</span>
+                <strong class="text-emerald">{{ estimateMonthly() | currency:'VND':'symbol':'1.0-0' }} / months</strong>
               </div>
               <div class="calc-row">
-                <span>Lãi suất cố định:</span>
-                <span>12%/năm</span>
+                <span>Fixed interest rate:</span>
+                <span>12%/year</span>
               </div>
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn-cancel" (click)="showApplyModal.set(false)">Hủy</button>
+              <button type="button" class="btn-cancel" (click)="showApplyModal.set(false)">Cancel</button>
               <button type="submit" class="btn-submit-apply" [disabled]="submitting()">
-                <span *ngIf="!submitting()">Gửi Đơn Đăng Ký Vay</span>
-                <span *ngIf="submitting()">Đang xử lý...</span>
+                <span *ngIf="!submitting()">Submit Loan Application</span>
+                <span *ngIf="submitting()">Processing...</span>
               </button>
             </div>
           </form>
@@ -297,7 +297,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
           <div class="modal-header">
             <div>
               <span class="loan-ref font-mono">{{ selectedLoan()?.loanRef }}</span>
-              <h2>Chi Tiết Khoản Vay & Lịch Trả Nợ</h2>
+              <h2>Loan Details & Repayment Schedule</h2>
             </div>
             <button class="btn-close" (click)="selectedLoan.set(null)">✕</button>
           </div>
@@ -305,15 +305,15 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
           <div class="modal-body" *ngIf="selectedLoan() as loan">
             <div class="loan-summary-strip">
               <div>
-                <small>Tổng dư nợ còn lại</small>
+                <small>Total outstanding balance</small>
                 <h3 class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</h3>
               </div>
               <div>
-                <small>Kỳ hạn</small>
-                <h4>{{ loan.termMonths }} tháng</h4>
+                <small>Term</small>
+                <h4>{{ loan.termMonths }} months</h4>
               </div>
               <div>
-                <small>Trả mỗi kỳ</small>
+                <small>Payment per period</small>
                 <h4>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</h4>
               </div>
             </div>
@@ -321,37 +321,37 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <!-- Repayment actions -->
             <div class="repay-actions-box" *ngIf="loan.status === 'ACTIVE' && loan.remainingAmount > 0">
               <button class="btn-repay-period" (click)="repayLoan(loan.id, 'NEXT_PERIOD')" [disabled]="repaying()">
-                💳 Thanh toán kỳ tới
+                💳 Pay next period
               </button>
               <button class="btn-repay-all" (click)="repayLoan(loan.id, 'FULL_SETTLEMENT')" [disabled]="repaying()">
-                ✨ Tất toán toàn bộ ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
+                ✨ Full settlement ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
               </button>
             </div>
 
             <!-- Schedule list -->
-            <h4 class="schedule-title">Lịch Trả Nợ Chi Tiết ({{ loan.schedules?.length || 0 }} kỳ)</h4>
+            <h4 class="schedule-title">Detailed Repayment Schedule ({{ loan.schedules?.length || 0 }} periods)</h4>
             <div class="schedule-table-wrap">
               <table class="schedule-table">
                 <thead>
                   <tr>
-                    <th>Kỳ</th>
-                    <th>Hạn thanh toán</th>
-                    <th>Gốc</th>
-                    <th>Lãi</th>
-                    <th>Tổng kỳ</th>
-                    <th>Trạng thái</th>
+                    <th>Period</th>
+                    <th>Due date</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Period total</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let s of loan.schedules">
-                    <td class="font-mono">Kỳ {{ s.periodNumber }}</td>
+                    <td class="font-mono">Period {{ s.periodNumber }}</td>
                     <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
                     <td>{{ s.principalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
                     <td>{{ s.interestAmount | currency:'VND':'symbol':'1.0-0' }}</td>
                     <td class="font-bold">{{ s.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
                     <td>
                       <span class="schedule-badge" [class.schedule-paid]="s.status === 'PAID'" [class.schedule-unpaid]="s.status === 'UNPAID'">
-                        {{ s.status === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                        {{ s.status === 'PAID' ? 'Paid' : 'Unpaid' }}
                       </span>
                     </td>
                   </tr>
@@ -365,7 +365,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <!-- OTP Security Modal for Digital Contract Signature -->
       <app-pin-modal
         [isOpen]="showPinModal()"
-        [title]="'Xác thực OTP ký hợp đồng vay'"
+        [title]="'Verify OTP to sign loan contract'"
         (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal.set(false)"
       ></app-pin-modal>
@@ -673,7 +673,7 @@ export class LoanDashboardComponent implements OnInit {
 
   submitApplyForm(): void {
     if (!this.applyAmount || this.applyAmount < 500000) {
-      this.notification.error('Số tiền vay tối thiểu là 500,000 ₫');
+      this.notification.error('Minimum loan amount is 500,000 ₫');
       return;
     }
     this.submitting.set(true);
@@ -685,18 +685,18 @@ export class LoanDashboardComponent implements OnInit {
       next: (res) => {
         this.submitting.set(false);
         this.showApplyModal.set(false);
-        this.notification.success('Gửi đơn vay thành công! Vui lòng chờ Admin xem xét phê duyệt.');
+        this.notification.success('Loan application submitted. Please wait for Admin review.');
         this.loadLoans();
       },
       error: (err) => {
         this.submitting.set(false);
-        this.notification.error(err?.error?.message || 'Không thể tạo đơn vay');
+        this.notification.error(err?.error?.message || 'Unable to create loan application');
       }
     });
   }
 
   downloadContractPdf(loanId: number): void {
-    this.notification.info('Đang tạo tệp Hợp đồng PDF...');
+    this.notification.info('Creating contract PDF...');
     this.loanService.downloadContractPdfBlob(loanId).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -706,7 +706,7 @@ export class LoanDashboardComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.notification.error('Không thể tải tệp PDF hợp đồng')
+      error: () => this.notification.error('Unable to download contract PDF')
     });
   }
 
@@ -733,12 +733,12 @@ export class LoanDashboardComponent implements OnInit {
     this.loanService.acceptLoanOffer(loanId).subscribe({
       next: (res) => {
         this.accepting.set(false);
-        this.notification.success('Ký hợp đồng thành công! Tiền đã giải ngân vào Ví PayGate và bản sao PDF đã gửi tới Gmail của bạn.');
+        this.notification.success('Contract signed successfully. Funds were disbursed to PayGate Wallet and a PDF copy was sent to your Gmail.');
         this.loadLoans();
       },
       error: (err) => {
         this.accepting.set(false);
-        this.notification.error(err?.error?.message || 'Không thể chấp nhận hợp đồng');
+        this.notification.error(err?.error?.message || 'Unable to accept contract');
       }
     });
   }
@@ -758,7 +758,7 @@ export class LoanDashboardComponent implements OnInit {
     this.loanService.repayLoan(loanId, type).subscribe({
       next: (res) => {
         this.repaying.set(false);
-        this.notification.success('Thanh toán khoản vay thành công!');
+        this.notification.success('Payment loans vay thành công!');
         if (res.data) {
           this.selectedLoan.set(res.data);
         }
@@ -766,7 +766,7 @@ export class LoanDashboardComponent implements OnInit {
       },
       error: (err) => {
         this.repaying.set(false);
-        this.notification.error(err?.error?.message || 'Thanh toán khoản vay thất bại');
+        this.notification.error(err?.error?.message || 'Payment loans vay thất bại');
       }
     });
   }
@@ -774,20 +774,20 @@ export class LoanDashboardComponent implements OnInit {
   approveLoan(loanId: number): void {
     this.loanService.approveLoan(loanId, 'Approved loan offer by Admin').subscribe({
       next: () => {
-        this.notification.success('Đã duyệt đề nghị vay! Đơn vay chuyển sang trạng thái chờ User ký hợp đồng.');
+        this.notification.success('Loan offer approved. The loan is now waiting for user signature.');
         this.loadLoans();
       },
-      error: (err) => this.notification.error(err?.error?.message || 'Phê duyệt thất bại')
+      error: (err) => this.notification.error(err?.error?.message || 'Approval failed')
     });
   }
 
   rejectLoan(loanId: number): void {
     this.loanService.rejectLoan(loanId, 'Rejected by admin').subscribe({
       next: () => {
-        this.notification.success('Đã từ chối đơn vay!');
+        this.notification.success('Loan rejected!');
         this.loadLoans();
       },
-      error: (err) => this.notification.error(err?.error?.message || 'Thao tác thất bại')
+      error: (err) => this.notification.error(err?.error?.message || 'Action failed')
     });
   }
 
@@ -804,11 +804,11 @@ export class LoanDashboardComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'PENDING_APPROVAL': return 'Đang chờ duyệt';
-      case 'OFFERED': return 'Đã duyệt - Chờ ký HĐ';
-      case 'ACTIVE': return 'Đang vay (Hoạt động)';
-      case 'PAID_OFF': return 'Đã tất toán';
-      case 'REJECTED': return 'Đã từ chối';
+      case 'PENDING_APPROVAL': return 'Pending approval';
+      case 'OFFERED': return 'Approved - Awaiting signature';
+      case 'ACTIVE': return 'Active loan (Active)';
+      case 'PAID_OFF': return 'Paid off';
+      case 'REJECTED': return 'Rejected';
       default: return status;
     }
   }
