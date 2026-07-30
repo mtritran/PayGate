@@ -105,7 +105,7 @@ app.post('/api/paygate-webhook', (req, res) => {
         const order = orders.find(o => o.orderId === orderId);
         if (order) {
             order.transactionRef = transactionRef;
-            order.status = status === 'SUCCESS' ? 'PAID' : 'FAILED';
+            order.status = (status === 'SUCCESS' || status === 'COMPLETED') ? 'PAID' : 'FAILED';
             console.log(`[MERCHANT] Updated Order ${orderId} status to: ${order.status}`);
         } else {
             console.warn(`[MERCHANT] Received webhook for orderId ${orderId} but it doesn't exist in our memory!`);
