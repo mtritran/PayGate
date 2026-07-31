@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WC2026 Ticket Store - Mock Merchant Demo</title>
+    <!-- Outfit Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --primary-glow: rgba(16, 185, 129, 0.35);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+            padding: 40px 20px;
+        }
+
+        h1, h2, h3, .store-brand {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header Section */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .store-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .store-brand span {
+            font-size: 2.2rem;
+            -webkit-text-fill-color: initial;
+        }
+
+        .demo-badge {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Products Grid */
+        .products-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 20px;
+            backdrop-filter: blur(12px);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .product-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .product-tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .product-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .product-price {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .product-price small {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .btn-buy {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .btn-buy:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 16px var(--primary-glow);
+            transform: scale(1.02);
+        }
+
+        /* Orders Section */
+        .orders-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+        }
+
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .orders-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .orders-table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.9rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .order-id-label {
+            font-family: monospace;
+            font-weight: 700;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .txn-ref-label {
+            font-family: monospace;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.65; }
+            to { opacity: 1; }
+        }
+
+        .empty-orders {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 6px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        /* Custom Alert */
+        .alert {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #a7f3d0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="store-brand">
+            <span>⚽</span> WC2026 Ticket Store
+        </div>
+        <div class="demo-badge">
+            3rd-Party Mock Integration
+        </div>
+    </header>
+
+    <!-- Callback Alert Banner -->
+    <div id="alert-banner" style="display: none;" class="alert">
+        <div>
+            <strong id="alert-title">Thanh toán hoàn tất!</strong> 
+            <span id="alert-message">Đơn hàng của bạn đã gửi thông tin thanh toán. Chờ xác nhận trừ tiền bất đồng bộ từ webhook.</span>
+        </div>
+        <button onclick="document.getElementById('alert-banner').style.display='none';" style="background: none; border: none; color: #fff; cursor: pointer; font-weight: bold; font-size: 1.1rem;">×</button>
+    </div>
+
+    <!-- Products Grid -->
+    <section class="products-section">
+        <h2 class="section-title">🎫 Danh sách Vé Trận Đấu</h2>
+        <div class="products-grid">
+            <!-- Product 1 -->
+            <div class="product-card">
+                <div class="product-header">
+                    <h3 class="product-title">Vé Trận Khai Mạc World Cup 2026</h3>
+                    <span class="product-tag">Standard</span>
+                </div>
+                <p class="product-desc">Trận đấu khai mạc giải đấu hấp dẫn nhất hành tinh tại Sân vận động Azteca. Hạng ghế Standard khán đài tầng 2.</p>
+                <div class="product-footer">
+                    <div class="product-price">150.000 <small>VND</small></div>
+                    <button class="btn-buy" onclick="buyProduct('Vé Trận Khai Mạc World Cup 2026', 150000)">Mua Ngay</button>
+                </div>
+            </div>
+
+            <!-- Product 2 -->
+            <div class="product-card">
+                <div class="product-header">
+                    <h3 class="product-title">Vé VIP Khán Đài Premium</h3>
+                    <span class="product-tag">VIP Gold</span>
+                </div>
+                <p class="product-desc">Vé VIP xem trận Chung kết tại Sân vận động MetLife. Bao gồm buffet tối cao cấp, lối đi riêng, quà tặng lưu niệm.</p>
+                <div class="product-footer">
+                    <div class="product-price">2.500.000 <small>VND</small></div>
+                    <button class="btn-buy" onclick="buyProduct('Vé VIP Khán Đài Premium', 2500000)">Mua Ngay</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Orders Section -->
+    <section class="orders-section">
+        <div class="orders-header">
+            <h2 class="orders-title">📋 Đơn Hàng Gần Đây</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="btn-clear-all" onclick="clearAllOrders()" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">🧹 Xóa Tất Cả</button>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    🔄 Tự động đồng bộ qua Webhook
+                </div>
+            </div>
+        </div>
+
+        <div class="orders-table-container">
+            <table id="orders-table">
+                <thead>
+                    <tr>
+                        <th>Mã Đơn</th>
+                        <th>Sản Phẩm</th>
+                        <th>Số Tiền</th>
+                        <th>Mã PayGate Txn</th>
+                        <th>Thời Gian Mua</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-body">
+                    <!-- Dynamic rendering -->
+                </tbody>
+            </table>
+            <div id="no-orders" class="empty-orders">Chưa có đơn hàng nào được tạo trong phiên này. Hãy mua vé phía trên!</div>
+        </div>
+    </section>
+</div>
+
+<script>
+    // Check URL parameters for redirect callback notifications
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('callback') || urlParams.has('status')) {
+            const status = urlParams.get('status');
+            const orderId = urlParams.get('orderId');
+            
+            const alertBanner = document.getElementById('alert-banner');
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            
+            alertBanner.style.display = 'flex';
+            
+            if (status === 'PROCESSING') {
+                alertTitle.innerText = "Yêu cầu thanh toán được tiếp nhận!";
+                alertMessage.innerText = `Đơn hàng #${orderId} đang chờ hệ thống trừ tiền ngầm bất đồng bộ. Trạng thái sẽ cập nhật tự động trong bảng dưới.`;
+                alertBanner.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
+                alertBanner.style.borderColor = "rgba(245, 158, 11, 0.3)";
+                alertBanner.style.color = "#fef3c7";
+            } else if (status === 'SUCCESS') {
+                alertTitle.innerText = "Thanh toán thành công!";
+                alertMessage.innerText = `Cảm ơn bạn đã mua vé. Hệ thống PayGate đã xử lý trừ tiền thành công.`;
+            } else if (status === 'CANCELLED' || status === 'CANCEL') {
+                alertTitle.innerText = "Giao dịch bị hủy!";
+                alertMessage.innerText = `Bạn đã hủy thanh toán trên cổng PayGate.`;
+                alertBanner.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+                alertBanner.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                alertBanner.style.color = "#fee2e2";
+            }
+            
+            // Clean URL query parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        // Load initial orders and start polling
+        loadOrders();
+        setInterval(loadOrders, 1000);
+    };
+
+    // 1. Fetch Orders from local mock server
+    async function loadOrders() {
+        try {
+            const response = await fetch('http://localhost:8082/api/orders');
+            const orders = await response.json();
+            
+            const ordersBody = document.getElementById('orders-body');
+            const noOrders = document.getElementById('no-orders');
+            
+            if (orders.length === 0) {
+                noOrders.style.display = 'block';
+                ordersBody.innerHTML = '';
+                return;
+            }
+            
+            noOrders.style.display = 'none';
+            ordersBody.innerHTML = orders.map(order => {
+                let statusBadge = '';
+                if (order.status === 'PENDING') {
+                    statusBadge = `<span class="status-badge status-pending">⏳ Đang xử lý</span>`;
+                } else if (order.status === 'PAID') {
+                    statusBadge = `<span class="status-badge status-paid">✅ Đã thanh toán</span>`;
+                } else {
+                    statusBadge = `<span class="status-badge status-failed">❌ Thất bại</span>`;
+                }
+
+                const txnRef = order.transactionRef ? order.transactionRef : '<Chờ trừ tiền...>';
+                const formattedDate = new Date(order.createdAt).toLocaleTimeString('vi-VN') + ' ' + new Date(order.createdAt).toLocaleDateString('vi-VN');
+                
+                return `
+                    <tr>
+                        <td><span class="order-id-label">${order.orderId}</span></td>
+                        <td><strong>${order.productName}</strong></td>
+                        <td>${parseFloat(order.price).toLocaleString('vi-VN')} VND</td>
+                        <td><span class="txn-ref-label">${txnRef}</span></td>
+                        <td>${formattedDate}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn-delete" onclick="deleteOrder('${order.orderId}')" title="Xóa đơn hàng">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+        }
+    }
+
+    // 2. Buy product trigger
+    async function buyProduct(productName, price) {
+        try {
+            const response = await fetch('http://localhost:8082/api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productName, price })
+            });
+            const data = await response.json();
+            if (data.paymentUrl) {
+                // Redirect user to PayGate
+                window.location.href = data.paymentUrl;
+            } else {
+                alert('Không thể khởi tạo thanh toán với PayGate: ' + data.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối tới mock merchant server.');
+            console.error(error);
+        }
+    }
+
+    // 3. Delete single order
+    async function deleteOrder(orderId) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${orderId}?`)) return;
+        try {
+            const response = await fetch(`http://localhost:8082/api/orders/${orderId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            if (data.success) {
+                loadOrders();
+            }
+        } catch (error) {
+            console.error('Error deleting order:', error);
+        }
+    }
+
+    // 4. Clear all orders
+    async function clearAllOrders() {
+        if (!confirm('Bạn có chắc chắn muốn xóa TẤT CẢ đơn hàng?')) return;
+        try {
+            const response = await fetch('http://localhost:8082/api/orders', {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+            if (data.success) {
+                loadOrders();
+            }
+        } catch (error) {
+            console.error('Error clearing orders:', error);
+        }
+    }
+</script>
+</body>
+</html>

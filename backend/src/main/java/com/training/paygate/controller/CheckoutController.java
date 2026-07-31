@@ -107,6 +107,29 @@ public class CheckoutController {
         return ApiResponse.success(info);
     }
 
+    @GetMapping("/info/txn/{transactionRef}")
+    @Operation(summary = "Lấy thông tin đơn hàng thanh toán qua transactionRef")
+    public ApiResponse<CheckoutInfoResponse> getCheckoutInfoByTxnRef(@PathVariable String transactionRef) {
+        CheckoutSession session = checkoutSessionRepository.findByTransactionRef(transactionRef)
+                .orElseThrow(() -> new ResourceNotFoundException("Phiên thanh toán không tồn tại"));
+
+        CheckoutInfoResponse info = new CheckoutInfoResponse(
+                session.getToken(),
+                session.getMerchantName(),
+                session.getMerchantCode(),
+                session.getOrderId(),
+                session.getAmount(),
+                session.getDescription(),
+                session.getReturnUrl(),
+                session.getCancelUrl(),
+                session.getStatus(),
+                session.getCreatedAt(),
+                session.getExpiresAt()
+        );
+
+        return ApiResponse.success(info);
+    }
+
     @PostMapping("/process")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Khách hàng đăng nhập & nhập OTP để hoàn tất thanh toán đơn hàng")
@@ -148,14 +171,14 @@ public class CheckoutController {
 
         TransactionResponse tx = transactionService.processPayment(paymentRequest, principal.getName());
 
-        session.setStatus("SUCCESS");
+        session.setStatus("PROCESSING");
         session.setTransactionRef(tx.transactionRef());
         checkoutSessionRepository.save(session);
 
         String redirectUrl = session.getReturnUrl() + (session.getReturnUrl().contains("?") ? "&" : "?")
-                + "status=SUCCESS&orderId=" + session.getOrderId() + "&transactionRef=" + tx.transactionRef();
+                + "status=PROCESSING&orderId=" + session.getOrderId() + "&transactionRef=" + tx.transactionRef();
 
-        return ApiResponse.success("Thanh toán đơn hàng thành công", Map.of(
+        return ApiResponse.success("Thanh toán đơn hàng đang được xử lý", Map.of(
                 "transactionRef", tx.transactionRef(),
                 "redirectUrl", redirectUrl
         ));

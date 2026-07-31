@@ -52,7 +52,7 @@ services:
       dockerfile: Dockerfile
     container_name: paygate-backend
     ports:
-      - "8080:8080"
+      - "8090:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/training_db
       SPRING_DATASOURCE_USERNAME: postgres
@@ -75,7 +75,7 @@ services:
       dockerfile: Dockerfile
     container_name: paygate-frontend
     ports:
-      - "4200:80"
+      - "4203:80"
     depends_on:
       - backend
 
