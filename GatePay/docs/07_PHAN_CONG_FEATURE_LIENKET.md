@@ -27,13 +27,13 @@ updated: 2026-08-03
    - *Tên tính năng:* Mua trước Trả sau 0% & Động cơ Chấm điểm Tín dụng 0-100  
    - *Phụ trách:* **Nhi** (GatePay - 5 ngày) & **Hoàng** (MarketPlace - 4 ngày)
 
-2. 💰 **[FEATURE_02_INSTANT_SETTLEMENT.md](file:///Users/thanvinh/Documents/antigravity/agitated-tesla/GatePay/docs/FEATURE_02_INSTANT_SETTLEMENT.md)**  
-   - *Tên tính năng:* Quyết toán Tạm ứng Doanh thu Sớm cho Nhà bán  
-   - *Phụ trách:* **Vinh** (GatePay - 3 ngày) & **Giảng + Trí v2** (MarketPlace - 2 ngày)
+2. 🚚 **[FEATURE_02_DELIVERY_TRACKING.md](file:///Users/thanvinh/Documents/antigravity/agitated-tesla/GatePay/docs/FEATURE_02_DELIVERY_TRACKING.md)**  
+   - *Tên tính năng:* Theo dõi Giao hàng (Delivery Tracking) cho khách & admin  
+   - *Phụ trách:* **[1 người MarketPlace]** (Backend + UI - 3 ngày)
 
-3. 🏢 **[FEATURE_03_WORKING_CAPITAL.md](file:///Users/thanvinh/Documents/antigravity/agitated-tesla/GatePay/docs/FEATURE_03_WORKING_CAPITAL.md)**  
-   - *Tên tính năng:* Vay Vốn Lưu Động Nhập Hàng Cho Người Bán  
-   - *Phụ trách:* **Trí** (GatePay - 4 ngày) & **Khoa** (MarketPlace - 2-3 ngày)
+3. ⭐ **[FEATURE_03_PRODUCT_REVIEWS.md](file:///Users/thanvinh/Documents/antigravity/agitated-tesla/GatePay/docs/FEATURE_03_PRODUCT_REVIEWS.md)**  
+   - *Tên tính năng:* Đánh giá Sản phẩm (Reviews & Ratings)  
+   - *Phụ trách:* **[1 người MarketPlace]** (Backend + UI - 3 ngày)
 
 4. 🔄 **[FEATURE_04_REFUND_MANAGEMENT.md](file:///Users/thanvinh/Documents/antigravity/agitated-tesla/GatePay/docs/FEATURE_04_REFUND_MANAGEMENT.md)**  
    - *Tên tính năng:* Xử Lý Hoàn Tiền Giao Dịch & Hủy Kỳ Trả Góp BNPL  
@@ -58,9 +58,9 @@ MILESTONE 0 (TRƯỚC — Tuần 1 ngày 1-3)
 MILESTONE 1 (Tuần 1 - Tuần 2)
   ├── Feature 0: Payment Gateway (tiếp) ➔ phải XONG mới làm các feature sau
   ├── 1. Feature 1: BNPL + Credit Score (Nhi + Hoàng) ➔ [⭐ ƯU TIÊN CAO NHẤT]
-  ├── 2. Feature 2: Instant Settlement (Vinh + Giảng/Trí v2)
-  └── 3. Feature 4: Refund / Hoàn Tiền (Trí v2)
+  ├── 2. Feature 4: Refund / Hoàn Tiền (Trí v2)
+  └── 3. Feature 2: Delivery Tracking ([1 người MarketPlace])
 
 MILESTONE 2 (Tuần 3 - Tuần 4)
-  └── 4. Feature 3: Working Capital (Trí + Khoa)
+  └── 4. Feature 3: Product Reviews & Ratings ([1 người MarketPlace])
 ```

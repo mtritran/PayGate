@@ -9,7 +9,7 @@
 | **`07_PHAN_CONG_FEATURE_LIENKET.md`** | ⭐ Phân công chi tiết các feature liên kết + thời gian dự kiến + lịch họp chiều | **Bạn làm gì, ai làm gì** |
 | **`FEATURE_00_PAYMENT_GATEWAY.md`** | ⚠️ NỀN TẢNG — gắn cổng thanh toán thật GatePay lên MarketPlace (thay payment giả lập) | **Làm TRƯỚC hết** |
 
-**Các file spec feature chi tiết:** `FEATURE_01_BNPL_CREDIT_SCORE`, `FEATURE_02_INSTANT_SETTLEMENT`, `FEATURE_03_WORKING_CAPITAL`, `FEATURE_04_REFUND_MANAGEMENT`.
+**Các file spec feature chi tiết:** `FEATURE_01_BNPL_CREDIT_SCORE`, `FEATURE_02_DELIVERY_TRACKING`, `FEATURE_03_PRODUCT_REVIEWS`, `FEATURE_04_REFUND_MANAGEMENT`.
 | **`SPEC_LIENKET_GATEPAY_MARKETPLACE.md`** | Spec chi tiết 4 feature (BNPL/Instant/Working Capital/Credit Score): API, class, security, DoD | AI/team code theo |
 | **`LINKAGE_PLAN_GATEPAY_MARKETPLACE.md`** | Blueprint tổng quan liên kết 2 bên | Hiểu mục tiêu dài hạn |
 | **`PAYMENT_GATEWAY_INTEGRATION_GUIDE.md`** | Hướng dẫn tích hợp cổng thanh toán cho Merchant | Đối tác/merchant đọc |
