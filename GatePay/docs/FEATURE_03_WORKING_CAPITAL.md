@@ -102,3 +102,29 @@ sequenceDiagram
 ### 🔵 Phía MarketPlace (Khoa - 2-3 ngày):
 - [ ] Thêm Card **"Hạn mức vay nhập hàng"** + Nút **"Đi vay"** trên Dashboard.
 - [ ] Gọi API yêu cầu vay và hiển thị tiến trình hoàn nợ.
+
+---
+
+## 🔒 6. Security (bắt buộc)
+- **JWT Bearer** merchant — chỉ merchant sở hữu mới request vay/accept.
+- **API Key** merchant khi request vay từ MarketPlace (xác thực đối tác).
+- **Hạn mức dựa doanh thu thật** qua gateway — không cho vay merchant không có doanh thu (chống vay rồi bỏ trốn).
+- **Cap auto-hold** ≤ 50% doanh thu (không giữ quá mức gây ảnh hưởng dòng tiền).
+- **Credit/Fraud check** merchant trước khi duyệt (dùng `CreditScoreService` + `FraudDetectionService`).
+- **Rate limit** request vay (chống spam).
+
+---
+
+## 🔗 7. Phụ thuộc & Thứ tự
+- **Phụ thuộc:** Cần **doanh thu thật** của merchant chạy qua GatePay để tính hạn mức → cần payment thật + (tốt nhất) FEATURE-01 BNPL đã chạy 1 thời gian.
+- **Thứ tự:** làm **SAU** FEATURE-01 (đợi có dữ liệu/lưu lượng doanh thu).
+
+---
+
+## ✅ 8. Definition of Done (DoD)
+- [ ] `POST /merchant-loans/request` sinh offer `{loanId, limit, autoHoldRate, interestRate}` từ doanh thu.
+- [ ] `accept` → giải ngân vào Ví Merchant + ghi nợ `merchant_loans`.
+- [ ] `RepaymentScheduler` auto-hold % doanh thu trừ nợ mỗi đơn.
+- [ ] `GET /{id}/repayment` trả đúng `paid/remaining`.
+- [ ] Dashboard Merchant hiển thị hạn mức vay + nút "Đi vay" + tiến trình trả nợ.
+- [ ] `./mvnw -o test-compile` xanh + unit test.

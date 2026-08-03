@@ -99,3 +99,27 @@ sequenceDiagram
 ### 🔵 Phía MarketPlace (Giảng & Trí v2 - 2 ngày):
 - [ ] Thêm Card **"Doanh thu đang giữ"** + Nút **"Tạm ứng"** trên Merchant Dashboard.
 - [ ] Xây dựng bảng hiển thị Lịch sử rút tiền & trạng thái giải ngân.
+
+---
+
+## 🔒 6. Security (bắt buộc)
+- **JWT Bearer** của merchant sở hữu — chỉ merchant đó mới xem pending/rút được (kiểm tra ownership bằng token).
+- **Rate limit** số lần rút/ngày (chống rút khống, vd ≤ 5 lần/ngày) + giới hạn `amount` mỗi lần.
+- **Validate** `amount > 0` và `amount ≤ availablePending` — không được rút quá.
+- **Idempotent** payout (bằng `payoutId` hoặc `idempotencyKey`) — tránh rút trùng khi retry.
+- **Ledger** `EntryType.PAYOUT` ghi đúng — phí + netDisbursed tách rõ.
+
+---
+
+## 🔗 7. Phụ thuộc & Thứ tự
+- **Phụ thuộc:** Cần merchant có **pending balance** — phát sinh khi Merchant bán hàng qua GatePay (payment thật). FEATURE-01 BNPL giúp tạo doanh thu, nhưng không bắt buộc.
+- **Thứ tự:** có thể chạy **song song** với FEATURE-01/04.
+
+---
+
+## ✅ 8. Definition of Done (DoD)
+- [ ] `GET /pending-balance` trả đúng `availablePending`/`onHold`/`feePct`.
+- [ ] `POST /payout` rút thành công → ledger PAYOUT ghi đúng, trừ pending, phí đúng `netDisbursed`.
+- [ ] Chặn rút quá số dư + quá số lần/ngày.
+- [ ] Dashboard Merchant hiển thị pending + nút "Tạm ứng" + lịch sử rút.
+- [ ] `./mvnw -o test-compile` xanh + unit test.

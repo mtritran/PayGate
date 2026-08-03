@@ -84,3 +84,28 @@ sequenceDiagram
 - [ ] Viết API `POST /api/v1/refunds` xử lý hoàn tiền mua thường vs. mua BNPL.
 - [ ] Hạch toán Sổ cái kép Ledger `EntryType.REFUND` để thu hồi tiền từ ví Merchant.
 - [ ] Thêm Nút **"Hoàn tiền"** trên màn hình Chi tiết đơn hàng của MarketPlace và cập nhật trạng thái đơn.
+
+---
+
+## 🔒 6. Security (bắt buộc)
+- **JWT Bearer** — chỉ người liên quan giao dịch (khách/merchant) hoặc ADMIN mới hoàn được.
+- **Idempotent** bằng `orderId` — tránh hoàn trùng 2 lần khi retry (kiểm tra `refunds` đã tồn tại).
+- **Chặn hoàn quá số đã trả** — validate `amount ≤ tổng đã thanh toán`.
+- **Rate limit** request hoàn tiền.
+- **REFUND ledger** hoàn ngược đúng — không để số dư âm.
+
+---
+
+## 🔗 7. Phụ thuộc & Thứ tự
+- **Phụ thuộc:** Cần có **giao dịch thật** (NORMAL hoặc BNPL) — tức phụ thuộc FEATURE-01 (BNPL) tạo ra đơn trả góp để hoàn.
+- **Thứ tự:** làm **SAU** FEATURE-01 (cần giao dịch/installment có sẵn).
+
+---
+
+## ✅ 8. Definition of Done (DoD)
+- [ ] `POST /refunds` hoàn tiền NORMAL → về Ví khách đúng.
+- [ ] Hoàn BNPL → hủy các kỳ installment PENDING + hoàn các kỳ đã đóng.
+- [ ] Ledger `EntryType.REFUND` thu hồi từ ví Merchant đúng.
+- [ ] Chặn hoàn trùng / hoàn quá số đã trả.
+- [ ] MarketPlace nút "Hoàn tiền" + cập nhật order → `REFUNDED` + `InventoryFacade.release()`.
+- [ ] `./mvnw -o test-compile` xanh + unit test.

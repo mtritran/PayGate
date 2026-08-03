@@ -106,3 +106,30 @@ sequenceDiagram
 - [ ] Xây dựng UI chọn gói BNPL (`BNPL_30/45`, `GTHP_3M/6M`) tại trang Checkout.
 - [ ] Lưu thông tin `paygate_plan` vào bảng `orders`.
 - [ ] Xử lý Webhook callback chuyển trạng thái đơn sang `PAID`.
+
+---
+
+## 🔒 6. Security (bắt buộc)
+- **API Key** merchant bắt buộc trong body `POST /credit/checkout` — verify `findByApiKey` + merchant `ACTIVE`.
+- **OTP** bắt buộc khi khách xác nhận trả sau (dùng `OtpService`, 1 lần/hết hạn).
+- **Rate limit** trên `/credit/checkout` (chống spam duyệt, vd 10 req/phút/user).
+- **Fraud check** trước khi duyệt BNPL (gọi `FraudDetectionService` — nếu CRITICAL → từ chối).
+- **Idempotent** bằng `orderId` — tránh duyệt trùng khi retry.
+- **Credit score** là dữ liệu nhạy cảm → chỉ ADMIN xem, webhook event dùng API key.
+
+---
+
+## 🔗 7. Phụ thuộc & Thứ tự
+- **Phụ thuộc:** Cần `CreditScoreService` (đã có, V27) + `OtpService` + merchant `apiKey` có sẵn.
+- **Làm trước:** Buy-Now-Pay-Later là **nền tảng** → các feature khác (Refund, Working Capital) phụ thuộc luồng thanh toán chạy đúng.
+- **Thứ tự trong team:** không chặn; FEATURE-02/04 có thể chạy song song.
+
+---
+
+## ✅ 8. Definition of Done (DoD)
+- [ ] `POST /credit/checkout` duyệt BNPL end-to-end (score → hạn mức → token → OTP).
+- [ ] `installments` được tạo đúng số kỳ khi khách xác nhận.
+- [ ] Ledger Debit/Credit ghi đúng (phí + trả merchant phần gốc).
+- [ ] Webhook `order.confirmed` cập nhật order MarketPlace → `PAID`.
+- [ ] Credit event từ MarketPlace → `credit_events` cập nhật score.
+- [ ] `./mvnw -o test-compile` xanh + unit test happy path & edge case.
