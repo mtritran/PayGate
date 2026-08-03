@@ -133,6 +133,8 @@ import { PinModalComponent } from '../../shared/components/pin-modal/pin-modal.c
       <app-pin-modal
         [isOpen]="showOtpModal()"
         title="OTP Verification Thanh Toán Đơn Hàng"
+        action="Xác thực OTP thanh toán đơn hàng"
+        [bypassVerification]="true"
         (confirmed)="onOtpConfirmed($event)"
         (cancelled)="showOtpModal.set(false)"
       ></app-pin-modal>
