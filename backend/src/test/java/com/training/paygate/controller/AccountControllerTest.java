@@ -51,6 +51,9 @@ class AccountControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
+    private com.training.paygate.cache.RefreshTokenCacheService refreshTokenCacheService;
+
+    @MockBean
     private AccountService accountService;
 
     @MockBean

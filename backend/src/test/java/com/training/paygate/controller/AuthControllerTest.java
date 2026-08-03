@@ -44,6 +44,9 @@ class AuthControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
+    private com.training.paygate.cache.RefreshTokenCacheService refreshTokenCacheService;
+
+    @MockBean
     private AuthService authService;
 
     @MockBean
@@ -71,7 +74,8 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("user_vinh"))
-                .andExpect(jsonPath("$.data.role").value("USER"));
+                .andExpect(jsonPath("$.data.role").value("USER"))
+                .andExpect(jsonPath("$.data.active").value(true));
     }
 
     @Test

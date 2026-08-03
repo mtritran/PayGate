@@ -10,12 +10,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -58,9 +61,20 @@ public class FraudDetectionService {
 
     private final FraudLogRepository fraudLogRepository;
     private final AccountRepository accountRepository;
+    private final StringRedisTemplate redisTemplate;
 
-    // In-memory sliding window history: username -> list of recent transactions in 5 minutes
-    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TxRecord>> userTxHistory = new ConcurrentHashMap<>();
+    // In-memory sliding window fallback used when Redis is unreachable
+    private final ConcurrentHashMap<String, ConcurrentLinkedQueue<TxRecord>> fallbackTxHistory = new ConcurrentHashMap<>();
+
+    // In-memory per-day counter fallback used when Redis is unreachable
+    private final ConcurrentHashMap<String, Long> fallbackDailyCounts = new ConcurrentHashMap<>();
+
+    private static final String REDIS_PREFIX = "fraud:tx:";
+    private static final String DAILY_PREFIX = "fraud:daily:";
+    private static final long DAILY_TX_LIMIT = 20;
+    private static final long DAILY_TTL_DAYS = 2;
+    private static final long WINDOW_MINUTES = 5;
+    private static final long WINDOW_MS = WINDOW_MINUTES * 60 * 1000L;
 
     private static final BigDecimal VERY_HIGH_AMOUNT = new BigDecimal("50000000");   // 50 Million VND
     private static final BigDecimal EXTREME_AMOUNT = new BigDecimal("200000000");   // 200 Million VND
@@ -70,15 +84,8 @@ public class FraudDetectionService {
      */
     public FraudAnalysisResult evaluatePayment(String username, Long userId, PaymentRequest request, String clientIp) {
         long now = System.currentTimeMillis();
-        long windowStart5Min = now - (5 * 60 * 1000L); // 5 minutes window
-        long windowStart1Min = now - (60 * 1000L);      // 1 minute window
-
-        ConcurrentLinkedQueue<TxRecord> history = userTxHistory.computeIfAbsent(username, k -> new ConcurrentLinkedQueue<>());
-        
-        // Clean up records older than 5 minutes
-        while (!history.isEmpty() && history.peek().getTimestamp() < windowStart5Min) {
-            history.poll();
-        }
+        long windowStart5Min = now - WINDOW_MS;
+        long windowStart1Min = now - (60 * 1000L);
 
         BigDecimal currentAmount = request.amount() != null ? request.amount() : BigDecimal.ZERO;
         int riskScore = 0;
@@ -87,8 +94,8 @@ public class FraudDetectionService {
         // --------------------------------------------------------------------
         // RULE 1: Rapid Transaction Velocity Check
         // --------------------------------------------------------------------
-        long countIn1Min = history.stream().filter(r -> r.getTimestamp() >= windowStart1Min).count();
-        long countIn5Min = history.size();
+        long countIn1Min = countTxInWindow(username, windowStart1Min, now);
+        long countIn5Min = countTxInWindow(username, windowStart5Min, now);
 
         if (countIn1Min >= 4) {
             riskScore += 45;
@@ -138,16 +145,27 @@ public class FraudDetectionService {
         // --------------------------------------------------------------------
         // RULE 5: Repeated Transfers to Same Destination Account in Short Time
         // --------------------------------------------------------------------
-        long sameDestCount = history.stream()
-                .filter(r -> r.getDestAccountId() != null && r.getDestAccountId().equals(request.destAccountId()))
-                .count();
+        long sameDestCount = countTxToDest(username, request.destAccountId(), windowStart5Min, now);
         if (sameDestCount >= 3) {
             riskScore += 25;
             rulesTriggered.append("[REPEATED_DESTINATION: >3 txs to same account] ");
         }
 
+        // --------------------------------------------------------------------
+        // RULE 6: Daily Transaction Volume Limit (Anti-Money-Laundering style)
+        // Counts ALL payment attempts in the current calendar day (local server
+        // date) to catch users who spread many small transactions across time
+        // to dodge the 5-minute velocity window.
+        // --------------------------------------------------------------------
+        long dailyCount = getDailyTxCount(username);
+        if (dailyCount >= DAILY_TX_LIMIT) {
+            riskScore += 40;
+            rulesTriggered.append("[DAILY_TX_LIMIT: >=20 txs in current day] ");
+        }
+
         // Record current transaction attempt
-        history.add(new TxRecord(now, currentAmount, request.destAccountId()));
+        recordTx(username, now, currentAmount, request.destAccountId());
+        incrementDailyTxCount(username);
 
         // Cap Risk Score at 100
         riskScore = Math.min(riskScore, 100);
@@ -208,5 +226,131 @@ public class FraudDetectionService {
                 .reason(suspicious ? "Hệ thống phát hiện dấu hiệu rủi ro cao: " + ruleStr : "Giao dịch an toàn.")
                 .recommendation(suspicious ? "Vui lòng xác minh bổ sung hoặc chậm lại thao tác để bảo vệ tài khoản." : "Cho phép thực hiện giao dịch.")
                 .build();
+    }
+
+    /**
+     * Counts transactions in a time window [windowStart, now] for a user.
+     * Uses Redis ZSET when available, otherwise in-memory fallback.
+     */
+    private long countTxInWindow(String username, long windowStart, long now) {
+        String key = REDIS_PREFIX + username;
+        try {
+            if (redisTemplate != null && redisTemplate.getConnectionFactory() != null) {
+                redisTemplate.opsForZSet().removeRangeByScore(key, 0, windowStart);
+                Long count = redisTemplate.opsForZSet().count(key, windowStart, now);
+                return count != null ? count : 0;
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable for fraud history ({}), using in-memory fallback", e.getMessage());
+        }
+        return countInMemory(username, windowStart, now);
+    }
+
+    /**
+     * Counts transactions to a specific destination account within the window.
+     */
+    private long countTxToDest(String username, Long destAccountId, long windowStart, long now) {
+        if (destAccountId == null) {
+            return 0;
+        }
+        String key = REDIS_PREFIX + username;
+        try {
+            if (redisTemplate != null && redisTemplate.getConnectionFactory() != null) {
+                long sameDestCount = 0;
+                Set<String> members = redisTemplate.opsForZSet().rangeByScore(key, windowStart, now);
+                if (members != null) {
+                    for (String member : members) {
+                        int sep = member.indexOf(':');
+                        if (sep > 0) {
+                            String destPart = member.substring(sep + 1);
+                            if (destPart.equals(String.valueOf(destAccountId))) {
+                                sameDestCount++;
+                            }
+                        }
+                    }
+                }
+                return sameDestCount;
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable for fraud history ({}), using in-memory fallback", e.getMessage());
+        }
+        return countToDestInMemory(username, destAccountId, windowStart, now);
+    }
+
+    /**
+     * Records the current transaction attempt for the user, then expires the key.
+     */
+    private void recordTx(String username, long now, BigDecimal amount, Long destAccountId) {
+        String key = REDIS_PREFIX + username;
+        try {
+            if (redisTemplate != null && redisTemplate.getConnectionFactory() != null) {
+                redisTemplate.opsForZSet().add(key, now + ":" + destAccountId, now);
+                redisTemplate.expire(key, Duration.ofSeconds(WINDOW_MINUTES * 60 + 5));
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable for fraud history ({}), using in-memory fallback", e.getMessage());
+        }
+        recordInMemory(username, now, amount, destAccountId);
+    }
+
+    /**
+     * Returns the number of payment attempts recorded so far today for the user
+     * (local server date). Uses Redis INCR for atomicity, with a 2-day TTL so the
+     * count outlives the 5-minute sliding window and survives to catch "lách luật".
+     */
+    private long getDailyTxCount(String username) {
+        String key = DAILY_PREFIX + java.time.LocalDate.now() + ":" + username;
+        try {
+            if (redisTemplate != null && redisTemplate.getConnectionFactory() != null) {
+                String val = redisTemplate.opsForValue().get(key);
+                long count = val != null ? Long.parseLong(val) : 0;
+                redisTemplate.expire(key, Duration.ofDays(DAILY_TTL_DAYS));
+                return count;
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable for daily fraud counter ({}), using in-memory fallback", e.getMessage());
+        }
+        return fallbackDailyCounts.getOrDefault(java.time.LocalDate.now() + ":" + username, 0L);
+    }
+
+    /**
+     * Atomically increments the daily transaction counter for the user.
+     */
+    private void incrementDailyTxCount(String username) {
+        String key = DAILY_PREFIX + java.time.LocalDate.now() + ":" + username;
+        try {
+            if (redisTemplate != null && redisTemplate.getConnectionFactory() != null) {
+                redisTemplate.opsForValue().increment(key);
+                redisTemplate.expire(key, Duration.ofDays(DAILY_TTL_DAYS));
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Redis unavailable for daily fraud counter ({}), skipping increment", e.getMessage());
+        }
+        // In-memory fallback: track per-day counts so the rule still works without Redis.
+        String fallbackKey = java.time.LocalDate.now() + ":" + username;
+        fallbackDailyCounts.merge(fallbackKey, 1L, Long::sum);
+    }
+
+    private long countInMemory(String username, long windowStart, long now) {
+        ConcurrentLinkedQueue<TxRecord> history = fallbackTxHistory.computeIfAbsent(username, k -> new ConcurrentLinkedQueue<>());
+        while (!history.isEmpty() && history.peek().getTimestamp() < windowStart) {
+            history.poll();
+        }
+        return history.stream().filter(r -> r.getTimestamp() <= now).count();
+    }
+
+    private long countToDestInMemory(String username, Long destAccountId, long windowStart, long now) {
+        ConcurrentLinkedQueue<TxRecord> history = fallbackTxHistory.computeIfAbsent(username, k -> new ConcurrentLinkedQueue<>());
+        return history.stream()
+                .filter(r -> r.getTimestamp() >= windowStart && r.getTimestamp() <= now)
+                .filter(r -> r.getDestAccountId() != null && r.getDestAccountId().equals(destAccountId))
+                .count();
+    }
+
+    private void recordInMemory(String username, long now, BigDecimal amount, Long destAccountId) {
+        ConcurrentLinkedQueue<TxRecord> history = fallbackTxHistory.computeIfAbsent(username, k -> new ConcurrentLinkedQueue<>());
+        history.add(new TxRecord(now, amount, destAccountId));
     }
 }

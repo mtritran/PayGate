@@ -245,7 +245,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                     null
             );
 
-            TransactionResponse txRes = transactionService.processPayment(request, user.getUsername());
+            TransactionResponse txRes = transactionService.processPayment(request, user.getUsername(), "internal");
 
             // Log success
             RecurringPaymentLog logEntity = RecurringPaymentLog.builder()

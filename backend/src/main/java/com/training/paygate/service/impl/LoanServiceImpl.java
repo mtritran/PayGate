@@ -226,7 +226,7 @@ public class LoanServiceImpl implements LoanService {
                         .orElseThrow(() -> new ResourceNotFoundException("SYSTEM User not found")));
 
         TransactionResponse txResponse = transactionService.processPayment(disbursePaymentReq,
-                systemUser.getUsername());
+                systemUser.getUsername(), "internal");
         log.info("[LOAN] Disbursement completed for loan {}: transaction ref {}", loan.getLoanRef(),
                 txResponse.transactionRef());
 
@@ -344,7 +344,7 @@ public class LoanServiceImpl implements LoanService {
         User borrower = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        TransactionResponse txResponse = transactionService.processPayment(repayPaymentReq, borrower.getUsername());
+        TransactionResponse txResponse = transactionService.processPayment(repayPaymentReq, borrower.getUsername(), "internal");
         log.info("[LOAN] Repayment transaction completed: ref {}", txResponse.transactionRef());
 
         // Publish event để tích điểm cho LOAN_REPAYMENT

@@ -67,21 +67,21 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionResponse processPayment(PaymentRequest request, Long userId) {
+    public TransactionResponse processPayment(PaymentRequest request, Long userId, String clientIp) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-        return processPayment(request, user.getUsername());
+        return processPayment(request, user.getUsername(), clientIp);
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public TransactionResponse processPayment(PaymentRequest request, String currentUsername) {
+    public TransactionResponse processPayment(PaymentRequest request, String currentUsername, String clientIp) {
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
         Long userId = currentUser != null ? currentUser.getId() : null;
 
         // Realtime Multi-Factor Fraud & Risk Evaluation
         com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult =
-                fraudDetectionService.evaluatePayment(currentUsername, userId, request, "127.0.0.1");
+                fraudDetectionService.evaluatePayment(currentUsername, userId, request, clientIp);
         if (fraudResult.isSuspicious() && fraudResult.getActionTaken() == com.training.paygate.service.FraudDetectionService.FraudAction.BLOCK_TEMPORARY) {
             throw new BadRequestException("CẢNH BÁO AN NINH GIAO DỊCH (" + fraudResult.getRiskScore() + "/100): " + fraudResult.getReason());
         }
