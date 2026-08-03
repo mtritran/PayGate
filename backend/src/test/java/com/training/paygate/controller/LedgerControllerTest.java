@@ -1,5 +1,6 @@
 package com.training.paygate.controller;
 
+import com.training.paygate.cache.RefreshTokenCacheService;
 import com.training.paygate.dto.response.LedgerEntryResponse;
 import com.training.paygate.dto.response.LedgerVerificationResponse;
 import com.training.paygate.security.JwtTokenProvider;
@@ -39,6 +40,9 @@ class LedgerControllerTest {
 
     @MockBean
     private LedgerService ledgerService;
+
+    @MockBean
+    private RefreshTokenCacheService refreshTokenCacheService;
 
     @Test
     @WithMockUser(roles = "ADMIN")

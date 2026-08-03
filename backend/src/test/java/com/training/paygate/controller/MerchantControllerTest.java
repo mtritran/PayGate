@@ -1,6 +1,7 @@
 package com.training.paygate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.paygate.cache.RefreshTokenCacheService;
 import com.training.paygate.dto.request.CreateMerchantRequest;
 import com.training.paygate.dto.request.UpdateMerchantRequest;
 import com.training.paygate.dto.response.MerchantResponse;
@@ -50,6 +51,9 @@ class MerchantControllerTest {
 
     @MockBean
     private UserDetailsService userDetailsService;
+
+    @MockBean
+    private RefreshTokenCacheService refreshTokenCacheService;
 
     @Test
     @WithMockUser(roles = "ADMIN")

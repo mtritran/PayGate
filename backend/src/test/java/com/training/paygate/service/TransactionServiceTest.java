@@ -72,6 +72,9 @@ class TransactionServiceTest {
     @Mock
     private LoyaltyService loyaltyService;
 
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private TransactionServiceImpl transactionService;
 
