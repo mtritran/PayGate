@@ -341,7 +341,7 @@ export class LoginComponent {
         this.loading.set(false);
         if (res.success) {
           this.notificationService.success('Login successful!');
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/accounts/dashboard';
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || (this.authService.isAdmin() ? '/admin/dashboard' : '/accounts/dashboard');
           this.router.navigateByUrl(returnUrl);
         } else {
           this.submitError.set(res.message || 'Login failed.');

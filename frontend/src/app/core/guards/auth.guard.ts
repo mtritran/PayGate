@@ -22,3 +22,15 @@ export const authGuard: CanActivateFn = (_route, state) => {
     })
   );
 };
+
+export const userOnlyGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  const authService = inject(AuthService);
+
+  if (authService.isAdmin()) {
+    router.navigate(['/admin/dashboard']);
+    return false;
+  }
+
+  return true;
+};

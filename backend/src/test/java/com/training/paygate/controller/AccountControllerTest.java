@@ -2,6 +2,7 @@ package com.training.paygate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.paygate.cache.BalanceCacheService;
+import com.training.paygate.cache.RefreshTokenCacheService;
 import com.training.paygate.dto.request.TopUpRequest;
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionResponse;
@@ -54,6 +55,9 @@ class AccountControllerTest {
 
     @MockBean
     private BalanceCacheService balanceCacheService;
+
+    @MockBean
+    private RefreshTokenCacheService refreshTokenCacheService;
 
     // ==========================================
     // 1. GET /api/v1/accounts/me

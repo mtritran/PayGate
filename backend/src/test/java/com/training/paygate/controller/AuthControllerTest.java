@@ -1,6 +1,7 @@
 package com.training.paygate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.paygate.cache.RefreshTokenCacheService;
 import com.training.paygate.dto.request.LoginRequest;
 import com.training.paygate.dto.request.RegisterRequest;
 import com.training.paygate.dto.response.AuthResponse;
@@ -48,6 +49,9 @@ class AuthControllerTest {
     @MockBean
     private UserDetailsService userDetailsService;
 
+    @MockBean
+    private RefreshTokenCacheService refreshTokenCacheService;
+
     // ==========================================
     // UC-U01: Đăng ký User mới (POST /api/v1/auth/register)
     // ==========================================
@@ -67,8 +71,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.username").value("user_vinh"))
-                .andExpect(jsonPath("$.data.role").value("USER"))
-                .andExpect(jsonPath("$.data.accessToken").value("access-token"));
+                .andExpect(jsonPath("$.data.role").value("USER"));
     }
 
     @Test

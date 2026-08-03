@@ -1,6 +1,7 @@
 package com.training.paygate.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.training.paygate.cache.RefreshTokenCacheService;
 import com.training.paygate.dto.request.PaymentRequest;
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionDetailResponse;
@@ -70,6 +71,9 @@ class TransactionControllerTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private RefreshTokenCacheService refreshTokenCacheService;
 
     // ==========================================
     // 1. POST /api/v1/transactions/pay
