@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, userOnlyGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
@@ -29,66 +29,82 @@ export const routes: Routes = [
       },
       {
         path: 'accounts/dashboard',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/account/account-dashboard/account-dashboard.component').then(m => m.AccountDashboardComponent)
       },
       {
         path: 'accounts/me',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/account/my-account/my-account.component').then(m => m.MyAccountComponent)
       },
       {
         path: 'accounts/topup',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
       },
       {
         path: 'vaults',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/vault/vault-list/vault-list.component').then(m => m.VaultListComponent)
       },
       {
         path: 'vaults/new',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/vault/vault-create/vault-create.component').then(m => m.VaultCreateComponent)
       },
       {
         path: 'vaults/:id',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/vault/vault-detail/vault-detail.component').then(m => m.VaultDetailComponent)
       },
       {
         path: 'loans',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/loan/loan-dashboard/loan-dashboard.component').then(m => m.LoanDashboardComponent)
       },
       {
         path: 'transactions/pay',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
       },
       {
         path: 'transactions/transfer',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
       },
       {
         path: 'transactions/history',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/transaction/transaction-list/transaction-list.component').then(m => m.TransactionListComponent)
       },
       {
         path: 'recurring-payments',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/recurring-payment/recurring-payment-list/recurring-payment-list.component').then(m => m.RecurringPaymentListComponent)
       },
       {
         path: 'recurring-payments/new',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/recurring-payment/recurring-payment-form/recurring-payment-form.component').then(m => m.RecurringPaymentFormComponent)
       },
       {
         path: 'bills/pay',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/bill/bill-pay/bill-pay.component').then(m => m.BillPayComponent)
       },
       {
         path: 'bills/saved',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/bill/saved-bills/saved-bills.component').then(m => m.SavedBillsComponent)
       },
       {
         path: 'vouchers',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/vouchers/voucher-shop.component').then(m => m.VoucherShopComponent)
       },
       {
         path: 'merchant/register',
+        canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/merchant/merchant-register/merchant-register.component').then(m => m.MerchantRegisterComponent)
       },
       {
