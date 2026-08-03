@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { Merchant } from '../../../core/models/merchant.model';
 import { LedgerService } from '../../../core/services/ledger.service';
@@ -43,7 +43,7 @@ type AdminTab = 'overview' | 'users' | 'merchants' | 'loans' | 'transactions' | 
           <small>{{ pendingMerchantsCount }} pending review</small>
         </button>
         <button class="kpi-card loans" (click)="activeTab = 'loans'">
-          <span class="kpi-label">LOAN QUEUE</span>
+          <span class="kpi-label">DEBT & LOAN QUEUE</span>
           <strong>{{ pendingLoansCount }}</strong>
           <small>{{ pendingLoansAmount | currency:'VND':'symbol':'1.0-0' }} awaiting decision</small>
         </button>
@@ -68,7 +68,7 @@ type AdminTab = 'overview' | 'users' | 'merchants' | 'loans' | 'transactions' | 
         <button [class.active]="activeTab === 'overview'" (click)="activeTab = 'overview'">Overview</button>
         <button [class.active]="activeTab === 'users'" (click)="activeTab = 'users'">Users</button>
         <button [class.active]="activeTab === 'merchants'" (click)="activeTab = 'merchants'">Merchants</button>
-        <button [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">Loans</button>
+        <button [class.active]="activeTab === 'loans'" (click)="activeTab = 'loans'">Debt & Loans</button>
         <button [class.active]="activeTab === 'transactions'" (click)="activeTab = 'transactions'">Transactions</button>
         <button [class.active]="activeTab === 'ledger'" (click)="activeTab = 'ledger'">Ledger</button>
         <button [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">Vouchers</button>
@@ -110,6 +110,7 @@ type AdminTab = 'overview' | 'users' | 'merchants' | 'loans' | 'transactions' | 
             <div class="modules-quick-grid">
               <button class="module-tile" (click)="activeTab = 'users'"><span>US</span><strong>User Directory</strong><small>Create, edit, disable, and audit platform accounts.</small></button>
               <button class="module-tile" (click)="activeTab = 'merchants'"><span>MR</span><strong>Merchant Review</strong><small>Approve partners and control merchant activation.</small></button>
+              <button class="module-tile" (click)="activeTab = 'loans'"><span>DB</span><strong>Debt & Loan Control</strong><small>Review applications, overdue exposure, and credit status.</small></button>
               <button class="module-tile" (click)="activeTab = 'transactions'"><span>TX</span><strong>Transaction Monitor</strong><small>Inspect platform payments and issue refunds.</small></button>
               <button class="module-tile" (click)="activeTab = 'ledger'"><span>LG</span><strong>Ledger Audit</strong><small>Verify debit and credit consistency.</small></button>
               <button class="module-tile" (click)="activeTab = 'vouchers'"><span>VC</span><strong>Voucher Operations</strong><small>Manage rewards and promotional inventory.</small></button>
@@ -175,7 +176,7 @@ type AdminTab = 'overview' | 'users' | 'merchants' | 'loans' | 'transactions' | 
 
       <section class="tab-pane" *ngIf="activeTab === 'loans'">
         <div class="admin-card">
-          <div class="card-hdr"><h3>Loan Approval Queue ({{ loansList.length }})</h3></div>
+            <div class="card-hdr"><h3>Debt & Loan Approval Queue ({{ loansList.length }})</h3></div>
           <div class="table-responsive">
             <table class="admin-table">
               <thead><tr><th>Reference</th><th>Amount</th><th>Term</th><th>Rate</th><th>Monthly Due</th><th>Status</th><th>Actions</th></tr></thead>
@@ -383,10 +384,15 @@ export class AdminDashboardComponent implements OnInit {
     private webhookLogService: WebhookLogService,
     private loanService: LoanService,
     private transactionService: TransactionService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    const requestedTab = this.route.snapshot.queryParamMap.get('tab') as AdminTab | null;
+    if (requestedTab && ['overview', 'users', 'merchants', 'loans', 'transactions', 'ledger', 'vouchers', 'webhooks'].includes(requestedTab)) {
+      this.activeTab = requestedTab;
+    }
     this.loadMetrics();
   }
 

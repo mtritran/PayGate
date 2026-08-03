@@ -10,6 +10,14 @@ import { AiAssistantComponent } from '../../shared/components/ai-assistant/ai-as
 import { NotificationService } from '../../core/services/notification.service';
 import { RealtimeNotificationService, NotificationItem } from '../../core/services/realtime-notification.service';
 
+type NavItem = {
+  label: string;
+  link: string;
+  icon: string;
+  exact: boolean;
+  queryParams?: Record<string, string>;
+};
+
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -25,17 +33,28 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
     <div class="main-layout">
       <!-- Top Header Bar -->
       <header class="top-header">
-        <div class="header-left clickable-brand" routerLink="/accounts/dashboard">
+        <div class="header-left clickable-brand" [routerLink]="homeLink()">
           <div class="header-logo">
             <img src="assets/PayGate_Logo.png" alt="PayGate" class="header-logo-img">
           </div>
           <div class="header-brand-text">
             <span class="header-brand-title">PayGate</span>
-            <span class="header-brand-sub">Smart Payment & Credit</span>
+            <span class="header-brand-sub">{{ isAdmin() ? 'Operations Console' : 'Smart Payment & Credit' }}</span>
           </div>
         </div>
 
-
+        <nav class="header-nav user-nav" *ngIf="!isAdmin()" aria-label="User navigation">
+          <a
+            *ngFor="let item of navItems()"
+            class="header-nav-link"
+            [routerLink]="item.link"
+            [queryParams]="item.queryParams"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.exact }"
+          >
+            <span>{{ item.label }}</span>
+          </a>
+        </nav>
 
         <div class="header-right">
           <!-- Notification Bell Container -->
@@ -81,7 +100,7 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
             </div>
           </div>
 
-          <button class="header-avatar-btn" routerLink="/accounts/me" title="Profile">
+          <button class="header-avatar-btn" [routerLink]="isAdmin() ? '/users' : '/accounts/me'" title="Account">
             <pg-avatar
               [name]="getDisplayName()"
               size="sm"
@@ -90,8 +109,9 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
           </button>
           <div class="header-user-info">
             <span class="header-user-name">{{ getDisplayName() }}</span>
+            <span class="header-user-role">{{ isAdmin() ? 'ADMIN' : 'USER' }}</span>
           </div>
-          <button class="header-logout-btn" (click)="logout()" title="Notifications">
+          <button class="header-logout-btn" (click)="logout()" title="Logout">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -101,15 +121,31 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
         </div>
       </header>
 
+      <aside class="admin-sidebar" *ngIf="isAdmin()" aria-label="Admin navigation">
+        <div class="sidebar-section-label">Management</div>
+        <nav class="sidebar-nav">
+          <a
+            *ngFor="let item of navItems()"
+            class="sidebar-nav-link"
+            [routerLink]="item.link"
+            [queryParams]="item.queryParams"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: item.exact }"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        </nav>
+      </aside>
+
       <!-- Main Content Container -->
-      <main class="main-content">
+      <main class="main-content" [class.admin-content]="isAdmin()">
         <div class="content-body">
           <router-outlet></router-outlet>
         </div>
       </main>
 
-      <!-- Global AI Financial Assistant Chatbot Floating Widget -->
-      <pg-ai-assistant />
+      <pg-ai-assistant *ngIf="!isAdmin()" />
     </div>
   `,
   styles: [`
@@ -191,22 +227,24 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
     .header-nav {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       flex: 1;
       justify-content: center;
+      min-width: 0;
     }
     .header-nav-link {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
-      border-radius: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
       font-size: 0.82rem;
       font-weight: 700;
       color: #64748b;
       text-decoration: none;
       transition: all 0.15s;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
     .header-nav-link:hover {
       color: #c20067;
@@ -218,6 +256,84 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
       background: #fff0f6;
       border-color: #f8bbd0;
       box-shadow: 0 2px 10px rgba(194,0,103,0.08);
+    }
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      color: #0d2b5c;
+      font-size: 0.64rem;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+    .header-nav-link.active .nav-icon,
+    .header-nav-link:hover .nav-icon {
+      background: #c20067;
+      color: #fff;
+    }
+
+    .admin-sidebar {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      bottom: 0;
+      z-index: 900;
+      width: 232px;
+      padding: 18px 14px;
+      background: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      box-shadow: 8px 0 24px rgba(15, 23, 42, 0.04);
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .sidebar-section-label {
+      padding: 0 10px 10px;
+      color: #94a3b8;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .admin-sidebar .nav-icon {
+      display: none;
+    }
+    .sidebar-nav-link {
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      color: #475569;
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .sidebar-nav-link:hover {
+      color: #c20067;
+      background: #fff0f6;
+      border-color: #f8bbd0;
+    }
+    .sidebar-nav-link.active {
+      color: #c20067;
+      background: #fff0f6;
+      border-color: #f8bbd0;
+      box-shadow: 0 4px 14px rgba(194, 0, 103, 0.08);
+    }
+    .sidebar-nav-link.active .nav-icon,
+    .sidebar-nav-link:hover .nav-icon {
+      background: #c20067;
+      color: #fff;
     }
 
     /* Header Right */
@@ -459,6 +575,12 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
       font-weight: 700;
       color: #0d2b5c;
     }
+    .header-user-role {
+      font-size: 0.66rem;
+      font-weight: 900;
+      color: #94a3b8;
+      letter-spacing: 0.06em;
+    }
     .header-logout-btn {
       width: 34px;
       height: 34px;
@@ -487,6 +609,9 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
       display: flex;
       flex-direction: column;
     }
+    .main-content.admin-content {
+      padding-left: 232px;
+    }
     .content-body {
       flex: 1;
       padding: 28px 32px;
@@ -497,8 +622,41 @@ import { RealtimeNotificationService, NotificationItem } from '../../core/servic
     }
 
     @media (max-width: 1024px) {
-      .header-nav { display: none; }
-      .top-header { padding: 0 16px; }
+      .admin-sidebar {
+        position: sticky;
+        top: 64px;
+        width: 100%;
+        height: auto;
+        bottom: auto;
+        padding: 10px 16px;
+        border-right: 0;
+        border-bottom: 1px solid #e2e8f0;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+        overflow-x: auto;
+      }
+      .sidebar-section-label {
+        display: none;
+      }
+      .sidebar-nav {
+        flex-direction: row;
+        min-width: max-content;
+      }
+      .main-content.admin-content {
+        padding-left: 0;
+      }
+      .header-nav {
+        order: 3;
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+      .top-header {
+        height: auto;
+        min-height: 64px;
+        flex-wrap: wrap;
+        padding: 10px 16px 0;
+      }
       .content-body { padding: 20px 16px; }
     }
     @media (max-width: 480px) {
@@ -518,6 +676,26 @@ export class MainLayoutComponent {
   unreadCount = this.realtimeNotification.unreadCount;
 
   isAdmin = computed(() => this.authService.getRole() === 'ADMIN' || this.authService.getRole() === 'ROLE_ADMIN');
+  homeLink = computed(() => this.isAdmin() ? '/admin/dashboard' : '/accounts/dashboard');
+  navItems = computed<NavItem[]>(() => this.isAdmin()
+    ? [
+        { label: 'Overview', link: '/admin/dashboard', icon: 'OV', exact: true },
+        { label: 'Users', link: '/users', icon: 'US', exact: false },
+        { label: 'Merchants', link: '/admin/merchants', icon: 'MR', exact: false },
+        { label: 'Debt', link: '/admin/dashboard', icon: 'DB', exact: true, queryParams: { tab: 'loans' } },
+        { label: 'Transactions', link: '/admin/dashboard', icon: 'TX', exact: true, queryParams: { tab: 'transactions' } },
+        { label: 'Ledger', link: '/admin/ledger', icon: 'LG', exact: false },
+        { label: 'Vouchers', link: '/admin/vouchers', icon: 'VC', exact: false },
+        { label: 'Webhooks', link: '/admin/webhooks', icon: 'WH', exact: false }
+      ]
+    : [
+        { label: 'Wallet', link: '/accounts/dashboard', icon: 'WL', exact: false },
+        { label: 'Transfer', link: '/transactions/pay', icon: 'TX', exact: false },
+        { label: 'History', link: '/transactions/history', icon: 'HS', exact: false },
+        { label: 'Bills', link: '/bills/pay', icon: 'BL', exact: false },
+        { label: 'Loans', link: '/loans', icon: 'LN', exact: false },
+        { label: 'Vouchers', link: '/vouchers', icon: 'VC', exact: false }
+      ]);
 
   @HostListener('document:click')
   onDocumentClick(): void {
