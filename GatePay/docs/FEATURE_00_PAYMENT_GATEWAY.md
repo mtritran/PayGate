@@ -3,8 +3,9 @@
 > **Tên tính năng:** Thay thế cổng thanh toán giả lập (`simulatePaymentGateway`) bằng cổng thanh toán thật GatePay.
 > **Mã quy chuẩn:** `FEATURE-00-GATEWAY`
 > **Thành viên phụ trách:**
-> - **GatePay (Backend):** Vinh (3 ngày)
+> - **GatePay (Backend):** [Member khác — không phải Vinh] (3 ngày)
 > - **MarketPlace (UI/Client):** [Gán 1 người] (2-3 ngày)
+> - **Review:** Vinh (chỉ review code, không code)
 >
 > ⚠️ **ĐÂY LÀ FEATURE NỀN TẢNG — phải làm TRƯỚC** các feature 01-04. Vì BNPL, Instant Settlement, Working Capital, Refund đều cần **doanh thu thật** chạy qua cổng.
 
@@ -94,7 +95,7 @@ sequenceDiagram
 
 ## 📋 5. Phân Công Chi Tiết Task
 
-### 🟢 Phía GatePay (Vinh - 3 ngày):
+### 🟢 Phía GatePay ([Member khác] - 3 ngày):
 - [ ] Kiểm tra / đảm bảo API `POST /api/v1/checkout/create` hoạt động (có sẵn trong `CheckoutController`).
 - [ ] Đảm bảo webhook gọi đúng `webhookUrl` của Merchant khi thanh toán xong (có sẵn).
 - [ ] Cung cấp **API Key** + `webhookUrl` cho Merchant MarketPlace.

@@ -3,7 +3,8 @@
 > **Tên tính năng:** Theo dõi hành trình giao hàng đơn hàng (delivery tracking) cho khách & admin.
 > **Mã quy chuẩn:** `FEATURE-02-DELIVERY`
 > **Thành viên phụ trách:**
-> - **MarketPlace (Backend + UI):** [1 người MarketPlace] (3 ngày)
+> - **MarketPlace (Backend + UI):** **Vinh** (3 ngày) — *Vinh code feature này (bên MarketPlace), không đụng code GatePay.*
+> - **Review:** Vinh tự review / member khác review chéo.
 >
 > Hướng **end-user**: khách xem được đơn hàng đang ở đâu, dự kiến khi nào tới.
 
@@ -62,7 +63,7 @@ sequenceDiagram
 
 ## 📋 5. Phân Công Chi Tiết Task
 
-### MarketPlace ([Người] - 3 ngày):
+### MarketPlace (Vinh - 3 ngày):
 - [ ] Tạo Entity `Delivery` + `DeliveryEvent` + repository.
 - [ ] Tạo migration V9/V10.
 - [ ] Viết API tạo/xem/cập nhật trạng thái delivery.

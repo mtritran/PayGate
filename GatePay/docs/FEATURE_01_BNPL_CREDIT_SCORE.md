@@ -3,8 +3,10 @@
 > **Tên tính năng:** Mua trước Trả sau 0% & Động cơ Chấm điểm Tín dụng
 > **Mã quy chuẩn:** `FEATURE-01-BNPL`
 > **Thành viên phụ trách:**
-> - **GatePay (Backend):** Nhi (5 ngày)
+> - **GatePay (Logic/API):** Nhi (5 ngày)
+> - **GatePay (DB/Migration/Entity):** Trí + các member khác
 > - **MarketPlace (UI/Client):** Hoàng (4 ngày)
+> - **Review:** Vinh (chỉ review, không code)
 
 ---
 
@@ -218,18 +220,25 @@ sequenceDiagram
 
 ## 📋 5. Phân Công Chi Tiết Task
 
-### 🟢 Phía GatePay (Nhi - 5 ngày):
+### 🟢 Phía GatePay — Logic/API (Nhi - 5 ngày):
 - [ ] Viết API `/api/v1/credit/checkout` & `/api/v1/credit/events`.
 - [ ] Xây dựng `CreditScoreService` (máy chấm điểm 0-100).
-- [ ] Tạo Flyway migration `V28__create_installments.sql` + Entity `Installment`, `CreditLine`, `CreditEvent`.
 - [ ] Tích hợp xác thực OTP & Hạch toán Sổ cái kép Ledger.
 - [ ] Tạo `cic-service` + `tp-bank-service` (mock) + integration.
+
+### 🗄️ Phía GatePay — DB/Migration/Entity (Trí + các member khác):
+- [ ] Tạo Flyway migration `V28__create_installments.sql` + `V28__create_credit_lines.sql` + Entity `Installment`, `CreditLine`, `CreditEvent`.
+- [ ] Tạo migration `credit_events` + index.
+- [ ] (Phối hợp Nhi) đảm bảo entity khớp schema cho logic.
 
 ### 🔵 Phía MarketPlace (Hoàng - 4 ngày):
 - [ ] Xây dựng UI chọn gói BNPL (`BNPL_30/45`, `GTHP_3M/6M`) tại trang Checkout.
 - [ ] Lưu thông tin `paygate_plan` vào bảng `orders`.
 - [ ] Xử lý Webhook callback chuyển trạng thái đơn sang `PAID`.
 - [ ] (Tùy chọn) Form "Mở hạn mức" + hiển thị hạn mức khả dụng.
+
+### 👀 Review (Vinh):
+- [ ] Review code PayGate F01 (chỉ review, không code).
 
 ---
 
