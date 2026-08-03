@@ -135,7 +135,8 @@ public class CheckoutController {
     @Operation(summary = "Khách hàng đăng nhập & nhập OTP để hoàn tất thanh toán đơn hàng")
     public ApiResponse<Map<String, String>> processCheckout(
             Principal principal,
-            @Valid @RequestBody CheckoutProcessRequest request
+            @Valid @RequestBody CheckoutProcessRequest request,
+            jakarta.servlet.http.HttpServletRequest httpRequest
     ) {
         CheckoutSession session = checkoutSessionRepository.findByToken(request.token())
                 .orElseThrow(() -> new ResourceNotFoundException("Phiên thanh toán không tồn tại"));
@@ -169,7 +170,7 @@ public class CheckoutController {
                 session.getMerchantId()
         );
 
-        TransactionResponse tx = transactionService.processPayment(paymentRequest, principal.getName());
+        TransactionResponse tx = transactionService.processPayment(paymentRequest, principal.getName(), clientIp(httpRequest));
 
         session.setStatus("PROCESSING");
         session.setTransactionRef(tx.transactionRef());
@@ -182,5 +183,13 @@ public class CheckoutController {
                 "transactionRef", tx.transactionRef(),
                 "redirectUrl", redirectUrl
         ));
+    }
+
+    private String clientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.isEmpty()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown_ip";
     }
 }
