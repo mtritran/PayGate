@@ -52,8 +52,6 @@ class AuthControllerTest {
     @MockBean
     private UserDetailsService userDetailsService;
 
-    @MockBean
-    private RefreshTokenCacheService refreshTokenCacheService;
 
     // ==========================================
     // UC-U01: Đăng ký User mới (POST /api/v1/auth/register)

@@ -55,8 +55,6 @@ class MerchantControllerTest {
     @MockBean
     private UserDetailsService userDetailsService;
 
-    @MockBean
-    private RefreshTokenCacheService refreshTokenCacheService;
 
     @Test
     @WithMockUser(roles = "ADMIN")

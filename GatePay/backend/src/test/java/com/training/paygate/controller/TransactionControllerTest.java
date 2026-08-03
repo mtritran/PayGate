@@ -76,8 +76,6 @@ class TransactionControllerTest {
     @MockBean
     private UserRepository userRepository;
 
-    @MockBean
-    private RefreshTokenCacheService refreshTokenCacheService;
 
     // ==========================================
     // 1. POST /api/v1/transactions/pay

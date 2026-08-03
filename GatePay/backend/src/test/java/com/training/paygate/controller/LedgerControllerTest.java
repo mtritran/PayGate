@@ -44,8 +44,6 @@ class LedgerControllerTest {
     @MockBean
     private LedgerService ledgerService;
 
-    @MockBean
-    private RefreshTokenCacheService refreshTokenCacheService;
 
     @Test
     @WithMockUser(roles = "ADMIN")

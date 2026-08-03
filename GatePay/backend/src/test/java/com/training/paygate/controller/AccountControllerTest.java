@@ -59,8 +59,6 @@ class AccountControllerTest {
     @MockBean
     private BalanceCacheService balanceCacheService;
 
-    @MockBean
-    private RefreshTokenCacheService refreshTokenCacheService;
 
     // ==========================================
     // 1. GET /api/v1/accounts/me
