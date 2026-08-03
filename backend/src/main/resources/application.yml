@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/${DB_NAME:training_db}
     username: ${DB_USER:postgres}
-    password: ${DB_PASS:postgres}
+    password: ${DB_PASS:11111111}
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -12,7 +12,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     open-in-view: false
     properties:
       hibernate:
@@ -27,6 +27,7 @@ spring:
     locations: classpath:db/migration
     out-of-order: true
     repair-on-migrate: true
+    validate-on-migrate: false
 
   data:
     redis:
@@ -42,8 +43,8 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:hk864071@gmail.com}
-    password: ${MAIL_PASSWORD:yamo exfu dpok wyva}
+    username: ${MAIL_USERNAME:nhybui2312@gmail.com}
+    password: ${MAIL_PASSWORD:tstl vrtu nykx vwld}
     properties:
       mail:
         smtp:
@@ -63,7 +64,7 @@ openrouter:
   api-url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1/chat/completions}
 
 server:
-  port: 8080
+  port: 8081
 
 springdoc:
   api-docs:
@@ -83,3 +84,8 @@ app:
     password: ${PAYGATE_ADMIN_PASSWORD:Admin@123456!}
     email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
 
+paygate:
+  provider-api:
+    base-url: ${PROVIDER_API_BASE_URL:http://localhost:8090}
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000

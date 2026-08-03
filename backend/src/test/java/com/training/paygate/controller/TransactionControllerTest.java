@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -63,6 +64,9 @@ class TransactionControllerTest {
     private UserDetailsService userDetailsService;
 
     @MockBean
+    private com.training.paygate.cache.RefreshTokenCacheService refreshTokenCacheService;
+
+    @MockBean
     private TransactionService transactionService;
 
     @MockBean
@@ -84,7 +88,7 @@ class TransactionControllerTest {
                 "TXN-PAY-123", "COMPLETED", BigDecimal.valueOf(100000), 1L, 2L, "PAYMENT", "Pay description", LocalDateTime.now()
         );
 
-        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"))).thenReturn(response);
+        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"), anyString())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/transactions/pay")
                         .with(csrf())
@@ -102,7 +106,7 @@ class TransactionControllerTest {
     void pay_insufficientBalance_returnsUnprocessableEntity() throws Exception {
         PaymentRequest request = new PaymentRequest("idem-key-999", 2L, BigDecimal.valueOf(100000000), "Big payment", null);
 
-        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1")))
+        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"), anyString()))
                 .thenThrow(new InsufficientBalanceException("Account balance insufficient for payment"));
 
         mockMvc.perform(post("/api/v1/transactions/pay")
@@ -132,7 +136,7 @@ class TransactionControllerTest {
     void pay_inactiveSourceAccount_returnsBadRequest() throws Exception {
         PaymentRequest request = new PaymentRequest("idem-key-frozen", 2L, BigDecimal.valueOf(100000), "Pay from frozen", null);
 
-        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1")))
+        when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"), anyString()))
                 .thenThrow(new BadRequestException("Source account is inactive or frozen"));
 
         mockMvc.perform(post("/api/v1/transactions/pay")

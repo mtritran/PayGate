@@ -10,7 +10,9 @@ import org.springframework.data.domain.Pageable;
 
 public interface TransactionService {
 
-    TransactionResponse processPayment(PaymentRequest request, String currentUsername);
+    TransactionResponse processPayment(PaymentRequest request, String currentUsername, String clientIp);
+
+    TransactionResponse processPayment(PaymentRequest request, Long userId, String clientIp);
 
     TransactionDetailResponse getTransactionByRef(String ref, String currentUsername);
 

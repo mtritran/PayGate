@@ -10,6 +10,8 @@ import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.WebhookLogRepository;
+import com.training.paygate.repository.CheckoutSessionRepository;
+import com.training.paygate.entity.CheckoutSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -34,6 +36,7 @@ public class WebhookConsumer {
     private final WebhookLogRepository webhookLogRepository;
     private final TransactionRepository transactionRepository;
     private final MerchantRepository merchantRepository;
+    private final CheckoutSessionRepository checkoutSessionRepository;
     private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
@@ -64,6 +67,19 @@ public class WebhookConsumer {
 
         Long merchantId = event.merchantId() != null ? event.merchantId() : 0L;
 
+        // Lookup CheckoutSession to get orderId and token
+        String orderId = null;
+        String token = null;
+        try {
+            Optional<CheckoutSession> sessionOpt = checkoutSessionRepository.findByTransactionRef(event.transactionRef());
+            if (sessionOpt.isPresent()) {
+                orderId = sessionOpt.get().getOrderId();
+                token = sessionOpt.get().getToken();
+            }
+        } catch (Exception e) {
+            log.error("Failed to lookup checkout session for transactionRef {}: {}", event.transactionRef(), e.getMessage());
+        }
+
         // 3. Build Webhook Payload JSON
         String payloadJson;
         try {
@@ -73,6 +89,12 @@ public class WebhookConsumer {
             payloadMap.put("merchantId", event.merchantId());
             payloadMap.put("amount", event.amount());
             payloadMap.put("status", event.status());
+            if (orderId != null) {
+                payloadMap.put("orderId", orderId);
+            }
+            if (token != null) {
+                payloadMap.put("token", token);
+            }
             payloadJson = objectMapper.writeValueAsString(payloadMap);
         } catch (Exception e) {
             log.error("Failed to serialize webhook payload for transaction {}: {}", event.transactionRef(), e.getMessage());

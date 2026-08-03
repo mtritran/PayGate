@@ -24,20 +24,25 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    public static final String TOKEN_TYPE_CLAIM = "token_type";
+    public static final String ACCESS_TOKEN_TYPE = "ACCESS";
+    public static final String REFRESH_TOKEN_TYPE = "REFRESH";
+
     public String generateAccessToken(String username) {
-        return generateToken(username, accessTokenExpiration);
+        return generateToken(username, accessTokenExpiration, ACCESS_TOKEN_TYPE);
     }
 
     public String generateRefreshToken(String username) {
-        return generateToken(username, refreshTokenExpiration);
+        return generateToken(username, refreshTokenExpiration, REFRESH_TOKEN_TYPE);
     }
 
-    private String generateToken(String username, long expiration) {
+    private String generateToken(String username, long expiration, String tokenType) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .subject(username)
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -46,6 +51,32 @@ public class JwtTokenProvider {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractTokenType(String token) {
+        try {
+            return extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public boolean isAccessToken(String token) {
+        return ACCESS_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return REFRESH_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    public long getRemainingExpirationMs(String token) {
+        try {
+            Date expiration = extractClaim(token, Claims::getExpiration);
+            long remaining = expiration.getTime() - System.currentTimeMillis();
+            return Math.max(remaining, 0);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public boolean isTokenValid(String token) {

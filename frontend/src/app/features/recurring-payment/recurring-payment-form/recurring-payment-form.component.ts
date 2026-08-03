@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -9,11 +9,12 @@ import {
   RecurringCategory,
   RecurringFrequency
 } from '../../../core/services/recurring-payment.service';
+import { BillService, BillSubscriptionResponse } from '../../../core/services/bill.service';
 
 @Component({
   selector: 'pg-recurring-payment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, CurrencyPipe],
   template: `
     <div class="form-container fade-in">
       <div class="form-card">
@@ -27,8 +28,8 @@ import {
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </div>
-          <h2>Tạo Lịch Định Kỳ & Hóa Đơn Tự Động</h2>
-          <p>Thiết lập tự động chuyển tiền hoặc thanh toán hóa đơn Điện, Nước, Internet.</p>
+          <h2>Create Recurring Payment & Auto Bills</h2>
+          <p>Set up automatic transfers or auto-pay for Electricity, Water, Internet bills.</p>
         </div>
 
         <form (ngSubmit)="submitForm()">
@@ -44,7 +45,7 @@ import {
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
-              <span>Chuyển Tiền</span>
+              <span>Transfer</span>
             </button>
             <button
               type="button"
@@ -55,7 +56,7 @@ import {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
               </svg>
-              <span>Hóa Đơn Điện</span>
+              <span>Electricity Bill</span>
             </button>
             <button
               type="button"
@@ -66,7 +67,7 @@ import {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"></path>
               </svg>
-              <span>Hóa Đơn Nước</span>
+              <span>Water Bill</span>
             </button>
             <button
               type="button"
@@ -84,85 +85,92 @@ import {
 
           <!-- Target Dest Account (if TRANSFER) -->
           <div class="form-group" *ngIf="category === 'TRANSFER'">
-            <label class="form-label">TÀI KHOẢN ĐÍCH (ID / SỐ TÀI KHOẢN) <span class="required">*</span></label>
+            <label class="form-label">DEST ACCOUNT (ID / ACCOUNT NUMBER) <span class="required">*</span></label>
             <input
               type="number"
               class="pg-input font-mono"
-              placeholder="Nhập ID tài khoản nhận (VD: 2)"
+              placeholder="Enter recipient account ID (e.g., 2)"
               [(ngModel)]="destAccountId"
               name="destAccountId"
               required
             />
           </div>
 
-          <!-- Provider & Bill Code (if BILL) -->
-          <div class="form-grid" *ngIf="category !== 'TRANSFER'">
-            <div class="form-group">
-              <label class="form-label">NHÀ CUNG CẤP</label>
-              <select class="pg-select" [(ngModel)]="providerCode" name="providerCode">
-                <option value="EVN_HANOI" *ngIf="category === 'ELECTRICITY'">EVN Hà Nội</option>
-                <option value="EVN_HCM" *ngIf="category === 'ELECTRICITY'">EVN TP.HCM</option>
-                <option value="EVN_MIENTRUNG" *ngIf="category === 'ELECTRICITY'">EVN Miền Trung</option>
-                <option value="VIWACO" *ngIf="category === 'WATER'">Nước Viwaco</option>
-                <option value="SAWACO" *ngIf="category === 'WATER'">Nước Sawaco</option>
-                <option value="VNPT" *ngIf="category === 'INTERNET'">VNPT Internet</option>
-                <option value="FPT" *ngIf="category === 'INTERNET'">FPT Telecom</option>
-                <option value="VIETTEL" *ngIf="category === 'INTERNET'">Viettel Internet</option>
-              </select>
+          <!-- Linked Subscriptions Picker (if BILL) -->
+          <div class="form-group" *ngIf="category !== 'TRANSFER'">
+            <label class="form-label">SELECT LINKED SERVICE <span class="required">*</span></label>
+
+            <!-- Loading state -->
+            <div *ngIf="loadingSubs()" class="subs-loading">
+              <span class="spinner-xs"></span> Loading linked services...
             </div>
 
-            <div class="form-group">
-              <label class="form-label">MÃ HÓA ĐƠN / KHÁCH HÀNG <span class="required">*</span></label>
-              <input
-                type="text"
-                class="pg-input font-mono"
-                placeholder="VD: PA1201009988"
-                [(ngModel)]="billCode"
-                name="billCode"
-                required
-              />
+            <!-- No subscriptions -->
+            <div *ngIf="!loadingSubs() && filteredSubs().length === 0" class="subs-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              No linked {{ categoryLabel() }} nào được liên kết.
+              <a routerLink="/bills" class="link-to-bills">Go to Bill Management →</a>
+            </div>
+
+            <!-- Subscriptions list -->
+            <div class="subs-list" *ngIf="!loadingSubs() && filteredSubs().length > 0">
+              <div
+                *ngFor="let sub of filteredSubs()"
+                class="sub-option"
+                [class.selected]="selectedSubId === sub.id"
+                (click)="selectSub(sub)">
+                <div class="sub-option-left">
+                  <div class="sub-option-name">{{ sub.providerName }}</div>
+                  <div class="sub-option-code font-mono">{{ sub.customerCode }}</div>
+                  <div class="sub-option-owner">{{ sub.customerName }}</div>
+                </div>
+                <div class="sub-option-right">
+                  <div class="sub-option-amount">~{{ sub.cycleAmount | currency:'VND':'symbol':'1.0-0' }}/period</div>
+                  <div class="sub-option-freq">{{ freqLabel(sub.frequency) }}</div>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Amount -->
           <div class="form-group">
-            <label class="form-label">SỐ TIỀN THANH TOÁN (VND) <span class="required">*</span></label>
+            <label class="form-label">PAYMENT AMOUNT (VND) <span class="required">*</span></label>
             <input
               type="number"
               class="pg-input font-mono"
-              placeholder="Nhập số tiền (tối thiểu 1,000 VND)"
+              placeholder="Enter amount (tối thiểu 1,000 VND)"
               [(ngModel)]="amount"
               name="amount"
               min="1000"
               required
             />
             <div class="quick-amounts">
-              <button type="button" class="btn-quick" (click)="amount = 50000">50,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 200000">200,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 500000">500,000đ</button>
-              <button type="button" class="btn-quick" (click)="amount = 1000000">1,000,000đ</button>
+              <button type="button" class="btn-quick" (click)="amount = 50000">50,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 200000">200,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 500000">500,000 VND</button>
+              <button type="button" class="btn-quick" (click)="amount = 1000000">1,000,000 VND</button>
             </div>
           </div>
 
           <!-- Frequency -->
           <div class="form-group">
-            <label class="form-label">CHU KỲ TỰ ĐỘNG <span class="required">*</span></label>
+            <label class="form-label">AUTO CYCLE <span class="required">*</span></label>
             <select class="pg-select" [(ngModel)]="frequency" name="frequency">
-              <option value="DAILY">Hàng Ngày (Mỗi 24 giờ)</option>
-              <option value="WEEKLY">Hàng Tuần (Mỗi tuần 1 lần)</option>
-              <option value="MONTHLY">Hàng Tháng (Mỗi tháng 1 lần)</option>
-              <option value="MINUTELY">Mỗi 1 Phút (Dùng thử nghiệm / Demo)</option>
-              <option value="ONCE">1 Lần Duy Nhất (Chờ ngày đến hạn)</option>
+              <option value="DAILY">Daily (Every 24 hours)</option>
+              <option value="WEEKLY">Weekly (Once per week)</option>
+              <option value="MONTHLY">Monthly (Once per month)</option>
+              <option value="MINUTELY">Every 1 Minute (Testing / Demo)</option>
+              <option value="ONCE">One Time Only (Wait for due date)</option>
             </select>
           </div>
 
           <!-- Description -->
           <div class="form-group">
-            <label class="form-label">GHI CHÚ GIAO DỊCH</label>
+            <label class="form-label">TRANSACTION NOTE</label>
             <input
               type="text"
               class="pg-input"
-              placeholder="Ghi chú thêm cho lịch hẹn này..."
+              placeholder="Add a note for this schedule..."
               [(ngModel)]="description"
               name="description"
             />
@@ -175,9 +183,9 @@ import {
 
           <!-- Submit Buttons -->
           <div class="form-actions">
-            <button type="button" class="btn-cancel" (click)="goBack()">Hủy Bỏ</button>
+            <button type="button" class="btn-cancel" (click)="goBack()">Cancel</button>
             <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
-              <span>{{ isSubmitting() ? 'Đang Tạo Lịch...' : 'Xác Nhận Tạo Lịch' }}</span>
+              <span>{{ isSubmitting() ? 'Creating…' : 'Confirm Create Schedule' }}</span>
             </button>
           </div>
         </form>
@@ -207,9 +215,9 @@ import {
     .header-icon-box {
       width: 52px;
       height: 52px;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      color: #059669;
+      background: #fff0f6;
+      border: 1px solid #f8bbd0;
+      color: #c20067;
       border-radius: 16px;
       display: flex;
       align-items: center;
@@ -250,10 +258,10 @@ import {
     }
     .tab-btn svg { width: 16px; height: 16px; color: #64748b; }
     .tab-btn.active {
-      background: #059669;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
-      border-color: #059669;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.25);
     }
     .tab-btn.active svg { color: #ffffff; }
 
@@ -283,8 +291,8 @@ import {
     }
     .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .pg-input:focus, .pg-select:focus {
-      border-color: #059669;
-      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+      border-color: #c20067;
+      box-shadow: 0 0 0 3px rgba(194, 0, 103, 0.15);
     }
 
     .quick-amounts { display: flex; gap: 8px; margin-top: 10px; }
@@ -330,56 +338,121 @@ import {
       padding: 12px 28px;
       border-radius: 12px;
       border: none;
-      background: #059669;
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff;
       font-weight: 700;
       font-size: 0.88rem;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+      box-shadow: 0 4px 14px rgba(194, 0, 103, 0.25);
       transition: all 0.15s ease;
     }
     .btn-submit:hover {
-      background: #047857;
+      opacity: 0.9;
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+      box-shadow: 0 6px 18px rgba(194, 0, 103, 0.35);
     }
+    .subs-loading { display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 13px; padding: 12px 0; }
+    .spinner-xs { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #c20067; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .subs-empty { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #6b7280; font-size: 13px; padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
+    .link-to-bills { color: #c20067; font-weight: 700; text-decoration: none; margin-left: 4px; }
+    .link-to-bills:hover { text-decoration: underline; }
+    .subs-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .sub-option {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      cursor: pointer; background: #fff; transition: 0.15s; gap: 12px;
+    }
+    .sub-option:hover { border-color: #c20067; background: #fff0f6; }
+    .sub-option.selected { border-color: #c20067; background: #ffe1ef; }
+    .sub-option-name { font-size: 14px; font-weight: 700; color: #111827; }
+    .sub-option-code { font-size: 12px; font-weight: 700; color: #c20067; }
+    .sub-option-owner { font-size: 12px; color: #6b7280; }
+    .sub-option-right { text-align: right; flex-shrink: 0; }
+    .sub-option-amount { font-size: 14px; font-weight: 700; color: #c20067; }
+    .sub-option-freq { font-size: 11px; color: #9ca3af; }
   `]
 })
 export class RecurringPaymentFormComponent implements OnInit {
   private service = inject(RecurringPaymentService);
+  private billService = inject(BillService);
   private router = inject(Router);
 
   category: RecurringCategory = 'TRANSFER';
   destAccountId?: number;
-  providerCode = 'EVN_HANOI';
+  providerCode = '';
   billCode = '';
+  selectedSubId: number | null = null;
   amount = 50000;
   frequency: RecurringFrequency = 'DAILY';
   description = '';
 
   isSubmitting = signal<boolean>(false);
   errorMsg = signal<string>('');
+  loadingSubs = signal(false);
 
-  ngOnInit(): void {}
+  allSubscriptions = signal<BillSubscriptionResponse[]>([]);
+
+  filteredSubs = () => {
+    const typeMap: Record<string, string> = {
+      ELECTRICITY: 'ELECTRICITY', WATER: 'WATER', INTERNET: 'INTERNET'
+    };
+    const targetType = typeMap[this.category];
+    if (!targetType) return [];
+    return this.allSubscriptions().filter(s => s.providerType === targetType && s.status === 'ACTIVE');
+  };
+
+  categoryLabel(): string {
+    const map: Record<string, string> = { ELECTRICITY: 'electricity', WATER: 'water', INTERNET: 'internet' };
+    return map[this.category] ?? '';
+  }
+
+  freqLabel(f: string): string {
+    const map: Record<string, string> = { MINUTELY: 'Every minute', DAILY: 'Daily', WEEKLY: 'Weekly', MONTHLY: 'Monthly' };
+    return map[f] ?? f;
+  }
+
+  ngOnInit(): void {
+    this.loadSubscriptions();
+  }
+
+  private loadSubscriptions(): void {
+    this.loadingSubs.set(true);
+    this.billService.getSubscriptions().subscribe({
+      next: res => {
+        this.allSubscriptions.set(res.data ?? []);
+        this.loadingSubs.set(false);
+      },
+      error: () => this.loadingSubs.set(false)
+    });
+  }
+
+  selectSub(sub: BillSubscriptionResponse): void {
+    this.selectedSubId = sub.id;
+    this.providerCode = sub.providerCode;
+    this.billCode = sub.customerCode;
+    this.amount = sub.cycleAmount || this.amount;
+    this.description = `Automatic payment ${sub.providerName} - ${sub.customerCode}`;
+  }
 
   selectCategory(cat: RecurringCategory): void {
     this.category = cat;
-    if (cat === 'ELECTRICITY') this.providerCode = 'EVN_HANOI';
-    if (cat === 'WATER') this.providerCode = 'VIWACO';
-    if (cat === 'INTERNET') this.providerCode = 'VNPT';
+    this.selectedSubId = null;
+    this.providerCode = '';
+    this.billCode = '';
   }
 
   submitForm(): void {
     if (this.category === 'TRANSFER' && !this.destAccountId) {
-      this.errorMsg.set('Vui lòng nhập ID tài khoản nhận.');
+      this.errorMsg.set('Please enter the destination account ID.');
       return;
     }
     if (this.category !== 'TRANSFER' && !this.billCode) {
-      this.errorMsg.set('Vui lòng nhập mã hóa đơn / mã khách hàng.');
+      this.errorMsg.set('Please select a linked service from the list above.');
       return;
     }
     if (!this.amount || this.amount < 1000) {
-      this.errorMsg.set('Số tiền tối thiểu là 1,000 VND.');
+      this.errorMsg.set('Minimum amount is 1,000 VND.');
       return;
     }
 
@@ -394,7 +467,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       destAccountId: this.category === 'TRANSFER' ? this.destAccountId : undefined,
       amount: this.amount,
       frequency: this.frequency,
-      description: this.description || (this.category === 'TRANSFER' ? 'Chuyển tiền định kỳ' : `Thanh toán hóa đơn ${this.category}`)
+      description: this.description || (this.category === 'TRANSFER' ? 'Recurring transfer' : `Auto bill payment ${this.category}`)
     };
 
     this.service.create(payload).subscribe({
@@ -404,7 +477,7 @@ export class RecurringPaymentFormComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        this.errorMsg.set(err?.error?.message || 'Có lỗi xảy ra khi tạo lịch thanh toán.');
+        this.errorMsg.set(err?.error?.message || 'An error occurred while creating the recurring payment.');
       }
     });
   }

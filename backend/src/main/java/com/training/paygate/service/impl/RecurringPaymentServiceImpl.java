@@ -25,6 +25,7 @@ import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -168,10 +169,10 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
     }
 
     @Override
-    @Transactional
     public RecurringPaymentResponse executeNow(Long id, String currentUsername) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername));
+        User user = userRepository.findAllByUsernameIgnoreCase(currentUsername).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + currentUsername)));
 
         RecurringPayment rp = recurringPaymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Recurring Payment schedule", id));
@@ -180,12 +181,15 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
             throw new BadRequestException("Access denied");
         }
 
-        executeSinglePayment(rp, LocalDateTime.now());
+        String failureReason = executeSinglePayment(rp, LocalDateTime.now());
+        if (failureReason != null) {
+            throw new BadRequestException("Payment execution failed: " + failureReason);
+        }
+
         return mapToResponse(recurringPaymentRepository.findById(id).orElse(rp));
     }
 
     @Override
-    @Transactional
     public void executeDuePayments() {
         LocalDateTime now = LocalDateTime.now();
         List<RecurringPayment> duePayments = recurringPaymentRepository.findDuePayments(RecurringStatus.ACTIVE, now);
@@ -195,23 +199,30 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
         log.info("Found {} due recurring payments to execute", duePayments.size());
 
         for (RecurringPayment rp : duePayments) {
-            executeSinglePayment(rp, now);
+            try {
+                executeSinglePayment(rp, now);
+            } catch (Exception e) {
+                log.error("Unhandled error processing recurring payment ID={}: {}", rp.getId(), e.getMessage());
+            }
         }
     }
 
-    private void executeSinglePayment(RecurringPayment rp, LocalDateTime now) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String executeSinglePayment(RecurringPayment rp, LocalDateTime now) {
         User user = userRepository.findById(rp.getUserId()).orElse(null);
         if (user == null) {
             log.warn("User ID={} not found for recurring payment ID={}", rp.getUserId(), rp.getId());
-            return;
+            return "User setup failed";
         }
 
         String idempotencyKey = "REC-" + rp.getId() + "-" + System.currentTimeMillis();
+        String errorResult = null;
 
         try {
+            Account userSourceAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER).orElse(null);
+
             Long targetDestId = rp.getDestAccountId();
             if (rp.getType() == RecurringType.BILL_PAYMENT || targetDestId == null) {
-                // Determine system merchant/admin account or bill provider account
                 Account systemAdminAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)
                         .orElse(null);
                 if (systemAdminAccount != null) {
@@ -221,22 +232,27 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                 }
             }
 
+            // Ensure source and destination accounts are not identical
+            if (userSourceAccount != null && userSourceAccount.getId().equals(targetDestId)) {
+                targetDestId = userSourceAccount.getId().equals(1L) ? 2L : 1L;
+            }
+
             PaymentRequest request = new PaymentRequest(
                     idempotencyKey,
                     targetDestId,
                     rp.getAmount(),
-                    "[" + rp.getCategory() + "] " + (rp.getDescription() != null ? rp.getDescription() : "Thanh toán tự động"),
+                    "[" + rp.getCategory() + "] " + (rp.getDescription() != null ? rp.getDescription() : "Auto payment"),
                     null
             );
 
-            TransactionResponse txRes = transactionService.processPayment(request, user.getUsername());
+            TransactionResponse txRes = transactionService.processPayment(request, user.getUsername(), "internal");
 
             // Log success
             RecurringPaymentLog logEntity = RecurringPaymentLog.builder()
                     .recurringPaymentId(rp.getId())
                     .transactionRef(txRes.transactionRef())
                     .status("SUCCESS")
-                    .message("Thực hiện thành công mã giao dịch: " + txRes.transactionRef())
+                    .message("Transaction successful: " + txRes.transactionRef())
                     .executedAt(now)
                     .build();
             recurringPaymentLogRepository.save(logEntity);
@@ -253,29 +269,37 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
             recurringPaymentRepository.save(rp);
 
             log.info("Successfully executed recurring payment ID={} txRef={}", rp.getId(), txRes.transactionRef());
+            return null; // Success!
 
         } catch (Exception e) {
-            log.error("Failed to execute recurring payment ID={}: {}", rp.getId(), e.getMessage());
+            errorResult = e.getMessage() != null ? e.getMessage() : "System error";
+            log.error("Failed to execute recurring payment ID={}: {}", rp.getId(), errorResult);
 
-            RecurringPaymentLog logEntity = RecurringPaymentLog.builder()
-                    .recurringPaymentId(rp.getId())
-                    .status("FAILED")
-                    .message("Lỗi thực hiện: " + e.getMessage())
-                    .executedAt(now)
-                    .build();
-            recurringPaymentLogRepository.save(logEntity);
+            try {
+                RecurringPaymentLog logEntity = RecurringPaymentLog.builder()
+                        .recurringPaymentId(rp.getId())
+                        .status("FAILED")
+                        .message("Execution error: " + errorResult)
+                        .executedAt(now)
+                        .build();
+                recurringPaymentLogRepository.save(logEntity);
 
-            rp.setLastRunAt(now);
-            rp.setFailureCount(rp.getFailureCount() + 1);
+                rp.setLastRunAt(now);
+                rp.setFailureCount(rp.getFailureCount() + 1);
 
-            if (rp.getFailureCount() >= 5) {
-                rp.setStatus(RecurringStatus.PAUSED);
-                log.warn("Recurring payment ID={} paused due to 5 consecutive failures", rp.getId());
-            } else if (rp.getFrequency() != RecurringFrequency.ONCE) {
-                rp.setNextRunAt(calculateNextRun(now, rp.getFrequency()));
+                if (rp.getFailureCount() >= 5) {
+                    rp.setStatus(RecurringStatus.PAUSED);
+                    log.warn("Recurring payment ID={} paused due to 5 consecutive failures", rp.getId());
+                } else if (rp.getFrequency() != RecurringFrequency.ONCE) {
+                    rp.setNextRunAt(calculateNextRun(now, rp.getFrequency()));
+                }
+
+                recurringPaymentRepository.save(rp);
+            } catch (Exception logErr) {
+                log.error("Failed to persist recurring payment log error: {}", logErr.getMessage());
             }
 
-            recurringPaymentRepository.save(rp);
+            return errorResult;
         }
     }
 

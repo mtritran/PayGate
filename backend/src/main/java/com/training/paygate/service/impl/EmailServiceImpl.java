@@ -1,6 +1,7 @@
 package com.training.paygate.service.impl;
 
 import com.training.paygate.service.EmailService;
+import com.training.paygate.exception.BadRequestException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -253,7 +254,198 @@ public class EmailServiceImpl implements EmailService {
         sendMimeEmail(recipientEmail, subject, htmlContent);
     }
 
+    @Override
+    @Async
+    public void sendLoanContractEmail(
+            String recipientEmail,
+            String recipientName,
+            String loanRef,
+            BigDecimal amount,
+            byte[] pdfBytes,
+            String attachmentFileName
+    ) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Cannot send loan contract email: recipientEmail is empty for loanRef {}", loanRef);
+            return;
+        }
+
+        String formattedAmount = formatVnd(amount);
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        String subject = "[PayGate] Hợp Đồng Vay Tiêu Dùng & Thông Báo Giải Ngân Thành Công - Ref: " + loanRef;
+
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+                <meta charset="UTF-8">
+                <title>Hợp Đồng Vay Tiêu Dùng</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #064e3b 0%%, #047857 60%%, #059669 100%%); padding: 36px 40px; text-align: center;">
+                                        <div style="display: inline-block; background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.25); margin-bottom: 12px;">
+                                            <span style="color: #a7f3d0; font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">PAYGATE CREDIT DIGITAL SERVICES</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0;">Xác Nhận Giải Ngân & Hợp Đồng Vay</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 36px 40px; color: #0f172a;">
+                                        <p style="font-size: 15px; color: #334155;">Xin chào <strong>%s</strong>,</p>
+                                        <p style="font-size: 15px; color: #475569; line-height: 1.6;">Chúc mừng bạn! Hợp đồng vay tiêu dùng của bạn đã được hoàn tất ký kết và tiền vay đã được <strong>giải ngân thành công vào Ví điện tử PayGate</strong> của bạn.</p>
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background: linear-gradient(135deg, #ecfdf5 0%%, #f0fdf4 100%%); border: 1px solid #a7f3d0; border-radius: 18px; margin-bottom: 24px; padding: 24px; text-align: center;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 6px;">Số tiền giải ngân</span>
+                                                    <span style="font-size: 32px; font-weight: 900; color: #059669;">+%s</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #64748b; font-size: 13px;">Mã hợp đồng:</td>
+                                                <td align="right" style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 800; font-family: monospace;">%s</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #64748b; font-size: 13px;">Thời gian giải ngân:</td>
+                                                <td align="right" style="padding: 8px 0; color: #334155; font-size: 13px; font-weight: 700;">%s</td>
+                                            </tr>
+                                        </table>
+
+                                        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 18px; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                                            📎 <strong>Tệp đính kèm:</strong> Bản sao chính thức Hợp đồng vay tiêu dùng chi tiết (file PDF) đã được đính kèm trực tiếp trong email này. Quý khách vui lòng lưu trữ cẩn thận.
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 40px; text-align: center;">
+                                        <p style="font-size: 12px; color: #94a3b8; margin: 0;">&copy; 2026 PayGate Consumer Credit Services. Automated Digital Signing System.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """,
+            recipientName,
+            formattedAmount,
+            loanRef,
+            timestamp
+        );
+
+        log.info("[EMAIL LOAN CONTRACT] Dispatching contract PDF to '{}' for loan '{}'", recipientEmail, loanRef);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail != null && !fromEmail.isBlank() ? fromEmail : "noreply@paygate.dev");
+            helper.setTo(recipientEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            if (pdfBytes != null && pdfBytes.length > 0) {
+                helper.addAttachment(attachmentFileName != null ? attachmentFileName : ("HopDongVay_" + loanRef + ".pdf"), new org.springframework.core.io.ByteArrayResource(pdfBytes));
+            }
+
+            mailSender.send(message);
+            log.info("[EMAIL LOAN CONTRACT SUCCESS] Email with PDF contract successfully sent to '{}'", recipientEmail);
+        } catch (Exception e) {
+            log.warn("[EMAIL LOAN CONTRACT ERROR] Could not send loan contract email to '{}'. Reason: {}", recipientEmail, e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendOtpEmail(
+            String recipientEmail,
+            String recipientName,
+            String otpCode,
+            String actionName
+    ) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Cannot send OTP email: recipientEmail is empty");
+            return;
+        }
+
+        String actionTitle = actionName != null && !actionName.isBlank() ? actionName : "Xác thực giao dịch";
+        String subject = String.format("[PayGate] Mã Xác Thực OTP (%s) - %s", otpCode, actionTitle);
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+
+        String htmlContent = String.format("""
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+                <meta charset="UTF-8">
+                <title>Mã Xác Thực OTP</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, sans-serif;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="max-width: 540px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); border: 1px solid #e2e8f0;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #4f46e5 0%%, #6366f1 60%%, #4338ca 100%%); padding: 32px 36px; text-align: center;">
+                                        <div style="display: inline-block; background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 10px; margin-bottom: 10px;">
+                                            <span style="color: #c7d2fe; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">PAYGATE SECURITY AUTHENTICATION</span>
+                                        </div>
+                                        <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 0;">Mã Xác Thực OTP Giao Dịch</h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 32px 36px; color: #0f172a;">
+                                        <p style="font-size: 15px; color: #334155; margin-top: 0;">Xin chào <strong>%s</strong>,</p>
+                                        <p style="font-size: 14px; color: #475569; line-height: 1.6;">Bạn vừa yêu cầu mã xác thực OTP cho thao tác: <strong style="color: #4f46e5;">%s</strong>.</p>
+
+                                        <!-- OTP Display Card -->
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%%" style="background: linear-gradient(135deg, #e0e7ff 0%%, #eef2ff 100%%); border: 2px dashed #818cf8; border-radius: 20px; margin: 24px 0; padding: 24px; text-align: center;">
+                                            <tr>
+                                                <td>
+                                                    <span style="font-size: 12px; font-weight: 800; color: #4338ca; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 8px;">Mã OTP 6 Chữ Số Của Bạn</span>
+                                                    <span style="font-size: 38px; font-weight: 900; color: #3730a3; letter-spacing: 0.25em; font-family: monospace;">%s</span>
+                                                    <span style="font-size: 12px; color: #6366f1; display: block; margin-top: 8px; font-weight: 600;">⏱️ Hiệu lực trong 5 phút</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="font-size: 13px; color: #64748b; margin-bottom: 8px;">Thời gian yêu cầu: <strong>%s</strong></p>
+
+                                        <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 14px 16px; color: #be123c; font-size: 13px; line-height: 1.5; margin-top: 20px;">
+                                            🚨 <strong>Cảnh báo bảo mật:</strong> KHÔNG chia sẻ mã OTP này cho bất kỳ ai, kể cả nhân viên ngân hàng hay hỗ trợ PayGate.
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 36px; text-align: center;">
+                                        <p style="font-size: 11px; color: #94a3b8; margin: 0;">&copy; 2026 PayGate Security System. Automated OTP Email Dispatcher.</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """,
+            recipientName != null ? recipientName : recipientEmail,
+            actionTitle,
+            otpCode,
+            timestamp
+        );
+
+        sendMimeEmail(recipientEmail, subject, htmlContent, true);
+    }
+
     private void sendMimeEmail(String to, String subject, String htmlContent) {
+        sendMimeEmail(to, subject, htmlContent, false);
+    }
+
+    private void sendMimeEmail(String to, String subject, String htmlContent, boolean failFast) {
         log.info("[EMAIL NOTIFICATION] Sending email to: '{}' | Subject: '{}'", to, subject);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -266,7 +458,10 @@ public class EmailServiceImpl implements EmailService {
             mailSender.send(message);
             log.info("[EMAIL NOTIFICATION SUCCESS] Email successfully dispatched to '{}'", to);
         } catch (Exception e) {
-            log.warn("[EMAIL NOTIFICATION NOTICE] Could not deliver email via SMTP server ({}). Reason: {}", to, e.getMessage());
+            log.warn("[EMAIL NOTIFICATION NOTICE] Could not deliver email via SMTP server ({}). Reason: {}", to, e.getMessage(), e);
+            if (failFast) {
+                throw new BadRequestException("Could not send OTP email. Check SMTP configuration and recipient email.");
+            }
         }
     }
 

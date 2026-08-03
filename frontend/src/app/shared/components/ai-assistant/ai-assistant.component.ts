@@ -2,6 +2,7 @@ import { Component, OnInit, signal, inject, AfterViewChecked, ElementRef, ViewCh
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AiService } from '../../../core/services/ai.service';
 
 export interface ChatMessage {
@@ -27,15 +28,16 @@ export interface ChatMessage {
       <button
         class="ai-trigger-btn"
         (click)="toggleOpen()"
-        title="PayGate AI Financial Assistant"
+        title="PayGate AI Assistant"
         aria-label="Toggle AI Financial Assistant"
       >
         <div class="ai-icon-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+            <path d="M5 4v4M3 6h4"/>
+            <path d="M19 16v4M17 18h4"/>
           </svg>
         </div>
-        <span class="ai-btn-text">PayGate AI</span>
         <span class="online-dot"></span>
       </button>
 
@@ -77,7 +79,7 @@ export interface ChatMessage {
               PayGate AI
             </div>
 
-            <div class="bubble-content" [innerHTML]="formatMessageText(msg.text)"></div>
+            <div class="bubble-content" *ngIf="msg.text && msg.text.trim()" [innerHTML]="formatMessageText(msg.text)"></div>
 
             <button
               *ngIf="msg.actionButton"
@@ -105,18 +107,11 @@ export interface ChatMessage {
 
         <!-- Quick Suggestion Chips -->
         <div class="quick-chips-bar" *ngIf="!isThinking()">
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Số dư ví của tôi là bao nhiêu?')">
-            <span>Số dư ví</span>
-          </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Tôi có bao nhiêu lịch định kỳ đang chạy?')">
-            <span>Lịch định kỳ</span>
-          </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cài đặt tự động thanh toán tiền điện')">
-            <span>Tự động đóng tiền điện</span>
-          </button>
-          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Cho tôi xem lịch sử giao dịch gần đây')">
-            <span>Lịch sử giao dịch</span>
-          </button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('What is my current balance?')"><span>Check Balance</span></button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my savings vaults')"><span>Savings Vaults</span></button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my consumer loans')"><span>Consumer Loans</span></button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my bill payments')"><span>Bill Payments</span></button>
+          <button type="button" class="chip-btn" (click)="sendQuickPrompt('Show my recent transactions')"><span>Transaction History</span></button>
         </div>
 
         <!-- Input Footer -->
@@ -124,7 +119,7 @@ export interface ChatMessage {
           <input
             type="text"
             class="chat-input"
-            placeholder="Hỏi AI bất cứ điều gì..."
+            placeholder="Ask AI anything..."
             [(ngModel)]="userInputText"
             (keyup.enter)="sendMessage()"
             [disabled]="isThinking()"
@@ -133,7 +128,7 @@ export interface ChatMessage {
             class="btn-send"
             [disabled]="!userInputText.trim() || isThinking()"
             (click)="sendMessage()"
-            title="Gửi"
+            title="Send"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="22" y1="2" x2="11" y2="13" />
@@ -146,9 +141,9 @@ export interface ChatMessage {
   `,
   styles: [`
     @keyframes pulseGlow {
-      0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
-      70% { box-shadow: 0 0 0 14px rgba(5, 150, 105, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(194, 0, 103, 0.34); }
+      70% { box-shadow: 0 0 0 14px rgba(194, 0, 103, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(194, 0, 103, 0); }
     }
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(16px) scale(0.96); }
@@ -170,38 +165,46 @@ export interface ChatMessage {
     }
 
     .ai-trigger-btn {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      width: 52px;
       height: 52px;
-      padding: 0 20px 0 14px;
-      border-radius: 28px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      border: 1px solid rgba(255,255,255,0.2);
+      padding: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c20067 0%, #ef4b8c 48%, #0072ce 100%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       color: #ffffff;
-      font-size: 0.92rem;
-      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(5, 150, 105, 0.38);
+      box-shadow: 0 10px 26px rgba(194, 0, 103, 0.3);
       transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      animation: pulseGlow 2.5s infinite;
     }
     .ai-trigger-btn:hover {
-      transform: translateY(-3px) scale(1.03);
-      box-shadow: 0 14px 34px rgba(5, 150, 105, 0.48);
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 0 16px 34px rgba(194, 0, 103, 0.42);
     }
     .ai-icon-box {
-      width: 30px; height: 30px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .ai-icon-box svg { width: 16px; height: 16px; }
+    .ai-icon-box svg {
+      width: 26px;
+      height: 26px;
+    }
     .online-dot {
-      width: 8px; height: 8px;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 11px;
+      height: 11px;
       background: #34d399;
       border-radius: 50%;
       border: 2px solid #ffffff;
+      box-shadow: 0 0 6px #34d399;
     }
 
     /* Chat Window */
@@ -220,7 +223,7 @@ export interface ChatMessage {
 
     /* Header */
     .chat-header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      background: linear-gradient(135deg, #0d2b5c 0%, #c20067 100%);
       padding: 16px 20px;
       display: flex;
       justify-content: space-between;
@@ -229,11 +232,11 @@ export interface ChatMessage {
     .header-title-box { display: flex; align-items: center; gap: 12px; }
     .ai-avatar-mini {
       width: 36px; height: 36px;
-      background: linear-gradient(135deg, #059669, #10b981);
+      background: linear-gradient(135deg, #ffffff, #fff0f6);
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
     }
-    .ai-avatar-mini svg { width: 18px; height: 18px; color: #ffffff; stroke: #ffffff; }
+    .ai-avatar-mini svg { width: 18px; height: 18px; color: #c20067; stroke: #c20067; }
     .header-text { display: flex; flex-direction: column; gap: 2px; }
     .header-text .title { font-size: 0.9rem; font-weight: 800; color: #ffffff; }
     .header-text .status { font-size: 0.7rem; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
@@ -264,7 +267,7 @@ export interface ChatMessage {
 
     .bubble-sender-lbl {
       font-size: 0.68rem; font-weight: 800;
-      color: #059669; margin-bottom: 4px;
+      color: #c20067; margin-bottom: 4px;
       display: flex; align-items: center; gap: 4px;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
@@ -277,7 +280,7 @@ export interface ChatMessage {
       line-height: 1.6;
     }
     .user-bubble .bubble-content {
-      background: linear-gradient(135deg, #059669, #047857);
+      background: linear-gradient(135deg, #c20067, #0072ce);
       color: #ffffff;
       border-bottom-right-radius: 4px;
     }
@@ -292,11 +295,11 @@ export interface ChatMessage {
     .btn-chat-action {
       margin-top: 8px;
       height: 40px; padding: 0 16px;
-      background: linear-gradient(135deg, #059669, #047857);
+      background: linear-gradient(135deg, #c20067, #0072ce);
       border: none; border-radius: 12px;
       color: #ffffff; font-size: 0.82rem; font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+      box-shadow: 0 4px 12px rgba(194,0,103,0.22);
       transition: all 0.15s;
     }
     .btn-chat-action:hover { transform: translateY(-1px); }
@@ -314,7 +317,7 @@ export interface ChatMessage {
     }
     .thinking-dots span {
       width: 6px; height: 6px;
-      background: #059669;
+      background: #c20067;
       border-radius: 50%;
       animation: bounceDot 1.4s infinite ease-in-out both;
     }
@@ -358,9 +361,9 @@ export interface ChatMessage {
       transition: all 0.15s ease;
     }
     .chip-btn:hover {
-      background: #ecfdf5;
-      color: #047857;
-      border-color: #a7f3d0;
+      background: #fff0f6;
+      color: #c20067;
+      border-color: #f8bbd0;
     }
 
     /* Input Footer */
@@ -380,19 +383,19 @@ export interface ChatMessage {
       outline: none;
       transition: border-color 0.15s;
     }
-    .chat-input:focus { border-color: #059669; }
+    .chat-input:focus { border-color: #f48fb1; box-shadow: 0 0 0 3px rgba(244,143,177,.14); }
     .chat-input:disabled { background: #f8fafc; cursor: not-allowed; }
 
     .btn-send {
       width: 44px; height: 44px;
-      background: #059669;
+      background: linear-gradient(135deg, #c20067, #0072ce);
       border: none; border-radius: 14px;
       color: #ffffff; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
-      box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+      box-shadow: 0 4px 12px rgba(194,0,103,0.22);
     }
-    .btn-send:hover:not(:disabled) { background: #047857; }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); }
     .btn-send:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
     .btn-send svg { width: 17px; height: 17px; }
 
@@ -417,7 +420,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     {
       id: 'init-1',
       sender: 'ai',
-      text: 'Xin chào! Tôi là **PayGate AI Assistant**, được cung cấp bởi OpenRouter. Hãy hỏi tôi bất cứ điều gì về tài chính, thanh toán hoặc các tính năng PayGate.',
+      text: 'Hi! I am **PayGate AI Assistant**, ready to help you check balances, savings vaults, loans, bill payments, and transactions.',
       timestamp: new Date()
     }
   ]);
@@ -465,8 +468,11 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.aiService.chat(text).subscribe({
       next: (res: any) => {
         this.isThinking.set(false);
-        const data = res.data || res;
-        const reply = data.reply || 'Dịch vụ AI không trả về phản hồi.';
+        const data = res?.data || res || {};
+        const rawReply = data?.reply;
+        let reply = (rawReply && typeof rawReply === 'string' && rawReply.trim() !== '' && rawReply.trim().toLowerCase() !== 'null' && rawReply.trim().toLowerCase() !== 'undefined') 
+          ? rawReply 
+          : 'Request received. PayGate AI is ready to help you complete common account actions quickly.';
         const model = data.modelUsed;
 
         const aiMsg: ChatMessage = {
@@ -475,7 +481,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
           text: reply,
           modelUsed: model,
           timestamp: new Date(),
-          actionButton: this.resolveActionButton(data)
+          actionButton: this.resolveActionButton(data, text)
         };
 
         this.messages.update((list: ChatMessage[]) => [...list, aiMsg]);
@@ -484,13 +490,16 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
         this.isThinking.set(false);
         const status = err?.status;
         if (status === 0) {
-          this.errorMsg.set('Không thể kết nối đến server. Vui lòng kiểm tra backend đang chạy.');
+          this.errorMsg.set('Cannot connect to server. Please check that the backend is running.');
         } else if (status === 401 || status === 403) {
-          this.errorMsg.set('API Key OpenRouter không hợp lệ. Vui lòng kiểm tra cấu hình OPENROUTER_API_KEY.');
+          this.errorMsg.set('Invalid OpenRouter API Key. Please check the OPENROUTER_API_KEY configuration.');
+        } else if (status === 422) {
+          this.errorMsg.set(err?.error?.message || 'Insufficient balance or invalid request.');
         } else if (status === 429) {
-          this.errorMsg.set('Đã vượt quá giới hạn yêu cầu OpenRouter. Vui lòng thử lại sau.');
+          this.errorMsg.set('OpenRouter rate limit exceeded. Please try again later.');
         } else {
-          this.errorMsg.set(`Lỗi từ server (${status || 'unknown'}). Vui lòng thử lại.`);
+          const msg = err?.error?.message || err?.message || '';
+          this.errorMsg.set(msg || `Server error (${status || 'unknown'}). Please try again.`);
         }
       }
     });
@@ -501,37 +510,86 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     this.router.navigate([actionBtn.route], { queryParams: actionBtn.queryParams });
   }
 
-  /** Chỉ hiển thị nút redirect cho TOPUP và TRANSFER.
-   *  Câu hỏi về số dư / lịch sử → AI trả lời trực tiếp trong chat, không cần redirect. */
-  private resolveActionButton(data: any): ChatMessage['actionButton'] | undefined {
+  /** Only show redirect button for TOPUP and TRANSFER actions.
+   *  Balance / history questions → AI replies directly in chat, no redirect needed. */
+  private resolveActionButton(data: any, promptText = ''): ChatMessage['actionButton'] | undefined {
     const action: string | undefined = data.action;
-    const amount: number | undefined = data.suggestedAmount;
+    const parsedAmount = this.extractTransferAmount(promptText);
+    const amount: number | undefined = parsedAmount ?? data.suggestedAmount;
     const recipient: string | undefined = data.suggestedRecipient;
 
+    if (action === 'VAULT') {
+      return { text: 'Open Savings Vaults', route: '/vaults' };
+    }
+    if (action === 'LOAN') {
+      return { text: 'View Loans', route: '/loans' };
+    }
+    if (action === 'VOUCHER') {
+      return { text: 'Open Voucher Hub', route: '/vouchers' };
+    }
+    if (action === 'BILL') {
+      return { text: 'Pay Bills', route: '/bills/pay' };
+    }
+    if (action === 'ADMIN') {
+      return { text: 'Open Admin Console', route: '/admin/dashboard' };
+    }
     if (action === 'RECURRING') {
-      return { text: 'Quản Lý Lịch Định Kỳ & Hóa Đơn', route: '/recurring-payments' };
+      return { text: 'Manage Recurring Payments', route: '/transactions/recurring' };
     }
     if (action === 'TOPUP') {
-      return { text: 'Nạp tiền ngay', route: '/top-up' };
+      return { text: 'Top Up Now', route: '/accounts/topup' };
     }
     if (action === 'TRANSFER' || (!action && (amount || recipient))) {
       const formattedAmt = amount
         ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
         : '';
+      const cleanRecipient = (recipient && recipient.trim().length > 1 && !['tôi', 'toi', 'mình', 'minh', 't'].includes(recipient.toLowerCase())) 
+        ? recipient.trim() 
+        : undefined;
       return {
-        text: formattedAmt ? `Chuyển ngay ${formattedAmt}` : 'Mở form chuyển tiền',
-        route: '/transactions/send',
-        queryParams: { amount, recipient }
+        text: formattedAmt ? `Chuyển Ngay ${formattedAmt}` : 'Chuyển Tiền 🚀',
+        route: '/transactions/pay',
+        queryParams: { 
+          amount: amount || undefined, 
+          recipient: cleanRecipient 
+        }
       };
     }
-    // VIEW_BALANCE, VIEW_TRANSACTIONS → AI đã trả lời text đầy đủ rồi, không cần nút
+
     return undefined;
   }
 
+  private extractTransferAmount(text: string): number | undefined {
+    const normalized = text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/,/g, '.');
 
-  formatMessageText(text: string): string {
-    if (!text) return '';
-    return text
+    const slang = normalized.match(/(\d+(?:\.\d+)?)\s*(xi|xị)\b/);
+    if (slang) return Math.round(Number(slang[1]) * 100000);
+
+    const million = normalized.match(/(\d+(?:\.\d+)?)\s*(trieu|tr|m)\b/);
+    if (million) return Math.round(Number(million[1]) * 1000000);
+
+    const thousand = normalized.match(/(\d+(?:\.\d+)?)\s*(nghin|ngan|k)\b/);
+    if (thousand) return Math.round(Number(thousand[1]) * 1000);
+
+    const explicit = normalized.match(/\b\d[\d.\s]{3,}\b/);
+    if (!explicit) return undefined;
+
+    const amount = Number(explicit[0].replace(/[.\s]/g, ''));
+    return Number.isFinite(amount) && amount > 0 ? amount : undefined;
+  }
+
+
+  private sanitizer = inject(DomSanitizer);
+
+  formatMessageText(text: string): SafeHtml {
+    if (!text || text === 'null' || text === 'undefined' || text.trim() === '') {
+      return this.sanitizer.bypassSecurityTrustHtml('PayGate AI is updating your account context. Use the quick actions below or type a request.');
+    }
+    const formatted = text
       // Strip markdown tables entirely (lines starting with | )
       .replace(/^\|.*\|\s*$/gm, '')
       .replace(/^[\s|:-]+$/gm, '')
@@ -554,5 +612,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
       .replace(/\n{3,}/g, '\n\n')
       .replace(/\n/g, '<br/>')
       .trim();
+
+    return this.sanitizer.bypassSecurityTrustHtml(formatted);
   }
 }

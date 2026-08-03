@@ -1,14 +1,24 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+import { map } from 'rxjs/operators';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
-  const token = localStorage.getItem('access_token');
+  const authService = inject(AuthService);
 
-  if (token) {
+  if (authService.isAuthenticated()) {
     return true;
   }
 
-  router.navigate(['/login']);
-  return false;
+  // Attempt silent refresh via HttpOnly refresh_token cookie before denying access
+  return authService.trySilentRefresh().pipe(
+    map((isSuccess) => {
+      if (isSuccess) {
+        return true;
+      }
+      router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+      return false;
+    })
+  );
 };

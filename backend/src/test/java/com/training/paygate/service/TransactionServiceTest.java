@@ -21,20 +21,26 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.service.impl.AsyncSettlementService;
 import com.training.paygate.service.impl.TransactionServiceImpl;
 import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.enums.Role;
 import com.training.paygate.dto.response.TransactionDetailResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,6 +49,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TransactionServiceTest {
 
     @Mock
@@ -69,8 +76,41 @@ class TransactionServiceTest {
     @Mock
     private AmqpTemplate amqpTemplate;
 
+    @Mock
+    private LoyaltyService loyaltyService;
+
+    @Mock
+    private AsyncSettlementService asyncSettlementService;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private BeneficiaryService beneficiaryService;
+
+    @Mock
+    private FraudDetectionService fraudDetectionService;
+
+    @Mock
+    private StringRedisTemplate stringRedisTemplate;
+
     @InjectMocks
     private TransactionServiceImpl transactionService;
+
+    @BeforeEach
+    void setUp() {
+        FraudDetectionService.FraudAnalysisResult safeResult = FraudDetectionService.FraudAnalysisResult.builder()
+                .riskScore(0)
+                .riskLevel(FraudDetectionService.RiskLevel.LOW)
+                .actionTaken(FraudDetectionService.FraudAction.ALLOW)
+                .suspicious(false)
+                .ruleTriggered("NORMAL")
+                .reason("Giao dịch an toàn.")
+                .recommendation("Cho phép thực hiện giao dịch.")
+                .build();
+        when(fraudDetectionService.evaluatePayment(anyString(), any(), any(PaymentRequest.class), anyString()))
+                .thenReturn(safeResult);
+    }
 
     @Test
     void processPayment_success() {
@@ -121,25 +161,26 @@ class TransactionServiceTest {
         when(accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(destAccount));
         when(merchantRepository.findById(5L)).thenReturn(Optional.of(merchant));
-
-        // Mock Lock ordering: 1L locked first, 2L locked second
-        when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(destAccount));
-        when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction persisted = invocation.getArgument(0);
+            persisted.setId(100L);
+            persisted.setTransactionRef("TXN-PAY-12345");
+            return persisted;
+        });
+        doReturn(CompletableFuture.completedFuture(null)).when(asyncSettlementService).settlePaymentAsync(any());
 
         // When
-        TransactionResponse result = transactionService.processPayment(request, username);
+        TransactionResponse result = transactionService.processPayment(request, username, "127.0.0.1");
 
         // Then
         assertThat(result.transactionRef()).isEqualTo("TXN-PAY-12345");
-        assertThat(result.status()).isEqualTo("COMPLETED");
-        verify(accountRepository).save(sourceAccount);
-        verify(accountRepository).save(destAccount);
-        verify(ledgerEntryRepository, times(2)).save(any(LedgerEntry.class));
-        verify(balanceCacheService).evictBalance(1L);
-        verify(balanceCacheService).evictBalance(2L);
+        assertThat(result.status()).isEqualTo("PENDING");
+        verify(transactionRepository).save(any(Transaction.class));
+        verify(asyncSettlementService).settlePaymentAsync(any());
+        verify(accountRepository, never()).save(any(Account.class));
+        verify(ledgerEntryRepository, never()).save(any(LedgerEntry.class));
         verify(idempotencyCacheService).set(idKey, "TXN-PAY-12345");
-        verify(amqpTemplate).convertAndSend(eq("payment.exchange"), eq("payment.completed"), any(PaymentCompletedEvent.class));
+        verify(loyaltyService, never()).earnPoints(anyLong(), any(BigDecimal.class), anyString());
     }
 
     @Test
@@ -166,7 +207,7 @@ class TransactionServiceTest {
         when(transactionRepository.findByTransactionRef("TXN-PAY-12345")).thenReturn(Optional.of(transaction));
 
         // When
-        TransactionResponse result = transactionService.processPayment(request, username);
+        TransactionResponse result = transactionService.processPayment(request, username, "127.0.0.1");
 
         // Then
         assertThat(result.transactionRef()).isEqualTo("TXN-PAY-12345");
@@ -210,11 +251,9 @@ class TransactionServiceTest {
         when(accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(destAccount));
         when(merchantRepository.findById(5L)).thenReturn(Optional.of(merchant));
-        when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(destAccount));
 
         // When & Then
-        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+        assertThatThrownBy(() -> transactionService.processPayment(request, username, "127.0.0.1"))
                 .isInstanceOf(InsufficientBalanceException.class);
         verify(transactionRepository, never()).save(any());
     }
@@ -253,7 +292,7 @@ class TransactionServiceTest {
         when(merchantRepository.findById(5L)).thenReturn(Optional.of(merchant));
 
         // When & Then
-        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+        assertThatThrownBy(() -> transactionService.processPayment(request, username, "127.0.0.1"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Merchant is inactive");
         verify(accountRepository, never()).findByIdForUpdate(anyLong());
@@ -425,11 +464,9 @@ class TransactionServiceTest {
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.USER)).thenReturn(Optional.of(sourceAccount));
         when(accountRepository.findById(2L)).thenReturn(Optional.of(destAccount));
-        when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sourceAccount));
-        when(accountRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(destAccount));
 
         // When & Then
-        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+        assertThatThrownBy(() -> transactionService.processPayment(request, username, "127.0.0.1"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Source account is not active");
     }
@@ -454,7 +491,7 @@ class TransactionServiceTest {
         when(merchantRepository.findById(99L)).thenReturn(Optional.of(inactiveMerchant));
 
         // When & Then
-        assertThatThrownBy(() -> transactionService.processPayment(request, username))
+        assertThatThrownBy(() -> transactionService.processPayment(request, username, "127.0.0.1"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Merchant is inactive");
     }

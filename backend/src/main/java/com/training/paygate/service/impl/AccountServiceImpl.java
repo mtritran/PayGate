@@ -25,6 +25,7 @@ import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
+import com.training.paygate.repository.VaultRepository;
 import com.training.paygate.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,8 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.training.paygate.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
@@ -50,6 +53,8 @@ public class AccountServiceImpl implements AccountService {
         private final LedgerEntryRepository ledgerEntryRepository;
         private final BalanceCacheService balanceCacheService;
         private final AccountMapper accountMapper;
+        private final VaultRepository vaultRepository;
+        private final NotificationService notificationService;
 
         @Override
         @Transactional
@@ -68,7 +73,17 @@ public class AccountServiceImpl implements AccountService {
                                 .build();
 
                 Account saved = accountRepository.save(account);
-                saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                String prefix = switch (ownerType) {
+                        case USER -> "ACC";
+                        case VAULT -> "VLT";
+                        case MERCHANT -> "MER";
+                        default -> "SYS";
+                };
+                String formattedAccNum = prefix + String.format("%08d", saved.getId());
+                if (accountRepository.existsByAccountNumber(formattedAccNum)) {
+                        formattedAccNum = prefix + System.currentTimeMillis() + (int)(Math.random() * 1000);
+                }
+                saved.setAccountNumber(formattedAccNum);
                 saved = accountRepository.save(saved);
 
                 return accountMapper.toResponse(saved);
@@ -103,7 +118,7 @@ public class AccountServiceImpl implements AccountService {
         Account userAccount = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        // Get or Create SYSTEM account (Đã rút ngắn còn 19 ký tự để tránh lỗi DB VARCHAR(20))
+        // Get or Create SYSTEM account (shortened to 19 chars to fit DB VARCHAR(20))
         Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseGet(() -> {
                     Account acc = Account.builder()
@@ -186,6 +201,18 @@ public class AccountServiceImpl implements AccountService {
             balanceCacheService.evictBalance(evictedAccountId);
         }
 
+        // Save real-time notification
+        try {
+            if (lockedUser.getOwnerType() == OwnerType.USER) {
+                String topUpMsg = String.format("Tài khoản của bạn đã được nạp +%,.0f VND. Giao dịch: %s. Nội dung: %s",
+                        transaction.getAmount().doubleValue(), transaction.getTransactionRef(),
+                        transaction.getDescription() != null ? transaction.getDescription() : "");
+                notificationService.createNotification(lockedUser.getOwnerId(), "Nạp tiền thành công", topUpMsg, "TOPUP");
+            }
+        } catch (Exception ne) {
+            ne.printStackTrace();
+        }
+
         return new TransactionResponse(
                 transaction.getTransactionRef(),
                 transaction.getStatus().name(),
@@ -198,27 +225,42 @@ public class AccountServiceImpl implements AccountService {
         );
     }
         @Override
-        @Transactional(readOnly = true)
+        @Transactional
         public AccountResponse getAccountByUsername(String username) {
-                User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found with username: " + username));
+                User user = userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                                .orElseGet(() -> userRepository.findByUsername(username)
+                                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                                "User not found with username: " + username)));
+
                 Account account = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Account for user " + username + " not found"));
+                                .orElseGet(() -> {
+                                        Account newAcc = Account.builder()
+                                                        .ownerId(user.getId())
+                                                        .ownerType(OwnerType.USER)
+                                                        .balance(BigDecimal.ZERO)
+                                                        .currency("VND")
+                                                        .status(AccountStatus.ACTIVE)
+                                                        .accountNumber("TMP-" + UUID.randomUUID().toString().substring(0, 10))
+                                                        .build();
+                                        Account saved = accountRepository.save(newAcc);
+                                        saved.setAccountNumber(String.format("AC%08d", saved.getId()));
+                                        return accountRepository.save(saved);
+                                });
+
                 return accountMapper.toResponse(account);
         }
 
     @Override
     @Transactional(readOnly = true)
     public AccountResponse getBalanceChecked(Long accountId, String currentUsername) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+        User user = userRepository.findAllByUsernameIgnoreCase(currentUsername).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(currentUsername)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername)));
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+        if (user.getRole() != Role.ADMIN && !canAccessAccount(user, account)) {
             throw new AccessDeniedException("You do not have permission to access this account's balance");
         }
 
@@ -228,13 +270,14 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getAccountHistory(Long accountId, String currentUsername, Pageable pageable) {
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
+        User user = userRepository.findAllByUsernameIgnoreCase(currentUsername).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(currentUsername)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername)));
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        if (user.getRole() != Role.ADMIN && !(account.getOwnerId().equals(user.getId()) && account.getOwnerType() == OwnerType.USER)) {
+        if (user.getRole() != Role.ADMIN && !canAccessAccount(user, account)) {
             throw new AccessDeniedException("You do not have permission to access this account's history");
         }
 
@@ -278,14 +321,20 @@ public class AccountServiceImpl implements AccountService {
         }
 
         Account account = accountOpt.orElseThrow(() ->
-                new ResourceNotFoundException("Tài khoản nhận tiền không tồn tại với thông tin: " + query));
+                new ResourceNotFoundException("PayGate account not found for: " + query));
+
+        if (account.getOwnerType() == OwnerType.VAULT) {
+            throw new BadRequestException(
+                "Tài khoản '" + query + "' là một Savings Vault (" + account.getAccountNumber()
+                + "). Vui lòng dùng tính năng Nạp Vault (Deposit) để gửi tiền vào quỹ tiết kiệm.");
+        }
 
         Long merchantId = null;
-        String ownerName = "Tài khoản PayGate";
+        String ownerName = "PayGate Account";
         if (account.getOwnerType() == OwnerType.USER) {
             ownerName = userRepository.findById(account.getOwnerId())
                     .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
-                    .orElse("Khách hàng PayGate");
+                    .orElse("PayGate User");
         } else if (account.getOwnerType() == OwnerType.MERCHANT) {
             Optional<Merchant> mOpt = merchantRepository.findById(account.getOwnerId());
             if (mOpt.isPresent()) {
@@ -293,7 +342,7 @@ public class AccountServiceImpl implements AccountService {
                 ownerName = m.getMerchantName();
                 merchantId = m.getId();
             } else {
-                ownerName = "Doanh nghiệp Merchant";
+                ownerName = "Merchant Business";
             }
         }
 
@@ -305,5 +354,17 @@ public class AccountServiceImpl implements AccountService {
                 account.getStatus(),
                 merchantId
         );
+    }
+
+    private boolean canAccessAccount(User user, Account account) {
+        if (account.getOwnerType() == OwnerType.USER) {
+            return account.getOwnerId().equals(user.getId());
+        }
+        if (account.getOwnerType() == OwnerType.VAULT) {
+            return vaultRepository.findByAccountId(account.getId())
+                    .map(vault -> vault.getUserId().equals(user.getId()))
+                    .orElse(false);
+        }
+        return false;
     }
 }

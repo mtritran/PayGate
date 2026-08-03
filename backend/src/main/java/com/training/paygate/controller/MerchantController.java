@@ -62,6 +62,12 @@ public class MerchantController {
         return ApiResponse.success(merchantService.getById(id));
     }
 
+    @GetMapping("/{id}/api-key")
+    @Operation(summary = "Get unmasked merchant API key for integration")
+    public ApiResponse<String> getRawApiKey(@PathVariable Long id) {
+        return ApiResponse.success("Raw API Key retrieved", merchantService.getRawApiKey(id));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new merchant", description = "Registers a new merchant and automatically provisions a merchant wallet account.")

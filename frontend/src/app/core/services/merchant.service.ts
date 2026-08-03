@@ -71,6 +71,10 @@ export class MerchantService {
     return this.http.get<ApiResponse<Merchant>>(`${this.userBaseUrl}/me`);
   }
 
+  getMyApiKey(): Observable<ApiResponse<string>> {
+    return this.http.get<ApiResponse<string>>(`${this.userBaseUrl}/me/api-key`);
+  }
+
   getActiveMerchants(): Observable<ApiResponse<Merchant[]>> {
     return this.http.get<ApiResponse<Merchant[]>>(`${this.userBaseUrl}/active`);
   }

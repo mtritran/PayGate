@@ -11,6 +11,7 @@ import com.training.paygate.entity.LedgerEntry;
 import com.training.paygate.entity.Merchant;
 import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
+import com.training.paygate.enums.AccountStatus;
 import com.training.paygate.enums.EntryType;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.Role;
@@ -26,7 +27,8 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
-import com.training.paygate.service.EmailService;
+import com.training.paygate.service.LoyaltyService;
+import com.training.paygate.service.NotificationService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,11 +59,33 @@ public class TransactionServiceImpl implements TransactionService {
     private final BalanceCacheService balanceCacheService;
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
-    private final EmailService emailService;
+    private final com.training.paygate.service.BeneficiaryService beneficiaryService;
+    private final LoyaltyService loyaltyService;
+    private final NotificationService notificationService;
+    private final com.training.paygate.service.FraudDetectionService fraudDetectionService;
+    private final AsyncSettlementService asyncSettlementService;
+
+    @Override
+    @Transactional
+    public TransactionResponse processPayment(PaymentRequest request, Long userId, String clientIp) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        return processPayment(request, user.getUsername(), clientIp);
+    }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public TransactionResponse processPayment(PaymentRequest request, String currentUsername) {
+    public TransactionResponse processPayment(PaymentRequest request, String currentUsername, String clientIp) {
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        Long userId = currentUser != null ? currentUser.getId() : null;
+
+        // Realtime Multi-Factor Fraud & Risk Evaluation
+        com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult =
+                fraudDetectionService.evaluatePayment(currentUsername, userId, request, clientIp);
+        if (fraudResult.isSuspicious() && fraudResult.getActionTaken() == com.training.paygate.service.FraudDetectionService.FraudAction.BLOCK_TEMPORARY) {
+            throw new BadRequestException("CẢNH BÁO AN NINH GIAO DỊCH (" + fraudResult.getRiskScore() + "/100): " + fraudResult.getReason());
+        }
+
         // 1. Check idempotency key in Redis / DB
         String cachedRef = idempotencyCacheService.get(request.idempotencyKey());
         if (cachedRef != null) {
@@ -81,17 +105,20 @@ public class TransactionServiceImpl implements TransactionService {
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
         Account sourceAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Source account not found for user: " + currentUsername));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Source account not found for user: " + currentUsername));
 
         // 3. Look up destination account
         Account destAccount = accountRepository.findById(request.destAccountId())
-                .orElseThrow(() -> new ResourceNotFoundException("Destination account not found with ID: " + request.destAccountId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Destination account not found with ID: " + request.destAccountId()));
 
         if (sourceAccount.getId().equals(destAccount.getId())) {
             throw new BadRequestException("Source and destination accounts must be different");
         }
 
-        // 4. Verify merchant active status if merchantId is provided or destination is merchant
+        // 4. Verify merchant active status if merchantId is provided or destination is
+        // merchant
         String merchantWebhookUrl = null;
         if (request.merchantId() != null) {
             Merchant merchant = merchantRepository.findById(request.merchantId())
@@ -110,116 +137,69 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
 
-        // 5. Lock accounts in ascending ID order to prevent deadlock
-        Long firstId = Math.min(sourceAccount.getId(), destAccount.getId());
-        Long secondId = Math.max(sourceAccount.getId(), destAccount.getId());
+        if (sourceAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("Source account is not active");
+        }
+        if (destAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new BadRequestException("Destination account is not active");
+        }
+        if (sourceAccount.getBalance().compareTo(request.amount()) < 0) {
+            throw new InsufficientBalanceException(
+                    "Insufficient balance in account: " + sourceAccount.getAccountNumber());
+        }
 
-        Account firstLocked = accountRepository.findByIdForUpdate(firstId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", firstId));
-        Account secondLocked = accountRepository.findByIdForUpdate(secondId)
-                .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
-
-        Account lockedSource = firstLocked.getId().equals(sourceAccount.getId()) ? firstLocked : secondLocked;
-        Account lockedDest = firstLocked.getId().equals(destAccount.getId()) ? firstLocked : secondLocked;
-
-        // 5.1 Re-check idempotency key AFTER acquiring locks to prevent concurrent duplicate payments
+        // 5. Re-check idempotency key AFTER validating the source/destination accounts to prevent concurrent duplicates
         Transaction concurrentTx = transactionRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null);
         if (concurrentTx != null) {
             idempotencyCacheService.set(request.idempotencyKey(), concurrentTx.getTransactionRef());
             return mapToResponse(concurrentTx);
         }
 
-        // 5.2 Validate account active status
-        if (lockedSource.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
-            throw new BadRequestException("Source account is not active");
-        }
-        if (lockedDest.getStatus() != com.training.paygate.enums.AccountStatus.ACTIVE) {
-            throw new BadRequestException("Destination account is not active");
-        }
-
-        // 6. Validate balance
-        if (lockedSource.getBalance().compareTo(request.amount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in account: " + lockedSource.getAccountNumber());
-        }
-
-        // 7. Update balances
-        lockedSource.setBalance(lockedSource.getBalance().subtract(request.amount()));
-        lockedDest.setBalance(lockedDest.getBalance().add(request.amount()));
-
-        accountRepository.save(lockedSource);
-        accountRepository.save(lockedDest);
-
-        // 8. Save Transaction
+        // 6. Save Transaction as pending and dispatch settlement to background
         Transaction transaction = Transaction.builder()
                 .transactionRef("TXN-PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .idempotencyKey(request.idempotencyKey())
-                .sourceAccountId(lockedSource.getId())
-                .destAccountId(lockedDest.getId())
+                .sourceAccountId(sourceAccount.getId())
+                .destAccountId(destAccount.getId())
                 .amount(request.amount())
                 .currency("VND")
                 .type(TransactionType.PAYMENT)
-                .status(TransactionStatus.COMPLETED)
+                .status(TransactionStatus.PENDING)
                 .merchantId(request.merchantId())
                 .description(request.description())
                 .build();
         transaction = transactionRepository.save(transaction);
 
-        // 9. Save Ledger Entries
-        LedgerEntry debitEntry = LedgerEntry.builder()
-                .transactionId(transaction.getId())
-                .accountId(lockedSource.getId())
-                .entryType(EntryType.DEBIT)
-                .amount(request.amount())
-                .balanceAfter(lockedSource.getBalance())
-                .build();
-
-        LedgerEntry creditEntry = LedgerEntry.builder()
-                .transactionId(transaction.getId())
-                .accountId(lockedDest.getId())
-                .entryType(EntryType.CREDIT)
-                .amount(request.amount())
-                .balanceAfter(lockedDest.getBalance())
-                .build();
-
-        ledgerEntryRepository.save(debitEntry);
-        ledgerEntryRepository.save(creditEntry);
-
-        // 10. Write to Idempotency Cache
+        // 7. Write to Idempotency Cache
         idempotencyCacheService.set(request.idempotencyKey(), transaction.getTransactionRef());
 
-        // 11. Evict balances from cache AFTER successful transaction commit
-        final Long sourceIdToEvict = lockedSource.getId();
-        final Long destIdToEvict = lockedDest.getId();
+        // 8. Auto-save beneficiary contact if transferring to a user account
+        try {
+            if (destAccount.getOwnerType() == OwnerType.USER) {
+                User destUser = userRepository.findById(destAccount.getOwnerId()).orElse(null);
+                if (destUser != null) {
+                    beneficiaryService.autoSaveBeneficiary(
+                            user.getId(),
+                            destAccount.getAccountNumber(),
+                            destUser.getFullName() != null ? destUser.getFullName() : destUser.getUsername(),
+                            destUser.getId());
+                }
+            }
+        } catch (Exception be) {
+            log.warn("Auto save beneficiary failed: {}", be.getMessage());
+        }
+
+        // 9. Dispatch settlement asynchronously after transaction commits
+        final Long txId = transaction.getId();
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    balanceCacheService.evictBalance(sourceIdToEvict);
-                    balanceCacheService.evictBalance(destIdToEvict);
+                    asyncSettlementService.settlePaymentAsync(txId);
                 }
             });
         } else {
-            balanceCacheService.evictBalance(sourceIdToEvict);
-            balanceCacheService.evictBalance(destIdToEvict);
-        }
-
-        // 12. Publish Completed Event to RabbitMQ (triggers both WebhookConsumer and NotificationConsumer via RabbitMQ topic routing)
-        PaymentCompletedEvent event = new PaymentCompletedEvent(
-                transaction.getTransactionRef(),
-                request.merchantId(),
-                merchantWebhookUrl,
-                transaction.getAmount(),
-                transaction.getStatus().name(),
-                user.getEmail(),
-                user.getUsername(),
-                lockedDest.getAccountNumber(),
-                transaction.getDescription()
-        );
-        try {
-            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
-            log.info("[RABBITMQ PUBLISH] Published PaymentCompletedEvent to 'payment.exchange' with routing key 'payment.completed'");
-        } catch (Exception e) {
-            log.warn("Could not publish PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
+            asyncSettlementService.settlePaymentAsync(txId);
         }
 
         return mapToResponse(transaction);
@@ -237,7 +217,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (user.getRole() != Role.ADMIN) {
             Account userAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
                     .orElseThrow(() -> new ResourceNotFoundException("User account not found"));
-            if (!tx.getSourceAccountId().equals(userAccount.getId()) && !tx.getDestAccountId().equals(userAccount.getId())) {
+            if (!tx.getSourceAccountId().equals(userAccount.getId())
+                    && !tx.getDestAccountId().equals(userAccount.getId())) {
                 throw new AccessDeniedException("You do not have permission to view this transaction");
             }
         }
@@ -251,8 +232,7 @@ public class TransactionServiceImpl implements TransactionService {
                         le.getEntryType().name(),
                         le.getAmount(),
                         le.getBalanceAfter(),
-                        le.getCreatedAt()
-                ))
+                        le.getCreatedAt()))
                 .collect(Collectors.toList());
 
         return new TransactionDetailResponse(
@@ -264,8 +244,7 @@ public class TransactionServiceImpl implements TransactionService {
                 tx.getType().name(),
                 tx.getDescription(),
                 tx.getCreatedAt(),
-                ledgerEntries
-        );
+                ledgerEntries);
     }
 
     @Override
@@ -277,18 +256,18 @@ public class TransactionServiceImpl implements TransactionService {
             Long sourceAccountId,
             Long destAccountId,
             Long merchantId,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         return transactionRepository.findAllWithFiltersAndOwner(
-                ownerAccountId, type, status, sourceAccountId, destAccountId, merchantId, pageable
-        ).map(this::mapToResponse);
+                ownerAccountId, type, status, sourceAccountId, destAccountId, merchantId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public TransactionResponse refund(String originalRef, String currentUsername) {
         Transaction originalTx = transactionRepository.findByTransactionRef(originalRef)
-                .orElseThrow(() -> new ResourceNotFoundException("Original transaction not found with reference: " + originalRef));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Original transaction not found with reference: " + originalRef));
 
         if (originalTx.getType() != TransactionType.PAYMENT || originalTx.getStatus() != TransactionStatus.COMPLETED) {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " is not in COMPLETED state");
@@ -299,15 +278,25 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
 
-        User user = userRepository.findByUsername(currentUsername)
+        User adminUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + currentUsername));
 
-        if (user.getRole() != Role.ADMIN) {
+        if (adminUser.getRole() != Role.ADMIN) {
             throw new AccessDeniedException("Only an ADMIN can request a refund");
         }
 
+        // Determine the original user who paid (owner of source account in original tx)
+        User originalPayer = null;
+        if (originalTx.getSourceAccountId() != null) {
+            Account srcAccount = accountRepository.findById(originalTx.getSourceAccountId()).orElse(null);
+            if (srcAccount != null && srcAccount.getOwnerType() == OwnerType.USER) {
+                originalPayer = userRepository.findById(srcAccount.getOwnerId()).orElse(null);
+            }
+        }
+
         // Lock accounts in ascending ID order to prevent deadlock
-        // Note: For refund, source is original destination (Merchant), destination is original source (User)
+        // Note: For refund, source is original destination (Merchant), destination is
+        // original source (User)
         Long firstId = Math.min(originalTx.getSourceAccountId(), originalTx.getDestAccountId());
         Long secondId = Math.max(originalTx.getSourceAccountId(), originalTx.getDestAccountId());
 
@@ -316,7 +305,8 @@ public class TransactionServiceImpl implements TransactionService {
         Account secondLocked = accountRepository.findByIdForUpdate(secondId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", secondId));
 
-        // Concurrency guard: Re-check if already refunded AFTER acquiring locks to prevent race condition
+        // Concurrency guard: Re-check if already refunded AFTER acquiring locks to
+        // prevent race condition
         if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
             throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
         }
@@ -327,7 +317,8 @@ public class TransactionServiceImpl implements TransactionService {
         Account lockedMerchant = firstLocked.getId().equals(originalTx.getDestAccountId()) ? firstLocked : secondLocked;
 
         if (lockedMerchant.getBalance().compareTo(originalTx.getAmount()) < 0) {
-            throw new InsufficientBalanceException("Insufficient balance in merchant account to perform refund: " + lockedMerchant.getAccountNumber());
+            throw new InsufficientBalanceException(
+                    "Insufficient balance in merchant account to perform refund: " + lockedMerchant.getAccountNumber());
         }
 
         // Update balances
@@ -400,12 +391,28 @@ public class TransactionServiceImpl implements TransactionService {
                 refundTx.getMerchantId(),
                 merchantWebhookUrl,
                 refundTx.getAmount(),
-                refundTx.getStatus().name()
-        );
+                refundTx.getStatus().name(),
+                originalPayer != null ? originalPayer.getEmail() : null,
+                originalPayer != null ? originalPayer.getUsername() : currentUsername,
+                lockedUser.getAccountNumber(),
+                refundTx.getDescription(),
+                refundTx.getType(),
+                originalPayer != null ? originalPayer.getId() : null);
         try {
             amqpTemplate.convertAndSend("payment.exchange", "payment.completed", event);
         } catch (Exception e) {
             log.warn("Could not publish Refund PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
+        }
+
+        // Save refund notification
+        try {
+            if (originalPayer != null) {
+                String refundMsg = String.format("Bạn đã được hoàn +%,.0f VND cho giao dịch: %s. Giao dịch hoàn tiền: %s.",
+                        refundTx.getAmount().doubleValue(), originalRef, refundTx.getTransactionRef());
+                notificationService.createNotification(originalPayer.getId(), "Hoàn tiền giao dịch", refundMsg, "REFUND");
+            }
+        } catch (Exception ne) {
+            log.error("Failed to create refund notification: {}", ne.getMessage());
         }
 
         return mapToResponse(refundTx);
@@ -420,7 +427,6 @@ public class TransactionServiceImpl implements TransactionService {
                 tx.getDestAccountId(),
                 tx.getType().name(),
                 tx.getDescription(),
-                tx.getCreatedAt()
-        );
+                tx.getCreatedAt());
     }
 }

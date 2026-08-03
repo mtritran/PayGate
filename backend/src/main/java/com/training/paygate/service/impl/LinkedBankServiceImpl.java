@@ -24,8 +24,9 @@ public class LinkedBankServiceImpl implements LinkedBankService {
     @Override
     @Transactional(readOnly = true)
     public List<LinkedBankResponse> getUserLinkedBanks(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found")));
 
         return linkedBankRepository.findByUserIdAndStatus(user.getId(), "ACTIVE")
                 .stream()
@@ -36,8 +37,9 @@ public class LinkedBankServiceImpl implements LinkedBankService {
     @Override
     @Transactional
     public LinkedBankResponse linkBank(String username, LinkedBankRequest request) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found")));
 
         String icon = request.iconType();
         if (icon == null || icon.isBlank()) {
@@ -68,8 +70,9 @@ public class LinkedBankServiceImpl implements LinkedBankService {
     @Override
     @Transactional
     public void unlinkBank(String username, Long bankId) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findAllByUsernameIgnoreCase(username).stream().findFirst()
+                .orElseGet(() -> userRepository.findByUsername(username)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found")));
 
         LinkedBank bank = linkedBankRepository.findByIdAndUserId(bankId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Linked bank not found"));

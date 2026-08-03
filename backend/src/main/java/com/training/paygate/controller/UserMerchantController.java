@@ -3,6 +3,7 @@ package com.training.paygate.controller;
 import com.training.paygate.common.ApiResponse;
 import com.training.paygate.dto.request.UserMerchantRequest;
 import com.training.paygate.dto.response.MerchantResponse;
+import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.MerchantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,7 +47,25 @@ public class UserMerchantController {
         Long userId = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"))
                 .getId();
-        return ApiResponse.success(merchantService.getByUserId(userId));
+        try {
+            return ApiResponse.success(merchantService.getByUserId(userId));
+        } catch (ResourceNotFoundException e) {
+            return ApiResponse.success(null);
+        }
+    }
+
+    @GetMapping("/me/api-key")
+    @Operation(summary = "Get current user's raw merchant API key")
+    public ApiResponse<String> getMyApiKey(Principal principal) {
+        Long userId = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+        try {
+            var merch = merchantService.getByUserId(userId);
+            return ApiResponse.success("API Key retrieved", merchantService.getRawApiKey(merch.id()));
+        } catch (ResourceNotFoundException e) {
+            return ApiResponse.success(null);
+        }
     }
 
     @GetMapping("/active")

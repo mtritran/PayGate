@@ -3,6 +3,7 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { Subject } from 'rxjs';
 import { TransactionService, TransactionFilters } from '../../../core/services/transaction.service';
 import { TransactionResponse, TransactionType, TransactionStatus } from '../../../core/models/transaction.model';
@@ -30,7 +31,8 @@ export interface BankBadge {
     MatDialogModule,
     SkeletonComponent,
     EmptyStateComponent,
-    BadgeComponent
+    BadgeComponent,
+    MatIconModule
   ],
   template: `
     <div class="transactions-page fade-in-up">
@@ -156,7 +158,7 @@ export interface BankBadge {
                     [style.backgroundColor]="getBankBadge(tx.description, tx.type).bg"
                     [style.color]="getBankBadge(tx.description, tx.type).color"
                     [style.borderColor]="getBankBadge(tx.description, tx.type).border">
-                    🏦 {{ getBankBadge(tx.description, tx.type).name }}
+                    <mat-icon>account_balance</mat-icon> {{ getBankBadge(tx.description, tx.type).name }}
                   </span>
                 </td>
 
@@ -238,12 +240,12 @@ export interface BankBadge {
     .transactions-page { display: flex; flex-direction: column; gap: 24px; color: #0f172a; font-family: 'Inter', system-ui, sans-serif; }
     .flex-between { display: flex; justify-content: space-between; align-items: center; }
 
-    .header-tag { font-size: 0.7rem; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .header-tag { font-size: 0.7rem; font-weight: 800; color: #c20067; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
     .page-header h2 { font-size: 1.65rem; font-weight: 800; margin: 0 0 4px 0; color: #0f172a; letter-spacing: -0.02em; }
     .subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
 
     .btn-new-payment {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      background: linear-gradient(135deg, #c20067 0%, #0072ce 100%);
       color: #ffffff !important;
       border-radius: 10px;
       font-weight: 600;
@@ -254,10 +256,10 @@ export interface BankBadge {
       align-items: center;
       gap: 8px;
       text-decoration: none;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+      box-shadow: 0 4px 12px rgba(194, 0, 103, 0.25);
       transition: all 0.2s;
     }
-    .btn-new-payment:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35); }
+    .btn-new-payment:hover { transform: translateY(-1.5px); box-shadow: 0 6px 16px rgba(194, 0, 103, 0.35); }
 
     .table-card {
       background: #ffffff;
@@ -273,13 +275,13 @@ export interface BankBadge {
     .filter-tabs { display: flex; background-color: #f1f5f9; padding: 4px; border-radius: 10px; gap: 2px; }
     .tab-btn { background: transparent; border: none; padding: 7px 16px; border-radius: 8px; font-size: 0.825rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.15s; }
     .tab-btn:hover { color: #0f172a; }
-    .tab-btn.active { background-color: #ffffff; color: #059669; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .tab-btn.active { background-color: #ffffff; color: #c20067; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
     .filter-controls { display: flex; align-items: center; gap: 12px; }
 
     /* Search Box */
     .search-box { display: flex; align-items: center; gap: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0 14px; width: 280px; height: 38px; transition: all 0.15s; }
-    .search-box:focus-within { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+    .search-box:focus-within { border-color: #c20067; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(194, 0, 103, 0.1); }
     .search-icon { width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; }
     .search-input { border: none; outline: none; width: 100%; font-size: 0.825rem; color: #0f172a; background: transparent; }
     .search-input::placeholder { color: #94a3b8; }
@@ -302,7 +304,7 @@ export interface BankBadge {
       transition: all 0.15s;
     }
     .custom-select:hover { border-color: #cbd5e1; }
-    .custom-select:focus { border-color: #059669; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); }
+    .custom-select:focus { border-color: #c20067; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(194, 0, 103, 0.1); }
     .select-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #94a3b8; pointer-events: none; }
 
     .skeleton-table { padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
@@ -317,9 +319,9 @@ export interface BankBadge {
     .transaction-row:hover td { background-color: #f8fafc; }
 
     .ref-cell { display: flex; align-items: center; gap: 8px; }
-    .dir-icon { width: 18px; height: 18px; color: #dc2626; }
-    .dir-icon.inbound { color: #16a34a; }
-    .ref-link { font-family: monospace; font-size: 0.825rem; font-weight: 700; color: #059669; }
+    .dir-icon { width: 18px; height: 18px; color: #c20067; }
+    .dir-icon.inbound { color: #0072ce; }
+    .ref-link { font-family: monospace; font-size: 0.825rem; font-weight: 700; color: #c20067; }
 
     .type-badge { font-weight: 600; font-size: 0.825rem; background-color: #f1f5f9; padding: 2px 8px; border-radius: 6px; color: #334155; }
 
@@ -339,7 +341,7 @@ export interface BankBadge {
     .font-mono { font-family: monospace; font-size: 0.825rem; font-weight: 600; }
     .font-medium { font-weight: 600; }
     .font-bold { font-weight: 700; }
-    .text-green { color: #16a34a; }
+    .text-green { color: #0072ce; }
     .text-dark { color: #0f172a; }
     .text-muted { color: #64748b; }
     .text-center { text-align: center; }
@@ -348,8 +350,8 @@ export interface BankBadge {
     .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
     .pill-dot { width: 6px; height: 6px; border-radius: 50%; }
     
-    .status-pill.completed { background-color: #dcfce7; color: #15803d; }
-    .status-pill.completed .pill-dot { background-color: #16a34a; }
+    .status-pill.completed { background-color: #fff0f6; color: #c20067; }
+    .status-pill.completed .pill-dot { background-color: #c20067; }
     
     .status-pill.failed { background-color: #fee2e2; color: #b91c1c; }
     .status-pill.failed .pill-dot { background-color: #dc2626; }
@@ -378,7 +380,7 @@ export interface BankBadge {
     .pagination-info { font-weight: 600; color: #334155; }
     .paginator-controls { display: flex; align-items: center; gap: 4px; }
     .page-btn { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #475569; cursor: pointer; transition: all 0.15s; }
-    .page-btn:hover:not(:disabled) { background-color: #f8fafc; color: #059669; border-color: #cbd5e1; }
+    .page-btn:hover:not(:disabled) { background-color: #f8fafc; color: #c20067; border-color: #cbd5e1; }
     .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .page-btn svg { width: 16px; height: 16px; }
 
@@ -420,13 +422,13 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       return { name: 'MB Bank', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
     }
     if (text.includes('vietcombank') || text.includes('vcb')) {
-      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+      return { name: 'Vietcombank', bg: '#fff0f6', color: '#c20067', border: '#f8bbd0' };
     }
     if (text.includes('techcombank') || text.includes('tcb')) {
       return { name: 'Techcombank', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' };
     }
     if (text.includes('vpbank')) {
-      return { name: 'VPBank', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' };
+      return { name: 'VPBank', bg: '#fff0f6', color: '#c20067', border: '#f8bbd0' };
     }
     if (text.includes('momo')) {
       return { name: 'MoMo Wallet', bg: '#fdf2f8', color: '#db2777', border: '#fbcfe8' };
@@ -447,7 +449,7 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       return { name: 'Napas ATM', bg: '#f8fafc', color: '#475569', border: '#cbd5e1' };
     }
     if (type === 'TOPUP') {
-      return { name: 'Vietcombank', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+      return { name: 'Vietcombank', bg: '#fff0f6', color: '#c20067', border: '#f8bbd0' };
     }
     return { name: 'PayGate Wallet', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
   }

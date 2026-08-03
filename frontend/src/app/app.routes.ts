@@ -40,7 +40,27 @@ export const routes: Routes = [
         loadComponent: () => import('./features/account/top-up/top-up.component').then(m => m.TopUpComponent)
       },
       {
+        path: 'vaults',
+        loadComponent: () => import('./features/vault/vault-list/vault-list.component').then(m => m.VaultListComponent)
+      },
+      {
+        path: 'vaults/new',
+        loadComponent: () => import('./features/vault/vault-create/vault-create.component').then(m => m.VaultCreateComponent)
+      },
+      {
+        path: 'vaults/:id',
+        loadComponent: () => import('./features/vault/vault-detail/vault-detail.component').then(m => m.VaultDetailComponent)
+      },
+      {
+        path: 'loans',
+        loadComponent: () => import('./features/loan/loan-dashboard/loan-dashboard.component').then(m => m.LoanDashboardComponent)
+      },
+      {
         path: 'transactions/pay',
+        loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
+      },
+      {
+        path: 'transactions/transfer',
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)
       },
       {
@@ -54,6 +74,18 @@ export const routes: Routes = [
       {
         path: 'recurring-payments/new',
         loadComponent: () => import('./features/recurring-payment/recurring-payment-form/recurring-payment-form.component').then(m => m.RecurringPaymentFormComponent)
+      },
+      {
+        path: 'bills/pay',
+        loadComponent: () => import('./features/bill/bill-pay/bill-pay.component').then(m => m.BillPayComponent)
+      },
+      {
+        path: 'bills/saved',
+        loadComponent: () => import('./features/bill/saved-bills/saved-bills.component').then(m => m.SavedBillsComponent)
+      },
+      {
+        path: 'vouchers',
+        loadComponent: () => import('./features/vouchers/voucher-shop.component').then(m => m.VoucherShopComponent)
       },
       {
         path: 'merchant/register',
@@ -78,6 +110,11 @@ export const routes: Routes = [
         path: 'admin/webhooks',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/webhook/webhook-log/webhook-log.component').then(m => m.WebhookLogComponent)
+      },
+      {
+        path: 'admin/vouchers',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/vouchers/admin-voucher.component').then(m => m.AdminVoucherComponent)
       }
     ]
   },
@@ -94,6 +131,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
       }
     ]
+  },
+  {
+    path: 'checkout',
+    loadComponent: () => import('./features/checkout/checkout.component').then(m => m.CheckoutComponent)
   },
   { path: '**', redirectTo: '' }
 ];

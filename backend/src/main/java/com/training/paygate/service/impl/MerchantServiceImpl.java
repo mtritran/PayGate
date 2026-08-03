@@ -58,6 +58,12 @@ public class MerchantServiceImpl implements MerchantService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public String getRawApiKey(Long id) {
+        Merchant merchant = merchantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Merchant", id));
+        return merchant.getApiKey();
+    }
     @Transactional
     public MerchantResponse create(CreateMerchantRequest request) {
         if (merchantRepository.existsByMerchantCode(request.merchantCode())) {

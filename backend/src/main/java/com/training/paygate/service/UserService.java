@@ -17,4 +17,10 @@ public interface UserService {
     UserResponse update(Long id, UpdateUserRequest request);
 
     void delete(Long id);
+
+    void setupPin(Long userId, com.training.paygate.dto.request.PinSetupRequest request);
+
+    boolean verifyPin(Long userId, String pin);
+
+    com.training.paygate.dto.response.PinStatusResponse getPinStatus(Long userId);
 }

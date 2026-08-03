@@ -16,6 +16,7 @@ import com.training.paygate.service.AccountService;
 import com.training.paygate.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,8 +48,10 @@ public class TransactionController {
     @PostMapping("/pay")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Process a payment transaction")
-    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, Principal principal) {
-        TransactionResponse response = transactionService.processPayment(request, principal.getName());
+    @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "payment")
+    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, Principal principal,
+                                                HttpServletRequest httpRequest) {
+        TransactionResponse response = transactionService.processPayment(request, principal.getName(), clientIp(httpRequest));
         return ApiResponse.success("Payment processed successfully", response);
     }
 
@@ -97,5 +100,13 @@ public class TransactionController {
     public ApiResponse<TransactionResponse> refund(@PathVariable String ref, Principal principal) {
         TransactionResponse response = transactionService.refund(ref, principal.getName());
         return ApiResponse.success("Transaction refunded successfully", response);
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.isEmpty()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown_ip";
     }
 }
