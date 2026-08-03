@@ -1,18 +1,35 @@
 # 💳 FEATURE 01: BNPL & Credit Score Engine
-> **Tên tính năng:** Mua trước Trả sau 0% & Động cơ Chấm điểm Tín dụng  
-> **Mã quy chuẩn:** `FEATURE-01-BNPL`  
-> **Thành viên phụ trách:**  
-> - **GatePay (Backend):** Nhi (5 ngày)  
-> - **MarketPlace (UI/Client):** Hoàng (4 ngày)  
+
+> **Tên tính năng:** Mua trước Trả sau 0% & Động cơ Chấm điểm Tín dụng
+> **Mã quy chuẩn:** `FEATURE-01-BNPL`
+> **Thành viên phụ trách:**
+> - **GatePay (Backend):** Nhi (5 ngày)
+> - **MarketPlace (UI/Client):** Hoàng (4 ngày)
 
 ---
 
 ## 📌 1. Mô tả Nghiệp vụ & Kịch bản
-Khách hàng mua hàng trên MarketPlace có thể chọn phương thức **"Mua trước Trả sau (BNPL)"** với thời gian thù lao 30–45 ngày hoặc trả góp 3–6 tháng.
 
-1. **Credit Score Engine (GatePay)** tự động tính toán điểm tín dụng (0-100) của khách hàng dựa trên lịch sử nạp/rút/chuyển tiền ví GatePay và lịch sử mua/hoàn đơn trên MarketPlace.
-2. Dựa trên điểm tín dụng, GatePay phê duyệt **Hạn mức BNPL (Credit Line)** và mức phí trả góp ưu đãi cho khách hàng.
-3. Khi thanh toán thành công, đơn hàng trên MarketPlace chuyển sang `PAID` và GatePay khởi tạo lịch trình trả góp `installments`.
+Người dùng bên MarketPlace (bán đồ điện tử) chọn mua hàng và thanh toán bằng **"Thẻ tín dụng PayGate"** — tức **vay ngay tại điểm bán**, nhận hàng liền, trả nợ trong kỳ hạn. PayGate đóng vai cổng thanh toán **cấp hạn mức tín dụng + xử lý tiền**.
+
+Khách mua hàng trên MarketPlace có thể chọn phương thức **"Mua trước Trả sau (BNPL)"** với thời gian trả trong 30–45 ngày hoặc trả góp 3–6 tháng.
+
+### Các bên tham gia & vai trò
+| Bên | Vai trò |
+|---|---|
+| **MarketPlace** | Bán hàng. Khởi tạo đơn, chuyển thanh toán sang PayGate. Nhận tiền ngay khi user chọn trả góp. |
+| **GatePay** | Cấp tài khoản, hạn mức tín dụng, tạo khoản vay, xử lý tiền cho merchant, thu nợ kỳ. |
+| **cic-service (mới)** | Chấm điểm tín dụng → trả verdict (cho vay / giảm / từ chối). Lấy lịch sử từ tp-bank. |
+| **tp-bank-service (mới)** | Nguồn tiền đối tác + nơi lưu lịch sử trả nợ gốc (đúng hạn / trễ). |
+
+---
+
+## 🧩 1.1 Khái niệm cốt lõi
+
+- **Issued limit (hạn mức được duyệt):** con số tối đa user được nợ (do cic quyết định lúc mở/nâng).
+- **Available limit (hạn mức khả dụng):** `issued − tổng dư nợ chưa trả`. Trả nợ → tăng dần lại.
+- **Vay thẳng merchant:** tiền đi thẳng `PayGate→merchant`, **KHÔNG chạm ví user**. User chỉ 'mang nợ'.
+- **Ghi nợ = Loan + LoanSchedule:** không trừ ví user; user trả từng kỳ để hồi phục available.
 
 ---
 
@@ -23,22 +40,105 @@ sequenceDiagram
     participant K as Khách hàng (Ví GatePay)
     participant M as MarketPlace (Storefront)
     participant G as GatePay (Credit Engine)
+    participant C as cic-service (Chấm điểm)
+    participant T as tp-bank-service (Lịch sử nợ)
 
     K->>M: Chọn sản phẩm + Chọn gói "BNPL Trả sau / Trả góp"
     M->>G: POST /api/v1/credit/checkout (apiKey, orderId, amount, plan)
-    G->>G: CreditScoreService: Chấm điểm (0-100) & Kiểm tra hạn mức credit_lines
-    alt Đủ điều kiện duyệt
+    G->>G: Kiểm tra user đã có issued limit chưa
+    alt Chưa có hạn mức
+        G->>K: Hiện form "Mở hạn mức" (nghề, thu nhập, 2 liên hệ...)
+        K->>G: Gửi hồ sơ mở hạn mức
+        G->>C: checkCredit(userProfile, income)
+        C-->>G: verdict (điểm, hạn mức)
+    else Đã có hạn mức
+        G->>C: checkCredit (đã có hồ sơ)
+        C->>T: getLoanHistory (6-12 tháng)
+        T-->>C: lịch sử trả nợ (đúng/trễ)
+        C-->>G: verdict (điểm xấu → từ chối)
+    end
+    G->>G: So amount với available (issued − dư nợ)
+    alt amount ≤ available
+        G->>G: Chọn kỳ hạn (3/6/9/12) → tạo Loan + LoanSchedule
+        G->>G: Ledger Debit + Payout thẳng merchant (idempotency "DISBURSE-{loanRef}")
         G-->>M: approval {approved: true, token, paymentUrl, fee}
         M-->>K: Redirect sang paymentUrl xác nhận OTP
         K->>G: Nhập OTP xác nhận thanh toán
-        G->>G: Khởi tạo các kỳ trả góp trong bảng installments + Ledger Debit/Credit
         G-->>M: Webhook order.confirmed
         M->>M: Cập nhật Order status -> PAID (lưu paygate_plan)
-    else Không đủ hạn mức
-        G-->>M: denied {approved: false, reason: "Hạn mức tín dụng không đủ"}
-        M-->>K: Thông báo từ chối BNPL, gợi ý thanh toán thường
+    else amount > available
+        G-->>M: Đề xuất DOWN-PAYMENT (trả chênh từ ví) hoặc từ chối / gợi ý nâng hạn
+    end
+
+    loop Mỗi kỳ trả nợ
+        K->>G: Trả kỳ (idempotency "REPAY-{loanRef}-{period}")
+        G->>G: Mark LoanSchedule PAID + available += kỳ
+        G->>T: Ghi lịch sử trả nợ (đúng hạn / trễ / số ngày trễ)
     end
 ```
+
+---
+
+## 🧭 2.1 Luồng chi tiết 6 Phase
+
+### 🔸 Phase 1 — Mua hàng & redirect (MarketPlace UI)
+1. User chọn SP + số lượng.
+2. Chọn PTTT **"Thẻ tín dụng PayGate"**.
+3. Bấm `[Tiến hành thanh toán]`.
+4. MarketPlace gọi `POST /api/v1/checkout/create` `{apiKey, orderId, amount, returnUrl, cancelUrl}`.
+5. PayGate kiểm tra merchant active, tạo CheckoutSession (token `CHK_xxx`, expires 15 phút).
+6. Trả về `paymentUrl = "http://localhost:4200/checkout?token=CHK_xxx"`.
+7. Trình duyệt REDIRECT sang PayGate (flow này **đã có sẵn**).
+
+### 🔸 Phase 2 — Chuẩn bị hạn mức (tại PayGate)
+8. User đăng nhập PayGate (JWT).
+9. Kiểm tra: user đã có `issued limit` chưa?
+   - **CHƯA** → hiện form "Mở hạn mức": Họ tên, nghề nghiệp, tên công ty/địa chỉ, thu nhập tháng, 2 liên hệ (tên + sđt + mối quan hệ) → bấm `[Tiếp tục]`.
+   - **CÓ** → đến Phase 3.
+
+### 🔸 Phase 3 — Tính CIC & mở / nâng hạn mức
+10. Gọi `cic-service → checkCredit(userProfile, income)`.
+    - **Lần đầu mở hạn:** cic chấm dựa HỒ SƠ (income, nghề) — tp-bank chưa có history nên **KHÔNG gọi tp-bank**.
+    - Điểm ok → tạo `issued limit = f(thu nhập, điểm)` (vd 50% × 15tr = 7tr).
+    - Hồ sơ yếu → **từ chối mở hạn**.
+11. (Tùy chọn) Nếu user muốn **NÂNG issued limit** (đơn > hạn): gọi cic → gọi tp-bank lấy lịch sử trả nợ → tính điểm mới → điều chỉnh issued.
+
+### 🔸 Phase 4 — Tạo khoản vay & chi tiết đơn
+12. Bắt đầu tạo khoản vay MỚI → **luôn gọi cic-service** (kể cả trong hạn đã duyệt). cic → tp-bank: đọc lịch sử 6-12 tháng trả (đúng hạn/trễ/số ngày trễ). cic tính điểm → trả verdict.
+13. Verdict:
+    - Điểm xấu (dưới ngưỡng) → ❌ **TỪ CHỐI** cho vay (dù available còn tiền).
+    - Điểm tốt / TB → tiếp tục.
+14. So `amount` (đơn) với `available` (issued − dư nợ):
+    - `amount ≤ available` → số vay = amount; user chỉ chọn kỳ hạn (3/6/9/12).
+    - `amount > available` → cho **DOWN-PAYMENT**: user trả phần chênh từ ví (vd 3tr), vay phần trong available. Hoặc/và: từ chối hoặc gợi ý nâng hạn / chọn SP thấp.
+
+### 🔸 Phase 5 — Ghi sổ & trả thẳng merchant (1 giao dịch)
+15. Tạo `Loan` (amount = số vay, term = kỳ, monthly = lãi+gốc) status `ACTIVE`.
+16. Sinh `LoanSchedule` cho từng kỳ.
+17. Ghi nợ user: `CreditLine.available -= số vay`.
+18. **Payout thẳng merchant** (REUSE có sẵn):
+    ```
+    TransactionService.processPayment(
+        idempotencyKey = "DISBURSE-{loanRef}",
+        destAccountId = merchantAccount.id,
+        amount = số vay, merchantId, ...)
+    ```
+    → Merchant MarketPlace nhận tiền ngay. **KHÔNG trừ ví user.**
+
+### 🔸 Phase 5b — Redirect về merchant
+19. Redirect về `returnUrl ?status=SUCCESS&orderId=..&transactionRef=..`
+20. User nhận hàng từ MarketPlace.
+
+### 🔸 Phase 6 — Trả nợ hàng kỳ (lặp lại đến khi xong nợ)
+21. Đến hạn kỳ → user trả từ ví PayGate:
+    ```
+    TransactionService.processPayment(
+        idempotencyKey = "REPAY-{loanRef}-{period}",
+        destAccountId = systemAccount.id, amount = kỳ)   // USER → SYSTEM
+    ```
+22. Mark `LoanSchedule` PAID.
+23. Cập nhật `available += kỳ` (trả về hạn khả dụng).
+24. Ghi lịch sử vào tp-bank: kỳ, đúng hạn? trễ? số ngày trễ → làm dữ liệu cho cic khi user vay tiếp / nâng hạn (Phase 4).
 
 ---
 
@@ -83,14 +183,36 @@ sequenceDiagram
 }
 ```
 
+### 3.3. Mở / nâng hạn mức (tại PayGate)
+- **Endpoint:** `POST /api/v1/credit/limit`
+- **Request Body:**
+```json
+{
+  "customerId": 1024,
+  "profile": { "occupation": "Engineer", "company": "...", "monthlyIncome": 15000000,
+               "contacts": [{"name":"...", "phone":"...", "relation":"...x2"}] }
+}
+```
+- **Response:** `{ approved, issuedLimit, reason }`
+
+### 3.4. Down-payment (khi amount > available)
+- **Request:** `{ orderId, downPaymentAmount, loanAmount, plan }` → user trả `downPaymentAmount` từ ví + vay `loanAmount`.
+
 ---
 
 ## 🗄️ 4. Cơ Sở Dữ Liệu & Migration
 
 ### Các bảng mới trên GatePay:
-1. `credit_lines`: Quản lý hạn mức được duyệt và số dư khả dụng của từng khách hàng.
-2. `installments`: Quản lý danh sách lịch trình trả góp theo từng kỳ (kỳ 1, kỳ 2, kỳ 3...).
-3. `credit_events`: Lưu lịch sử sự kiện mua hàng / trả hàng từ MarketPlace phục vụ tính điểm tín dụng.
+1. `credit_lines`: hạn mức được duyệt (`issued`) + số dư khả dụng (`available`) của từng khách.
+2. `installments`: lịch trình trả góp theo từng kỳ (tái dùng/ghi bổ sung `LoanSchedule`).
+3. `credit_events`: lịch sử sự kiện mua/trả từ MarketPlace phục vụ tính điểm.
+
+### Migration (GatePay, dải riêng):
+- `V28__create_installments.sql` + `V28__create_credit_lines.sql` *(hoặc gộp)*.
+
+### Microservice mới:
+- `cic-service` (mock Spring Boot): endpoint `checkCredit`, đọc tp-bank.
+- `tp-bank-service` (mock Spring Boot): seed vốn 50 tỷ, lưu lịch sử trả nợ, API `getLoanHistory`.
 
 ---
 
@@ -101,11 +223,13 @@ sequenceDiagram
 - [ ] Xây dựng `CreditScoreService` (máy chấm điểm 0-100).
 - [ ] Tạo Flyway migration `V28__create_installments.sql` + Entity `Installment`, `CreditLine`, `CreditEvent`.
 - [ ] Tích hợp xác thực OTP & Hạch toán Sổ cái kép Ledger.
+- [ ] Tạo `cic-service` + `tp-bank-service` (mock) + integration.
 
 ### 🔵 Phía MarketPlace (Hoàng - 4 ngày):
 - [ ] Xây dựng UI chọn gói BNPL (`BNPL_30/45`, `GTHP_3M/6M`) tại trang Checkout.
 - [ ] Lưu thông tin `paygate_plan` vào bảng `orders`.
 - [ ] Xử lý Webhook callback chuyển trạng thái đơn sang `PAID`.
+- [ ] (Tùy chọn) Form "Mở hạn mức" + hiển thị hạn mức khả dụng.
 
 ---
 
@@ -114,22 +238,31 @@ sequenceDiagram
 - **OTP** bắt buộc khi khách xác nhận trả sau (dùng `OtpService`, 1 lần/hết hạn).
 - **Rate limit** trên `/credit/checkout` (chống spam duyệt, vd 10 req/phút/user).
 - **Fraud check** trước khi duyệt BNPL (gọi `FraudDetectionService` — nếu CRITICAL → từ chối).
-- **Idempotent** bằng `orderId` — tránh duyệt trùng khi retry.
-- **Credit score** là dữ liệu nhạy cảm → chỉ ADMIN xem, webhook event dùng API key.
+- **Idempotent** bằng `orderId` + `DISBURSE-{loanRef}` + `REPAY-{loanRef}-{period}` — tránh đúp tiền.
+- **Credit score** là dữ liệu nhạy cảm → chỉ ADMIN xem; webhook event dùng API key.
+- **cic/tp-bank** là service nội bộ → chỉ GatePay gọi, không public.
 
 ---
 
 ## 🔗 7. Phụ thuộc & Thứ tự
-- **Phụ thuộc:** Cần `CreditScoreService` (đã có, V27) + `OtpService` + merchant `apiKey` có sẵn.
-- **Làm trước:** Buy-Now-Pay-Later là **nền tảng** → các feature khác (Refund, Working Capital) phụ thuộc luồng thanh toán chạy đúng.
+- **Phụ thuộc:** `CreditScoreService` (đã có, V27) + `OtpService` + merchant `apiKey` có sẵn + `cic-service`/`tp-bank-service` (mock trước).
+- **Làm trước:** BNPL là **nền tảng** → Refund, Working Capital phụ thuộc luồng thanh toán chạy đúng.
 - **Thứ tự trong team:** không chặn; FEATURE-02/04 có thể chạy song song.
+- **Ghi chú an toàn:** 
+  - KHÔNG để tiền chạm ví user khi mua — chỉ "nợ" (Loan/Schedule) + "trả thẳng merchant".
+  - **1 transaction duy nhất** khi tạo loan + payout merchant (toàn vẹn).
+  - Ghi tp-bank **async/outbox sau commit**, tránh rollback nhầm.
+  - `available` cộng dồn khi trả nợ nhưng **"được vay tiếp hay không" do verdict cic** — 2 chuyện TÁCH RỜI.
 
 ---
 
 ## ✅ 8. Definition of Done (DoD)
 - [ ] `POST /credit/checkout` duyệt BNPL end-to-end (score → hạn mức → token → OTP).
 - [ ] `installments` được tạo đúng số kỳ khi khách xác nhận.
-- [ ] Ledger Debit/Credit ghi đúng (phí + trả merchant phần gốc).
+- [ ] Ledger Debit/Credit ghi đúng (phí + trả merchant phần gốc) + **KHÔNG chạm ví user**.
 - [ ] Webhook `order.confirmed` cập nhật order MarketPlace → `PAID`.
 - [ ] Credit event từ MarketPlace → `credit_events` cập nhật score.
+- [ ] Mở/nâng hạn mức qua cic; verdict từ chối hoạt động đúng.
+- [ ] Down-payment khi `amount > available`.
+- [ ] Trả nợ kỳ → `available` hồi phục + ghi tp-bank lịch sử.
 - [ ] `./mvnw -o test-compile` xanh + unit test happy path & edge case.
