@@ -1,0 +1,44 @@
+name: CI - GatePay Backend
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - 'feature/**'
+      - 'fix/**'
+      - 'hotfix/**'
+  pull_request:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test (Java 17)
+    runs-on: ubuntu-latest
+    # CI chạy từ thư mục backend (GatePay/backend)
+    defaults:
+      run:
+        working-directory: GatePay/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compile
+        run: ./mvnw -q clean compile
+
+      - name: Unit test (không cần Docker)
+        run: ./mvnw -q test -Dtest='!*IntegrationTest'
+        # IntegrationTest cần Docker (Postgres/Redis/Rabbit) — chạy thủ công ở local/môi trường CI riêng nếu cần

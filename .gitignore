@@ -1,0 +1,17 @@
+# =====================================================
+# Repo cha (root) — GatePay + erconomic phân tách biệt
+# -----------------------------------------------------
+# GatePay/ là project chính của team (sẽ push lên PayGate).
+# erconomic/ là repo MarketPlace RIÊNG (clone từ team kia) —
+# chỉ dùng để phân tích/theo dõi, KHÔNG push lên PayGate.
+# Dòng dưới đảm bảo erconomic KHÔNG bao giờ bị git add/push
+# vào repo cha này.
+erconomic/
+
+# Log / môi trường cá nhân
+*.log
+.env
+# IDE
+.idea/
+.vscode/
+.DS_Store
