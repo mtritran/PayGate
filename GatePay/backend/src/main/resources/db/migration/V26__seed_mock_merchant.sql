@@ -5,7 +5,7 @@ ON CONFLICT (username) DO NOTHING;
 
 -- Seed the merchant
 INSERT INTO merchants (user_id, merchant_name, merchant_code, api_key, webhook_url, active, status)
-SELECT u.id, 'Mock Merchant Shop', 'MOCK_MERCHANT', 'mock-merchant-api-key-123456', 'http://localhost:8082/api/paygate-webhook', TRUE, 'ACTIVE'
+SELECT u.id, 'Mock Merchant Shop', 'MOCK_MERCHANT', 'mock-merchant-api-key-123456', 'http://localhost:8080/api/paygate-webhook', TRUE, 'ACTIVE'
 FROM users u WHERE u.username = 'mock_merchant_owner'
 ON CONFLICT (merchant_code) DO NOTHING;
 
