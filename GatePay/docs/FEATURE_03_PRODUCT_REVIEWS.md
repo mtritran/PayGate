@@ -3,8 +3,8 @@
 > **Tên tính năng:** Khách đánh giá sản phẩm sau khi mua (rating 1-5 + bình luận).
 > **Mã quy chuẩn:** `FEATURE-03-REVIEWS`
 > **Thành viên phụ trách:**
-> - **MarketPlace (Backend + UI):** **Vinh** (3 ngày) — *Vinh code feature này (bên MarketPlace), không đụng code GatePay.*
-> - **Review:** Vinh tự review / member khác review chéo.
+> - **MarketPlace (Backend + UI):** **Khoa** (3 ngày)
+> - **Review:** **Vinh** (PM — chỉ review, không code)
 >
 > Hướng **end-user**: tăng tin tưởng mua hàng, hiển thị đánh giá trên trang sản phẩm.
 
@@ -59,7 +59,7 @@ sequenceDiagram
 
 ## 📋 5. Phân Công Chi Tiết Task
 
-### MarketPlace (Vinh - 3 ngày):
+### MarketPlace (Khoa - 3 ngày):
 - [ ] Entity `Review` + repository (tìm theo product, tính avg rating).
 - [ ] Migration V11.
 - [ ] API: GET reviews theo product (có avg) + POST review (validate đã mua).
