@@ -27,7 +27,8 @@ public class CheckoutController {
 
     @PostMapping("/create")
     @Operation(summary = "Merchant initiates a checkout session (Public API for Merchants)")
-    public ApiResponse<CheckoutCreateResponse> createCheckoutSession(@Valid @RequestBody CheckoutCreateRequest request) {
+    public ApiResponse<CheckoutCreateResponse> createCheckoutSession(
+            @Valid @RequestBody CheckoutCreateRequest request) {
         CheckoutCreateResponse data = checkoutService.createCheckoutSession(request);
         return ApiResponse.success("Checkout session created successfully", data);
     }
@@ -52,9 +53,9 @@ public class CheckoutController {
     public ApiResponse<CheckoutProcessResponse> processCheckout(
             Principal principal,
             @Valid @RequestBody CheckoutProcessRequest request,
-            HttpServletRequest httpRequest
-    ) {
-        CheckoutProcessResponse data = checkoutService.processCheckout(principal.getName(), request, clientIp(httpRequest));
+            HttpServletRequest httpRequest) {
+        CheckoutProcessResponse data = checkoutService.processCheckout(principal.getName(), request,
+                clientIp(httpRequest));
         return ApiResponse.success("Checkout payment is being processed", data);
     }
 
