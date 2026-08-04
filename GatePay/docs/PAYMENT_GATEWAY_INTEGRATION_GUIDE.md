@@ -24,6 +24,12 @@ Chào mừng bạn đến với tài liệu tích hợp Cổng thanh toán **Pay
 
 ## 1. TỔNG QUAN LUỒNG THANH TOÁN
 
+> 🌐 **Thống nhất Quy hoạch Port 2 Dự án:**
+> | Dự án | Frontend Port | Backend Port |
+> | :--- | :--- | :--- |
+> | **MarketPlace** | `http://localhost:4200` | `http://localhost:8080` |
+> | **PayGate (GatePay)** | `http://localhost:4201` | `http://localhost:8081` |
+
 Sơ đồ tuần tự (Sequence Diagram) thể hiện luồng tương tác giữa **Website của bạn**, **Server PayGate**, và **Khách hàng**:
 
 ```
@@ -53,7 +59,7 @@ Sơ đồ tuần tự (Sequence Diagram) thể hiện luồng tương tác giữ
 ## 2. CƠ CHẾ ĐỊNH DANH & BẢO MẬT
 
 Để kết nối tới API PayGate, bạn cần có tài khoản **Merchant Partner**:
-1. Tru cập **Merchant Portal**: `http://localhost:4200/merchant/register`
+1. Tru cập **Merchant Portal**: `http://localhost:4201/merchant/register`
 2. Sang tab **`🔑 API Integration Keys`** để lấy các thông tin:
    - **`Merchant Code`**: Mã định danh đối tác (ví dụ: `SHOPEE_STORE`).
    - **`API Key`**: Chuỗi khóa bí mật (Secret Key) để gọi API (ví dụ: `6436dcc0-e065-4259-bd45-43cb936bb56c`).
@@ -70,7 +76,7 @@ Sơ đồ tuần tự (Sequence Diagram) thể hiện luồng tương tác giữ
 Khi khách hàng bấm thanh toán trên website của bạn, Server phía bạn gửi request tới API PayGate.
 
 - **HTTP Method**: `POST`
-- **URL**: `http://localhost:8080/api/v1/checkout/create`
+- **URL**: `http://localhost:8081/api/v1/checkout/create`
 - **Header**: `Content-Type: application/json`
 
 #### Request Body (JSON):
@@ -98,14 +104,13 @@ Khi khách hàng bấm thanh toán trên website của bạn, Server phía bạn
 #### Response Thành công (200 OK):
 ```json
 {
-  "success": true,
-  "message": "Tạo phiên thanh toán thành công",
+  "code": 200,
+  "message": "Checkout session created successfully",
   "data": {
     "token": "CHK_3EF6DF2E73B9469093B97BFD47177875",
-    "paymentUrl": "http://localhost:4200/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875",
+    "paymentUrl": "http://localhost:4201/checkout?token=CHK_3EF6DF2E73B9469093B97BFD47177875",
     "expiresAt": "2026-07-28T16:30:00.000"
-  },
-  "timestamp": "2026-07-28T16:15:00.000"
+  }
 }
 ```
 
@@ -119,7 +124,7 @@ Giao diện Checkout PayGate sẽ tự động tải các thông tin đơn hàng
 ---
 
 ### Bước 3: Khách hàng Xác thực OTP qua Gmail
-Tại giao diện `http://localhost:4200/checkout?token=...`:
+Tại giao diện `http://localhost:4201/checkout?token=...`:
 1. Khách hàng xem thông tin số tiền & Đăng nhập Ví PayGate của họ.
 2. Bấm nút **"Xác thực OTP & Thanh toán"**.
 3. Hệ thống tự động gửi **Mã OTP 6 chữ số** về Email (Gmail) của khách hàng.
