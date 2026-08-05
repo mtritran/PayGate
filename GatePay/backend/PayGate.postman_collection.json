@@ -754,6 +754,156 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "8. Checkout Gateway",
+			"item": [
+				{
+					"name": "Create Checkout Session (Merchant)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set(\"checkoutToken\", jsonData.data.token);",
+									"    console.log(\"Saved checkoutToken to variables: \" + jsonData.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apiKey\": \"valid-api-key-here\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-1001\",\n    \"returnUrl\": \"http://localhost:4200/payment/callback\",\n    \"cancelUrl\": \"http://localhost:4200/cart\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"create"
+							]
+						},
+						"description": "Merchant (bên thứ 3) gọi API tạo phiên thanh toán mới. Trả về paymentUrl, expiresAt và token (tự động lưu vào biến checkoutToken)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Checkout Info By Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/info/{{checkoutToken}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"info",
+								"{{checkoutToken}}"
+							]
+						},
+						"description": "Lấy thông tin công khai của đơn hàng và Merchant theo token phiên thanh toán."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Checkout Info By Transaction Ref",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/info/txn/{{transactionRef}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"info",
+								"txn",
+								"{{transactionRef}}"
+							]
+						},
+						"description": "Truy vấn thông tin phiên thanh toán theo mã tham chiếu giao dịch transactionRef."
+					},
+					"response": []
+				},
+				{
+					"name": "Process Checkout Payment (Customer OTP)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.transactionRef) {",
+									"    pm.collectionVariables.set(\"transactionRef\", jsonData.data.transactionRef);",
+									"    console.log(\"Saved transactionRef to variables: \" + jsonData.data.transactionRef);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{checkoutToken}}\",\n    \"otpCode\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/process",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"process"
+							]
+						},
+						"description": "Khách hàng đăng nhập, xác thực bằng mã OTP để thực hiện thanh toán giao dịch Checkout. Trả về transactionRef và redirectUrl."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
@@ -775,6 +925,16 @@
 		{
 			"key": "merchantCode",
 			"value": "TECHMART",
+			"type": "string"
+		},
+		{
+			"key": "checkoutToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionRef",
+			"value": "",
 			"type": "string"
 		}
 	]

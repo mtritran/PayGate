@@ -33,6 +33,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.training.paygate.repository.CheckoutSessionRepository;
+import com.training.paygate.entity.CheckoutSession;
+
 @ExtendWith(MockitoExtension.class)
 class WebhookConsumerTest {
 
@@ -47,6 +50,9 @@ class WebhookConsumerTest {
 
     @Mock
     private MerchantRepository merchantRepository;
+
+    @Mock
+    private CheckoutSessionRepository checkoutSessionRepository;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -69,16 +75,15 @@ class WebhookConsumerTest {
 
     @Test
     void consumePaymentCompleted_successResponse_savesSuccessLog() {
-        // Given
         Transaction tx = Transaction.builder().id(10L).transactionRef("TXN-12345").build();
+        CheckoutSession session = CheckoutSession.builder().orderId("ORD-99").token("CHK_TOK_1").build();
         when(transactionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(tx));
+        when(checkoutSessionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(session));
         when(restTemplate.postForEntity(eq("https://merchant.com/webhook"), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("{\"status\":\"ok\"}", HttpStatus.OK));
 
-        // When
         webhookConsumer.consumePaymentCompleted(testEvent);
 
-        // Then
         ArgumentCaptor<WebhookLog> logCaptor = ArgumentCaptor.forClass(WebhookLog.class);
         verify(webhookLogRepository).save(logCaptor.capture());
 
@@ -88,20 +93,25 @@ class WebhookConsumerTest {
         assertThat(savedLog.getTransactionId()).isEqualTo(10L);
         assertThat(savedLog.getMerchantId()).isEqualTo(1L);
         assertThat(savedLog.getUrl()).isEqualTo("https://merchant.com/webhook");
+
+        assertThat(savedLog.getPayload()).contains("event");
+        assertThat(savedLog.getPayload()).contains("transactionRef");
+        assertThat(savedLog.getPayload()).contains("merchantId");
+        assertThat(savedLog.getPayload()).contains("amount");
+        assertThat(savedLog.getPayload()).contains("status");
+        assertThat(savedLog.getPayload()).contains("orderId");
+        assertThat(savedLog.getPayload()).contains("token");
     }
 
     @Test
     void consumePaymentCompleted_httpError_savesFailedLog() {
-        // Given
         Transaction tx = Transaction.builder().id(10L).transactionRef("TXN-12345").build();
         when(transactionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(tx));
         when(restTemplate.postForEntity(eq("https://merchant.com/webhook"), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request"));
 
-        // When
         webhookConsumer.consumePaymentCompleted(testEvent);
 
-        // Then
         ArgumentCaptor<WebhookLog> logCaptor = ArgumentCaptor.forClass(WebhookLog.class);
         verify(webhookLogRepository).save(logCaptor.capture());
 
@@ -113,7 +123,6 @@ class WebhookConsumerTest {
 
     @Test
     void consumePaymentCompleted_missingUrl_skipsDispatching() {
-        // Given
         PaymentCompletedEvent noUrlEvent = new PaymentCompletedEvent(
                 "TXN-12345",
                 99L,
@@ -123,10 +132,8 @@ class WebhookConsumerTest {
         );
         when(merchantRepository.findById(99L)).thenReturn(Optional.empty());
 
-        // When
         webhookConsumer.consumePaymentCompleted(noUrlEvent);
 
-        // Then
         verify(restTemplate, never()).postForEntity(any(), any(), any());
         verify(webhookLogRepository, never()).save(any());
     }

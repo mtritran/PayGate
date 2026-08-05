@@ -13,8 +13,11 @@
 Khi Khách hàng yêu cầu hủy đơn hoặc trả hàng trên MarketPlace, hệ thống tự động kích hoạt luồng **Hoàn tiền (Refund)** bảo mật:
 
 1. **Đối với Đơn hàng Mua Thường:** Hoàn tiền ròng lại trực tiếp vào Số dư Ví GatePay của khách hàng.
-2. **Đối với Đơn hàng Mua Trả Góp BNPL:** Tự động **Hủy/Hoãn các kỳ trả góp `installments` chưa đến hạn**, và hoàn trả lại số tiền khách đã thanh toán ở các kỳ trước đó.
-3. Hạch toán Sổ cái kép `EntryType.REFUND` để thu hồi lại tiền từ Ví Merchant.
+2. **Đối với Đơn hàng Mua Trả Góp BNPL (Hoàn Toàn Bộ):** Tự động **Hủy/Hoãn toàn bộ các kỳ trả góp `installments` chưa đến hạn**, và hoàn trả lại số tiền khách đã thanh toán ở các kỳ trước đó về Ví.
+3. **Hoàn tiền một phần (Partial Refund):** Khi khách chỉ trả 1 vài sản phẩm trong đơn.
+   - **Luồng Mua Thường:** Chỉ hoàn đúng số tiền tương ứng của các sản phẩm bị trả (`amount`) vào Ví khách.
+   - **Luồng BNPL (Phức tạp):** KHÔNG hủy toàn bộ khoản vay. Số tiền hoàn sẽ được **cấn trừ trực tiếp vào Dư nợ gốc (Principal)**. Hệ thống ưu tiên gạch nợ (Mark as PAID/CANCELLED) từ kỳ trả góp **xa nhất lùi về hiện tại** (giảm thời gian mang nợ của khách). Nếu số tiền hoàn LỚN HƠN tổng dư nợ còn lại, phần dư thừa sẽ được cộng thẳng vào Ví GatePay của khách.
+4. Hạch toán Sổ cái kép `EntryType.REFUND` để thu hồi lại số tiền hoàn tương ứng từ Ví Merchant.
 
 ---
 
@@ -77,7 +80,8 @@ sequenceDiagram
   "transactionRef": "TX-2026-0803-9988",
   "orderId": "ORD-2026-0803-9988",
   "amount": 2500000,
-  "reason": "Khách trả hàng do sai kích thước"
+  "refundItems": ["ITEM-1", "ITEM-3"], 
+  "reason": "Khách trả hàng do sai kích thước (Hoàn 1 phần)"
 }
 ```
 - **Response (200 OK):**
@@ -182,6 +186,7 @@ sequenceDiagram
 ## ✅ 8. Definition of Done (DoD)
 - [ ] `POST /refunds` hoàn tiền NORMAL → về Ví khách đúng.
 - [ ] Hoàn BNPL → hủy các kỳ installment PENDING + hoàn các kỳ đã đóng.
+- [ ] Hỗ trợ hoàn tiền một phần (Partial Refund) giảm trừ đúng số tiền tương ứng.
 - [ ] Ledger `EntryType.REFUND` thu hồi từ ví Merchant đúng.
 - [ ] Chặn hoàn trùng / hoàn quá số đã trả.
 - [ ] MarketPlace nút "Hoàn tiền" + cập nhật order → `REFUNDED` + `InventoryFacade.release()`.
