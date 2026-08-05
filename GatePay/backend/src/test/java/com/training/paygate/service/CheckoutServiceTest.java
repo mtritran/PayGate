@@ -11,8 +11,6 @@ import com.training.paygate.entity.CheckoutSession;
 import com.training.paygate.entity.Merchant;
 import com.training.paygate.enums.MerchantStatus;
 import com.training.paygate.enums.OwnerType;
-import com.training.paygate.enums.TransactionStatus;
-import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.AccountRepository;
@@ -31,7 +29,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -232,7 +229,8 @@ class CheckoutServiceTest {
 
                 CheckoutInfoResponse mockInfo = new CheckoutInfoResponse(
                                 "CHK_123", "Store", "STORE", "ORD-1", new BigDecimal("200000"),
-                                "Desc", "http://return.url", null, "PENDING", LocalDateTime.now(), LocalDateTime.now().plusMinutes(10));
+                                "Desc", "http://return.url", null, "PENDING", LocalDateTime.now(),
+                                LocalDateTime.now().plusMinutes(10));
 
                 when(checkoutSessionRepository.findByToken("CHK_123")).thenReturn(Optional.of(session));
                 when(checkoutSessionMapper.toCheckoutInfoResponse(session)).thenReturn(mockInfo);
@@ -258,7 +256,8 @@ class CheckoutServiceTest {
 
                 CheckoutInfoResponse mockInfo = new CheckoutInfoResponse(
                                 "CHK_OLD", "Store", "STORE", "ORD-2", new BigDecimal("200000"),
-                                "Desc", "http://return.url", null, "EXPIRED", LocalDateTime.now(), LocalDateTime.now().minusMinutes(5));
+                                "Desc", "http://return.url", null, "EXPIRED", LocalDateTime.now(),
+                                LocalDateTime.now().minusMinutes(5));
 
                 when(checkoutSessionRepository.findByToken("CHK_OLD")).thenReturn(Optional.of(expiredSession));
                 when(checkoutSessionMapper.toCheckoutInfoResponse(expiredSession)).thenReturn(mockInfo);
@@ -288,7 +287,8 @@ class CheckoutServiceTest {
 
                 CheckoutInfoResponse mockInfo = new CheckoutInfoResponse(
                                 "CHK_COMPLETED", "Store", "STORE", "ORD-1", new BigDecimal("200000"),
-                                "Desc", "http://return.url", null, "COMPLETED", LocalDateTime.now(), LocalDateTime.now().minusMinutes(10));
+                                "Desc", "http://return.url", null, "COMPLETED", LocalDateTime.now(),
+                                LocalDateTime.now().minusMinutes(10));
 
                 when(checkoutSessionRepository.findByToken("CHK_COMPLETED")).thenReturn(Optional.of(completedSession));
                 when(checkoutSessionMapper.toCheckoutInfoResponse(completedSession)).thenReturn(mockInfo);
@@ -338,9 +338,11 @@ class CheckoutServiceTest {
 
                 CheckoutInfoResponse mockInfo = new CheckoutInfoResponse(
                                 "CHK_ACTIVE", "Store", "STORE", "ORD-1", new BigDecimal("200000"),
-                                "Desc", "http://return.url", null, "PENDING", LocalDateTime.now(), LocalDateTime.now().plusMinutes(10));
+                                "Desc", "http://return.url", null, "PENDING", LocalDateTime.now(),
+                                LocalDateTime.now().plusMinutes(10));
 
-                when(checkoutSessionRepository.findByTransactionRef("TXN-ACTIVE-200")).thenReturn(Optional.of(activeSession));
+                when(checkoutSessionRepository.findByTransactionRef("TXN-ACTIVE-200"))
+                                .thenReturn(Optional.of(activeSession));
                 when(checkoutSessionMapper.toCheckoutInfoResponse(activeSession)).thenReturn(mockInfo);
 
                 CheckoutInfoResponse info = checkoutService.getCheckoutInfoByTxnRef("TXN-ACTIVE-200");
@@ -363,7 +365,8 @@ class CheckoutServiceTest {
 
                 CheckoutInfoResponse mockInfo = new CheckoutInfoResponse(
                                 "CHK_TXN_EXPIRED", "Store", "STORE", "ORD-1", new BigDecimal("200000"),
-                                "Desc", "http://return.url", null, "EXPIRED", LocalDateTime.now(), LocalDateTime.now().minusMinutes(10));
+                                "Desc", "http://return.url", null, "EXPIRED", LocalDateTime.now(),
+                                LocalDateTime.now().minusMinutes(10));
 
                 when(checkoutSessionRepository.findByTransactionRef("TXN-100")).thenReturn(Optional.of(expiredSession));
                 when(checkoutSessionMapper.toCheckoutInfoResponse(expiredSession)).thenReturn(mockInfo);
@@ -433,7 +436,8 @@ class CheckoutServiceTest {
                 when(userRepository.findByUsername("unknown@test.com")).thenReturn(Optional.empty());
                 CheckoutProcessRequest processRequest = new CheckoutProcessRequest("CHK_PROCESS", "123456");
 
-                assertThatThrownBy(() -> checkoutService.processCheckout("unknown@test.com", processRequest, "127.0.0.1"))
+                assertThatThrownBy(
+                                () -> checkoutService.processCheckout("unknown@test.com", processRequest, "127.0.0.1"))
                                 .isInstanceOf(BadRequestException.class)
                                 .hasMessageContaining("Authenticated user not found");
         }
@@ -445,7 +449,8 @@ class CheckoutServiceTest {
                 when(userRepository.findByUsername("inactive@test.com")).thenReturn(Optional.of(inactiveUser));
                 CheckoutProcessRequest processRequest = new CheckoutProcessRequest("CHK_PROCESS", "123456");
 
-                assertThatThrownBy(() -> checkoutService.processCheckout("inactive@test.com", processRequest, "127.0.0.1"))
+                assertThatThrownBy(
+                                () -> checkoutService.processCheckout("inactive@test.com", processRequest, "127.0.0.1"))
                                 .isInstanceOf(BadRequestException.class)
                                 .hasMessageContaining("User account is currently inactive or disabled");
         }
@@ -528,7 +533,8 @@ class CheckoutServiceTest {
                                 .isInstanceOf(BadRequestException.class)
                                 .hasMessageContaining("Invalid or expired OTP code");
 
-                verify(transactionService, never()).processPayment(any(PaymentRequest.class), any(String.class), any(String.class));
+                verify(transactionService, never()).processPayment(any(PaymentRequest.class), any(String.class),
+                                any(String.class));
         }
 
         @Test
