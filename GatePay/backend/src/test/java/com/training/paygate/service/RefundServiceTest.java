@@ -9,6 +9,7 @@ import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
 import com.training.paygate.enums.AccountStatus;
 import com.training.paygate.enums.OwnerType;
+import com.training.paygate.enums.RefundStatus;
 import com.training.paygate.enums.Role;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
@@ -22,6 +23,7 @@ import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,25 +45,23 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RefundServiceTest {
 
-    @Mock
-    private RefundRepository refundRepository;
-    @Mock
-    private TransactionRepository transactionRepository;
-    @Mock
-    private AccountRepository accountRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private LedgerEntryRepository ledgerEntryRepository;
-    @Mock
-    private BalanceCacheService balanceCacheService;
-    @Mock
-    private NotificationService notificationService;
-    @Mock
-    private PaymentEventPublisher paymentEventPublisher;
+    @Mock private RefundRepository refundRepository;
+    @Mock private TransactionRepository transactionRepository;
+    @Mock private AccountRepository accountRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private LedgerEntryRepository ledgerEntryRepository;
+    @Mock private BalanceCacheService balanceCacheService;
+    @Mock private NotificationService notificationService;
+    @Mock private PaymentEventPublisher paymentEventPublisher;
 
     @InjectMocks
     private RefundService refundService;
+
+    // ─── Shared fixtures ────────────────────────────────────────────────────────
+
+    private static final String USERNAME = "customer@test.com";
+    private static final String TX_REF   = "TXN-PAY-100";
+    private static final String ORDER_ID = "ORD-100";
 
     private User activeUser;
     private Transaction completedTx;
@@ -71,8 +71,8 @@ class RefundServiceTest {
     @BeforeEach
     void setUp() {
         activeUser = User.builder()
-                .username("customer@test.com")
-                .email("customer@test.com")
+                .username(USERNAME)
+                .email(USERNAME)
                 .role(Role.USER)
                 .active(true)
                 .build();
@@ -80,7 +80,7 @@ class RefundServiceTest {
 
         completedTx = Transaction.builder()
                 .id(1L)
-                .transactionRef("TXN-PAY-100")
+                .transactionRef(TX_REF)
                 .sourceAccountId(10L)
                 .destAccountId(20L)
                 .merchantId(5L)
@@ -109,188 +109,368 @@ class RefundServiceTest {
                 .build();
     }
 
-    @Test
-    @DisplayName("processRefund_Success: Normal refund succeeds and updates balances")
-    void processRefund_Success() {
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Defective item");
+    // ─── Helper: stub happy-path for a regular USER ───────────────────────────
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
+    private void stubHappyPathForUser() {
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
         when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
+        when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
-        when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
+        when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
         when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+        // consistent lock ordering: id 10 < 20
         when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
         when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
-
-        RefundResponse response = refundService.processRefund(request, "customer@test.com");
-
-        assertThat(response).isNotNull();
-        assertThat(response.status()).isEqualTo("COMPLETED");
-        assertThat(response.amountRefunded()).isEqualTo(new BigDecimal("500000.00"));
-        assertThat(response.sourceType()).isEqualTo("NORMAL");
-        assertThat(merchantAccount.getBalance()).isEqualTo(new BigDecimal("500000.00"));
-        assertThat(userAccount.getBalance()).isEqualTo(new BigDecimal("700000.00"));
     }
 
-    @Test
-    @DisplayName("processRefund_Idempotent: Repeated request with same orderId returns previous refund response")
-    void processRefund_Idempotent() {
-        Refund existingRefund = Refund.builder()
-                .refundRef("RF-EXISTING-123")
-                .originalTransactionRef("TXN-PAY-100")
-                .orderId("ORD-100")
-                .merchantId(5L)
-                .userId(100L)
-                .amount(new BigDecimal("500000.00"))
-                .sourceType("NORMAL")
-                .installmentsCancelled(0)
-                .status("COMPLETED")
-                .createdAt(LocalDateTime.now())
-                .build();
+    // ════════════════════════════════════════════════════════════════════════════
+    // Happy Paths
+    // ════════════════════════════════════════════════════════════════════════════
 
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Duplicate call");
+    @Nested
+    @DisplayName("Happy Paths")
+    class HappyPaths {
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.of(existingRefund));
+        @Test
+        @DisplayName("Full refund succeeds — balances updated, status COMPLETED")
+        void processRefund_Success() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Defective item");
+            stubHappyPathForUser();
 
-        RefundResponse response = refundService.processRefund(request, "customer@test.com");
+            RefundResponse response = refundService.processRefund(request, USERNAME);
 
-        assertThat(response.refundId()).isEqualTo("RF-EXISTING-123");
-        assertThat(response.status()).isEqualTo("COMPLETED");
-        verify(transactionRepository, never()).findByTransactionRefForUpdate(any());
-        verify(accountRepository, never()).save(any());
+            assertThat(response).isNotNull();
+            assertThat(response.status()).isEqualTo(RefundStatus.COMPLETED);   // ← enum, not String
+            assertThat(response.amountRefunded()).isEqualTo(new BigDecimal("500000.00"));
+            assertThat(response.sourceType()).isEqualTo("NORMAL");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("500000.00");
+            assertThat(userAccount.getBalance()).isEqualByComparingTo("700000.00");
+        }
+
+        @Test
+        @DisplayName("Partial refund succeeds — only partial amount deducted")
+        void processRefund_PartialRefundSuccess() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("100000.00"), "Partial return");
+            stubHappyPathForUser();
+            // 200 000 already refunded, now requesting 100 000 more → total 300 000 < 500 000 ✓
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF))
+                    .thenReturn(new BigDecimal("200000.00"));
+
+            RefundResponse response = refundService.processRefund(request, USERNAME);
+
+            assertThat(response.amountRefunded()).isEqualByComparingTo("100000.00");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("900000.00");
+            assertThat(userAccount.getBalance()).isEqualByComparingTo("300000.00");
+        }
+
+        @Test
+        @DisplayName("Idempotent request — returns existing refund without any side effects")
+        void processRefund_Idempotent() {
+            Refund existingRefund = Refund.builder()
+                    .refundRef("RF-EXISTING-123")
+                    .originalTransactionRef(TX_REF)
+                    .orderId(ORDER_ID)
+                    .merchantId(5L)
+                    .userId(100L)
+                    .amount(new BigDecimal("500000.00"))
+                    .sourceType("NORMAL")
+                    .installmentsCancelled(0)
+                    .status(RefundStatus.COMPLETED)   // ← enum
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Duplicate call");
+
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.of(existingRefund));
+
+            RefundResponse response = refundService.processRefund(request, USERNAME);
+
+            assertThat(response.refundId()).isEqualTo("RF-EXISTING-123");
+            assertThat(response.status()).isEqualTo(RefundStatus.COMPLETED);
+            // Không được truy vấn thêm sau khi idempotency cache hit
+            verify(transactionRepository, never()).findByTransactionRefForUpdate(any());
+            verify(accountRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("BNPL refund via TransactionType.LOAN_REPAYMENT — sourceType = BNPL")
+        void processRefund_BnplByType_Success() {
+            completedTx.setType(TransactionType.LOAN_REPAYMENT);
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, "ORD-200", new BigDecimal("500000.00"), "Cancel BNPL");
+            stubHappyPathForUser();
+
+            RefundResponse response = refundService.processRefund(request, USERNAME);
+
+            assertThat(response.sourceType()).isEqualTo("BNPL");
+            // installmentsCancelled không còn hardcode = 3; @PrePersist không chạy trong unit test → default 0
+            assertThat(response.installmentsCancelled()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("BNPL refund via description fallback (type=PAYMENT but description contains BNPL)")
+        void processRefund_BnplByDescriptionFallback_Success() {
+            completedTx.setType(TransactionType.PAYMENT);
+            completedTx.setDescription("BNPL Installment for order #ORD-300");
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, "ORD-300", new BigDecimal("500000.00"), "Cancel");
+            stubHappyPathForUser();
+
+            RefundResponse response = refundService.processRefund(request, USERNAME);
+
+            assertThat(response.sourceType()).isEqualTo("BNPL");
+        }
+
+        @Test
+        @DisplayName("Admin refund — credits original customer account, not admin wallet")
+        void processRefund_AdminSuccess_CreditGoesToCustomer() {
+            // Admin user
+            User adminUser = User.builder()
+                    .username("admin@system.com")
+                    .email("admin@system.com")
+                    .role(Role.ADMIN)
+                    .active(true)
+                    .build();
+            adminUser.setId(999L);
+
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Admin override");
+
+            when(userRepository.findByUsername("admin@system.com")).thenReturn(Optional.of(adminUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            // ADMIN path: tìm account theo sourceAccountId của tx (= 10L), không phải ownerId=999
+            when(accountRepository.findById(10L)).thenReturn(Optional.of(userAccount));
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
+            when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+            when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
+            when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
+            when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+
+            RefundResponse response = refundService.processRefund(request, "admin@system.com");
+
+            assertThat(response.status()).isEqualTo(RefundStatus.COMPLETED);
+            // Tiền về ví khách hàng gốc (id=10), không phải ví admin
+            assertThat(userAccount.getBalance()).isEqualByComparingTo("700000.00");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("500000.00");
+            // findByOwnerIdAndOwnerType không được gọi với adminId=999
+            verify(accountRepository, never()).findByOwnerIdAndOwnerType(999L, OwnerType.USER);
+        }
     }
 
-    @Test
-    @DisplayName("processRefund_UnauthorizedUserError: User trying to refund someone else's transaction throws IDOR 400")
-    void processRefund_UnauthorizedUserError() {
-        completedTx.setSourceAccountId(999L); // Original transaction belongs to account 999, not 10
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "IDOR attempt");
+    // ════════════════════════════════════════════════════════════════════════════
+    // Authentication & User Validation
+    // ════════════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
-        when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
+    @Nested
+    @DisplayName("Authentication & User Validation")
+    class AuthValidation {
 
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("does not belong to the authenticated user");
+        @Test
+        @DisplayName("Blank username throws BadRequestException")
+        void processRefund_BlankUsername_Error() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "test");
+
+            assertThatThrownBy(() -> refundService.processRefund(request, "  "))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Username cannot be empty");
+
+            verify(userRepository, never()).findByUsername(any());
+        }
+
+        @Test
+        @DisplayName("User not found throws ResourceNotFoundException")
+        void processRefund_UserNotFound_Error() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "test");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Authenticated user not found");
+        }
+
+        @Test
+        @DisplayName("Inactive user throws BadRequestException")
+        void processRefund_InactiveUser_Error() {
+            activeUser.setActive(false);
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "test");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("inactive");
+        }
     }
 
-    @Test
-    @DisplayName("processRefund_InvalidAmountError: Negative or null amount throws 400")
-    void processRefund_InvalidAmountError() {
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("-10000.00"), "Negative amount");
+    // ════════════════════════════════════════════════════════════════════════════
+    // Amount Validation
+    // ════════════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
+    @Nested
+    @DisplayName("Amount Validation")
+    class AmountValidation {
 
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("must be a positive number greater than zero");
+        @Test
+        @DisplayName("Negative amount throws BadRequestException")
+        void processRefund_NegativeAmount_Error() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("-10000.00"), "Negative");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("must be a positive number greater than zero");
+        }
+
+        @Test
+        @DisplayName("Zero amount throws BadRequestException")
+        void processRefund_ZeroAmount_Error() {
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, BigDecimal.ZERO, "Zero");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("must be a positive number greater than zero");
+        }
     }
 
-    @Test
-    @DisplayName("processRefund_BnplSuccess: BNPL refund cancels installments")
-    void processRefund_BnplSuccess() {
-        completedTx.setDescription("BNPL Installment Order #ORD-200");
-        completedTx.setType(TransactionType.LOAN_REPAYMENT);
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-200", new BigDecimal("500000.00"), "Cancel BNPL");
+    // ════════════════════════════════════════════════════════════════════════════
+    // Transaction Validation
+    // ════════════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
-        when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
-        when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
-        when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
-        when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
-        when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
-        when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+    @Nested
+    @DisplayName("Transaction Validation")
+    class TransactionValidation {
 
-        RefundResponse response = refundService.processRefund(request, "customer@test.com");
+        @Test
+        @DisplayName("Transaction not found throws ResourceNotFoundException")
+        void processRefund_TxNotFound_Error() {
+            RefundCreateRequest request = new RefundCreateRequest("TXN-INVALID", ORDER_ID, new BigDecimal("500000.00"), "Not found");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate("TXN-INVALID")).thenReturn(Optional.empty());
 
-        assertThat(response.sourceType()).isEqualTo("BNPL");
-        assertThat(response.installmentsCancelled()).isEqualTo(3);
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Original transaction not found");
+        }
+
+        @Test
+        @DisplayName("Non-COMPLETED transaction throws BadRequestException")
+        void processRefund_UncompletedTx_Error() {
+            completedTx.setStatus(TransactionStatus.PENDING);
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Pending refund");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("cannot be refunded");
+        }
+
+        @Test
+        @DisplayName("Transaction missing merchantId throws BadRequestException")
+        void processRefund_MissingMerchantId_Error() {
+            completedTx.setMerchantId(null);
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Refund");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("missing merchant reference");
+        }
     }
 
-    @Test
-    @DisplayName("processRefund_InsufficientMerchantBalanceError: Throws 400 when merchant balance is insufficient")
-    void processRefund_InsufficientMerchantBalanceError() {
-        merchantAccount.setBalance(new BigDecimal("100000.00"));
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Defective item");
+    // ════════════════════════════════════════════════════════════════════════════
+    // Ownership & Authorization
+    // ════════════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
-        when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
-        when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
-        when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
-        when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
-        when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
+    @Nested
+    @DisplayName("Ownership & Authorization")
+    class OwnershipValidation {
 
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Merchant wallet balance");
+        @Test
+        @DisplayName("User trying to refund another user's transaction — IDOR blocked (400)")
+        void processRefund_UnauthorizedUser_Error() {
+            completedTx.setSourceAccountId(999L); // belongs to someone else
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "IDOR attempt");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
+
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("does not belong to the authenticated user");
+        }
+
+        @Test
+        @DisplayName("Admin refund — source account of tx not found → ResourceNotFoundException")
+        void processRefund_AdminSourceAccountNotFound_Error() {
+            User adminUser = User.builder()
+                    .username("admin@system.com")
+                    .email("admin@system.com")
+                    .role(Role.ADMIN)
+                    .active(true)
+                    .build();
+            adminUser.setId(999L);
+
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Admin refund");
+            when(userRepository.findByUsername("admin@system.com")).thenReturn(Optional.of(adminUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            // sourceAccountId = 10L nhưng không tìm thấy account
+            when(accountRepository.findById(10L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> refundService.processRefund(request, "admin@system.com"))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Source account not found");
+        }
     }
 
-    @Test
-    @DisplayName("processRefund_CumulativeOverRefundError: Throws 400 when cumulative refund amount exceeds original tx amount")
-    void processRefund_CumulativeOverRefundError() {
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("300000.00"), "Partial refund");
+    // ════════════════════════════════════════════════════════════════════════════
+    // Business Rule Validation
+    // ════════════════════════════════════════════════════════════════════════════
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
-        when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
-        when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(new BigDecimal("300000.00"));
+    @Nested
+    @DisplayName("Business Rule Validation")
+    class BusinessRuleValidation {
 
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("would exceed original transaction amount");
-    }
+        @Test
+        @DisplayName("Cumulative refund exceeds original amount throws BadRequestException")
+        void processRefund_CumulativeOverRefund_Error() {
+            // 300 000 đã refund + 300 000 mới = 600 000 > 500 000 gốc
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("300000.00"), "Over-refund");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF))
+                    .thenReturn(new BigDecimal("300000.00"));
 
-    @Test
-    @DisplayName("processRefund_MissingMerchantIdError: Throws 400 when original tx is missing merchantId")
-    void processRefund_MissingMerchantIdError() {
-        completedTx.setMerchantId(null);
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Refund");
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("would exceed original transaction amount");
+        }
 
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
+        @Test
+        @DisplayName("Merchant balance insufficient throws BadRequestException")
+        void processRefund_InsufficientMerchantBalance_Error() {
+            merchantAccount.setBalance(new BigDecimal("100000.00"));
+            RefundCreateRequest request = new RefundCreateRequest(TX_REF, ORDER_ID, new BigDecimal("500000.00"), "Defective item");
+            when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeUser));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
+            when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+            when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
+            when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
 
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("missing merchant reference");
-    }
-
-    @Test
-    @DisplayName("processRefund_UncompletedTxError: Refund on non-COMPLETED transaction throws 400")
-    void processRefund_UncompletedTxError() {
-        completedTx.setStatus(TransactionStatus.PENDING);
-        RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Pending refund");
-
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
-
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("cannot be refunded");
-    }
-
-    @Test
-    @DisplayName("processRefund_TxNotFound: Non-existing transactionRef throws 404")
-    void processRefund_TxNotFound() {
-        RefundCreateRequest request = new RefundCreateRequest("TXN-INVALID", "ORD-100", new BigDecimal("500000.00"), "Not found");
-
-        when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
-        when(transactionRepository.findByTransactionRefForUpdate("TXN-INVALID")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Original transaction not found");
+            assertThatThrownBy(() -> refundService.processRefund(request, USERNAME))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Merchant wallet balance");
+        }
     }
 }

@@ -1,5 +1,7 @@
 package com.training.paygate.dto.response;
 
+import com.training.paygate.enums.RefundStatus;
+
 import java.math.BigDecimal;
 
 public record RefundResponse(
@@ -8,5 +10,5 @@ public record RefundResponse(
         BigDecimal amountRefunded,
         String sourceType,
         int installmentsCancelled,
-        String status
+        RefundStatus status
 ) {}

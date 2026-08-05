@@ -1,7 +1,10 @@
 package com.training.paygate.entity;
 
+import com.training.paygate.enums.RefundStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -59,8 +62,9 @@ public class Refund {
     @Column(name = "installments_cancelled")
     private Integer installmentsCancelled;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
-    private String status;
+    private RefundStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -15,6 +15,6 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
 
     Optional<Refund> findByRefundRef(String refundRef);
 
-    @Query("SELECT COALESCE(SUM(r.amount), 0) FROM Refund r WHERE r.originalTransactionRef = :originalTxRef AND r.status = 'COMPLETED'")
+    @Query("SELECT COALESCE(SUM(r.amount), 0) FROM Refund r WHERE r.originalTransactionRef = :originalTxRef AND r.status = com.training.paygate.enums.RefundStatus.COMPLETED")
     BigDecimal sumRefundedAmountByOriginalTransactionRef(@Param("originalTxRef") String originalTxRef);
 }
