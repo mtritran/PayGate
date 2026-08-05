@@ -3,8 +3,9 @@
 > **Tên tính năng:** Xử Lý Hoàn Tiền Giao Dịch & Hủy Kỳ Trả Góp BNPL + **Rút tiền Merchant (2 hũ)**
 > **Mã quy chuẩn:** `FEATURE-04-REFUND`
 > **Thành viên phụ trách:**
-> - **GatePay & MarketPlace:** **Trí** (3–5 ngày)
-> - **Review:** Vinh (chỉ review, không code)
+> - **GatePay:** **Trí** (3–5 ngày)
+> - **MarketPlace:** **Trí v2**
+> - **Review:** Vinh (PM — chỉ review, không code)
 
 ---
 
