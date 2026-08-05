@@ -27,7 +27,6 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
-import com.training.paygate.service.LoyaltyService;
 import com.training.paygate.service.NotificationService;
 import com.training.paygate.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +59,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
     private final com.training.paygate.service.BeneficiaryService beneficiaryService;
-    private final LoyaltyService loyaltyService;
     private final NotificationService notificationService;
     private final com.training.paygate.service.FraudDetectionService fraudDetectionService;
     private final AsyncSettlementService asyncSettlementService;
@@ -80,10 +78,12 @@ public class TransactionServiceImpl implements TransactionService {
         Long userId = currentUser != null ? currentUser.getId() : null;
 
         // Realtime Multi-Factor Fraud & Risk Evaluation
-        com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult =
-                fraudDetectionService.evaluatePayment(currentUsername, userId, request, clientIp);
-        if (fraudResult.isSuspicious() && fraudResult.getActionTaken() == com.training.paygate.service.FraudDetectionService.FraudAction.BLOCK_TEMPORARY) {
-            throw new BadRequestException("CẢNH BÁO AN NINH GIAO DỊCH (" + fraudResult.getRiskScore() + "/100): " + fraudResult.getReason());
+        com.training.paygate.service.FraudDetectionService.FraudAnalysisResult fraudResult = fraudDetectionService
+                .evaluatePayment(currentUsername, userId, request, clientIp);
+        if (fraudResult.isSuspicious() && fraudResult
+                .getActionTaken() == com.training.paygate.service.FraudDetectionService.FraudAction.BLOCK_TEMPORARY) {
+            throw new BadRequestException(
+                    "CẢNH BÁO AN NINH GIAO DỊCH (" + fraudResult.getRiskScore() + "/100): " + fraudResult.getReason());
         }
 
         // 1. Check idempotency key in Redis / DB
@@ -148,7 +148,8 @@ public class TransactionServiceImpl implements TransactionService {
                     "Insufficient balance in account: " + sourceAccount.getAccountNumber());
         }
 
-        // 5. Re-check idempotency key AFTER validating the source/destination accounts to prevent concurrent duplicates
+        // 5. Re-check idempotency key AFTER validating the source/destination accounts
+        // to prevent concurrent duplicates
         Transaction concurrentTx = transactionRepository.findByIdempotencyKey(request.idempotencyKey()).orElse(null);
         if (concurrentTx != null) {
             idempotencyCacheService.set(request.idempotencyKey(), concurrentTx.getTransactionRef());
@@ -407,9 +408,11 @@ public class TransactionServiceImpl implements TransactionService {
         // Save refund notification
         try {
             if (originalPayer != null) {
-                String refundMsg = String.format("Bạn đã được hoàn +%,.0f VND cho giao dịch: %s. Giao dịch hoàn tiền: %s.",
+                String refundMsg = String.format(
+                        "Bạn đã được hoàn +%,.0f VND cho giao dịch: %s. Giao dịch hoàn tiền: %s.",
                         refundTx.getAmount().doubleValue(), originalRef, refundTx.getTransactionRef());
-                notificationService.createNotification(originalPayer.getId(), "Hoàn tiền giao dịch", refundMsg, "REFUND");
+                notificationService.createNotification(originalPayer.getId(), "Hoàn tiền giao dịch", refundMsg,
+                        "REFUND");
             }
         } catch (Exception ne) {
             log.error("Failed to create refund notification: {}", ne.getMessage());

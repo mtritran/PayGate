@@ -43,7 +43,6 @@ public class WebhookConsumer {
     public void consumePaymentCompleted(PaymentCompletedEvent event) {
         log.info("Received PaymentCompletedEvent for webhook dispatching: {}", event.transactionRef());
 
-        // 1. Determine target URL
         String targetUrl = event.webhookUrl();
         if (targetUrl == null || targetUrl.isBlank()) {
             if (event.merchantId() != null) {
@@ -60,14 +59,12 @@ public class WebhookConsumer {
             return;
         }
 
-        // 2. Lookup Transaction ID
         Long transactionId = transactionRepository.findByTransactionRef(event.transactionRef())
                 .map(Transaction::getId)
                 .orElse(0L);
 
         Long merchantId = event.merchantId() != null ? event.merchantId() : 0L;
 
-        // Lookup CheckoutSession to get orderId and token
         String orderId = null;
         String token = null;
         try {
@@ -80,7 +77,6 @@ public class WebhookConsumer {
             log.error("Failed to lookup checkout session for transactionRef {}: {}", event.transactionRef(), e.getMessage());
         }
 
-        // 3. Build Webhook Payload JSON
         String payloadJson;
         try {
             Map<String, Object> payloadMap = new HashMap<>();
@@ -89,19 +85,14 @@ public class WebhookConsumer {
             payloadMap.put("merchantId", event.merchantId());
             payloadMap.put("amount", event.amount());
             payloadMap.put("status", event.status());
-            if (orderId != null) {
-                payloadMap.put("orderId", orderId);
-            }
-            if (token != null) {
-                payloadMap.put("token", token);
-            }
+            payloadMap.put("orderId", orderId != null ? orderId : "");
+            payloadMap.put("token", token != null ? token : "");
             payloadJson = objectMapper.writeValueAsString(payloadMap);
         } catch (Exception e) {
             log.error("Failed to serialize webhook payload for transaction {}: {}", event.transactionRef(), e.getMessage());
             payloadJson = "{\"transactionRef\":\"" + event.transactionRef() + "\"}";
         }
 
-        // 4. Send HTTP POST request
         Integer responseStatus = null;
         String responseBody = null;
         WebhookStatus webhookStatus;
@@ -133,7 +124,6 @@ public class WebhookConsumer {
             log.error("Webhook delivery failed to {} for transaction {}. Scheduled retry at: {}", targetUrl, event.transactionRef(), nextRetryAt);
         }
 
-        // 5. Log execution result
         WebhookLog webhookLog = WebhookLog.builder()
                 .transactionId(transactionId)
                 .merchantId(merchantId)

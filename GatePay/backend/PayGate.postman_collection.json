@@ -785,7 +785,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"apiKey\": \"mock-merchant-api-key-123456\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-1001\",\n    \"returnUrl\": \"http://localhost:4200/payment/callback\",\n    \"cancelUrl\": \"http://localhost:4200/cart\"\n}"
+							"raw": "{\n    \"apiKey\": \"valid-api-key-here\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-1001\",\n    \"returnUrl\": \"http://localhost:4200/payment/callback\",\n    \"cancelUrl\": \"http://localhost:4200/cart\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/checkout/create",
@@ -822,6 +822,29 @@
 							]
 						},
 						"description": "Lấy thông tin công khai của đơn hàng và Merchant theo token phiên thanh toán."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Checkout Info By Transaction Ref",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/info/txn/{{transactionRef}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"info",
+								"txn",
+								"{{transactionRef}}"
+							]
+						},
+						"description": "Truy vấn thông tin phiên thanh toán theo mã tham chiếu giao dịch transactionRef."
 					},
 					"response": []
 				},
@@ -946,6 +969,16 @@
 		{
 			"key": "merchantCode",
 			"value": "MOCK_MERCHANT",
+			"type": "string"
+		},
+		{
+			"key": "checkoutToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionRef",
+			"value": "",
 			"type": "string"
 		},
 		{

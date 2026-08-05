@@ -90,6 +90,10 @@ sequenceDiagram
   "cancelUrl": "http://marketplace.local/payment-cancelled"
 }
 ```
+> 🌐 **Cấu hình Port thống nhất:**
+> - MarketPlace: FE: `4200` · BE: `8080`
+> - GatePay: FE: `4201` · BE: `8081`
+
 - **Response (200 OK):**
 ```json
 {
@@ -97,7 +101,7 @@ sequenceDiagram
   "message": "Checkout session created",
   "data": {
     "token": "CHK_A1B2C3D4E5F6",
-    "paymentUrl": "http://localhost:8081/checkout?token=CHK_A1B2C3D4E5F6",
+    "paymentUrl": "http://localhost:4201/checkout?token=CHK_A1B2C3D4E5F6",
     "expiresAt": "2026-08-03T15:30:00"
   }
 }
