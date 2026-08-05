@@ -35,6 +35,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,7 +115,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Defective item");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
         when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
@@ -152,7 +153,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Duplicate call");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.of(existingRefund));
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.of(existingRefund));
 
         RefundResponse response = refundService.processRefund(request, "customer@test.com");
 
@@ -169,7 +170,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "IDOR attempt");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
 
@@ -198,7 +199,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-200", new BigDecimal("500000.00"), "Cancel BNPL");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-200")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
         when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
@@ -220,7 +221,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Defective item");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
         when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(BigDecimal.ZERO);
@@ -239,7 +240,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("300000.00"), "Partial refund");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
         when(accountRepository.findByOwnerIdAndOwnerType(100L, OwnerType.USER)).thenReturn(Optional.of(userAccount));
         when(refundRepository.sumRefundedAmountByOriginalTransactionRef("TXN-PAY-100")).thenReturn(new BigDecimal("300000.00"));
@@ -256,7 +257,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Refund");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
 
         assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
@@ -271,7 +272,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-PAY-100", "ORD-100", new BigDecimal("500000.00"), "Pending refund");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-PAY-100")).thenReturn(Optional.of(completedTx));
 
         assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))
@@ -285,7 +286,7 @@ class RefundServiceTest {
         RefundCreateRequest request = new RefundCreateRequest("TXN-INVALID", "ORD-100", new BigDecimal("500000.00"), "Not found");
 
         when(userRepository.findByUsername("customer@test.com")).thenReturn(Optional.of(activeUser));
-        when(refundRepository.findByOrderId("ORD-100")).thenReturn(Optional.empty());
+        when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
         when(transactionRepository.findByTransactionRefForUpdate("TXN-INVALID")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> refundService.processRefund(request, "customer@test.com"))

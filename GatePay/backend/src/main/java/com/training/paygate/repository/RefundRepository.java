@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface RefundRepository extends JpaRepository<Refund, Long> {
-    Optional<Refund> findByOrderId(String orderId);
+    Optional<Refund> findByIdempotencyKey(String idempotencyKey);
 
     Optional<Refund> findByRefundRef(String refundRef);
 

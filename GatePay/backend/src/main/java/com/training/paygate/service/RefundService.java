@@ -27,9 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -77,15 +79,20 @@ public class RefundService {
         }
         BigDecimal refundAmount = request.amount().setScale(2, RoundingMode.HALF_UP);
 
-        // 3. Check Idempotency by orderId (Fast read before DB locks)
-        Optional<Refund> existingRefundOpt = refundRepository.findByOrderId(request.orderId());
+        // 3. Generate Idempotency Key (orderId + amount + reason)
+        String rawKey = request.orderId() + "_" + refundAmount.toPlainString() + "_" + 
+                        (request.reason() != null ? request.reason() : "");
+        String idempotencyKey = DigestUtils.md5DigestAsHex(rawKey.getBytes(StandardCharsets.UTF_8));
+
+        // 4. Check Idempotency by generated key (Fast read before DB locks)
+        Optional<Refund> existingRefundOpt = refundRepository.findByIdempotencyKey(idempotencyKey);
         if (existingRefundOpt.isPresent()) {
             Refund existing = existingRefundOpt.get();
             log.info("Idempotent refund request detected for orderId {}. Returning existing refundRef {}", request.orderId(), existing.getRefundRef());
             return mapToResponse(existing);
         }
 
-        // 4. Validate and Lock Original Transaction (Prevents Concurrent Over-Refund Race Conditions)
+        // 5. Validate and Lock Original Transaction (Prevents Concurrent Over-Refund Race Conditions)
         Transaction originalTx = transactionRepository.findByTransactionRefForUpdate(request.transactionRef())
                 .orElseThrow(() -> new ResourceNotFoundException("Original transaction not found with ref: " + request.transactionRef()));
 
@@ -98,7 +105,7 @@ public class RefundService {
             throw new BadRequestException("Original transaction is missing merchant reference and cannot be refunded");
         }
 
-        // 5. Validate Transaction Ownership (IDOR Prevention)
+        // 6. Validate Transaction Ownership (IDOR Prevention)
         Account userAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer wallet account not found for user: " + currentUsername));
 
@@ -106,7 +113,7 @@ public class RefundService {
             throw new BadRequestException("Original transaction does not belong to the authenticated user");
         }
 
-        // 6. Validate Cumulative Refund Amount (Prevent Concurrent / Partial Over-Refund)
+        // 7. Validate Cumulative Refund Amount (Prevent Concurrent / Partial Over-Refund)
         BigDecimal alreadyRefunded = refundRepository.sumRefundedAmountByOriginalTransactionRef(originalTx.getTransactionRef());
         BigDecimal totalRefundAttempt = alreadyRefunded.add(refundAmount);
         if (totalRefundAttempt.compareTo(originalTx.getAmount()) > 0) {
@@ -115,7 +122,7 @@ public class RefundService {
                     totalRefundAttempt, originalTx.getAmount(), alreadyRefunded));
         }
 
-        // 7. Consistent Lock Ordering for Accounts (Prevents Deadlocks across concurrent operations)
+        // 8. Consistent Lock Ordering for Accounts (Prevents Deadlocks across concurrent operations)
         Account merchantAccount = accountRepository.findByOwnerIdAndOwnerType(merchantId, OwnerType.MERCHANT)
                 .orElseThrow(() -> new ResourceNotFoundException("Merchant wallet account not found for merchantId: " + merchantId));
 
@@ -135,14 +142,14 @@ public class RefundService {
             userAccount = firstLocked;
         }
 
-        // 8. Check Insufficient Merchant Balance
+        // 9. Check Insufficient Merchant Balance
         if (merchantAccount.getBalance().compareTo(refundAmount) < 0) {
             throw new BadRequestException(String.format(
                     "Merchant wallet balance (%,.0f VND) is insufficient to process refund of %,.0f VND",
                     merchantAccount.getBalance(), refundAmount));
         }
 
-        // 9. Determine Transaction Type (NORMAL vs BNPL)
+        // 10. Determine Transaction Type (NORMAL vs BNPL)
         String sourceType = SOURCE_TYPE_NORMAL;
         int installmentsCancelled = 0;
 
@@ -152,7 +159,7 @@ public class RefundService {
             installmentsCancelled = DEFAULT_BNPL_CANCELLED_COUNT;
         }
 
-        // 10. Deduct from Merchant Wallet and Credit Customer Wallet
+        // 11. Deduct from Merchant Wallet and Credit Customer Wallet
         merchantAccount.setBalance(merchantAccount.getBalance().subtract(refundAmount).setScale(2, RoundingMode.HALF_UP));
         userAccount.setBalance(userAccount.getBalance().add(refundAmount).setScale(2, RoundingMode.HALF_UP));
 
@@ -162,7 +169,7 @@ public class RefundService {
         balanceCacheService.evictBalance(merchantAccount.getId());
         balanceCacheService.evictBalance(userAccount.getId());
 
-        // 11. Record Ledger Entries (DEBIT for Merchant, CREDIT for Customer)
+        // 12. Record Ledger Entries (DEBIT for Merchant, CREDIT for Customer)
         LedgerEntry debitMerchant = LedgerEntry.builder()
                 .transactionId(originalTx.getId())
                 .accountId(merchantAccount.getId())
@@ -182,11 +189,12 @@ public class RefundService {
         ledgerEntryRepository.save(debitMerchant);
         ledgerEntryRepository.save(creditCustomer);
 
-        // 12. Save Refund Entity with Concurrent Idempotency Guard (Catch Unique Constraint Violation)
+        // 13. Save Refund Entity with Concurrent Idempotency Guard (Catch Unique Constraint Violation)
         String refundRef = "RF-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
         Refund refund = Refund.builder()
                 .refundRef(refundRef)
                 .orderId(request.orderId())
+                .idempotencyKey(idempotencyKey)
                 .originalTransactionRef(originalTx.getTransactionRef())
                 .merchantId(merchantId)
                 .userId(user.getId())
@@ -200,13 +208,13 @@ public class RefundService {
         try {
             refund = refundRepository.save(refund);
         } catch (DataIntegrityViolationException e) {
-            log.warn("Concurrent duplicate refund detected for orderId {}. Fetching existing record.", request.orderId());
-            Refund existing = refundRepository.findByOrderId(request.orderId())
+            log.warn("Concurrent duplicate refund detected for idempotencyKey {}. Fetching existing record.", idempotencyKey);
+            Refund existing = refundRepository.findByIdempotencyKey(idempotencyKey)
                     .orElseThrow(() -> new BadRequestException("Duplicate refund request for orderId: " + request.orderId()));
             return mapToResponse(existing);
         }
 
-        // 13. Publish Event & Dispatch Notifications
+        // 14. Publish Event & Dispatch Notifications
         try {
             paymentEventPublisher.publishPaymentCompleted(new PaymentCompletedEvent(
                     refundRef,

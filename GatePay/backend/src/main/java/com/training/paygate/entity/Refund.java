@@ -32,8 +32,11 @@ public class Refund {
     @Column(name = "refund_ref", nullable = false, unique = true, length = 64)
     private String refundRef;
 
-    @Column(name = "order_id", nullable = false, unique = true, length = 64)
+    @Column(name = "order_id", nullable = false, length = 64)
     private String orderId;
+
+    @Column(name = "idempotency_key", nullable = false, unique = true, length = 128)
+    private String idempotencyKey;
 
     @Column(name = "original_transaction_ref", nullable = false, length = 64)
     private String originalTransactionRef;
