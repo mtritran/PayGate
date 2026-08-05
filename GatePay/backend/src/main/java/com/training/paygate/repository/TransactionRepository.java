@@ -12,10 +12,17 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
+
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     Optional<Transaction> findByTransactionRef(String transactionRef);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Transaction t WHERE t.transactionRef = :transactionRef")
+    Optional<Transaction> findByTransactionRefForUpdate(@Param("transactionRef") String transactionRef);
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 

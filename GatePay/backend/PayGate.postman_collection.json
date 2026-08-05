@@ -754,12 +754,183 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "8. Checkout Gateway",
+			"item": [
+				{
+					"name": "Create Checkout Session (Merchant)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set(\"checkoutToken\", jsonData.data.token);",
+									"    console.log(\"Saved checkoutToken to variables: \" + jsonData.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apiKey\": \"mock-merchant-api-key-123456\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-1001\",\n    \"returnUrl\": \"http://localhost:4200/payment/callback\",\n    \"cancelUrl\": \"http://localhost:4200/cart\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"create"
+							]
+						},
+						"description": "Merchant (bên thứ 3) gọi API tạo phiên thanh toán mới. Trả về paymentUrl, expiresAt và token (tự động lưu vào biến checkoutToken)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Checkout Info By Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/info/{{checkoutToken}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"info",
+								"{{checkoutToken}}"
+							]
+						},
+						"description": "Lấy thông tin công khai của đơn hàng và Merchant theo token phiên thanh toán."
+					},
+					"response": []
+				},
+				{
+					"name": "Process Checkout Payment (Customer OTP)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.transactionRef) {",
+									"    pm.collectionVariables.set(\"transactionRef\", jsonData.data.transactionRef);",
+									"    console.log(\"Saved transactionRef to variables: \" + jsonData.data.transactionRef);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{checkoutToken}}\",\n    \"otpCode\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/process",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"process"
+							]
+						},
+						"description": "Khách hàng đăng nhập, xác thực bằng mã OTP để thực hiện thanh toán giao dịch Checkout. Trả về transactionRef và redirectUrl."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "9. Refund Management",
+			"item": [
+				{
+					"name": "Process Refund Request",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transactionRef\": \"{{transactionRef}}\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"reason\": \"Khách hàng hủy đơn / trả hàng do sản phẩm lỗi\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/refunds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"refunds"
+							]
+						},
+						"description": "Xử lý yêu cầu hoàn tiền cho đơn hàng từ MarketPlace hoặc Khách hàng."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080",
+			"value": "http://localhost:8081",
 			"type": "string"
 		},
 		{
@@ -774,7 +945,17 @@
 		},
 		{
 			"key": "merchantCode",
-			"value": "TECHMART",
+			"value": "MOCK_MERCHANT",
+			"type": "string"
+		},
+		{
+			"key": "checkoutToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionRef",
+			"value": "",
 			"type": "string"
 		}
 	]
