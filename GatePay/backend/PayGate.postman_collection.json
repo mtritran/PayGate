@@ -904,12 +904,56 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "9. Refund Management",
+			"item": [
+				{
+					"name": "Process Refund Request",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwtToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transactionRef\": \"{{transactionRef}}\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"reason\": \"Khách hàng hủy đơn / trả hàng do sản phẩm lỗi\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/refunds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"refunds"
+							]
+						},
+						"description": "Xử lý yêu cầu hoàn tiền cho đơn hàng từ MarketPlace hoặc Khách hàng."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080",
+			"value": "http://localhost:8081",
 			"type": "string"
 		},
 		{
@@ -924,7 +968,17 @@
 		},
 		{
 			"key": "merchantCode",
-			"value": "TECHMART",
+			"value": "MOCK_MERCHANT",
+			"type": "string"
+		},
+		{
+			"key": "checkoutToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionRef",
+			"value": "",
 			"type": "string"
 		},
 		{
