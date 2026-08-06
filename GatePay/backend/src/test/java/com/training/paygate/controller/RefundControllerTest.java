@@ -3,6 +3,7 @@ package com.training.paygate.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.paygate.dto.request.RefundCreateRequest;
 import com.training.paygate.dto.response.RefundResponse;
+import com.training.paygate.enums.RefundStatus;
 import com.training.paygate.security.JwtAuthenticationFilter;
 import com.training.paygate.security.JwtTokenProvider;
 import com.training.paygate.service.RefundService;
@@ -49,7 +50,7 @@ class RefundControllerTest {
     @DisplayName("processRefund_Success: Return 200 OK and refund response")
     void processRefund_Success() throws Exception {
         RefundCreateRequest request = new RefundCreateRequest("TXN-100", "ORD-100", new BigDecimal("250000.00"), "Defective product");
-        RefundResponse mockResponse = new RefundResponse("RF-12345", "TXN-100", new BigDecimal("250000.00"), "NORMAL", 0, "COMPLETED");
+        RefundResponse mockResponse = new RefundResponse("RF-12345", "TXN-100", new BigDecimal("250000.00"), "NORMAL", 0, RefundStatus.COMPLETED);
 
         Principal mockPrincipal = new UsernamePasswordAuthenticationToken("customer@test.com", "password");
 

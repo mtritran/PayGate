@@ -2,7 +2,8 @@
 CREATE TABLE IF NOT EXISTS refunds (
     id BIGSERIAL PRIMARY KEY,
     refund_ref VARCHAR(64) UNIQUE NOT NULL,
-    order_id VARCHAR(64) UNIQUE NOT NULL,
+    order_id VARCHAR(64) NOT NULL,
+    idempotency_key VARCHAR(128) UNIQUE NOT NULL,
     original_transaction_ref VARCHAR(64) NOT NULL,
     merchant_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
