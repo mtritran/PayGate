@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record RefundCreateRequest(
+        @NotBlank(message = "Merchant API Key must not be blank")
+        String apiKey,
+
         @NotBlank(message = "Transaction reference must not be blank")
         String transactionRef,
 
@@ -14,7 +17,5 @@ public record RefundCreateRequest(
 
         @NotNull(message = "Amount is required")
         @Positive(message = "Amount must be greater than zero")
-        BigDecimal amount,
-
-        String reason
+        BigDecimal amount
 ) {}

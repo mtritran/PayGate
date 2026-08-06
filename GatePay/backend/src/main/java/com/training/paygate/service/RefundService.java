@@ -5,13 +5,14 @@ import com.training.paygate.dto.request.RefundCreateRequest;
 import com.training.paygate.dto.response.RefundResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.LedgerEntry;
+import com.training.paygate.entity.Merchant;
 import com.training.paygate.entity.Refund;
 import com.training.paygate.entity.Transaction;
 import com.training.paygate.entity.User;
 import com.training.paygate.enums.EntryType;
+import com.training.paygate.enums.MerchantStatus;
 import com.training.paygate.enums.OwnerType;
 import com.training.paygate.enums.RefundStatus;
-import com.training.paygate.enums.Role;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
 import com.training.paygate.exception.BadRequestException;
@@ -20,6 +21,7 @@ import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.messaging.publisher.PaymentEventPublisher;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.LedgerEntryRepository;
+import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.RefundRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
@@ -44,7 +46,7 @@ public class RefundService {
 
     private static final String SOURCE_TYPE_NORMAL = "NORMAL";
     private static final String SOURCE_TYPE_BNPL = "BNPL";
-    private static final String DEFAULT_REFUND_REASON = "Customer refund request";
+    private static final String DEFAULT_REFUND_REASON = "Merchant refund request";
     private static final String NOTIF_TITLE_REFUND = "Transaction Refund";
     private static final String NOTIF_TYPE_REFUND = "REFUND";
 
@@ -52,25 +54,26 @@ public class RefundService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final MerchantRepository merchantRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final BalanceCacheService balanceCacheService;
     private final NotificationService notificationService;
     private final PaymentEventPublisher paymentEventPublisher;
 
     @Transactional
-    public RefundResponse processRefund(RefundCreateRequest request, String currentUsername) {
+    public RefundResponse processRefund(RefundCreateRequest request) {
         log.info("Processing refund request for orderId: {}, transactionRef: {}", request.orderId(), request.transactionRef());
 
-        // 1. Check Authentication Context
-        if (currentUsername == null || currentUsername.isBlank()) {
-            throw new BadRequestException("Username cannot be empty for refund processing");
+        // 1. Authenticate Merchant by API Key
+        if (request.apiKey() == null || request.apiKey().isBlank()) {
+            throw new BadRequestException("Merchant API Key must not be empty for refund processing");
         }
 
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found with username: " + currentUsername));
+        Merchant merchant = merchantRepository.findByApiKey(request.apiKey())
+                .orElseThrow(() -> new BadRequestException("Invalid Merchant API Key"));
 
-        if (!user.isActive()) {
-            throw new BadRequestException("User account is currently inactive");
+        if (!merchant.isActive() || merchant.getStatus() != MerchantStatus.ACTIVE) {
+            throw new BadRequestException("Merchant account is currently inactive or pending approval");
         }
 
         // 2. Validate Amount
@@ -79,12 +82,8 @@ public class RefundService {
         }
         BigDecimal refundAmount = request.amount().setScale(2, RoundingMode.HALF_UP);
 
-        // 3. Generate Idempotency Key (transactionRef + orderId + amount + reason)
-        // FIX: Add transactionRef to key to prevent collisions between different transactions
-        // sharing the same orderId + amount + reason
-        String rawKey = request.transactionRef() + "_" + request.orderId() + "_"
-                + refundAmount.toPlainString() + "_"
-                + (request.reason() != null ? request.reason() : "");
+        // 3. Generate Idempotency Key (transactionRef + orderId + amount)
+        String rawKey = request.transactionRef() + "_" + request.orderId() + "_" + refundAmount.toPlainString();
         String idempotencyKey = DigestUtils.md5DigestAsHex(rawKey.getBytes(StandardCharsets.UTF_8));
 
         // 4. Check Idempotency by generated key (Fast read before DB locks)
@@ -108,28 +107,15 @@ public class RefundService {
             throw new BadRequestException("Original transaction is missing merchant reference and cannot be refunded");
         }
 
-        // 6. Validate Transaction Ownership (IDOR Prevention)
-        // - Regular User: can only refund their own transactions
-        // - ADMIN: can refund any transaction; money is refunded to original customer's wallet, not admin's wallet
-        Account userAccount;
-        Long refundTargetUserId;  // userId of target customer receiving refund — stored in Refund entity
-
-        if (user.getRole() == Role.ADMIN) {
-            // Find original customer account based on transaction's sourceAccountId
-            userAccount = accountRepository.findById(originalTx.getSourceAccountId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Source account not found for transaction: " + request.transactionRef()));
-            refundTargetUserId = userAccount.getOwnerId();
-            log.info("ADMIN {} processing refund on behalf of account id {}", currentUsername, userAccount.getId());
-        } else {
-            userAccount = accountRepository.findByOwnerIdAndOwnerType(user.getId(), OwnerType.USER)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Customer wallet account not found for user: " + currentUsername));
-            if (!originalTx.getSourceAccountId().equals(userAccount.getId())) {
-                throw new BadRequestException("Original transaction does not belong to the authenticated user");
-            }
-            refundTargetUserId = user.getId();
+        // Validate Transaction Ownership against authenticated Merchant
+        if (!merchantId.equals(merchant.getId())) {
+            throw new BadRequestException("Original transaction does not belong to the authenticated Merchant");
         }
+
+        // 6. Retrieve Customer Account from Transaction Source Account
+        Account userAccount = accountRepository.findById(originalTx.getSourceAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Customer wallet account not found for transaction: " + request.transactionRef()));
+        Long refundTargetUserId = userAccount.getOwnerId();
 
         // 7. Validate Cumulative Refund Amount (Prevent Concurrent / Partial Over-Refund)
         BigDecimal alreadyRefunded = refundRepository.sumRefundedAmountByOriginalTransactionRef(originalTx.getTransactionRef());
@@ -168,7 +154,6 @@ public class RefundService {
         }
 
         // 10. Determine Source Type (NORMAL vs BNPL)
-        // FIX: Prioritize checking TransactionType enum first, fallback to description matching only if necessary
         String sourceType = SOURCE_TYPE_NORMAL;
         if (originalTx.getType() == TransactionType.LOAN_REPAYMENT
                 || originalTx.getType() == TransactionType.LOAN_DISBURSEMENT
@@ -190,8 +175,6 @@ public class RefundService {
         String refundRef = "RF-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
 
         // 13. Record Ledger Entries (DEBIT for Merchant, CREDIT for Customer)
-        // FIX: Use original transactionId for tracking; add notes via description if LedgerEntry supports it.
-        // Audit trail: each pair of ledger entries corresponds to a single refundRef.
         LedgerEntry debitMerchant = LedgerEntry.builder()
                 .transactionId(originalTx.getId())
                 .accountId(merchantAccount.getId())
@@ -212,17 +195,17 @@ public class RefundService {
         ledgerEntryRepository.save(creditCustomer);
 
         // 14. Save Refund Entity with Concurrent Idempotency Guard
-        // FIX: Separate refund saving into REQUIRES_NEW transaction so DataIntegrityViolationException
-        // does not trigger rollback on parent transaction (where balance & ledger were committed).
-        // If duplicate -> return existing record; if other errors -> re-throw to rollback entirely.
         String finalSourceType = sourceType;
-        final Account finalMerchantAccount = merchantAccount;
         final Account finalUserAccount = userAccount;
 
         Refund refund = saveRefundWithIdempotencyGuard(
                 refundRef, idempotencyKey, request, originalTx, merchantId, refundTargetUserId, refundAmount, finalSourceType);
 
-        // 15. Publish Event & Dispatch Notifications
+        // 15. Publish Event & Dispatch Notifications to Target Customer
+        User customerUser = userRepository.findById(refundTargetUserId).orElse(null);
+        String customerEmail = customerUser != null ? customerUser.getEmail() : null;
+        String customerUsername = customerUser != null ? customerUser.getUsername() : "User_" + refundTargetUserId;
+
         try {
             paymentEventPublisher.publishPaymentCompleted(new PaymentCompletedEvent(
                     refundRef,
@@ -230,12 +213,12 @@ public class RefundService {
                     null,
                     refundAmount,
                     RefundStatus.COMPLETED.name(),
-                    user.getEmail(),
-                    user.getUsername(),
+                    customerEmail,
+                    customerUsername,
                     finalUserAccount.getAccountNumber(),
                     "Refund for order #" + request.orderId(),
                     TransactionType.REFUND,
-                    user.getId()
+                    refundTargetUserId
             ));
         } catch (Exception e) {
             log.warn("Could not publish Refund PaymentCompletedEvent to RabbitMQ: {}", e.getMessage());
@@ -244,7 +227,7 @@ public class RefundService {
         try {
             String msg = String.format("Refund completed successfully +%,.0f VND for order #%s. Refund ref: %s.",
                     refundAmount, request.orderId(), refundRef);
-            notificationService.createNotification(user.getId(), NOTIF_TITLE_REFUND, msg, NOTIF_TYPE_REFUND);
+            notificationService.createNotification(refundTargetUserId, NOTIF_TITLE_REFUND, msg, NOTIF_TYPE_REFUND);
         } catch (Exception e) {
             log.warn("Could not create notification for refund: {}", e.getMessage());
         }
@@ -255,14 +238,6 @@ public class RefundService {
 
     /**
      * Save Refund in an independent transaction (REQUIRES_NEW).
-     * <p>
-     * Reason: Catching {@link DataIntegrityViolationException} inside parent transaction (@Transactional)
-     * causes Spring to mark the transaction as "rollback-only" immediately when exception is thrown,
-     * resulting in {@link org.springframework.transaction.UnexpectedRollbackException} upon commit
-     * — causing all balance deductions and ledger entries to be lost even if the refund actually exists.
-     * <p>
-     * By using REQUIRES_NEW, exception is isolated in this sub-transaction,
-     * allowing parent transaction to commit normally.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Refund saveRefundWithIdempotencyGuard(
@@ -281,9 +256,9 @@ public class RefundService {
                 .idempotencyKey(idempotencyKey)
                 .originalTransactionRef(originalTx.getTransactionRef())
                 .merchantId(merchantId)
-                .userId(refundTargetUserId)   // userId of target customer receiving refund (not admin)
+                .userId(refundTargetUserId)
                 .amount(refundAmount)
-                .reason(request.reason() != null && !request.reason().isBlank() ? request.reason() : DEFAULT_REFUND_REASON)
+                .reason(DEFAULT_REFUND_REASON)
                 .sourceType(sourceType)
                 .status(RefundStatus.COMPLETED)
                 .build();
@@ -299,7 +274,6 @@ public class RefundService {
 
     /**
      * Detect BNPL via description when TransactionType provides insufficient details.
-     * Used only as a fallback when transaction type is standard PAYMENT but is actually BNPL.
      */
     private boolean isBnplByDescription(String description) {
         return description != null && description.toUpperCase().contains("BNPL");
