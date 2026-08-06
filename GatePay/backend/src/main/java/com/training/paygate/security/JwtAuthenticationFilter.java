@@ -40,15 +40,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && jwtTokenProvider.isAccessToken(jwt)) {
 
             String username = jwtTokenProvider.extractUsername(jwt);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            Long userId = jwtTokenProvider.extractUserId(jwt);
+            String role = jwtTokenProvider.extractRole(jwt);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
+            if (username != null && userId != null && role != null) {
+                java.util.List<org.springframework.security.core.authority.SimpleGrantedAuthority> authorities = 
+                        java.util.List.of(
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role),
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority(role)
+                        );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                CustomUserDetails userDetails = new CustomUserDetails(
+                        userId, username, "", true, true, true, true, authorities);
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

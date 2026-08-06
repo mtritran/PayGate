@@ -8,9 +8,7 @@ import com.training.paygate.dto.request.VoucherRedeemRequest;
 import com.training.paygate.dto.response.UserVoucherResponse;
 import com.training.paygate.dto.response.VoucherApplyResponse;
 import com.training.paygate.dto.response.VoucherResponse;
-import com.training.paygate.entity.User;
-import com.training.paygate.exception.ResourceNotFoundException;
-import com.training.paygate.repository.UserRepository;
+import com.training.paygate.security.CustomUserDetails;
 import com.training.paygate.service.VoucherService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,9 +16,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -30,7 +28,6 @@ import java.util.List;
 public class VoucherController {
 
     private final VoucherService voucherService;
-    private final UserRepository userRepository;
 
     // --- USER ENDPOINTS ---
 
@@ -45,33 +42,27 @@ public class VoucherController {
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Đổi điểm thưởng lấy Voucher")
     public ApiResponse<UserVoucherResponse> redeemVoucher(
-            Principal principal,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             @Valid @RequestBody VoucherRedeemRequest request
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
-        return ApiResponse.success("Voucher redeemed successfully", voucherService.redeemVoucher(user.getId(), request));
+        return ApiResponse.success("Voucher redeemed successfully", voucherService.redeemVoucher(currentUser.getId(), request));
     }
 
     @GetMapping("/vouchers/my-vouchers")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Xem danh sách Voucher cá nhân")
-    public ApiResponse<List<UserVoucherResponse>> getMyVouchers(Principal principal) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
-        return ApiResponse.success(voucherService.getMyVouchers(user.getId()));
+    public ApiResponse<List<UserVoucherResponse>> getMyVouchers(@AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ApiResponse.success(voucherService.getMyVouchers(currentUser.getId()));
     }
 
     @PostMapping("/vouchers/apply")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Kiểm tra và áp dụng Voucher trước khi thanh toán")
     public ApiResponse<VoucherApplyResponse> applyVoucher(
-            Principal principal,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             @Valid @RequestBody VoucherApplyRequest request
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + principal.getName()));
-        return ApiResponse.success(voucherService.applyVoucher(user.getId(), request));
+        return ApiResponse.success(voucherService.applyVoucher(currentUser.getId(), request));
     }
 
     // --- ADMIN ENDPOINTS ---
