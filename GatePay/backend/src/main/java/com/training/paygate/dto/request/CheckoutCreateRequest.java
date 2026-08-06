@@ -18,6 +18,8 @@ public record CheckoutCreateRequest(
 
         String description,
 
+        String paymentMethod, // Optional: "PAYGATE" or "VIETQR"
+
         @NotBlank(message = "returnUrl là bắt buộc")
         String returnUrl,
 

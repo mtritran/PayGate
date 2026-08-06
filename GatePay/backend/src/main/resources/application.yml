@@ -83,9 +83,18 @@ app:
     username: ${PAYGATE_ADMIN_USERNAME:admin}
     password: ${PAYGATE_ADMIN_PASSWORD:Admin@123456!}
     email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  checkout:
+    session-ttl-minutes: 15
 
 paygate:
   provider-api:
     base-url: ${PROVIDER_API_BASE_URL:http://localhost:8090}
     connect-timeout-ms: 3000
     read-timeout-ms: 5000
+  vietqr:
+    bank-bin: ${VIETQR_BANK_BIN:970422}
+    bank-code: ${VIETQR_BANK_CODE:MB}
+    account-number: ${VIETQR_ACCOUNT_NUMBER:099988887777}
+    account-name: ${VIETQR_ACCOUNT_NAME:PAYGATE PAYMENT GATEWAY}
