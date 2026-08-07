@@ -8,7 +8,7 @@ import com.training.paygate.dto.response.TransactionDetailResponse;
 import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
-import com.training.paygate.security.CustomUserDetails;
+import org.springframework.security.core.userdetails.UserDetails;
 import com.training.paygate.service.AccountService;
 import com.training.paygate.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,7 +44,7 @@ public class TransactionController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Process a payment transaction")
     @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "payment")
-    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal CustomUserDetails currentUser,
+    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal UserDetails currentUser,
                                                 HttpServletRequest httpRequest) {
         TransactionResponse response = transactionService.processPayment(request, currentUser.getUsername(), clientIp(httpRequest));
         return ApiResponse.success("Payment processed successfully", response);
@@ -52,7 +52,7 @@ public class TransactionController {
 
     @GetMapping("/{ref}")
     @Operation(summary = "Get transaction details by reference")
-    public ApiResponse<TransactionDetailResponse> getTransactionByRef(@PathVariable String ref, @AuthenticationPrincipal CustomUserDetails currentUser) {
+    public ApiResponse<TransactionDetailResponse> getTransactionByRef(@PathVariable String ref, @AuthenticationPrincipal UserDetails currentUser) {
         TransactionDetailResponse response = transactionService.getTransactionByRef(ref, currentUser.getUsername());
         return ApiResponse.success(response);
     }
@@ -69,7 +69,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir,
-            @AuthenticationPrincipal CustomUserDetails currentUser
+            @AuthenticationPrincipal UserDetails currentUser
     ) {
         Long ownerAccountId = null;
         boolean isAdmin = currentUser.getAuthorities().stream()
@@ -92,7 +92,7 @@ public class TransactionController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Request a refund for a completed transaction (Requires ROLE_ADMIN)")
-    public ApiResponse<TransactionResponse> refund(@PathVariable String ref, @AuthenticationPrincipal CustomUserDetails currentUser) {
+    public ApiResponse<TransactionResponse> refund(@PathVariable String ref, @AuthenticationPrincipal UserDetails currentUser) {
         TransactionResponse response = transactionService.refund(ref, currentUser.getUsername());
         return ApiResponse.success("Transaction refunded successfully", response);
     }
