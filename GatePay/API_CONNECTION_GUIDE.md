@@ -86,13 +86,16 @@ Nếu bạn cần kiểm tra luồng liên kết ngân hàng hoặc thanh toán 
 
 ## 2. Thông Tin Địa Chỉ Các Dịch Vụ (Service Registry & Endpoints)
 
+> 🌐 **Thống nhất Quy hoạch Port 2 Dự án:**
+> - **MarketPlace:** Frontend: `http://localhost:4200` · Backend: `http://localhost:8080`
+> - **PayGate (GatePay):** Frontend: `http://localhost:4201` · Backend: `http://localhost:8081`
+
 | Dịch vụ | URL | Thông tin đăng nhập / Credentials |
 | :--- | :--- | :--- |
 | **Backend API** | `http://localhost:8081` | - |
 | **Swagger UI (OpenAPI Docs)** | `http://localhost:8081/swagger-ui.html` | Xem thông tin chi tiết cấu trúc Request/Response |
 | **JSON API Docs** | `http://localhost:8081/v3/api-docs` | AI có thể đọc file JSON này để import trực tiếp |
-| **Frontend Angular (Dev)** | `http://localhost:4200` | - |
-| **Frontend Angular (Docker)** | `http://localhost:4201` | - |
+| **Frontend Angular (PayGate)** | `http://localhost:4201` | Trang ví & checkout PayGate |
 | **PostgreSQL** | `localhost:5432` | DB: `training_db` \| User: `postgres` \| Pass: `postgres` |
 | **Redis** | `localhost:6379` | Không có mật khẩu |
 | **RabbitMQ Management** | `http://localhost:15672` | User: `guest` \| Pass: `guest` |

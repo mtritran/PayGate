@@ -47,15 +47,15 @@ updated: 2026-08-03
 - **1 người 1 mảng** ➔ Không đè file nhau, chống Git Conflict.
 - Tuân thủ coding standard `CODING_STANDARDS/AGENTS.md`.
 
-### 🎯 VAI TRÒ VINH (theo bản kế hoạch PM)
-- **Vinh = PM + review tất cả** các feature (F00..F04) — **không code**.
-- **GatePay (GP):** Trí, Nhi code · **MarketPlace:** Hoàng, Giảng, Khoa, Trí v2 code.
-- Phân công theo bảng:
-  - F00 Payment Gateway: **Trí** (GP) + **Hoàng** (MP) · review Vinh
-  - F01 BNPL + Credit Score: **Nhi** (GP) + **Hoàng** (MP) · review Vinh
-  - F02 Delivery Tracking: **Giảng** (MP) · review Vinh
-  - F03 Product Reviews: **Khoa** (MP) · review Vinh
-  - F04 Refund + Rút tiền 2 hũ: **Trí** (GP) + **Trí v2** (MP) · review Vinh
+### 🌐 THỐNG NHẤT QUY HOẠCH PORT 2 DỰ ÁN
+Do trùng port khi khởi chạy đồng thời 2 dự án trên localhost, thống nhất quy hoạch port như sau:
+- **MarketPlace:** Frontend: `http://localhost:4200` · Backend: `http://localhost:8080`
+- **PayGate (GatePay):** Frontend: `http://localhost:4201` · Backend: `http://localhost:8081`
+
+### 🎯 VAI TRÒ VINH (mới)
+- **Vinh KHÔNG code bên PayGate nữa** — chỉ **review code** các feature PayGate (F00, F01, F04).
+- **Vinh CODE 2 feature bên MarketPlace:** F02 Delivery Tracking + F03 Product Reviews (thuần MarketPlace, không đụng code PayGate).
+- **Phần 4 (DB) của các feature do Trí + các member khác đảm nhận** — không phải Vinh.
 
 ---
 

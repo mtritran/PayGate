@@ -25,24 +25,28 @@ public class JwtTokenProvider {
     private long refreshTokenExpiration;
 
     public static final String TOKEN_TYPE_CLAIM = "token_type";
+    public static final String USER_ID_CLAIM = "user_id";
+    public static final String ROLE_CLAIM = "role";
     public static final String ACCESS_TOKEN_TYPE = "ACCESS";
     public static final String REFRESH_TOKEN_TYPE = "REFRESH";
 
-    public String generateAccessToken(String username) {
-        return generateToken(username, accessTokenExpiration, ACCESS_TOKEN_TYPE);
+    public String generateAccessToken(String username, Long userId, String role) {
+        return generateToken(username, userId, role, accessTokenExpiration, ACCESS_TOKEN_TYPE);
     }
 
-    public String generateRefreshToken(String username) {
-        return generateToken(username, refreshTokenExpiration, REFRESH_TOKEN_TYPE);
+    public String generateRefreshToken(String username, Long userId, String role) {
+        return generateToken(username, userId, role, refreshTokenExpiration, REFRESH_TOKEN_TYPE);
     }
 
-    private String generateToken(String username, long expiration, String tokenType) {
+    private String generateToken(String username, Long userId, String role, long expiration, String tokenType) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .subject(username)
                 .claim(TOKEN_TYPE_CLAIM, tokenType)
+                .claim(USER_ID_CLAIM, userId)
+                .claim(ROLE_CLAIM, role)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -51,6 +55,23 @@ public class JwtTokenProvider {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public Long extractUserId(String token) {
+        try {
+            Number userIdNumber = extractClaim(token, claims -> claims.get(USER_ID_CLAIM, Number.class));
+            return userIdNumber != null ? userIdNumber.longValue() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public String extractRole(String token) {
+        try {
+            return extractClaim(token, claims -> claims.get(ROLE_CLAIM, String.class));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public String extractTokenType(String token) {

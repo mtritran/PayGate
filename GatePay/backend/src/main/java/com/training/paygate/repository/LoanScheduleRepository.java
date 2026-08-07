@@ -11,5 +11,7 @@ public interface LoanScheduleRepository extends JpaRepository<LoanSchedule, Long
 
     List<LoanSchedule> findByLoanIdOrderByPeriodNumberAsc(Long loanId);
 
+    List<LoanSchedule> findByTransactionRef(String transactionRef);
+
     Optional<LoanSchedule> findFirstByLoanIdAndStatusOrderByPeriodNumberAsc(Long loanId, LoanScheduleStatus status);
 }

@@ -4,7 +4,7 @@ import com.training.paygate.common.ApiResponse;
 import com.training.paygate.dto.request.UserMerchantRequest;
 import com.training.paygate.dto.response.MerchantResponse;
 import com.training.paygate.exception.ResourceNotFoundException;
-import com.training.paygate.repository.UserRepository;
+import com.training.paygate.security.CustomUserDetails;
 import com.training.paygate.service.MerchantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -29,26 +29,19 @@ import java.util.List;
 public class UserMerchantController {
 
     private final MerchantService merchantService;
-    private final UserRepository userRepository;
 
     @PostMapping("/request")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Request merchant registration", description = "Submits a merchant registration request for the currently authenticated user.")
-    public ApiResponse<MerchantResponse> requestMerchant(@Valid @RequestBody UserMerchantRequest request, Principal principal) {
-        Long userId = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getId();
-        return ApiResponse.success("Merchant request submitted successfully. Pending admin approval.", merchantService.requestMerchant(userId, request));
+    public ApiResponse<MerchantResponse> requestMerchant(@Valid @RequestBody UserMerchantRequest request, @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ApiResponse.success("Merchant request submitted successfully. Pending admin approval.", merchantService.requestMerchant(currentUser.getId(), request));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Get current user's merchant profile", description = "Retrieves merchant request status for the currently authenticated user.")
-    public ApiResponse<MerchantResponse> getMyMerchant(Principal principal) {
-        Long userId = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getId();
+    public ApiResponse<MerchantResponse> getMyMerchant(@AuthenticationPrincipal CustomUserDetails currentUser) {
         try {
-            return ApiResponse.success(merchantService.getByUserId(userId));
+            return ApiResponse.success(merchantService.getByUserId(currentUser.getId()));
         } catch (ResourceNotFoundException e) {
             return ApiResponse.success(null);
         }
@@ -56,12 +49,9 @@ public class UserMerchantController {
 
     @GetMapping("/me/api-key")
     @Operation(summary = "Get current user's raw merchant API key")
-    public ApiResponse<String> getMyApiKey(Principal principal) {
-        Long userId = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getId();
+    public ApiResponse<String> getMyApiKey(@AuthenticationPrincipal CustomUserDetails currentUser) {
         try {
-            var merch = merchantService.getByUserId(userId);
+            var merch = merchantService.getByUserId(currentUser.getId());
             return ApiResponse.success("API Key retrieved", merchantService.getRawApiKey(merch.id()));
         } catch (ResourceNotFoundException e) {
             return ApiResponse.success(null);

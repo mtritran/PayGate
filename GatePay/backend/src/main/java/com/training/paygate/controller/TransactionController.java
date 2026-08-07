@@ -6,12 +6,9 @@ import com.training.paygate.dto.request.PaymentRequest;
 import com.training.paygate.dto.response.AccountResponse;
 import com.training.paygate.dto.response.TransactionDetailResponse;
 import com.training.paygate.dto.response.TransactionResponse;
-import com.training.paygate.entity.User;
-import com.training.paygate.enums.Role;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
-import com.training.paygate.exception.ResourceNotFoundException;
-import com.training.paygate.repository.UserRepository;
+import com.training.paygate.security.CustomUserDetails;
 import com.training.paygate.service.AccountService;
 import com.training.paygate.service.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.Principal;
-
 @RestController
 @RequestMapping("/api/v1/transactions")
 @RequiredArgsConstructor
@@ -43,22 +39,21 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final AccountService accountService;
-    private final UserRepository userRepository;
 
     @PostMapping("/pay")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Process a payment transaction")
     @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "payment")
-    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, Principal principal,
+    public ApiResponse<TransactionResponse> pay(@Valid @RequestBody PaymentRequest request, @AuthenticationPrincipal CustomUserDetails currentUser,
                                                 HttpServletRequest httpRequest) {
-        TransactionResponse response = transactionService.processPayment(request, principal.getName(), clientIp(httpRequest));
+        TransactionResponse response = transactionService.processPayment(request, currentUser.getUsername(), clientIp(httpRequest));
         return ApiResponse.success("Payment processed successfully", response);
     }
 
     @GetMapping("/{ref}")
     @Operation(summary = "Get transaction details by reference")
-    public ApiResponse<TransactionDetailResponse> getTransactionByRef(@PathVariable String ref, Principal principal) {
-        TransactionDetailResponse response = transactionService.getTransactionByRef(ref, principal.getName());
+    public ApiResponse<TransactionDetailResponse> getTransactionByRef(@PathVariable String ref, @AuthenticationPrincipal CustomUserDetails currentUser) {
+        TransactionDetailResponse response = transactionService.getTransactionByRef(ref, currentUser.getUsername());
         return ApiResponse.success(response);
     }
 
@@ -74,14 +69,14 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir,
-            Principal principal
+            @AuthenticationPrincipal CustomUserDetails currentUser
     ) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + principal.getName()));
-
         Long ownerAccountId = null;
-        if (user.getRole() != Role.ADMIN) {
-            AccountResponse userAccount = accountService.getAccountByUsername(principal.getName());
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
+                
+        if (!isAdmin) {
+            AccountResponse userAccount = accountService.getAccountByUsername(currentUser.getUsername());
             ownerAccountId = userAccount.id();
         }
 
@@ -97,8 +92,8 @@ public class TransactionController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Request a refund for a completed transaction (Requires ROLE_ADMIN)")
-    public ApiResponse<TransactionResponse> refund(@PathVariable String ref, Principal principal) {
-        TransactionResponse response = transactionService.refund(ref, principal.getName());
+    public ApiResponse<TransactionResponse> refund(@PathVariable String ref, @AuthenticationPrincipal CustomUserDetails currentUser) {
+        TransactionResponse response = transactionService.refund(ref, currentUser.getUsername());
         return ApiResponse.success("Transaction refunded successfully", response);
     }
 

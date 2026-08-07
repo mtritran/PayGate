@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -370,30 +371,20 @@ public class LoanServiceImpl implements LoanService {
 
         // Update schedule status
         if (request.repayType() == RepayType.NEXT_PERIOD && scheduleToPay != null) {
-            scheduleToPay.setStatus(LoanScheduleStatus.PAID);
-            scheduleToPay.setPaidAt(LocalDateTime.now());
+            scheduleToPay.setStatus(LoanScheduleStatus.PROCESSING);
             scheduleToPay.setTransactionRef(txResponse.transactionRef());
             loanScheduleRepository.save(scheduleToPay);
         } else {
-            // Mark all remaining pending schedules as PAID
+            // Mark all remaining pending schedules as PROCESSING
             List<LoanSchedule> pendingSchedules = loanScheduleRepository.findByLoanIdOrderByPeriodNumberAsc(loanId);
             for (LoanSchedule s : pendingSchedules) {
                 if (s.getStatus() == LoanScheduleStatus.PENDING) {
-                    s.setStatus(LoanScheduleStatus.PAID);
-                    s.setPaidAt(LocalDateTime.now());
+                    s.setStatus(LoanScheduleStatus.PROCESSING);
                     s.setTransactionRef(txResponse.transactionRef());
                 }
             }
             loanScheduleRepository.saveAll(pendingSchedules);
         }
-
-        // Update remaining amount
-        BigDecimal newRemaining = loan.getRemainingAmount().subtract(amountToPay);
-        if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
-            newRemaining = BigDecimal.ZERO;
-            loan.setStatus(LoanStatus.PAID_OFF);
-        }
-        loan.setRemainingAmount(newRemaining);
 
         Loan saved = loanRepository.save(loan);
         return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
@@ -404,6 +395,47 @@ public class LoanServiceImpl implements LoanService {
     public Page<LoanResponse> getAllLoansForAdmin(Pageable pageable) {
         return loanRepository.findAll(pageable)
                 .map(loan -> mapToLoanResponse(loan, getSchedulesForLoan(loan.getId())));
+    }
+
+    @RabbitListener(queues = "${rabbitmq.queue.loan:loan.queue}")
+    @Transactional
+    public void handlePaymentCompleted(PaymentCompletedEvent event) {
+        if (event == null || event.transactionType() != TransactionType.LOAN_REPAYMENT) {
+            return;
+        }
+
+        List<LoanSchedule> schedules = loanScheduleRepository.findByTransactionRef(event.transactionRef());
+        if (schedules.isEmpty()) {
+            return;
+        }
+
+        Loan loan = schedules.get(0).getLoan();
+
+        if ("COMPLETED".equalsIgnoreCase(event.status())) {
+            for (LoanSchedule s : schedules) {
+                if (s.getStatus() == LoanScheduleStatus.PROCESSING) {
+                    s.setStatus(LoanScheduleStatus.PAID);
+                    s.setPaidAt(LocalDateTime.now());
+                }
+            }
+            loanScheduleRepository.saveAll(schedules);
+
+            BigDecimal newRemaining = loan.getRemainingAmount().subtract(event.amount());
+            if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
+                newRemaining = BigDecimal.ZERO;
+                loan.setStatus(LoanStatus.PAID_OFF);
+            }
+            loan.setRemainingAmount(newRemaining);
+            loanRepository.save(loan);
+        } else if ("FAILED".equalsIgnoreCase(event.status())) {
+            for (LoanSchedule s : schedules) {
+                if (s.getStatus() == LoanScheduleStatus.PROCESSING) {
+                    s.setStatus(LoanScheduleStatus.PENDING);
+                    s.setTransactionRef(null);
+                }
+            }
+            loanScheduleRepository.saveAll(schedules);
+        }
     }
 
     private List<LoanScheduleResponse> getSchedulesForLoan(Long loanId) {
