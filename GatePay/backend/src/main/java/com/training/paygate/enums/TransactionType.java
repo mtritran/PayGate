@@ -9,5 +9,6 @@ public enum TransactionType {
     LOAN_REPAYMENT,
     LOAN_DISBURSEMENT,
     VAULT_DEPOSIT,
-    VAULT_WITHDRAW
+    VAULT_WITHDRAW,
+    SETTLEMENT
 }
