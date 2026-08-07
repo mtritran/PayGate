@@ -59,7 +59,7 @@ class CheckoutServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(checkoutService, "frontendBaseUrl", "http://localhost:4200");
+        ReflectionTestUtils.setField(checkoutService, "frontendBaseUrl", "http://localhost:4201");
         ReflectionTestUtils.setField(checkoutService, "sessionTtlMinutes", 15);
 
         activeMerchant = Merchant.builder()
@@ -125,7 +125,7 @@ class CheckoutServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.paymentMethod()).isEqualTo(PaymentMethod.PAYGATE);
-        assertThat(response.paymentUrl()).startsWith("http://localhost:4200/checkout?token=CHK_");
+        assertThat(response.paymentUrl()).startsWith("http://localhost:4201/checkout?token=CHK_");
         verify(checkoutSessionRepository).save(pendingSession);
     }
 
@@ -191,7 +191,7 @@ class CheckoutServiceTest {
         CheckoutProcessRequest request = new CheckoutProcessRequest("CHK_TOKEN_123", "123456");
 
         when(checkoutSessionRepository.findByToken("CHK_TOKEN_123")).thenReturn(Optional.of(pendingSession));
-        when(otpService.verifyOtp("user_buyer", "Checkout payment OTP verification", "123456")).thenReturn(true);
+        when(otpService.verifyOtp("user_buyer", "OTP verification for order payment", "123456")).thenReturn(true);
         when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(merchantAccount));
         when(transactionService.processPayment(any(), eq("user_buyer"), eq("127.0.0.1")))
                 .thenReturn(new TransactionResponse(
@@ -221,7 +221,7 @@ class CheckoutServiceTest {
         CheckoutProcessRequest request = new CheckoutProcessRequest("CHK_TOKEN_123", "999999");
 
         when(checkoutSessionRepository.findByToken("CHK_TOKEN_123")).thenReturn(Optional.of(pendingSession));
-        when(otpService.verifyOtp("user_buyer", "Checkout payment OTP verification", "999999")).thenReturn(false);
+        when(otpService.verifyOtp("user_buyer", "OTP verification for order payment", "999999")).thenReturn(false);
 
         assertThatThrownBy(() -> checkoutService.processCheckout("user_buyer", request, "127.0.0.1"))
                 .isInstanceOf(BadRequestException.class)
