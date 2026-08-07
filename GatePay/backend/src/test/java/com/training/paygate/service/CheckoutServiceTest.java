@@ -59,7 +59,7 @@ class CheckoutServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(checkoutService, "frontendBaseUrl", "http://localhost:4200");
+        ReflectionTestUtils.setField(checkoutService, "frontendBaseUrl", "http://localhost:4201");
         ReflectionTestUtils.setField(checkoutService, "sessionTtlMinutes", 15);
 
         activeMerchant = Merchant.builder()
@@ -125,7 +125,7 @@ class CheckoutServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.paymentMethod()).isEqualTo(PaymentMethod.PAYGATE);
-        assertThat(response.paymentUrl()).startsWith("http://localhost:4200/checkout?token=CHK_");
+        assertThat(response.paymentUrl()).startsWith("http://localhost:4201/checkout?token=CHK_");
         verify(checkoutSessionRepository).save(pendingSession);
     }
 
