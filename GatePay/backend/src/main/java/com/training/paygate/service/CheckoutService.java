@@ -153,7 +153,7 @@ public class CheckoutService {
             throw new BadRequestException("Checkout session has expired");
         }
 
-        boolean otpValid = otpService.verifyOtp(username, "Checkout payment OTP verification", request.otpCode());
+        boolean otpValid = otpService.verifyOtp(username, "OTP verification for order payment", request.otpCode());
         if (!otpValid) {
             throw new BadRequestException("Invalid or expired OTP code");
         }

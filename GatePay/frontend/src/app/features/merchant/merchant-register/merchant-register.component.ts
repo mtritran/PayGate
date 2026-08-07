@@ -169,7 +169,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
             <div class="endpoint-info-card mt-24">
               <div class="endpoint-header">
                 <span class="http-badge post">POST</span>
-                <span class="endpoint-url">http://localhost:8080/api/v1/checkout/create</span>
+                <span class="endpoint-url">http://localhost:8081/api/v1/checkout/create</span>
               </div>
               <p class="endpoint-desc">Primary endpoint used by your server to create payment orders.</p>
             </div>
@@ -194,7 +194,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
               <div class="ov-icon ov-icon-endpoint">⚡</div>
               <div>
                 <strong>Base URL</strong>
-                <code class="code-inline">http://localhost:8080/api/v1</code>
+                <code class="code-inline">http://localhost:8081/api/v1</code>
               </div>
             </div>
             <div class="overview-item">
@@ -290,7 +290,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
           <!-- Parameter Specification Table -->
           <div class="docs-section mt-28">
             <h4 class="section-subtitle">📋 Bảng Tham Số Khởi Create Đơn Hàng</h4>
-            <p class="docs-desc">Gửi POST request đến <code class="code-inline">http://localhost:8080/api/v1/checkout/create</code> với body JSON như sau:</p>
+            <p class="docs-desc">Gửi POST request đến <code class="code-inline">http://localhost:8081/api/v1/checkout/create</code> với body JSON như sau:</p>
             <div class="table-responsive">
               <table class="docs-table">
                 <thead>
@@ -479,7 +479,7 @@ type CodeLanguage = 'curl' | 'nodejs' | 'php' | 'python';
                 <p>Test APIs directly in the OpenAPI 3.0 Swagger UI and inspect request/response in the browser</p>
               </div>
             </div>
-            <a href="http://localhost:8080/swagger-ui.html" target="_blank" class="btn-open-swagger">Open Swagger UI ↗</a>
+            <a href="http://localhost:8081/swagger-ui.html" target="_blank" class="btn-open-swagger">Open Swagger UI ↗</a>
           </div>
         </div>
       </div>
@@ -742,7 +742,7 @@ export class MerchantRegisterComponent implements OnInit {
     const lang = this.selectedLang();
 
     if (lang === 'curl') {
-      return `curl -X POST http://localhost:8080/api/v1/checkout/create \\
+      return `curl -X POST http://localhost:8081/api/v1/checkout/create \\
   -H "Content-Type: application/json" \\
   -d '{
     "apiKey": "${key}",
@@ -757,7 +757,7 @@ export class MerchantRegisterComponent implements OnInit {
       return `const axios = require('axios');
 
 async function createPayGateCheckout() {
-  const response = await axios.post('http://localhost:8080/api/v1/checkout/create', {
+  const response = await axios.post('http://localhost:8081/api/v1/checkout/create', {
     apiKey: '${key}',
     orderId: 'SHOPEE_ORDER_1001',
     amount: 250000,
@@ -773,7 +773,7 @@ async function createPayGateCheckout() {
 
     if (lang === 'php') {
       return `<?php
-$ch = curl_init('http://localhost:8080/api/v1/checkout/create');
+$ch = curl_init('http://localhost:8081/api/v1/checkout/create');
 $payload = json_encode([
     "apiKey" => "${key}",
     "orderId" => "SHOPEE_ORDER_1001",
@@ -794,7 +794,7 @@ exit;`;
 
     return `import requests
 
-url = "http://localhost:8080/api/v1/checkout/create"
+url = "http://localhost:8081/api/v1/checkout/create"
 payload = {
     "apiKey": "${key}",
     "orderId": "SHOPEE_ORDER_1001",
