@@ -68,7 +68,9 @@ public class BankIntegrationService {
             throw new BadRequestException("Could not extract valid orderId from transfer content: " + request.transferContent());
         }
 
-        CheckoutSession session = checkoutSessionRepository.findByOrderId(orderId)
+        CheckoutSession session = checkoutSessionRepository
+                .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(orderId, "PENDING")
+                .or(() -> checkoutSessionRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderId))
                 .orElseThrow(() -> new ResourceNotFoundException("No checkout session found matching orderId: " + orderId));
 
         if ("COMPLETED".equalsIgnoreCase(session.getStatus())) {
@@ -138,7 +140,7 @@ public class BankIntegrationService {
         session.setTransactionRef(txRef);
         checkoutSessionRepository.save(session);
 
-        dispatchMerchantWebhook(session, txRef, amount);
+        dispatchMerchantWebhook(session, txRef, amount, tx.getId());
 
         log.info("Bank Webhook settlement completed [orderId={}, txRef={}]", orderId, txRef);
 
@@ -163,7 +165,7 @@ public class BankIntegrationService {
         return content.trim();
     }
 
-    private void dispatchMerchantWebhook(CheckoutSession session, String txRef, BigDecimal amount) {
+    private void dispatchMerchantWebhook(CheckoutSession session, String txRef, BigDecimal amount, Long transactionId) {
         try {
             Merchant merchant = merchantRepository.findById(session.getMerchantId()).orElse(null);
             if (merchant == null || merchant.getWebhookUrl() == null || merchant.getWebhookUrl().isBlank()) {
@@ -184,6 +186,7 @@ public class BankIntegrationService {
             String jsonPayload = objectMapper.writeValueAsString(payloadMap);
 
             WebhookLog logRecord = WebhookLog.builder()
+                    .transactionId(transactionId)
                     .merchantId(merchant.getId())
                     .url(merchant.getWebhookUrl())
                     .payload(jsonPayload)

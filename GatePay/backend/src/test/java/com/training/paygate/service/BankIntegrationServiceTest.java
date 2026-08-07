@@ -94,7 +94,7 @@ class BankIntegrationServiceTest {
     void processBankWebhook_Success() throws Exception {
         BankWebhookRequest request = new BankWebhookRequest("MB", "FT12345", "099988887777", new BigDecimal("500000.00"), "PAYGATE ORD-100234", LocalDateTime.now().toString());
 
-        when(checkoutSessionRepository.findByOrderId("ORD-100234")).thenReturn(Optional.of(pendingSession));
+        when(checkoutSessionRepository.findFirstByOrderIdAndStatusOrderByCreatedAtDesc("ORD-100234", "PENDING")).thenReturn(Optional.of(pendingSession));
         when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(sysAccount));
         when(accountRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(sysAccount));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> {
@@ -131,7 +131,8 @@ class BankIntegrationServiceTest {
     @DisplayName("processBankWebhook_SessionNotFound: Throws ResourceNotFoundException")
     void processBankWebhook_SessionNotFound() {
         BankWebhookRequest request = new BankWebhookRequest("MB", "FT12345", "099988887777", new BigDecimal("500000.00"), "PAYGATE ORD-UNKNOWN", LocalDateTime.now().toString());
-        when(checkoutSessionRepository.findByOrderId("ORD-UNKNOWN")).thenReturn(Optional.empty());
+        when(checkoutSessionRepository.findFirstByOrderIdAndStatusOrderByCreatedAtDesc("ORD-UNKNOWN", "PENDING")).thenReturn(Optional.empty());
+        when(checkoutSessionRepository.findFirstByOrderIdOrderByCreatedAtDesc("ORD-UNKNOWN")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bankIntegrationService.processBankWebhook(request))
                 .isInstanceOf(ResourceNotFoundException.class)
