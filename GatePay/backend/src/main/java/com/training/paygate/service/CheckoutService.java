@@ -1,5 +1,6 @@
 package com.training.paygate.service;
 
+import com.training.paygate.config.VietQrProperties;
 import com.training.paygate.dto.request.CheckoutCreateRequest;
 import com.training.paygate.dto.request.CheckoutProcessRequest;
 import com.training.paygate.dto.request.PaymentRequest;
@@ -10,22 +11,21 @@ import com.training.paygate.dto.response.TransactionResponse;
 import com.training.paygate.entity.Account;
 import com.training.paygate.entity.CheckoutSession;
 import com.training.paygate.entity.Merchant;
-import com.training.paygate.entity.User;
 import com.training.paygate.enums.MerchantStatus;
 import com.training.paygate.enums.OwnerType;
+import com.training.paygate.enums.PaymentMethod;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
-import com.training.paygate.mapper.CheckoutSessionMapper;
+import com.training.paygate.mapper.CheckoutMapper;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.CheckoutSessionRepository;
 import com.training.paygate.repository.MerchantRepository;
-import com.training.paygate.repository.UserRepository;
+import com.training.paygate.util.VietQrUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -35,152 +35,152 @@ import java.util.UUID;
 @Slf4j
 public class CheckoutService {
 
-        private final MerchantRepository merchantRepository;
-        private final CheckoutSessionRepository checkoutSessionRepository;
-        private final AccountRepository accountRepository;
-        private final UserRepository userRepository;
-        private final TransactionService transactionService;
-        private final OtpService otpService;
-        private final CheckoutSessionMapper checkoutSessionMapper;
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_PROCESSING = "PROCESSING";
+    private static final String STATUS_EXPIRED = "EXPIRED";
 
-        @Value("${paygate.frontend-url}")
-        private String frontendUrl;
+    private final MerchantRepository merchantRepository;
+    private final CheckoutSessionRepository checkoutSessionRepository;
+    private final AccountRepository accountRepository;
+    private final TransactionService transactionService;
+    private final OtpService otpService;
+    private final VietQrProperties vietQrProperties;
+    private final CheckoutMapper checkoutMapper;
 
-        @Transactional
-        public CheckoutCreateResponse createCheckoutSession(CheckoutCreateRequest request) {
-                Merchant merchant = merchantRepository.findByApiKey(request.apiKey())
-                                .orElseThrow(() -> new BadRequestException("Invalid Merchant API Key"));
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
-                if (!merchant.isActive() || merchant.getStatus() != MerchantStatus.ACTIVE) {
-                        throw new BadRequestException("Merchant account is currently inactive or disabled");
-                }
+    @Value("${app.checkout.session-ttl-minutes}")
+    private int sessionTtlMinutes;
 
-                String token = "CHK_" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
-                LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(15);
+    @Transactional
+    public CheckoutCreateResponse createCheckoutSession(CheckoutCreateRequest request) {
+        Merchant merchant = merchantRepository.findByApiKey(request.apiKey())
+                .orElseThrow(() -> new BadRequestException("Invalid merchant API key"));
 
-                CheckoutSession session = CheckoutSession.builder()
-                                .token(token)
-                                .merchantId(merchant.getId())
-                                .merchantCode(merchant.getMerchantCode())
-                                .merchantName(merchant.getMerchantName())
-                                .orderId(request.orderId())
-                                .amount(request.amount())
-                                .description(request.description() != null ? request.description()
-                                                : "Order Payment #" + request.orderId())
-                                .returnUrl(request.returnUrl())
-                                .cancelUrl(request.cancelUrl())
-                                .status("PENDING")
-                                .expiresAt(expiresAt)
-                                .build();
-
-                checkoutSessionRepository.save(session);
-
-                String paymentUrl = (frontendUrl.endsWith("/") ? frontendUrl : frontendUrl + "/") + "checkout?token="
-                                + token;
-
-                return new CheckoutCreateResponse(token, paymentUrl, expiresAt);
+        if (!merchant.isActive() || merchant.getStatus() != MerchantStatus.ACTIVE) {
+            throw new BadRequestException("Merchant account is inactive or not approved");
         }
 
-        @Transactional
-        public CheckoutInfoResponse getCheckoutInfo(String token) {
-                if (token == null || token.isBlank()) {
-                        throw new BadRequestException("Checkout token cannot be empty");
-                }
+        String token = "CHK_" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(sessionTtlMinutes);
 
-                CheckoutSession session = checkoutSessionRepository.findByToken(token)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Checkout session does not exist or has expired"));
+        CheckoutSession session = checkoutMapper.toEntity(request, merchant, token, expiresAt);
+        checkoutSessionRepository.save(session);
 
-                if (LocalDateTime.now().isAfter(session.getExpiresAt()) && "PENDING".equals(session.getStatus())) {
-                        session.setStatus("EXPIRED");
-                        checkoutSessionRepository.save(session);
-                        log.info("Checkout session for orderId {} has expired", session.getOrderId());
-                }
+        PaymentMethod paymentMethod = request.paymentMethod() != null ? request.paymentMethod() : PaymentMethod.PAYGATE;
+        log.info("CheckoutSession created [token={}, orderId={}, method={}]", token, request.orderId(), paymentMethod);
 
-                return checkoutSessionMapper.toCheckoutInfoResponse(session);
+        if (PaymentMethod.VIETQR == paymentMethod) {
+            Account sysAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                    .orElseThrow(() -> new ResourceNotFoundException("System escrow account not found"));
+
+            String transferContent = "PAYGATE " + request.orderId();
+            String accountNumber = sysAccount.getAccountNumber();
+            String bankBin = vietQrProperties.getBankBin();
+            String accountName = vietQrProperties.getAccountName();
+            String bankCode = vietQrProperties.getBankCode();
+
+            String vietQrUrl = VietQrUtil.generateVietQrUrl(
+                    bankBin,
+                    accountNumber,
+                    request.amount(),
+                    transferContent,
+                    accountName);
+            String qrCodePayload = VietQrUtil.generateEmvCoPayload(
+                    bankBin,
+                    accountNumber,
+                    request.amount(),
+                    transferContent,
+                    accountName);
+
+            return new CheckoutCreateResponse(
+                    token,
+                    PaymentMethod.VIETQR,
+                    null,
+                    vietQrUrl,
+                    qrCodePayload,
+                    transferContent,
+                    bankCode,
+                    accountNumber,
+                    accountName,
+                    expiresAt);
         }
 
-        @Transactional
-        public CheckoutInfoResponse getCheckoutInfoByTxnRef(String transactionRef) {
-                if (transactionRef == null || transactionRef.isBlank()) {
-                        throw new BadRequestException("Transaction reference cannot be empty");
-                }
-                log.info("Fetching checkout info by transaction ref: {}", transactionRef);
+        String paymentUrl = frontendBaseUrl + "/checkout?token=" + token;
+        return new CheckoutCreateResponse(
+                token,
+                PaymentMethod.PAYGATE,
+                paymentUrl,
+                null, null, null, null, null, null,
+                expiresAt);
+    }
 
-                CheckoutSession session = checkoutSessionRepository.findByTransactionRef(transactionRef)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Checkout session does not exist for transaction ref: "
-                                                                + transactionRef));
+    @Transactional
+    public CheckoutInfoResponse getCheckoutInfo(String token) {
+        CheckoutSession session = checkoutSessionRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkout session not found or expired"));
 
-                if (LocalDateTime.now().isAfter(session.getExpiresAt()) && "PENDING".equals(session.getStatus())) {
-                        session.setStatus("EXPIRED");
-                        checkoutSessionRepository.save(session);
-                        log.info("Checkout session for transactionRef {} has expired", transactionRef);
-                }
-
-                return checkoutSessionMapper.toCheckoutInfoResponse(session);
+        if (STATUS_PENDING.equals(session.getStatus()) && LocalDateTime.now().isAfter(session.getExpiresAt())) {
+            session.setStatus(STATUS_EXPIRED);
+            checkoutSessionRepository.save(session);
         }
 
-        @Transactional
-        public CheckoutProcessResponse processCheckout(String username, CheckoutProcessRequest request,
-                        String clientIp) {
-                if (username == null || username.isBlank()) {
-                        throw new BadRequestException("Username cannot be empty");
-                }
+        return checkoutMapper.toInfoResponse(session);
+    }
 
-                User user = userRepository.findByUsername(username)
-                                .orElseThrow(() -> new BadRequestException("Authenticated user not found"));
+    @Transactional(readOnly = true)
+    public CheckoutInfoResponse getCheckoutInfoByTxnRef(String transactionRef) {
+        CheckoutSession session = checkoutSessionRepository.findByTransactionRef(transactionRef)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkout session not found"));
 
-                if (!user.isActive()) {
-                        throw new BadRequestException("User account is currently inactive or disabled");
-                }
+        return checkoutMapper.toInfoResponse(session);
+    }
 
-                CheckoutSession session = checkoutSessionRepository.findByToken(request.token())
-                                .orElseThrow(() -> new ResourceNotFoundException("Checkout session does not exist"));
+    @Transactional
+    public CheckoutProcessResponse processCheckout(String username, CheckoutProcessRequest request, String clientIp) {
+        CheckoutSession session = checkoutSessionRepository.findByToken(request.token())
+                .orElseThrow(() -> new ResourceNotFoundException("Checkout session not found"));
 
-                if (!"PENDING".equals(session.getStatus())) {
-                        throw new BadRequestException("Checkout session status is " + session.getStatus().toLowerCase()
-                                        + " and cannot be processed");
-                }
-
-                if (LocalDateTime.now().isAfter(session.getExpiresAt())) {
-                        session.setStatus("EXPIRED");
-                        checkoutSessionRepository.save(session);
-                        throw new BadRequestException("Checkout session has expired (15 minutes)");
-                }
-
-                boolean otpValid = otpService.verifyOtp(username, "OTP verification for order payment",
-                                request.otpCode());
-                if (!otpValid) {
-                        throw new BadRequestException("Invalid or expired OTP code");
-                }
-
-                Account merchantAccount = accountRepository
-                                .findByOwnerIdAndOwnerType(session.getMerchantId(), OwnerType.MERCHANT)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Merchant wallet account does not exist"));
-
-                PaymentRequest paymentRequest = new PaymentRequest(
-                                "CHK_IDEM_" + session.getToken(),
-                                merchantAccount.getId(),
-                                session.getAmount(),
-                                "Order payment #" + session.getOrderId() + " for " + session.getMerchantName(),
-                                session.getMerchantId());
-
-                TransactionResponse tx = transactionService.processPayment(paymentRequest, username, clientIp);
-
-                session.setStatus("PROCESSING");
-                session.setTransactionRef(tx.transactionRef());
-                checkoutSessionRepository.save(session);
-
-                String redirectUrl = UriComponentsBuilder.fromUriString(session.getReturnUrl())
-                                .queryParam("status", "PROCESSING")
-                                .queryParam("orderId", session.getOrderId())
-                                .queryParam("transactionRef", tx.transactionRef())
-                                .build()
-                                .encode()
-                                .toUriString();
-
-                return new CheckoutProcessResponse(tx.transactionRef(), redirectUrl);
+        if (!STATUS_PENDING.equals(session.getStatus())) {
+            throw new BadRequestException(
+                    "Checkout session is already " + session.getStatus().toLowerCase() + " or invalid");
         }
+
+        if (LocalDateTime.now().isAfter(session.getExpiresAt())) {
+            session.setStatus(STATUS_EXPIRED);
+            checkoutSessionRepository.save(session);
+            throw new BadRequestException("Checkout session has expired");
+        }
+
+        boolean otpValid = otpService.verifyOtp(username, "Checkout payment OTP verification", request.otpCode());
+        if (!otpValid) {
+            throw new BadRequestException("Invalid or expired OTP code");
+        }
+
+        Account systemAccount = accountRepository
+                .findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                .orElseThrow(() -> new ResourceNotFoundException("System escrow wallet account not found"));
+
+        PaymentRequest paymentRequest = new PaymentRequest(
+                "CHK_IDEM_" + UUID.randomUUID().toString(),
+                systemAccount.getId(),
+                session.getAmount(),
+                "Payment for order #" + session.getOrderId() + " to " + session.getMerchantName(),
+                session.getMerchantId());
+
+        TransactionResponse tx = transactionService.processPayment(paymentRequest, username, clientIp);
+
+        session.setStatus(STATUS_PROCESSING);
+        session.setTransactionRef(tx.transactionRef());
+        checkoutSessionRepository.save(session);
+
+        String redirectUrl = session.getReturnUrl() + (session.getReturnUrl().contains("?") ? "&" : "?")
+                + "status=PROCESSING&orderId=" + session.getOrderId() + "&transactionRef=" + tx.transactionRef();
+
+        log.info("CheckoutSession processed successfully [token={}, orderId={}, txRef={}]",
+                session.getToken(), session.getOrderId(), tx.transactionRef());
+
+        return new CheckoutProcessResponse(tx.transactionRef(), redirectUrl);
+    }
 }

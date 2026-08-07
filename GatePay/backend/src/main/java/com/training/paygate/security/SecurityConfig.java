@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/v1/checkout/create", "/api/v1/checkout/info/**").permitAll()
                         .requestMatchers("/api/v1/refunds").permitAll()
+                        .requestMatchers("/api/v1/integration/bank-webhook").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()

@@ -57,7 +57,7 @@ class MerchantControllerIntegrationTest extends BaseIntegrationTest {
                 .active(true)
                 .build();
         userRepository.save(adminUser);
-        adminToken = jwtTokenProvider.generateAccessToken("admin");
+        adminToken = jwtTokenProvider.generateAccessToken("admin", adminUser.getId(), "ROLE_ADMIN");
 
         // Create Normal User
         User normalUser = User.builder()
@@ -69,7 +69,7 @@ class MerchantControllerIntegrationTest extends BaseIntegrationTest {
                 .active(true)
                 .build();
         savedUser = userRepository.save(normalUser);
-        userToken = jwtTokenProvider.generateAccessToken("user");
+        userToken = jwtTokenProvider.generateAccessToken("user", savedUser.getId(), "ROLE_USER");
     }
 
     @Test

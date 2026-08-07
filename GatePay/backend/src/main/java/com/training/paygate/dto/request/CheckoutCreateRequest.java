@@ -1,5 +1,6 @@
 package com.training.paygate.dto.request;
 
+import com.training.paygate.enums.PaymentMethod;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,8 @@ public record CheckoutCreateRequest(
         BigDecimal amount,
 
         String description,
+
+        PaymentMethod paymentMethod,
 
         @NotBlank(message = "Return URL is required")
         String returnUrl,

@@ -2,45 +2,15 @@
 	"info": {
 		"_postman_id": "8d3e2300-349c-485a-8b89-f538e124ea88",
 		"name": "PayGate APIs - Full System Collection",
-		"description": "Bộ sưu tập Postman đầy đủ kiểm thử toàn bộ hệ thống Cổng thanh toán PayGate (Authentication, Accounts, Merchants, Payments, Double-Entry Ledger Audit, Webhooks)",
+		"description": "Bộ sưu tập Postman đầy đủ kiểm thử toàn bộ hệ thống Cổng thanh toán PayGate (Authentication, Merchants Onboarding & Approval, Accounts/Topup, Feature-00 Checkout Gateway & VietQR, Feature-04 Refund, Double-Entry Ledger, Webhooks)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "1. Authentication",
+			"name": "1. Authentication & Users",
 			"item": [
 				{
-					"name": "Register User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"adminuser\",\n    \"email\": \"admin@paygate.com\",\n    \"password\": \"password123\",\n    \"fullName\": \"System Administrator\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/auth/register",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"register"
-							]
-						},
-						"description": "Đăng ký một tài khoản mới."
-					},
-					"response": []
-				},
-				{
-					"name": "Login User",
+					"name": "1.1. Login as Admin",
 					"event": [
 						{
 							"listen": "test",
@@ -48,8 +18,9 @@
 								"exec": [
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
+									"    pm.collectionVariables.set(\"adminToken\", jsonData.data.accessToken);",
 									"    pm.collectionVariables.set(\"jwtToken\", jsonData.data.accessToken);",
-									"    console.log(\"Saved jwtToken to variables: \" + jsonData.data.accessToken);",
+									"    console.log(\"Saved adminToken & jwtToken: \" + jsonData.data.accessToken);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -66,7 +37,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"adminuser\",\n    \"password\": \"password123\"\n}"
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Admin@123456!\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/auth/login",
@@ -80,93 +51,169 @@
 								"login"
 							]
 						},
-						"description": "Đăng nhập lấy JWT Token. Token được lưu tự động vào biến `jwtToken`."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "2. User Management",
-			"item": [
-				{
-					"name": "Get Current User Profile",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/me",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"me"
-							]
-						},
-						"description": "Lấy thông tin tài khoản người dùng đang đăng nhập dựa trên JWT Token."
+						"description": "Đăng nhập với tài khoản ADMIN mặc định. Tự động lưu vào biến `adminToken` và `jwtToken`."
 					},
 					"response": []
 				},
 				{
-					"name": "Get All Users (Admin)",
+					"name": "1.2. Register Merchant Owner User",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"merchant_owner\",\n    \"email\": \"merchant_owner@paygate.dev\",\n    \"password\": \"Password@123!\",\n    \"fullName\": \"Merchant Owner\"\n}"
 						},
-						"method": "GET",
-						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/users?page=0&size=10",
+							"raw": "{{baseUrl}}/api/v1/auth/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"v1",
-								"users"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "0"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								}
+								"auth",
+								"register"
 							]
 						},
-						"description": "Lấy danh sách người dùng phân trang dành cho Admin."
+						"description": "Đăng ký tài khoản User cho chủ Shop/Merchant."
+					},
+					"response": []
+				},
+				{
+					"name": "1.3. Login Merchant Owner",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
+									"    pm.collectionVariables.set(\"merchantUserToken\", jsonData.data.accessToken);",
+									"    pm.collectionVariables.set(\"jwtToken\", jsonData.data.accessToken);",
+									"    console.log(\"Saved merchantUserToken: \" + jsonData.data.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"merchant_owner\",\n    \"password\": \"Password@123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Đăng nhập tài khoản Chủ Merchant. Tự động lưu vào biến `merchantUserToken`."
+					},
+					"response": []
+				},
+				{
+					"name": "1.4. Register Customer User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"customer_tri\",\n    \"email\": \"customer_tri@paygate.dev\",\n    \"password\": \"Password@123!\",\n    \"fullName\": \"Tran Manh Tri Customer\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Đăng ký tài khoản User khách hàng (Customer) để thực hiện mua sắm và thanh toán ví."
+					},
+					"response": []
+				},
+				{
+					"name": "1.5. Login Customer User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.accessToken) {",
+									"    pm.collectionVariables.set(\"customerToken\", jsonData.data.accessToken);",
+									"    pm.collectionVariables.set(\"jwtToken\", jsonData.data.accessToken);",
+									"    console.log(\"Saved customerToken: \" + jsonData.data.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"customer_tri\",\n    \"password\": \"Password@123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Đăng nhập tài khoản Khách hàng. Tự động lưu vào biến `customerToken`."
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "3. Merchant Admin",
+			"name": "2. Merchant Onboarding & Approval Flow",
 			"item": [
 				{
-					"name": "Create Merchant",
+					"name": "2.1. User - Request Merchant Registration",
 					"event": [
 						{
 							"listen": "test",
@@ -176,7 +223,7 @@
 									"if (jsonData.success && jsonData.data && jsonData.data.id) {",
 									"    pm.collectionVariables.set(\"merchantId\", jsonData.data.id);",
 									"    pm.collectionVariables.set(\"merchantCode\", jsonData.data.merchantCode);",
-									"    console.log(\"Saved merchantId: \" + jsonData.data.id + \", merchantCode: \" + jsonData.data.merchantCode);",
+									"    console.log(\"Saved merchantId: \" + jsonData.data.id + \", code: \" + jsonData.data.merchantCode);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -189,7 +236,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{jwtToken}}",
+									"value": "{{merchantUserToken}}",
 									"type": "string"
 								}
 							]
@@ -203,7 +250,143 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"userId\": 1,\n    \"merchantName\": \"Shop TechMart\",\n    \"merchantCode\": \"TECHMART\",\n    \"webhookUrl\": \"https://webhook.site/test-endpoint\"\n}"
+							"raw": "{\n    \"merchantName\": \"Marketplace TechShop\",\n    \"merchantCode\": \"MP_TECHSHOP\",\n    \"webhookUrl\": \"http://localhost:8082/api/paygate-webhook\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/merchants/request",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"merchants",
+								"request"
+							]
+						},
+						"description": "User chủ shop gửi yêu cầu đăng ký Merchant (Trạng thái ban đầu: PENDING_APPROVAL). Tự động lưu `merchantId`."
+					},
+					"response": []
+				},
+				{
+					"name": "2.2. Admin - Approve Merchant Request",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/merchants/{{merchantId}}/approve",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"merchants",
+								"{{merchantId}}",
+								"approve"
+							]
+						},
+						"description": "Admin duyệt yêu cầu Merchant. Hệ thống tự động kích hoạt ACTIVE và tạo Ví MERCHANT."
+					},
+					"response": []
+				},
+				{
+					"name": "2.3. User - Get My Merchant API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"apiKey\", jsonData.data);",
+									"    console.log(\"Saved apiKey: \" + jsonData.data);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{merchantUserToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/merchants/me/api-key",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"merchants",
+								"me",
+								"api-key"
+							]
+						},
+						"description": "Chủ Shop lấy raw API Key sau khi được duyệt. Tự động lưu vào biến `apiKey` để dùng cho Checkout & Refund."
+					},
+					"response": []
+				},
+				{
+					"name": "2.4. (Fast Track) Admin - Create Merchant Directly",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set(\"merchantId\", jsonData.data.id);",
+									"    pm.collectionVariables.set(\"merchantCode\", jsonData.data.merchantCode);",
+									"    console.log(\"Saved merchantId: \" + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": 1,\n    \"merchantName\": \"Marketplace FastShop\",\n    \"merchantCode\": \"MP_FASTSHOP\",\n    \"webhookUrl\": \"http://localhost:8082/api/paygate-webhook\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/admin/merchants",
@@ -217,117 +400,42 @@
 								"merchants"
 							]
 						},
-						"description": "Đăng ký đối tác Merchant mới (Yêu cầu ADMIN). Tự động khởi tạo Ví MERCHANT."
+						"description": "Admin tạo thẳng Merchant kích hoạt ngay mà không cần qua luồng duyệt."
 					},
 					"response": []
 				},
 				{
-					"name": "Get All Merchants",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/merchants?page=0&size=10&sortBy=createdAt&sortDir=DESC",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"merchants"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "0"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								},
-								{
-									"key": "sortBy",
-									"value": "createdAt"
-								},
-								{
-									"key": "sortDir",
-									"value": "DESC"
-								}
-							]
-						},
-						"description": "Lấy danh sách các Merchant phân trang."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Merchant by ID",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/merchants/{{merchantId}}",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"merchants",
-								"{{merchantId}}"
-							]
-						},
-						"description": "Truy vấn chi tiết Merchant theo merchantId."
-					},
-					"response": []
-				},
-				{
-					"name": "Update Merchant",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
+					"name": "2.5. Admin - Get Raw API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set(\"apiKey\", jsonData.data);",
+									"    console.log(\"Saved apiKey: \" + jsonData.data);",
+									"}"
+								],
+								"type": "text/javascript"
 							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"merchantName\": \"TechMart Super Store\",\n    \"webhookUrl\": \"https://webhook.site/updated-endpoint\",\n    \"active\": true\n}"
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
 						},
+						"method": "GET",
+						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/merchants/{{merchantId}}",
+							"raw": "{{baseUrl}}/api/v1/admin/merchants/{{merchantId}}/api-key",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -336,27 +444,28 @@
 								"v1",
 								"admin",
 								"merchants",
-								"{{merchantId}}"
+								"{{merchantId}}",
+								"api-key"
 							]
 						},
-						"description": "Cập nhật thông tin Merchant."
+						"description": "Admin lấy unmasked raw API Key của Merchant. Tự động lưu vào biến `apiKey`."
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "4. Account & Wallet",
+			"name": "3. Customer Wallet Preparation",
 			"item": [
 				{
-					"name": "Top Up Wallet Balance",
+					"name": "3.1. Top Up Customer Wallet Balance",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{jwtToken}}",
+									"value": "{{customerToken}}",
 									"type": "string"
 								}
 							]
@@ -370,7 +479,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"amount\": 500000.00,\n    \"paymentMethod\": \"BANK_TRANSFER\"\n}"
+							"raw": "{\n    \"amount\": 1000000.00,\n    \"description\": \"Nạp 1,000,000 VND vào ví Customer để test mua hàng\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/accounts/topup",
@@ -384,19 +493,19 @@
 								"topup"
 							]
 						},
-						"description": "Nạp tiền vào tài khoản ví cá nhân."
+						"description": "Nạp 1,000,000 VND vào ví khách hàng để chuẩn bị test thanh toán PayGate."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Current User Account",
+					"name": "3.2. Get Customer Wallet Balance",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{jwtToken}}",
+									"value": "{{customerToken}}",
 									"type": "string"
 								}
 							]
@@ -415,351 +524,17 @@
 								"me"
 							]
 						},
-						"description": "Xem chi tiết số dư và thông tin ví cá nhân của người dùng hiện tại."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Account Dashboard Overview",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/accounts/dashboard",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"accounts",
-								"dashboard"
-							]
-						},
-						"description": "Xem tổng quan Dashboard ví tài khoản."
+						"description": "Kiểm tra số dư ví người dùng sau khi nạp tiền."
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "5. Transactions & Payment",
+			"name": "4. Feature-00: Checkout Gateway (PayGate & VietQR)",
 			"item": [
 				{
-					"name": "Process Payment (Idempotency Key)",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Idempotency-Key",
-								"value": "IDEM-PAY-TEST-9999"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"merchantCode\": \"TECHMART\",\n    \"amount\": 100000.00,\n    \"description\": \"Thanh toan don hang test #1001\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/transactions/pay",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"transactions",
-								"pay"
-							]
-						},
-						"description": "Thực hiện thanh toán giao dịch với Idempotency Key chống trùng nạp."
-					},
-					"response": []
-				},
-				{
-					"name": "Process Payment Retry (Test Idempotency)",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Idempotency-Key",
-								"value": "IDEM-PAY-TEST-9999"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"merchantCode\": \"TECHMART\",\n    \"amount\": 100000.00,\n    \"description\": \"Thanh toan don hang test #1001\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/transactions/pay",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"transactions",
-								"pay"
-							]
-						},
-						"description": "Gửi lại trùng Idempotency-Key: Trả về kết quả giao dịch cũ ngay lập tức mà KHÔNG trừ tiền thêm lần 2."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Transaction History",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/transactions/history?page=0&size=10",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"transactions",
-								"history"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "0"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Lấy danh sách lịch sử giao dịch thanh toán."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "6. Double-Entry Ledger Audit (Admin)",
-			"item": [
-				{
-					"name": "Verify Double-Entry Ledger Balance",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/ledger/verify",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"ledger",
-								"verify"
-							]
-						},
-						"description": "Kiểm tra toàn vẹn tài chính hệ thống Sổ cái kép (Kiểm tra totalDebit == totalCredit)."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Account Ledger Entries",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/ledger/account/1",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"ledger",
-								"account",
-								"1"
-							]
-						},
-						"description": "Xem chi tiết nhật ký chép sổ Sổ cái (DEBIT / CREDIT) của một Tài khoản cụ thể."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "7. Webhook Audit (Admin)",
-			"item": [
-				{
-					"name": "Get All Webhook Logs",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/webhooks?page=0&size=10&sortBy=createdAt&sortDir=DESC",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"webhooks"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "0"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								},
-								{
-									"key": "sortBy",
-									"value": "createdAt"
-								},
-								{
-									"key": "sortDir",
-									"value": "DESC"
-								}
-							]
-						},
-						"description": "Truy vấn danh sách nhật ký thực thi gửi webhook phân trang dành cho Admin."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Webhook Logs (Filter SUCCESS Status)",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/v1/admin/webhooks?page=0&size=10&status=SUCCESS",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"admin",
-								"webhooks"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "0"
-								},
-								{
-									"key": "size",
-									"value": "10"
-								},
-								{
-									"key": "status",
-									"value": "SUCCESS"
-								}
-							]
-						},
-						"description": "Lọc nhật ký gửi webhook theo trạng thái SUCCESS."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "8. Checkout Gateway",
-			"item": [
-				{
-					"name": "Create Checkout Session (Merchant)",
+					"name": "4.1. MarketPlace - Create Checkout Session (PayGate Wallet)",
 					"event": [
 						{
 							"listen": "test",
@@ -768,7 +543,7 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
 									"    pm.collectionVariables.set(\"checkoutToken\", jsonData.data.token);",
-									"    console.log(\"Saved checkoutToken to variables: \" + jsonData.data.token);",
+									"    console.log(\"Saved checkoutToken: \" + jsonData.data.token);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -785,7 +560,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"apiKey\": \"valid-api-key-here\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-1001\",\n    \"returnUrl\": \"http://localhost:4200/payment/callback\",\n    \"cancelUrl\": \"http://localhost:4200/cart\"\n}"
+							"raw": "{\n    \"apiKey\": \"{{apiKey}}\",\n    \"orderId\": \"ORD-100234\",\n    \"amount\": 250000.00,\n    \"description\": \"Payment for order #ORD-100234 via PayGate Wallet\",\n    \"paymentMethod\": \"PAYGATE\",\n    \"returnUrl\": \"http://localhost:8082/?callback=true\",\n    \"cancelUrl\": \"http://localhost:8082/?cancel=true\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/checkout/create",
@@ -799,12 +574,57 @@
 								"create"
 							]
 						},
-						"description": "Merchant (bên thứ 3) gọi API tạo phiên thanh toán mới. Trả về paymentUrl, expiresAt và token (tự động lưu vào biến checkoutToken)."
+						"description": "MarketPlace tạo phiên thanh toán qua Ví PayGate. Trả về paymentUrl và token (tự động lưu vào `checkoutToken`)."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Checkout Info By Token",
+					"name": "4.2. MarketPlace - Create Checkout Session (VietQR)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set(\"checkoutToken\", jsonData.data.token);",
+									"    console.log(\"Saved checkoutToken: \" + jsonData.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apiKey\": \"{{apiKey}}\",\n    \"orderId\": \"ORD-100235\",\n    \"amount\": 500000.00,\n    \"description\": \"Payment for order #ORD-100235 via VietQR\",\n    \"paymentMethod\": \"VIETQR\",\n    \"returnUrl\": \"http://localhost:8082/?callback=true\",\n    \"cancelUrl\": \"http://localhost:8082/?cancel=true\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/checkout/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"checkout",
+								"create"
+							]
+						},
+						"description": "MarketPlace tạo phiên thanh toán VietQR. Trả về vietQrUrl, qrCodePayload (EMVCo), STK Hệ Thống và cú pháp transferContent."
+					},
+					"response": []
+				},
+				{
+					"name": "4.3. Customer/Frontend - Get Checkout Info By Token",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -821,12 +641,12 @@
 								"{{checkoutToken}}"
 							]
 						},
-						"description": "Lấy thông tin công khai của đơn hàng và Merchant theo token phiên thanh toán."
+						"description": "Lấy thông tin công khai của đơn hàng và Merchant theo token phiên thanh toán để điền sẵn vào form."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Checkout Info By Transaction Ref",
+					"name": "4.4. Customer/Frontend - Get Checkout Info By TxnRef",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -844,12 +664,53 @@
 								"{{transactionRef}}"
 							]
 						},
-						"description": "Truy vấn thông tin phiên thanh toán theo mã tham chiếu giao dịch transactionRef."
+						"description": "Tra cứu thông tin Checkout Session theo transactionRef."
 					},
 					"response": []
 				},
 				{
-					"name": "Process Checkout Payment (Customer OTP)",
+					"name": "4.5. Customer - Send OTP For Checkout Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customerToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"Xác thực thanh toán đơn hàng\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/otp/send",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"otp",
+								"send"
+							]
+						},
+						"description": "Gửi mã OTP 6 chữ số về Email của người dùng trước khi bấm xác nhận thanh toán PayGate."
+					},
+					"response": []
+				},
+				{
+					"name": "4.6. Customer - Authenticate OTP & Complete Checkout Payment",
 					"event": [
 						{
 							"listen": "test",
@@ -858,7 +719,7 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.data && jsonData.data.transactionRef) {",
 									"    pm.collectionVariables.set(\"transactionRef\", jsonData.data.transactionRef);",
-									"    console.log(\"Saved transactionRef to variables: \" + jsonData.data.transactionRef);",
+									"    console.log(\"Saved transactionRef: \" + jsonData.data.transactionRef);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -871,7 +732,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{jwtToken}}",
+									"value": "{{customerToken}}",
 									"type": "string"
 								}
 							]
@@ -899,28 +760,33 @@
 								"process"
 							]
 						},
-						"description": "Khách hàng đăng nhập, xác thực bằng mã OTP để thực hiện thanh toán giao dịch Checkout. Trả về transactionRef và redirectUrl."
+						"description": "Khách hàng xác thực OTP thanh toán. Tiền trừ từ ví User và chuyển vào Ví Hệ Thống (Hũ A Escrow 30 ngày). Tự động lưu `transactionRef`."
 					},
 					"response": []
 				}
 			]
 		},
 		{
-			"name": "9. Refund Management",
+			"name": "5. Feature-00: Bank Integration Webhook (VietQR Settlement)",
 			"item": [
 				{
-					"name": "Process Refund Request",
+					"name": "5.1. Bank - Inbound Bank Webhook Settlement (VietQR)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.transactionRef) {",
+									"    pm.collectionVariables.set(\"transactionRef\", jsonData.data.transactionRef);",
+									"    console.log(\"Saved transactionRef: \" + jsonData.data.transactionRef);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwtToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
 						"header": [
 							{
@@ -930,7 +796,42 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"transactionRef\": \"{{transactionRef}}\",\n    \"orderId\": \"ORD-1001\",\n    \"amount\": 250000.00,\n    \"reason\": \"Khách hàng hủy đơn / trả hàng do sản phẩm lỗi\"\n}"
+							"raw": "{\n    \"bankCode\": \"MB\",\n    \"bankTransactionNo\": \"MB_TXN_998877\",\n    \"accountNumber\": \"099988887777\",\n    \"amount\": 500000.00,\n    \"transferContent\": \"PAYGATE ORD-100235\",\n    \"transactionTime\": \"2026-08-07T08:30:00\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/integration/bank-webhook",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"integration",
+								"bank-webhook"
+							]
+						},
+						"description": "Giả lập Ngân hàng đối tác gửi Webhook đối soát khi khách quét mã VietQR và chuyển tiền thành công vào STK Hệ Thống."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "6. Feature-04: Refund Management",
+			"item": [
+				{
+					"name": "6.1. MarketPlace - Process Partial Refund (100,000 VND)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apiKey\": \"{{apiKey}}\",\n    \"transactionRef\": \"{{transactionRef}}\",\n    \"orderId\": \"ORD-100234\",\n    \"amount\": 100000.00\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/refunds",
@@ -943,7 +844,106 @@
 								"refunds"
 							]
 						},
-						"description": "Xử lý yêu cầu hoàn tiền cho đơn hàng từ MarketPlace hoặc Khách hàng."
+						"description": "MarketPlace gọi API hoàn một phần tiền (Partial Refund). Hệ thống trừ tiền từ Ví Hệ Thống hoàn về tài khoản người mua."
+					},
+					"response": []
+				},
+				{
+					"name": "6.2. MarketPlace - Process Full/Remaining Refund (150,000 VND)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"apiKey\": \"{{apiKey}}\",\n    \"transactionRef\": \"{{transactionRef}}\",\n    \"orderId\": \"ORD-100234\",\n    \"amount\": 150000.00\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/refunds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"refunds"
+							]
+						},
+						"description": "MarketPlace hoàn nốt số tiền còn lại (Full Refund). Hệ thống cập nhật trạng thái đơn hàng thành FULL_REFUNDED."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "7. Ledger Audit & Accounts (Admin)",
+			"item": [
+				{
+					"name": "7.1. Verify Double-Entry Ledger Balance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/ledger/verify",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"ledger",
+								"verify"
+							]
+						},
+						"description": "Kiểm tra toàn vẹn tài chính hệ thống Sổ cái kép (Kiểm tra totalDebit == totalCredit)."
+					},
+					"response": []
+				},
+				{
+					"name": "7.2. Get Account Ledger Entries",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/ledger/account/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"ledger",
+								"account",
+								"1"
+							]
+						},
+						"description": "Xem chi tiết nhật ký chép sổ Sổ cái (DEBIT / CREDIT) của một Tài khoản cụ thể."
 					},
 					"response": []
 				}
@@ -953,7 +953,22 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8081",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "merchantUserToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customerToken",
+			"value": "",
 			"type": "string"
 		},
 		{
@@ -963,21 +978,16 @@
 		},
 		{
 			"key": "merchantId",
-			"value": "1",
-			"type": "string"
-		},
-		{
-			"key": "merchantCode",
-			"value": "MOCK_MERCHANT",
-			"type": "string"
-		},
-		{
-			"key": "checkoutToken",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "transactionRef",
+			"key": "merchantCode",
+			"value": "MP_TECHSHOP",
+			"type": "string"
+		},
+		{
+			"key": "apiKey",
 			"value": "",
 			"type": "string"
 		},
