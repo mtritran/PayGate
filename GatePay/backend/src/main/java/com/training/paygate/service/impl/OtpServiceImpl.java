@@ -54,7 +54,8 @@ public class OtpServiceImpl implements OtpService {
         long ttlSeconds = 300; // 5 minutes
         long expiresAt = Instant.now().getEpochSecond() + ttlSeconds;
 
-        log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", otpCode, username, action, ttlSeconds);
+        log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", otpCode, username,
+                action, ttlSeconds);
 
         // Dispatch OTP code to user's real email (Gmail)
         String actionTitle = action != null && !action.isBlank() ? action : "Xác thực giao dịch";
@@ -105,7 +106,8 @@ public class OtpServiceImpl implements OtpService {
     }
 
     private String maskEmail(String email) {
-        if (email == null || !email.contains("@")) return email;
+        if (email == null || !email.contains("@"))
+            return email;
         String[] parts = email.split("@");
         String name = parts[0];
         String domain = parts[1];
