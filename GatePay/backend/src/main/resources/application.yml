@@ -87,6 +87,10 @@ app:
     base-url: http://localhost:4201
   checkout:
     session-ttl-minutes: 15
+  settlement:
+    enabled: true
+    cron: ${PAYGATE_SETTLEMENT_CRON:0 0 1 * * ?}
+    hold-days: ${PAYGATE_SETTLEMENT_HOLD_DAYS:30}
 
 paygate:
   frontend-url: http://localhost:4201
