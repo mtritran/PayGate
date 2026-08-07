@@ -16,15 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/integration")
 @RequiredArgsConstructor
-@Tag(name = "Bank Integration Webhook", description = "Endpoint nhận thông báo chuyển khoản thành công từ Ngân hàng đối tác")
+@Tag(name = "Bank Integration Webhook", description = "Partner bank transfer webhook endpoint")
 public class BankIntegrationController {
 
     private final BankIntegrationService bankIntegrationService;
 
     @PostMapping("/bank-webhook")
-    @Operation(summary = "Nhận webhook thông báo chuyển khoản tiền từ Ngân hàng ngoài qua VietQR (Public API)")
+    @Operation(summary = "Process inbound bank transfer webhook for VietQR payments")
     public ApiResponse<TransactionResponse> handleBankWebhook(@Valid @RequestBody BankWebhookRequest request) {
         TransactionResponse response = bankIntegrationService.processBankWebhook(request);
-        return ApiResponse.success("Xử lý chuyển khoản ngân hàng VietQR thành công", response);
+        return ApiResponse.success("Bank transfer webhook processed successfully", response);
     }
 }

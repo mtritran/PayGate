@@ -84,7 +84,7 @@ app:
     password: ${PAYGATE_ADMIN_PASSWORD:Admin@123456!}
     email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
   frontend:
-    base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+    base-url: http://localhost:4201
   checkout:
     session-ttl-minutes: 15
 

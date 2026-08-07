@@ -5,8 +5,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Pure utility class for VietQR URL generation and EMVCo payload construction.
- * All bank account configuration must be injected via {@link com.training.paygate.config.VietQrProperties}.
+ * Pure utility class for VietQR QuickLink URL generation and EMVCo payload construction.
+ * All bank account configurations are injected via {@link com.training.paygate.config.VietQrProperties}.
  */
 public class VietQrUtil {
 
@@ -14,9 +14,9 @@ public class VietQrUtil {
      * Generates a standard VietQR QuickLink image URL for VietQR scanning across all Vietnam banking apps.
      */
     public static String generateVietQrUrl(String bankBin, String accountNumber, BigDecimal amount, String transferContent, String accountName) {
-        String bin = (bankBin != null && !bankBin.isBlank()) ? bankBin : DEFAULT_BANK_BIN;
-        String acc = (accountNumber != null && !accountNumber.isBlank()) ? accountNumber : DEFAULT_ACCOUNT_NUMBER;
-        String name = (accountName != null && !accountName.isBlank()) ? accountName : DEFAULT_ACCOUNT_NAME;
+        String bin = bankBin != null ? bankBin : "";
+        String acc = accountNumber != null ? accountNumber : "";
+        String name = accountName != null ? accountName : "";
         String amt = (amount != null) ? amount.toPlainString() : "0";
 
         try {
@@ -33,8 +33,8 @@ public class VietQrUtil {
      * Generates standard EMVCo VietQR string payload.
      */
     public static String generateEmvCoPayload(String bankBin, String accountNumber, BigDecimal amount, String transferContent, String accountName) {
-        String bin = (bankBin != null && !bankBin.isBlank()) ? bankBin : DEFAULT_BANK_BIN;
-        String acc = (accountNumber != null && !accountNumber.isBlank()) ? accountNumber : DEFAULT_ACCOUNT_NUMBER;
+        String bin = bankBin != null ? bankBin : "";
+        String acc = accountNumber != null ? accountNumber : "";
         String amt = (amount != null) ? amount.toPlainString() : "0";
 
         StringBuilder sb = new StringBuilder();
