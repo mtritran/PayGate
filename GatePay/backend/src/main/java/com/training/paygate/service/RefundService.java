@@ -24,6 +24,7 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.RefundRepository;
 import com.training.paygate.repository.TransactionRepository;
+import com.training.paygate.repository.MerchantSettlementRepository;
 import com.training.paygate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +60,7 @@ public class RefundService {
     private final BalanceCacheService balanceCacheService;
     private final NotificationService notificationService;
     private final PaymentEventPublisher paymentEventPublisher;
+    private final MerchantSettlementRepository merchantSettlementRepository;
 
     @Transactional
     public RefundResponse processRefund(RefundCreateRequest request) {
@@ -126,31 +128,41 @@ public class RefundService {
                     totalRefundAttempt, originalTx.getAmount(), alreadyRefunded));
         }
 
-        // 8. Consistent Lock Ordering for Accounts (Prevents Deadlocks across concurrent operations)
-        Account merchantAccount = accountRepository.findByOwnerIdAndOwnerType(merchantId, OwnerType.MERCHANT)
-                .orElseThrow(() -> new ResourceNotFoundException("Merchant wallet account not found for merchantId: " + merchantId));
+        // 8. Determine account to deduct refund from: systemAccount (escrow) if not settled, merchantAccount if already settled
+        boolean isSettled = merchantSettlementRepository.existsByOriginalTransactionRef(originalTx.getTransactionRef());
 
-        Long firstLockId = Math.min(merchantAccount.getId(), userAccount.getId());
-        Long secondLockId = Math.max(merchantAccount.getId(), userAccount.getId());
+        Account deductSourceAccount;
+        if (isSettled) {
+            deductSourceAccount = accountRepository.findByOwnerIdAndOwnerType(merchantId, OwnerType.MERCHANT)
+                    .orElseThrow(() -> new ResourceNotFoundException("Merchant wallet account not found for merchantId: " + merchantId));
+        } else {
+            deductSourceAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                    .orElseThrow(() -> new ResourceNotFoundException("System Escrow Account not found"));
+        }
+
+        // Consistent Lock Ordering for Accounts (Prevents Deadlocks across concurrent operations)
+        Long firstLockId = Math.min(deductSourceAccount.getId(), userAccount.getId());
+        Long secondLockId = Math.max(deductSourceAccount.getId(), userAccount.getId());
 
         Account firstLocked = accountRepository.findByIdForUpdate(firstLockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found for locking id: " + firstLockId));
         Account secondLocked = accountRepository.findByIdForUpdate(secondLockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found for locking id: " + secondLockId));
 
-        if (merchantAccount.getId().equals(firstLocked.getId())) {
-            merchantAccount = firstLocked;
+        if (deductSourceAccount.getId().equals(firstLocked.getId())) {
+            deductSourceAccount = firstLocked;
             userAccount = secondLocked;
         } else {
-            merchantAccount = secondLocked;
+            deductSourceAccount = secondLocked;
             userAccount = firstLocked;
         }
 
-        // 9. Check Insufficient Merchant Balance
-        if (merchantAccount.getBalance().compareTo(refundAmount) < 0) {
+        // 9. Check Insufficient Balance
+        if (deductSourceAccount.getBalance().compareTo(refundAmount) < 0) {
+            String accountName = isSettled ? "Merchant wallet" : "System Escrow Account";
             throw new BadRequestException(String.format(
-                    "Merchant wallet balance (%,.0f VND) is insufficient to process refund of %,.0f VND",
-                    merchantAccount.getBalance(), refundAmount));
+                    "%s balance (%,.0f VND) is insufficient to process refund of %,.0f VND",
+                    accountName, deductSourceAccount.getBalance(), refundAmount));
         }
 
         // 10. Determine Source Type (NORMAL vs BNPL)
@@ -161,26 +173,26 @@ public class RefundService {
             sourceType = SOURCE_TYPE_BNPL;
         }
 
-        // 11. Deduct from Merchant Wallet and Credit Customer Wallet
-        merchantAccount.setBalance(merchantAccount.getBalance().subtract(refundAmount).setScale(2, RoundingMode.HALF_UP));
+        // 11. Deduct from Source Account and Credit Customer Wallet
+        deductSourceAccount.setBalance(deductSourceAccount.getBalance().subtract(refundAmount).setScale(2, RoundingMode.HALF_UP));
         userAccount.setBalance(userAccount.getBalance().add(refundAmount).setScale(2, RoundingMode.HALF_UP));
 
-        accountRepository.save(merchantAccount);
+        accountRepository.save(deductSourceAccount);
         accountRepository.save(userAccount);
 
-        balanceCacheService.evictBalance(merchantAccount.getId());
+        balanceCacheService.evictBalance(deductSourceAccount.getId());
         balanceCacheService.evictBalance(userAccount.getId());
 
         // 12. Generate Refund Reference
         String refundRef = "RF-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
 
-        // 13. Record Ledger Entries (DEBIT for Merchant, CREDIT for Customer)
-        LedgerEntry debitMerchant = LedgerEntry.builder()
+        // 13. Record Ledger Entries (DEBIT for deductSourceAccount, CREDIT for Customer)
+        LedgerEntry debitSource = LedgerEntry.builder()
                 .transactionId(originalTx.getId())
-                .accountId(merchantAccount.getId())
+                .accountId(deductSourceAccount.getId())
                 .entryType(EntryType.DEBIT)
                 .amount(refundAmount)
-                .balanceAfter(merchantAccount.getBalance())
+                .balanceAfter(deductSourceAccount.getBalance())
                 .build();
 
         LedgerEntry creditCustomer = LedgerEntry.builder()
@@ -191,7 +203,7 @@ public class RefundService {
                 .balanceAfter(userAccount.getBalance())
                 .build();
 
-        ledgerEntryRepository.save(debitMerchant);
+        ledgerEntryRepository.save(debitSource);
         ledgerEntryRepository.save(creditCustomer);
 
         // 14. Save Refund Entity with Concurrent Idempotency Guard

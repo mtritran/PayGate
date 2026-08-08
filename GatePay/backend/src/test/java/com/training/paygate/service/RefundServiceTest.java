@@ -23,6 +23,7 @@ import com.training.paygate.repository.LedgerEntryRepository;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.RefundRepository;
 import com.training.paygate.repository.TransactionRepository;
+import com.training.paygate.repository.MerchantSettlementRepository;
 import com.training.paygate.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,7 @@ class RefundServiceTest {
     @Mock private BalanceCacheService balanceCacheService;
     @Mock private NotificationService notificationService;
     @Mock private PaymentEventPublisher paymentEventPublisher;
+    @Mock private MerchantSettlementRepository merchantSettlementRepository;
 
     @InjectMocks
     private RefundService refundService;
@@ -72,6 +74,7 @@ class RefundServiceTest {
     private Transaction completedTx;
     private Account merchantAccount;
     private Account userAccount;
+    private Account systemAccount;
 
     @BeforeEach
     void setUp() {
@@ -121,6 +124,15 @@ class RefundServiceTest {
                 .currency("VND")
                 .status(AccountStatus.ACTIVE)
                 .build();
+
+        systemAccount = Account.builder()
+                .id(99L)
+                .ownerId(0L)
+                .ownerType(OwnerType.SYSTEM)
+                .balance(new BigDecimal("5000000.00"))
+                .currency("VND")
+                .status(AccountStatus.ACTIVE)
+                .build();
     }
 
     private void stubHappyPathForMerchant() {
@@ -129,9 +141,10 @@ class RefundServiceTest {
         when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
         when(accountRepository.findById(10L)).thenReturn(Optional.of(userAccount));
         when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
-        when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+        when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(false);
+        when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
         when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
-        when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
+        when(accountRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(systemAccount));
         when(userRepository.findById(100L)).thenReturn(Optional.of(customerUser));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
     }
@@ -145,7 +158,7 @@ class RefundServiceTest {
     class HappyPaths {
 
         @Test
-        @DisplayName("Full refund succeeds — balances updated, status COMPLETED")
+        @DisplayName("Full refund succeeds — system escrow balance updated, merchant wallet untouched")
         void processRefund_Success() {
             RefundCreateRequest request = new RefundCreateRequest(API_KEY, TX_REF, ORDER_ID, new BigDecimal("500000.00"));
             stubHappyPathForMerchant();
@@ -156,12 +169,13 @@ class RefundServiceTest {
             assertThat(response.status()).isEqualTo(RefundStatus.COMPLETED);
             assertThat(response.amountRefunded()).isEqualTo(new BigDecimal("500000.00"));
             assertThat(response.sourceType()).isEqualTo("NORMAL");
-            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("500000.00");
+            assertThat(systemAccount.getBalance()).isEqualByComparingTo("4500000.00");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("1000000.00");
             assertThat(userAccount.getBalance()).isEqualByComparingTo("700000.00");
         }
 
         @Test
-        @DisplayName("Partial refund succeeds — only partial amount deducted")
+        @DisplayName("Partial refund succeeds — only system escrow balance updated")
         void processRefund_PartialRefundSuccess() {
             RefundCreateRequest request = new RefundCreateRequest(API_KEY, TX_REF, ORDER_ID, new BigDecimal("100000.00"));
             stubHappyPathForMerchant();
@@ -171,8 +185,45 @@ class RefundServiceTest {
             RefundResponse response = refundService.processRefund(request);
 
             assertThat(response.amountRefunded()).isEqualByComparingTo("100000.00");
-            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("900000.00");
+            assertThat(systemAccount.getBalance()).isEqualByComparingTo("4900000.00");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("1000000.00");
             assertThat(userAccount.getBalance()).isEqualByComparingTo("300000.00");
+        }
+
+        @Test
+        @DisplayName("Refund for already settled transaction — deducts from merchant account balance")
+        void processRefund_AlreadySettled_DeductsFromMerchant() {
+            RefundCreateRequest request = new RefundCreateRequest(API_KEY, TX_REF, ORDER_ID, new BigDecimal("200000.00"));
+
+            when(merchantRepository.findByApiKey(API_KEY)).thenReturn(Optional.of(activeMerchant));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            when(accountRepository.findById(10L)).thenReturn(Optional.of(userAccount));
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
+            
+            // isSettled = true
+            when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(true);
+            when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+            
+            // userAccount ID = 10, merchantAccount ID = 20 -> lock order: 10 then 20
+            when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
+            when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
+            
+            when(userRepository.findById(100L)).thenReturn(Optional.of(customerUser));
+            when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+
+            RefundResponse response = refundService.processRefund(request);
+
+            assertThat(response).isNotNull();
+            assertThat(response.status()).isEqualTo(RefundStatus.COMPLETED);
+            assertThat(response.amountRefunded()).isEqualTo(new BigDecimal("200000.00"));
+            
+            // Deducted from Merchant Wallet (1000000 -> 800000)
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("800000.00");
+            // Credited to User (200000 -> 400000)
+            assertThat(userAccount.getBalance()).isEqualByComparingTo("400000.00");
+            // System Escrow untouched
+            assertThat(systemAccount.getBalance()).isEqualByComparingTo("5000000.00");
         }
 
         @Test
@@ -395,8 +446,31 @@ class RefundServiceTest {
         }
 
         @Test
-        @DisplayName("Merchant balance insufficient throws BadRequestException")
-        void processRefund_InsufficientMerchantBalance_Error() {
+        @DisplayName("System escrow balance insufficient throws BadRequestException")
+        void processRefund_InsufficientEscrowBalance_Error() {
+            systemAccount.setBalance(new BigDecimal("100000.00"));
+            RefundCreateRequest request = new RefundCreateRequest(API_KEY, TX_REF, ORDER_ID, new BigDecimal("500000.00"));
+            when(merchantRepository.findByApiKey(API_KEY)).thenReturn(Optional.of(activeMerchant));
+            when(refundRepository.findByIdempotencyKey(anyString())).thenReturn(Optional.empty());
+            when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
+            when(accountRepository.findById(10L)).thenReturn(Optional.of(userAccount));
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
+            
+            when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(false);
+            when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+            
+            // userAccount ID = 10, systemAccount ID = 99 -> lock order: 10 then 99
+            when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
+            when(accountRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(systemAccount));
+
+            assertThatThrownBy(() -> refundService.processRefund(request))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("System Escrow Account balance");
+        }
+
+        @Test
+        @DisplayName("Merchant balance insufficient when already settled throws BadRequestException")
+        void processRefund_InsufficientMerchantBalanceWhenSettled_Error() {
             merchantAccount.setBalance(new BigDecimal("100000.00"));
             RefundCreateRequest request = new RefundCreateRequest(API_KEY, TX_REF, ORDER_ID, new BigDecimal("500000.00"));
             when(merchantRepository.findByApiKey(API_KEY)).thenReturn(Optional.of(activeMerchant));
@@ -404,7 +478,11 @@ class RefundServiceTest {
             when(transactionRepository.findByTransactionRefForUpdate(TX_REF)).thenReturn(Optional.of(completedTx));
             when(accountRepository.findById(10L)).thenReturn(Optional.of(userAccount));
             when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
+            
+            when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(true);
             when(accountRepository.findByOwnerIdAndOwnerType(5L, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+            
+            // userAccount ID = 10, merchantAccount ID = 20 -> lock order: 10 then 20
             when(accountRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(userAccount));
             when(accountRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(merchantAccount));
 
