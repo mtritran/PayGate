@@ -187,24 +187,88 @@ class MerchantSettlementServiceTest {
     class RefundedTransactions {
 
         @Test
-        @DisplayName("settleSingleTransaction skips balance transfer and marks CANCELLED_REFUNDED if refunded")
-        void settleSingleTransaction_Refunded_SkipTransfer() {
+        @DisplayName("settleSingleTransaction skips balance transfer and marks CANCELLED_REFUNDED if fully refunded (100%)")
+        void settleSingleTransaction_FullyRefunded_SkipTransfer() {
             when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(false);
             when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(AMOUNT);
 
             merchantSettlementService.settleSingleTransaction(completedTx);
 
-            // Verify no accounts loaded or modified
+            // Verify no accounts or transactions loaded or modified
             verify(accountRepository, never()).findByOwnerIdAndOwnerType(anyLong(), any());
             verify(accountRepository, never()).save(any());
             verify(ledgerEntryRepository, never()).save(any());
+            verify(transactionRepository, never()).save(any());
 
-            // Verify record saved with CANCELLED_REFUNDED
+            // Verify record saved with CANCELLED_REFUNDED and amount = 0
             ArgumentCaptor<MerchantSettlement> settlementCaptor = ArgumentCaptor.forClass(MerchantSettlement.class);
             verify(merchantSettlementRepository).save(settlementCaptor.capture());
             MerchantSettlement savedRecord = settlementCaptor.getValue();
             assertThat(savedRecord.getOriginalTransactionRef()).isEqualTo(TX_REF);
+            assertThat(savedRecord.getAmount()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(savedRecord.getStatus()).isEqualTo(SettlementStatus.CANCELLED_REFUNDED);
+        }
+
+        @Test
+        @DisplayName("settleSingleTransaction successfully settles remaining Net Amount if partially refunded")
+        void settleSingleTransaction_PartiallyRefunded_SettlesNetAmount() {
+            // Total = 500,000 VND, Partial Refund = 200,000 VND -> Net Settlement = 300,000 VND
+            BigDecimal partialRefund = new BigDecimal("200000.00");
+            BigDecimal netAmount = new BigDecimal("300000.00");
+
+            when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(false);
+            when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(partialRefund);
+            when(merchantRepository.findById(MERCHANT_ID)).thenReturn(Optional.of(merchant));
+            when(accountRepository.findByOwnerIdAndOwnerType(MERCHANT_ID, OwnerType.MERCHANT)).thenReturn(Optional.of(merchantAccount));
+            when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(systemAccount));
+            when(accountRepository.findById(systemAccount.getId())).thenReturn(Optional.of(systemAccount));
+            when(accountRepository.findById(merchantAccount.getId())).thenReturn(Optional.of(merchantAccount));
+
+            merchantSettlementService.settleSingleTransaction(completedTx);
+
+            // Verify balances updated by NET amount: System -300k, Merchant +300k
+            assertThat(systemAccount.getBalance()).isEqualByComparingTo("9700000.00");
+            assertThat(merchantAccount.getBalance()).isEqualByComparingTo("1300000.00");
+            verify(accountRepository).save(systemAccount);
+            verify(accountRepository).save(merchantAccount);
+
+            // Verify ledger entries for net amount
+            ArgumentCaptor<LedgerEntry> ledgerCaptor = ArgumentCaptor.forClass(LedgerEntry.class);
+            verify(ledgerEntryRepository, times(2)).save(ledgerCaptor.capture());
+            List<LedgerEntry> entries = ledgerCaptor.getAllValues();
+            assertThat(entries.get(0).getAmount()).isEqualByComparingTo(netAmount);
+            assertThat(entries.get(1).getAmount()).isEqualByComparingTo(netAmount);
+
+            // Verify merchant settlement record saved with net amount and COMPLETED
+            ArgumentCaptor<MerchantSettlement> settlementCaptor = ArgumentCaptor.forClass(MerchantSettlement.class);
+            verify(merchantSettlementRepository).save(settlementCaptor.capture());
+            MerchantSettlement savedSettlement = settlementCaptor.getValue();
+            assertThat(savedSettlement.getAmount()).isEqualByComparingTo(netAmount);
+            assertThat(savedSettlement.getStatus()).isEqualTo(SettlementStatus.COMPLETED);
+
+            // Verify audit transaction record saved with net amount and formatted description
+            ArgumentCaptor<Transaction> txCaptor = ArgumentCaptor.forClass(Transaction.class);
+            verify(transactionRepository).save(txCaptor.capture());
+            Transaction savedTx = txCaptor.getValue();
+            assertThat(savedTx.getType()).isEqualTo(TransactionType.SETTLEMENT);
+            assertThat(savedTx.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+            assertThat(savedTx.getAmount()).isEqualByComparingTo(netAmount);
+            assertThat(savedTx.getDescription())
+                    .contains("Net after")
+                    .contains("200,000")
+                    .contains(TX_REF);
+
+            // Verify notification sent with net breakdown
+            verify(notificationService).createNotification(eq(MERCHANT_USER_ID), anyString(), anyString(), eq("SETTLEMENT"));
+
+            // Verify RabbitMQ settlement event published with net amount
+            ArgumentCaptor<PaymentCompletedEvent> eventCaptor = ArgumentCaptor.forClass(PaymentCompletedEvent.class);
+            verify(paymentEventPublisher).publishPaymentCompleted(eventCaptor.capture());
+            PaymentCompletedEvent publishedEvent = eventCaptor.getValue();
+            assertThat(publishedEvent.amount()).isEqualByComparingTo(netAmount);
+            assertThat(publishedEvent.merchantId()).isEqualTo(MERCHANT_ID);
+            assertThat(publishedEvent.transactionType()).isEqualTo(TransactionType.SETTLEMENT);
+            assertThat(publishedEvent.userId()).isEqualTo(MERCHANT_USER_ID);
         }
     }
 

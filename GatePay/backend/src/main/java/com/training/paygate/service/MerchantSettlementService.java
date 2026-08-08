@@ -82,24 +82,36 @@ public class MerchantSettlementService {
             return;
         }
 
-        // 2. Check Refund: Has this order been refunded (100% full refund)?
+        // 2. Check Refund & Calculate Net Settlement Amount
+        BigDecimal totalAmount = originalTx.getAmount();
         BigDecimal refundedAmount = refundRepository.sumRefundedAmountByOriginalTransactionRef(origTxRef);
-        if (refundedAmount != null && refundedAmount.compareTo(BigDecimal.ZERO) > 0) {
+        if (refundedAmount == null) {
+            refundedAmount = BigDecimal.ZERO;
+        }
+
+        // Case A: 100% Full Refund (or refundedAmount >= totalAmount) -> Skip transfer
+        if (refundedAmount.compareTo(totalAmount) >= 0) {
             log.info(
-                    "Transaction {} has been refunded (amount: {} VND). Marking settlement as CANCELLED_REFUNDED and skipping transfer.",
-                    origTxRef, refundedAmount);
+                    "Transaction {} has been fully refunded (refunded: {} VND >= total: {} VND). Marking settlement as CANCELLED_REFUNDED and skipping transfer.",
+                    origTxRef, refundedAmount, totalAmount);
 
             MerchantSettlement cancelledRecord = MerchantSettlement.builder()
                     .settlementRef(
                             "STL-REF-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase())
                     .originalTransactionRef(origTxRef)
                     .merchantId(originalTx.getMerchantId())
-                    .amount(originalTx.getAmount())
+                    .amount(BigDecimal.ZERO)
                     .status(SettlementStatus.CANCELLED_REFUNDED)
                     .build();
             merchantSettlementRepository.save(cancelledRecord);
             return;
         }
+
+        // Case B: Partial Refund (0 < refundedAmount < totalAmount) OR No Refund (refundedAmount == 0)
+        // Net amount transferred to Merchant = totalAmount - refundedAmount
+        BigDecimal netSettlementAmount = totalAmount.subtract(refundedAmount);
+        log.info("Settling transaction {}: total={} VND, refunded={} VND -> netSettlementAmount={} VND to merchantId {}",
+                origTxRef, totalAmount, refundedAmount, netSettlementAmount, originalTx.getMerchantId());
 
         // 3. Retrieve Merchant and Merchant Account
         Long merchantId = originalTx.getMerchantId();
@@ -133,18 +145,16 @@ public class MerchantSettlementService {
         systemAccount = accountRepository.findById(systemAccount.getId()).orElseThrow();
         merchantAccount = accountRepository.findById(merchantAccount.getId()).orElseThrow();
 
-        BigDecimal amount = originalTx.getAmount();
-
         // 5. Balance Validation
-        if (systemAccount.getBalance().compareTo(amount) < 0) {
-            log.error("Insufficient balance in System Escrow Account ({}) for settlement amount {} on tx {}.",
-                    systemAccount.getBalance(), amount, origTxRef);
+        if (systemAccount.getBalance().compareTo(netSettlementAmount) < 0) {
+            log.error("Insufficient balance in System Escrow Account ({}) for settlement net amount {} on tx {}.",
+                    systemAccount.getBalance(), netSettlementAmount, origTxRef);
             return;
         }
 
-        // 6. Transfer Balance: Deduct 100% System Escrow, Credit 100% Merchant Wallet
-        systemAccount.setBalance(systemAccount.getBalance().subtract(amount));
-        merchantAccount.setBalance(merchantAccount.getBalance().add(amount));
+        // 6. Transfer Balance: Deduct Net System Escrow, Credit Net Merchant Wallet
+        systemAccount.setBalance(systemAccount.getBalance().subtract(netSettlementAmount));
+        merchantAccount.setBalance(merchantAccount.getBalance().add(netSettlementAmount));
 
         accountRepository.save(systemAccount);
         accountRepository.save(merchantAccount);
@@ -157,7 +167,7 @@ public class MerchantSettlementService {
                 .transactionId(originalTx.getId())
                 .accountId(systemAccount.getId())
                 .entryType(EntryType.DEBIT)
-                .amount(amount)
+                .amount(netSettlementAmount)
                 .balanceAfter(systemAccount.getBalance())
                 .build();
 
@@ -165,7 +175,7 @@ public class MerchantSettlementService {
                 .transactionId(originalTx.getId())
                 .accountId(merchantAccount.getId())
                 .entryType(EntryType.CREDIT)
-                .amount(amount)
+                .amount(netSettlementAmount)
                 .balanceAfter(merchantAccount.getBalance())
                 .build();
 
@@ -178,7 +188,7 @@ public class MerchantSettlementService {
                 .settlementRef(settlementRef)
                 .originalTransactionRef(origTxRef)
                 .merchantId(merchantId)
-                .amount(amount)
+                .amount(netSettlementAmount)
                 .status(SettlementStatus.COMPLETED)
                 .build();
         merchantSettlementRepository.save(settlement);
@@ -189,20 +199,29 @@ public class MerchantSettlementService {
                 .transactionRef(stlTxRef)
                 .sourceAccountId(systemAccount.getId())
                 .destAccountId(merchantAccount.getId())
-                .amount(amount)
+                .amount(netSettlementAmount)
                 .currency(originalTx.getCurrency() != null ? originalTx.getCurrency() : "VND")
                 .type(TransactionType.SETTLEMENT)
                 .status(TransactionStatus.COMPLETED)
                 .merchantId(merchantId)
-                .description("30-Day Escrow Settlement for Order Tx #" + origTxRef)
+                .description(refundedAmount.compareTo(BigDecimal.ZERO) > 0
+                        ? String.format("30-Day Escrow Settlement (Net after %,.0f VND refund) for Order Tx #%s", refundedAmount, origTxRef)
+                        : "30-Day Escrow Settlement for Order Tx #" + origTxRef)
                 .build();
         transactionRepository.save(settlementTx);
 
         // 10. Dispatch Notification & RabbitMQ Event to Merchant User
         try {
-            String msg = String.format(
-                    "Auto-settlement completed: +%,.0f VND from order transaction #%s has been transferred to your merchant wallet.",
-                    amount, origTxRef);
+            String msg;
+            if (refundedAmount.compareTo(BigDecimal.ZERO) > 0) {
+                msg = String.format(
+                        "Auto-settlement completed: +%,.0f VND (Net after %,.0f VND refund from order transaction #%s) has been transferred to your merchant wallet.",
+                        netSettlementAmount, refundedAmount, origTxRef);
+            } else {
+                msg = String.format(
+                        "Auto-settlement completed: +%,.0f VND from order transaction #%s has been transferred to your merchant wallet.",
+                        netSettlementAmount, origTxRef);
+            }
             notificationService.createNotification(merchant.getUserId(), "Merchant Settlement Received", msg,
                     "SETTLEMENT");
         } catch (Exception e) {
@@ -214,7 +233,7 @@ public class MerchantSettlementService {
                     settlementRef,
                     merchantId,
                     merchant.getWebhookUrl(),
-                    amount,
+                    netSettlementAmount,
                     "SETTLED",
                     null,
                     "SYSTEM",
@@ -226,7 +245,7 @@ public class MerchantSettlementService {
             log.warn("Could not publish settlement event to RabbitMQ: {}", e.getMessage());
         }
 
-        log.info("Escrow settlement {} completed for original txRef {}: +{} VND to merchantId {}",
-                settlementRef, origTxRef, amount, merchantId);
+        log.info("Escrow settlement {} completed for original txRef {}: +{} VND (net) to merchantId {}",
+                settlementRef, origTxRef, netSettlementAmount, merchantId);
     }
 }
