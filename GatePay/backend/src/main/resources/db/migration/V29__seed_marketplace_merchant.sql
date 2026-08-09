@@ -16,7 +16,7 @@ SELECT
     'MarketPlace Demo',
     'MARKETPLACE_MP',
     'marketplace-api-key-123456',
-    'http://localhost:8082/api/paygate-webhook',
+    'http://localhost:8080/api/v1/webhooks/gatepay',
     TRUE,
     'ACTIVE'
 FROM users u

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LoanService, LoanResponse, RepayType } from '../../../core/services/loan.service';
@@ -92,7 +92,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
         </div>
 
         <div class="loans-grid stagger-children" *ngIf="myLoans().length > 0">
-          <div *ngFor="let loan of myLoans()" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
+          <div *ngFor="let loan of myLoans(); trackBy: trackByLoanId" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
             <div class="card-top">
               <div>
                 <span class="loan-ref font-mono">{{ loan.loanRef }}</span>
@@ -138,36 +138,12 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
       <div *ngIf="activeTab() === 'PROFILE'" class="profile-tab">
         <div *ngIf="profileLoading()" class="skeleton" style="height:400px; border-radius:20px"></div>
         <div *ngIf="!profileLoading()">
-          
-          <div class="credit-assessment-card" *ngIf="myProfile()?.approvedLimit">
-            <div class="ca-header">
-              <h3>Your Approved Limit</h3>
-              <span class="ca-badge" [class.declined]="myProfile()?.riskGrade === 'POOR'">{{ myProfile()?.riskGrade }}</span>
-            </div>
-            <div class="ca-limit">{{ myProfile()?.approvedLimit | currency:'VND':'symbol':'1.0-0' }}</div>
-            <p class="ca-hint" style="margin-top: 10px; font-size: 0.88rem; color: #64748b;">
-              💡 To use this limit, select BNPL when checking out on a partner marketplace. A loan will be created automatically.
-            </p>
-          </div>
-
-          <div class="credit-assessment-card pending-ca" *ngIf="myProfile() && !myProfile()?.approvedLimit">
-            <h3>Pre-approve your limit</h3>
-            <p>You have saved your profile. Assess your credit now to get a BNPL limit before you shop.</p>
-            <button class="btn-assess" (click)="assessCredit()" [disabled]="assessing()">
-              {{ assessing() ? 'Assessing...' : 'Assess Credit Now' }}
-            </button>
-          </div>
-
-          <div class="profile-form-wrapper">
-            <h3>Borrower Profile</h3>
-            <p class="text-muted">Update your profile to get a better BNPL limit.</p>
-            <app-bnpl-profile-form 
-              [initialData]="myProfile()" 
-              [loading]="profileSaving()"
-              submitLabel="Save Profile"
-              (formSubmit)="onProfileSubmit($event)">
-            </app-bnpl-profile-form>
-          </div>
+          <app-bnpl-profile-form
+            [initialData]="myProfile()"
+            [loading]="profileSaving()"
+            (formSubmit)="onProfileSubmit($event)"
+            (assessRequested)="assessCredit()">
+          </app-bnpl-profile-form>
         </div>
       </div>
     </div>
@@ -187,15 +163,15 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
           <div class="loan-summary-strip">
             <div>
               <small>Total outstanding balance</small>
-              <h3 class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</h3>
+              <strong>{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
             </div>
             <div>
               <small>Term</small>
-              <h4>{{ loan.termMonths }} months</h4>
+              <strong>{{ loan.termMonths }} months</strong>
             </div>
             <div>
               <small>Payment per period</small>
-              <h4>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</h4>
+              <strong>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</strong>
             </div>
           </div>
 
@@ -224,15 +200,17 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let s of loan.schedules">
+                <tr *ngFor="let s of loan.schedules; trackBy: trackByScheduleId">
                   <td class="font-mono">Period {{ s.periodNumber }}</td>
                   <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
                   <td>{{ s.amountDue | currency:'VND':'symbol':'1.0-0' }}</td>
                   <td>{{ 0 | currency:'VND':'symbol':'1.0-0' }}</td>
                   <td class="font-bold">{{ s.amountDue | currency:'VND':'symbol':'1.0-0' }}</td>
                   <td>
-                    <span class="schedule-badge" [class.schedule-paid]="s.status === 'PAID'" [class.schedule-unpaid]="s.status === 'UNPAID'">
-                      {{ s.status === 'PAID' ? 'Paid' : 'Unpaid' }}
+                    <span class="schedule-badge" 
+                          [class.schedule-paid]="s.status === 'PAID' || s.status === 'PROCESSING'" 
+                          [class.schedule-unpaid]="s.status === 'PENDING' || s.status === 'UNPAID'">
+                      {{ (s.status === 'PAID' || s.status === 'PROCESSING') ? 'Paid' : 'Unpaid' }}
                     </span>
                   </td>
                 </tr>
@@ -459,7 +437,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
     .empty-icon { width: 80px; height: 80px; background: #fff0f6; color: #c20067; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
   `]
 })
-export class BnplDashboardComponent implements OnInit {
+export class BnplDashboardComponent implements OnInit, OnDestroy {
   private loanService = inject(LoanService);
   private notification = inject(NotificationService);
   private profileService = inject(BnplProfileService);
@@ -484,9 +462,16 @@ export class BnplDashboardComponent implements OnInit {
   selectedLoan = signal<LoanResponse | null>(null);
   myProfile = signal<any>(null);
 
+  /** SWR: subscription handle for background revalidation polling */
+  private revalidationSub: any = null;
+
   ngOnInit(): void {
     this.loadBnplLoans();
     this.loadProfile();
+  }
+
+  ngOnDestroy(): void {
+    this.stopRevalidation();
   }
 
   loadProfile(): void {
@@ -548,6 +533,65 @@ export class BnplDashboardComponent implements OnInit {
     });
   }
 
+  /**
+   * SWR: Silently revalidate loan list + selected loan detail in the background.
+   * Unlike loadBnplLoans(), this does NOT set loading=true so the UI remains interactive.
+   */
+  private revalidateLoans(): void {
+    this.loanService.getMyLoans().subscribe({
+      next: (res) => {
+        const allLoans = res.data?.content ?? [];
+        const bnplLoans = allLoans.filter(l => l.reason && l.reason.startsWith('BNPL'));
+        this.myLoans.set(bnplLoans);
+      }
+    });
+
+    // Revalidate BNPL profile so Approved Limit & Available Limit update automatically
+    this.profileService.getMyProfile().subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.myProfile.set(res.data);
+        }
+      }
+    });
+
+    // Also revalidate the selected loan detail if the modal is open
+    const current = this.selectedLoan();
+    if (current) {
+      this.loanService.getLoanById(current.id).subscribe({
+        next: (res) => {
+          if (res.data) {
+            this.selectedLoan.set(res.data);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * SWR: Start background polling after a mutation (payment).
+   * Polls every 3s for up to 30s to catch async status updates,
+   * then stops automatically to conserve resources.
+   */
+  private startRevalidation(): void {
+    this.stopRevalidation();
+    let elapsed = 0;
+    this.revalidationSub = setInterval(() => {
+      elapsed += 3000;
+      this.revalidateLoans();
+      if (elapsed >= 30000) {
+        this.stopRevalidation();
+      }
+    }, 3000);
+  }
+
+  private stopRevalidation(): void {
+    if (this.revalidationSub) {
+      clearInterval(this.revalidationSub);
+      this.revalidationSub = null;
+    }
+  }
+
   activeLoansCount(): number {
     return this.myLoans().filter(l => l.status === 'ACTIVE').length;
   }
@@ -579,15 +623,26 @@ export class BnplDashboardComponent implements OnInit {
         this.repaying.set(false);
         this.notification.success('BNPL installment paid successfully!');
         if (res.data) {
+          // Instant optimistic update of modal and background list
           this.selectedLoan.set(res.data);
+          this.myLoans.set(this.myLoans().map(l => l.id === res.data!.id ? { ...l, ...res.data! } : l));
         }
-        this.loadBnplLoans();
+        // Single silent background revalidation after 1.5s to sync final async DB state
+        setTimeout(() => this.revalidateLoans(), 1500);
       },
       error: (err) => {
         this.repaying.set(false);
         this.notification.error(err?.error?.message || 'Payment failed');
       }
     });
+  }
+
+  trackByLoanId(index: number, loan: LoanResponse): number {
+    return loan.id;
+  }
+
+  trackByScheduleId(index: number, s: any): number {
+    return s.id || index;
   }
 
   getStatusClass(status: string): string {

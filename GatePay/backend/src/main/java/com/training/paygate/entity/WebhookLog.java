@@ -31,7 +31,7 @@ public class WebhookLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "transaction_id", nullable = false)
+    @Column(name = "transaction_id")
     private Long transactionId;
 
     @Column(name = "merchant_id", nullable = false)

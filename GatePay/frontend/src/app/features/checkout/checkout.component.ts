@@ -1246,11 +1246,27 @@ export class CheckoutComponent implements OnInit {
       this.returnToMerchant('CANCELLED');
       return;
     }
-    const cancelUrl = this.info()?.cancelUrl;
-    if (cancelUrl) {
-      window.location.href = cancelUrl;
+
+    const token = this.token();
+    const doRedirect = () => {
+      const cancelUrl = this.info()?.cancelUrl;
+      if (cancelUrl) {
+        window.location.href = cancelUrl;
+      } else {
+        this.router.navigate(['/']);
+      }
+    };
+
+    // Notify PayGate backend so it publishes a PAYMENT_CANCELLED webhook
+    // to the merchant. Redirect regardless of API success — the webhook
+    // is the authoritative notification, the redirect is just UX.
+    if (token) {
+      this.checkoutService.cancelCheckout(token).subscribe({
+        next: () => doRedirect(),
+        error: () => doRedirect()
+      });
     } else {
-      this.router.navigate(['/']);
+      doRedirect();
     }
   }
 

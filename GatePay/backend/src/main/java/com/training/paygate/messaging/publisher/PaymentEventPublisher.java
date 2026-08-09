@@ -1,6 +1,7 @@
 package com.training.paygate.messaging.publisher;
 
 import com.training.paygate.messaging.config.RabbitMQConfig;
+import com.training.paygate.messaging.event.CheckoutCancelledEvent;
 import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.messaging.event.PaymentRequestEvent;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,15 @@ public class PaymentEventPublisher {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.PAYMENT_EXCHANGE,
                 RabbitMQConfig.ROUTING_PAYMENT_COMPLETED,
+                event
+        );
+    }
+
+    public void publishCheckoutCancelled(CheckoutCancelledEvent event) {
+        log.info("Publishing CheckoutCancelledEvent for token: {}, orderId: {}", event.token(), event.orderId());
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.PAYMENT_EXCHANGE,
+                RabbitMQConfig.ROUTING_PAYMENT_CANCELLED,
                 event
         );
     }

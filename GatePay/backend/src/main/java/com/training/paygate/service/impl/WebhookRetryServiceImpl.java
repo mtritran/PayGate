@@ -1,9 +1,12 @@
 package com.training.paygate.service.impl;
 
+import com.training.paygate.entity.Merchant;
 import com.training.paygate.entity.WebhookLog;
 import com.training.paygate.enums.WebhookStatus;
+import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.WebhookLogRepository;
 import com.training.paygate.service.WebhookRetryService;
+import com.training.paygate.util.HmacUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -26,6 +29,7 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
 
     private final WebhookLogRepository webhookLogRepository;
     private final RestTemplate restTemplate;
+    private final MerchantRepository merchantRepository;
 
     @Override
     @Scheduled(fixedDelay = 30000)
@@ -59,6 +63,15 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            if (webhookLog.getMerchantId() != null && webhookLog.getMerchantId() > 0) {
+                Merchant merchant = merchantRepository.findById(webhookLog.getMerchantId()).orElse(null);
+                if (merchant != null && merchant.getApiKey() != null && !merchant.getApiKey().isBlank()) {
+                    String signature = HmacUtils.generateSignature(webhookLog.getPayload(), merchant.getApiKey());
+                    headers.set("X-Signature", signature);
+                }
+            }
+
             HttpEntity<String> entity = new HttpEntity<>(webhookLog.getPayload(), headers);
 
             ResponseEntity<String> response = restTemplate.postForEntity(webhookLog.getUrl(), entity, String.class);
