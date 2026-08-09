@@ -8,6 +8,12 @@
 # vào repo cha này.
 erconomic/
 
+# Build artifacts
+target/
+**/target/
+node_modules/
+**/node_modules/
+
 # Log / môi trường cá nhân
 *.log
 .env

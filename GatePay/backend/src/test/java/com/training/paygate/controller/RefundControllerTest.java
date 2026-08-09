@@ -14,14 +14,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.security.Principal;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,18 +44,15 @@ class RefundControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
-    @DisplayName("processRefund_Success: Return 200 OK and refund response")
+    @DisplayName("processRefund_Success: Return 200 OK and refund response for valid Merchant request")
     void processRefund_Success() throws Exception {
-        RefundCreateRequest request = new RefundCreateRequest("TXN-100", "ORD-100", new BigDecimal("250000.00"), "Defective product");
+        RefundCreateRequest request = new RefundCreateRequest("MC_KEY_123", "TXN-100", "ORD-100", new BigDecimal("250000.00"));
         RefundResponse mockResponse = new RefundResponse("RF-12345", "TXN-100", new BigDecimal("250000.00"), "NORMAL", 0, RefundStatus.COMPLETED);
 
-        Principal mockPrincipal = new UsernamePasswordAuthenticationToken("customer@test.com", "password");
-
-        when(refundService.processRefund(any(RefundCreateRequest.class), eq("customer@test.com")))
+        when(refundService.processRefund(any(RefundCreateRequest.class)))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(post("/api/v1/refunds")
-                        .principal(mockPrincipal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -70,11 +64,9 @@ class RefundControllerTest {
     @Test
     @DisplayName("processRefund_InvalidBody: Return 400 Bad Request when validation fails")
     void processRefund_InvalidBody() throws Exception {
-        RefundCreateRequest invalidRequest = new RefundCreateRequest("", "", new BigDecimal("-100"), "");
-        Principal mockPrincipal = new UsernamePasswordAuthenticationToken("customer@test.com", "password");
+        RefundCreateRequest invalidRequest = new RefundCreateRequest("", "", "", new BigDecimal("-100"));
 
         mockMvc.perform(post("/api/v1/refunds")
-                        .principal(mockPrincipal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());

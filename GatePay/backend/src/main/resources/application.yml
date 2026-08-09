@@ -83,6 +83,14 @@ app:
     username: ${PAYGATE_ADMIN_USERNAME:admin}
     password: ${PAYGATE_ADMIN_PASSWORD:Admin@123456!}
     email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
+  frontend:
+    base-url: http://localhost:4201
+  checkout:
+    session-ttl-minutes: 15
+  settlement:
+    enabled: true
+    cron: ${PAYGATE_SETTLEMENT_CRON:0 0 1 * * ?}
+    hold-days: ${PAYGATE_SETTLEMENT_HOLD_DAYS:30}
 
 paygate:
   frontend-url: http://localhost:4201
@@ -92,3 +100,8 @@ paygate:
     read-timeout-ms: 5000
   cic:
     base-url: ${CIC_BASE_URL:http://localhost:8084}
+  vietqr:
+    bank-bin: ${VIETQR_BANK_BIN:970422}
+    bank-code: ${VIETQR_BANK_CODE:MB}
+    account-number: ${VIETQR_ACCOUNT_NUMBER:099988887777}
+    account-name: ${VIETQR_ACCOUNT_NAME:PAYGATE PAYMENT GATEWAY}

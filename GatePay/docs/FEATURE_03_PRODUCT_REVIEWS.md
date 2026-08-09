@@ -15,6 +15,10 @@ Khách sau khi mua và nhận đơn có thể **đánh giá sản phẩm**:
 1. Khách vào trang sản phẩm → xem **điểm trung bình** + danh sách review.
 2. Khách đã mua (order DELIVERED) được phép **gửi đánh giá** (rating 1-5 + comment).
 3. Rating trung bình hiển thị trên trang sản phẩm để người khác tham khảo.
+4. **Lọc đánh giá:** Khách có thể click để lọc các comment theo số sao đánh giá (từ 1 đến 5 sao).
+5. **Ràng buộc Hủy đơn & Đánh giá (Hai chiều):** 
+   - Đơn hàng đã bị Hủy (CANCELLED) thì tuyệt đối không được phép comment đánh giá.
+   - Ngược lại, nếu đơn hàng đã có comment đánh giá thì hệ thống chặn không cho phép Hủy đơn hàng.
 
 > **Lưu ý:** branch MarketPlace có nhánh `feature/FEATURE-STP-01-reviews` từng thêm reviews — nếu còn dùng được thì kế thừa/hoàn thiện thay vì viết mới.
 

@@ -17,6 +17,7 @@ public class RabbitMQConfig {
     public static final String SETTLEMENT_QUEUE = "settlement.queue";
     public static final String WEBHOOK_QUEUE = "webhook.queue";
     public static final String NOTIFICATION_QUEUE = "notification.queue";
+    public static final String LOAN_QUEUE = "loan.queue";
 
     public static final String ROUTING_PAYMENT_REQUEST = "payment.request";
     public static final String ROUTING_PAYMENT_COMPLETED = "payment.completed";
@@ -48,6 +49,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue loanQueue() {
+        return new Queue(LOAN_QUEUE, true);
+    }
+
+    @Bean
     public Binding validateBinding(Queue validateQueue, TopicExchange paymentExchange) {
         return BindingBuilder.bind(validateQueue).to(paymentExchange).with(ROUTING_PAYMENT_REQUEST);
     }
@@ -65,6 +71,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding notificationBinding(Queue notificationQueue, TopicExchange paymentExchange) {
         return BindingBuilder.bind(notificationQueue).to(paymentExchange).with(ROUTING_PAYMENT_WILDCARD);
+    }
+
+    @Bean
+    public Binding loanBinding(Queue loanQueue, TopicExchange paymentExchange) {
+        return BindingBuilder.bind(loanQueue).to(paymentExchange).with(ROUTING_PAYMENT_COMPLETED);
     }
 
     @Bean

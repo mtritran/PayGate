@@ -74,8 +74,8 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        String accessToken = jwtTokenProvider.generateAccessToken(username);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+        String accessToken = jwtTokenProvider.generateAccessToken(username, user.getId(), user.getRole().name());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username, user.getId(), user.getRole().name());
 
         refreshTokenCacheService.saveRefreshToken(username, refreshToken, refreshTokenExpiration);
 
@@ -101,8 +101,8 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
-        String newAccessToken = jwtTokenProvider.generateAccessToken(username);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(username);
+        String newAccessToken = jwtTokenProvider.generateAccessToken(username, user.getId(), user.getRole().name());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(username, user.getId(), user.getRole().name());
 
         // Rotation: Lưu Refresh Token mới vào Redis, tự động vô hiệu hóa token cũ
         refreshTokenCacheService.saveRefreshToken(username, newRefreshToken, refreshTokenExpiration);

@@ -1,0 +1,16 @@
+/* Ép Mermaid hiển thị kích thước thật, không bị bóp nhỏ, và cho phép cuộn ngang */
+
+.markdown-rendered .mermaid {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    display: block !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+}
+
+.markdown-rendered .mermaid svg {
+    /* Ép SVG dùng kích thước tự nhiên của nó, không bị co lại theo chiều rộng của trang */
+    min-width: 1000px !important; 
+    max-width: unset !important;
+    height: auto !important;
+}

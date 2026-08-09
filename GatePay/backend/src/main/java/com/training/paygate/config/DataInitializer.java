@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountService accountService;
+    private final com.training.paygate.config.VietQrProperties vietQrProperties;
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -40,22 +41,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // 1. Seed SYSTEM account if missing
-        if (accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM).isEmpty()) {
-            log.info(">>> Provisioning SYSTEM Central Fund Account...");
-            Account sysAcc = Account.builder()
-                    .ownerId(0L)
-                    .ownerType(OwnerType.SYSTEM)
-                    .accountNumber("SYS0000000000000001")
-                    .balance(BigDecimal.valueOf(99_000_000_000.00))
-                    .currency("VND")
-                    .status(AccountStatus.ACTIVE)
-                    .build();
-            accountRepository.save(sysAcc);
-            log.info(">>> SYSTEM Central Fund Account created successfully.");
-        }
-
-        // 2. Seed default ADMIN account if missing
+        // 1. Seed default ADMIN account if missing
         User adminUser;
         if (!userRepository.existsByUsername(adminUsername)) {
             log.info(">>> Seeding default ADMIN account: username={}", adminUsername);
@@ -73,17 +59,44 @@ public class DataInitializer implements CommandLineRunner {
             log.info(">>> Default ADMIN account created successfully with username: {}", adminUsername);
         } else {
             adminUser = userRepository.findByUsername(adminUsername).orElse(null);
-            log.info(">>> ADMIN account '{}' already exists.", adminUsername);
+            if (adminUser != null && !passwordEncoder.matches(adminPassword, adminUser.getPassword())) {
+                adminUser.setPassword(passwordEncoder.encode(adminPassword));
+                adminUser.setRole(Role.ADMIN);
+                adminUser.setActive(true);
+                adminUser = userRepository.save(adminUser);
+                log.info(">>> Updated ADMIN password to match configured admin password.");
+            } else {
+                log.info(">>> ADMIN account '{}' already exists.", adminUsername);
+            }
         }
 
-        // 3. Ensure ADMIN user has a wallet account
-        if (adminUser != null && accountRepository.findByOwnerIdAndOwnerType(adminUser.getId(), OwnerType.USER).isEmpty()) {
+        // 2. Ensure ADMIN user has a wallet account
+        if (adminUser != null
+                && accountRepository.findByOwnerIdAndOwnerType(adminUser.getId(), OwnerType.USER).isEmpty()) {
             try {
                 accountService.createAccount(adminUser.getId(), OwnerType.USER);
                 log.info(">>> Provisioned User Wallet account for ADMIN successfully (ID: {})", adminUser.getId());
             } catch (Exception e) {
                 log.warn(">>> Account wallet provisioning for ADMIN skipped or failed: {}", e.getMessage());
             }
+        }
+
+        // 3. Seed SYSTEM account if missing
+        if (accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM).isEmpty()) {
+            log.info(">>> Provisioning SYSTEM Central Fund Account...");
+            String sysAccNumber = (vietQrProperties != null && vietQrProperties.getAccountNumber() != null)
+                    ? vietQrProperties.getAccountNumber()
+                    : "099988887777";
+            Account sysAcc = Account.builder()
+                    .ownerId(0L)
+                    .ownerType(OwnerType.SYSTEM)
+                    .accountNumber(sysAccNumber)
+                    .balance(BigDecimal.valueOf(99_000_000_000.00))
+                    .currency("VND")
+                    .status(AccountStatus.ACTIVE)
+                    .build();
+            accountRepository.save(sysAcc);
+            log.info(">>> SYSTEM Central Fund Account created successfully with account number: {}", sysAccNumber);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.training.paygate.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.training.paygate.enums.PaymentMethod;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,6 +35,8 @@ public record CheckoutCreateRequest(
 
         String description,
 
+        PaymentMethod paymentMethod,
+
         @NotBlank(message = "Return URL is required")
         String returnUrl,
 
@@ -47,6 +50,6 @@ public record CheckoutCreateRequest(
             String returnUrl,
             String cancelUrl
     ) {
-        this(apiKey, orderId, amount, null, null, null, null, null, description, returnUrl, cancelUrl);
+        this(apiKey, orderId, amount, null, null, null, null, null, description, null, returnUrl, cancelUrl);
     }
 }

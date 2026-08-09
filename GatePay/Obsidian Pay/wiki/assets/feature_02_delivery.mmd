@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant A as Admin (Kho)
+    participant S as System (DeliveryService)
+    participant K as Khách hàng
+
+    A->>S: POST /api/v1/orders/{id}/delivery
+           { carrier: "GHTK", trackingCode: "GHTK100200300", estimatedDelivery: "2026-08-12" }
+    S->>S: Validate: Order phải ở status SHIPPED
+    S->>S: Tạo Delivery { status: PENDING }
+    S->>S: Tạo DeliveryEvent đầu tiên { status: PENDING, note: "Đơn hàng đang được đóng gói" }
+    S-->>A: { deliveryId: 42, status: "PENDING" }
+
+    A->>S: PUT /api/v1/delivery/42/status { status: "IN_TRANSIT", note: "Đã giao cho GHTK" }
+    S->>S: Cập nhật Delivery.status = IN_TRANSIT
+    S->>S: Thêm DeliveryEvent { status: IN_TRANSIT, occurredAt: now() }
+    S-->>A: { deliveryId: 42, status: "IN_TRANSIT" }
+
+    K->>S: GET /api/v1/delivery/{orderId}
+    S-->>K: {
+              carrier: "GHTK",
+              trackingCode: "GHTK100200300",
+              status: "IN_TRANSIT",
+              estimatedDelivery: "2026-08-12",
+              events: [
+                { status: "PENDING", note: "Đóng gói", occurredAt: "2026-08-10T09:00" },
+                { status: "IN_TRANSIT", note: "Giao cho GHTK", occurredAt: "2026-08-10T14:30" }
+              ]
+            }
+
+    A->>S: PUT /api/v1/delivery/42/status { status: "DELIVERED", note: "Đã giao tận tay" }
+    S->>S: Delivery.status = DELIVERED
+    S->>S: TỰ ĐỘNG: Order.status = DELIVERED
+    S-->>A: { deliveryId: 42, status: "DELIVERED" }

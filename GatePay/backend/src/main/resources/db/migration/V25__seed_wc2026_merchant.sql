@@ -1,9 +1,8 @@
--- Seed Admin user if missing (so it is guaranteed to exist before inserting merchants)
+-- Seed Admin user if missing
 INSERT INTO users (username, email, password, full_name, role, active)
-VALUES ('admin', 'admin@paygate.dev', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWmXBDdcCNSrTQyTZbaG', 'System Administrator', 'ADMIN', TRUE)
+VALUES ('admin', 'admin@paygate.dev', '$2a$10$EblZqNptyYvcLm/VwDCVAuBjzZOI7khzdyGPBr08PpIi0na624b8.', 'System Administrator', 'ADMIN', TRUE)
 ON CONFLICT (username) DO NOTHING;
 
--- Seed WC2026 Ticket Platform as a merchant on PayGate
 -- Uses admin user as the merchant owner
 INSERT INTO merchants (user_id, merchant_name, merchant_code, api_key, webhook_url, active, status)
 SELECT u.id, 'WC2026 Ticket Platform', 'WC2026_TICKETS', '2b834fbb-f02c-4d84-8dbf-b93e39e1f309',

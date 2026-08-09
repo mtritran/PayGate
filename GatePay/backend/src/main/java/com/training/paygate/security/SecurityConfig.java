@@ -50,7 +50,9 @@ public class SecurityConfig {
                                 "/api/v1/checkout/*/borrower-profile",
                                 "/api/v1/checkout/*/credit-assessment",
                                 "/api/v1/checkout/*/bnpl-proposals",
-                                "/api/v1/checkout/bnpl-proposals/*/confirm"
+                                "/api/v1/checkout/bnpl-proposals/*/confirm",
+                                "/api/v1/refunds",
+                                "/api/v1/integration/bank-webhook"
                         ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()

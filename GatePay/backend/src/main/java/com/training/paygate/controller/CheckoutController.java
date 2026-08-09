@@ -21,17 +21,20 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.training.paygate.annotation.RateLimit;
+
 import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/checkout")
 @RequiredArgsConstructor
-@Tag(name = "Payment Gateway Checkout", description = "APIs for Third-Party Merchants to initiate checkout and customers to authenticate transactions")
+@Tag(name = "Payment Gateway Checkout", description = "APIs for third-party merchants to initiate checkout sessions and customers to authenticate payments")
 public class CheckoutController {
 
     private final CheckoutService checkoutService;
 
     @PostMapping("/create")
+    @RateLimit(limit = 60, windowSeconds = 60, key = "checkout_create")
     @Operation(summary = "Merchant initiates a checkout session (Public API for Merchants)")
     public ApiResponse<CheckoutCreateResponse> createCheckoutSession(
             jakarta.servlet.http.HttpServletRequest httpRequest,
@@ -46,20 +49,19 @@ public class CheckoutController {
     @GetMapping("/info/{token}")
     @Operation(summary = "Get public checkout session details by token")
     public ApiResponse<CheckoutInfoResponse> getCheckoutInfo(@PathVariable String token) {
-        CheckoutInfoResponse info = checkoutService.getCheckoutInfo(token);
-        return ApiResponse.success(info);
+        return ApiResponse.success(checkoutService.getCheckoutInfo(token));
     }
 
     @GetMapping("/info/txn/{transactionRef}")
     @Operation(summary = "Get checkout session details by transaction reference")
     public ApiResponse<CheckoutInfoResponse> getCheckoutInfoByTxnRef(@PathVariable String transactionRef) {
-        CheckoutInfoResponse info = checkoutService.getCheckoutInfoByTxnRef(transactionRef);
-        return ApiResponse.success(info);
+        return ApiResponse.success(checkoutService.getCheckoutInfoByTxnRef(transactionRef));
     }
 
     @PostMapping("/process")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Customer authenticates with OTP to complete checkout payment")
+    @RateLimit(limit = 5, windowSeconds = 60, key = "checkout_process")
+    @Operation(summary = "Customer authenticates OTP and completes checkout payment")
     public ApiResponse<CheckoutProcessResponse> processCheckout(
             Principal principal,
             @Valid @RequestBody CheckoutProcessRequest request,

@@ -4,7 +4,7 @@ import com.training.paygate.common.ApiResponse;
 import com.training.paygate.common.PageResponse;
 import com.training.paygate.entity.WebhookLog;
 import com.training.paygate.enums.WebhookStatus;
-import com.training.paygate.repository.WebhookLogRepository;
+import com.training.paygate.service.WebhookLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Webhook Audit (Admin)", description = "Webhook logs lookup and status filtering APIs (ROLE_ADMIN required)")
 public class WebhookLogController {
 
-    private final WebhookLogRepository webhookLogRepository;
+    private final WebhookLogService webhookLogService;
 
     @GetMapping
     @Operation(summary = "Get paginated webhook logs", description = "Retrieves a paginated list of webhook execution logs, optionally filtered by status.")
@@ -43,9 +43,7 @@ public class WebhookLogController {
         Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-        Page<WebhookLog> result = (status != null)
-                ? webhookLogRepository.findByStatus(status, pageRequest)
-                : webhookLogRepository.findAll(pageRequest);
+        Page<WebhookLog> result = webhookLogService.getLogs(status, pageRequest);
 
         return ApiResponse.success(PageResponse.from(result, log -> log));
     }
