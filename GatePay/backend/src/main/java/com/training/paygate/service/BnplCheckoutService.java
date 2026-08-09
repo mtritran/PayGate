@@ -29,9 +29,15 @@ import com.training.paygate.repository.LoanRepository;
 import com.training.paygate.repository.LoanScheduleRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.UserRepository;
+import com.training.paygate.messaging.publisher.PaymentEventPublisher;
+import com.training.paygate.messaging.event.PaymentCompletedEvent;
+import com.training.paygate.repository.MerchantRepository;
+import com.training.paygate.entity.Merchant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -62,6 +68,8 @@ public class BnplCheckoutService {
     private final AccountService accountService;
     private final BnplProfileRepository bnplProfileRepository;
     private final NotificationService notificationService;
+    private final PaymentEventPublisher paymentEventPublisher;
+    private final MerchantRepository merchantRepository;
 
     @Transactional
     public BnplCheckoutResponse selectCustomer(String token, Long customerId) {
@@ -306,9 +314,44 @@ public class BnplCheckoutService {
         session.setTransactionRef(transaction.getTransactionRef());
         checkoutSessionRepository.save(session);
 
-        String msg = String.format("Khoản vay BNPL %s đã được tạo thành công cho đơn hàng %s. Số tiền: %s VND.",
+        String merchantWebhookUrl = null;
+        if (session.getMerchantId() != null) {
+            Merchant merchant = merchantRepository.findById(session.getMerchantId()).orElse(null);
+            if (merchant != null) {
+                merchantWebhookUrl = merchant.getWebhookUrl();
+            }
+        }
+
+        User user = userRepository.findById(proposal.getUserId()).orElse(null);
+
+        // Publish the webhook event AFTER the DB transaction commits. Publishing inside the
+        // @Transactional method would let the RabbitMQ consumer receive the message before the
+        // checkout session's transactionRef is visible in the DB — the consumer's
+        // findByTransactionRef would return empty → orderId null → webhook skipped.
+        final PaymentCompletedEvent event = new PaymentCompletedEvent(
+                transaction.getTransactionRef(),
+                transaction.getMerchantId(),
+                merchantWebhookUrl,
+                transaction.getAmount(),
+                "COMPLETED",
+                user != null ? user.getEmail() : null,
+                user != null ? user.getUsername() : null,
+                merchantAccount.getAccountNumber(),
+                transaction.getDescription(),
+                transaction.getType(),
+                user != null ? user.getId() : null);
+
+        final String notifMsg = String.format("Khoản vay BNPL %s đã được tạo thành công cho đơn hàng %s. Số tiền: %s VND.",
                 loan.getLoanRef(), session.getOrderId(), loan.getAmount());
-        notificationService.createNotification(proposal.getUserId(), "Tạo khoản vay thành công", msg, "BNPL_LOAN_CREATED");
+        final Long notifUserId = proposal.getUserId();
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                paymentEventPublisher.publishPaymentCompleted(event);
+                notificationService.createNotification(notifUserId, "Tạo khoản vay thành công", notifMsg, "BNPL_LOAN_CREATED");
+            }
+        });
 
         return proposalResponse(proposal, loan.getLoanRef());
     }

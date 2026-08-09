@@ -17,6 +17,8 @@ import com.training.paygate.enums.PaymentMethod;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.mapper.CheckoutMapper;
+import com.training.paygate.messaging.event.CheckoutCancelledEvent;
+import com.training.paygate.messaging.publisher.PaymentEventPublisher;
 import com.training.paygate.repository.AccountRepository;
 import com.training.paygate.repository.CheckoutSessionRepository;
 import com.training.paygate.repository.MerchantRepository;
@@ -26,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,6 +43,7 @@ public class CheckoutService {
     private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_PROCESSING = "PROCESSING";
     private static final String STATUS_EXPIRED = "EXPIRED";
+    private static final String STATUS_CANCELLED = "CANCELLED";
 
     private final MerchantRepository merchantRepository;
     private final CheckoutSessionRepository checkoutSessionRepository;
@@ -47,6 +52,7 @@ public class CheckoutService {
     private final OtpService otpService;
     private final VietQrProperties vietQrProperties;
     private final CheckoutMapper checkoutMapper;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
@@ -240,5 +246,48 @@ public class CheckoutService {
                 session.getToken(), session.getOrderId(), tx.transactionRef());
 
         return new CheckoutProcessResponse(tx.transactionRef(), redirectUrl);
+    }
+
+    /**
+     * Cancel a checkout session and notify the merchant via webhook.
+     * Called when the customer clicks "Cancel" on the PayGate checkout page.
+     */
+    @Transactional
+    public void cancelCheckout(String token) {
+        CheckoutSession session = checkoutSessionRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Checkout session not found"));
+
+        // Only cancel sessions that are still pending
+        if (!STATUS_PENDING.equals(session.getStatus())) {
+            log.info("Checkout {} is already {} — cancel is a no-op", token, session.getStatus());
+            return;
+        }
+
+        session.setStatus(STATUS_CANCELLED);
+        checkoutSessionRepository.save(session);
+        log.info("Checkout session {} cancelled for order {}", token, session.getOrderId());
+
+        // Build and publish cancel webhook AFTER DB commit to avoid the race condition where
+        // WebhookConsumer receives the event before the session is visible in DB.
+        String webhookUrl = null;
+        if (session.getMerchantId() != null) {
+            webhookUrl = merchantRepository.findById(session.getMerchantId())
+                    .map(Merchant::getWebhookUrl).orElse(null);
+        }
+
+        final String finalWebhookUrl = webhookUrl;
+        final CheckoutCancelledEvent cancelEvent = new CheckoutCancelledEvent(
+                token,
+                session.getOrderId(),
+                session.getMerchantId(),
+                finalWebhookUrl,
+                session.getAmount());
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                paymentEventPublisher.publishCheckoutCancelled(cancelEvent);
+            }
+        });
     }
 }

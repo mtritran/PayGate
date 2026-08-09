@@ -21,6 +21,7 @@ public class RabbitMQConfig {
 
     public static final String ROUTING_PAYMENT_REQUEST = "payment.request";
     public static final String ROUTING_PAYMENT_COMPLETED = "payment.completed";
+    public static final String ROUTING_PAYMENT_CANCELLED = "payment.cancelled";
     public static final String ROUTING_PAYMENT_WILDCARD = "payment.#";
 
     @Bean
@@ -66,6 +67,11 @@ public class RabbitMQConfig {
     @Bean
     public Binding webhookBinding(Queue webhookQueue, TopicExchange paymentExchange) {
         return BindingBuilder.bind(webhookQueue).to(paymentExchange).with(ROUTING_PAYMENT_COMPLETED);
+    }
+
+    @Bean
+    public Binding webhookCancelBinding(Queue webhookQueue, TopicExchange paymentExchange) {
+        return BindingBuilder.bind(webhookQueue).to(paymentExchange).with(ROUTING_PAYMENT_CANCELLED);
     }
 
     @Bean

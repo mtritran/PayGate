@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -95,7 +95,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
         </div>
 
         <div class="loans-grid stagger-children" *ngIf="myLoans().length > 0">
-          <div *ngFor="let loan of myLoans()" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
+          <div *ngFor="let loan of myLoans(); trackBy: trackByLoanId" class="loan-card" [class.border-active]="loan.status === 'ACTIVE'">
             <div class="card-top">
               <div>
                 <span class="loan-ref font-mono">{{ loan.loanRef }}</span>
@@ -158,7 +158,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
       <!-- ADMIN LOANS LIST -->
       <div *ngIf="!loading() && activeTab() === 'admin-loans' && isAdmin()">
         <div class="loans-grid stagger-children">
-          <div *ngFor="let loan of adminLoans()" class="loan-card admin-card">
+          <div *ngFor="let loan of adminLoans(); trackBy: trackByLoanId" class="loan-card admin-card">
             <div class="card-top">
               <div>
                 <span class="loan-ref font-mono">{{ loan.loanRef }}</span>
@@ -178,7 +178,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
                 <span>Total payable:</span> <strong>{{ loan.totalRepayable | currency:'VND':'symbol':'1.0-0' }}</strong>
               </div>
               <div class="detail-item">
-                <span>Created at:</span> <strong>{{ loan.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                <span>User:</span> <strong>{{ loan.userFullName || loan.userEmail || ('User #' + loan.userId) }}</strong>
               </div>
             </div>
 
@@ -186,14 +186,84 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
               <span class="reason-label">Reason:</span> {{ loan.reason }}
             </div>
 
-            <!-- Admin action buttons -->
-            <div class="admin-actions" *ngIf="loan.status === 'PENDING_APPROVAL'">
-              <button class="btn-approve" (click)="approveLoan(loan.id)">✓ Approve Loan Offer</button>
-              <button class="btn-reject" (click)="rejectLoan(loan.id)">✕ Reject</button>
+            <div class="card-actions admin-actions" *ngIf="loan.status === 'PENDING_APPROVAL'">
+              <button class="btn-approve" (click)="approveLoan(loan.id)">Approve Offer</button>
+              <button class="btn-reject" (click)="rejectLoan(loan.id)">Reject</button>
             </div>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- LOAN DETAIL & REPAYMENT MODAL -->
+    <div *ngIf="selectedLoan()" class="modal-overlay fade-in">
+      <div class="modal-card wide-modal">
+        <div class="modal-header">
+          <div>
+            <span class="loan-ref font-mono">{{ selectedLoan()?.loanRef }}</span>
+            <h2>Loan Details & Repayment Schedule</h2>
+          </div>
+          <button class="btn-close" (click)="selectedLoan.set(null)">✕</button>
+        </div>
+
+        <div class="modal-body" *ngIf="selectedLoan() as loan">
+          <!-- Summary strip -->
+          <div class="loan-summary-strip">
+            <div>
+              <small>Total outstanding balance</small>
+              <h3 class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</h3>
+            </div>
+            <div>
+              <small>Term</small>
+              <h4>{{ loan.termMonths }} months</h4>
+            </div>
+            <div>
+              <small>Payment per period</small>
+              <h4>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</h4>
+            </div>
+          </div>
+
+          <!-- Repayment actions -->
+          <div class="repay-actions-box" *ngIf="loan.status === 'ACTIVE' && loan.remainingAmount > 0">
+            <button class="btn-repay-period" (click)="repayLoan(loan.id, 'NEXT_PERIOD')" [disabled]="repaying()">
+              💳 Pay next period
+            </button>
+            <button class="btn-repay-all" (click)="repayLoan(loan.id, 'FULL_SETTLEMENT')" [disabled]="repaying()">
+              ✨ Full settlement ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
+            </button>
+          </div>
+
+          <!-- Schedule list -->
+          <h4 class="schedule-title">Detailed Repayment Schedule ({{ loan.schedules?.length || 0 }} periods)</h4>
+          <div class="schedule-table-wrap">
+            <table class="schedule-table">
+              <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Due date</th>
+                    <th>Period total</th>
+                    <th>Status</th>
+                  </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of loan.schedules; trackBy: trackByScheduleId">
+                  <td class="font-mono">Period {{ s.periodNumber }}</td>
+                  <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ s.amountDue | currency:'VND':'symbol':'1.0-0' }}</td>
+                  <td>
+                    <span class="schedule-badge" 
+                          [class.schedule-paid]="s.status === 'PAID' || s.status === 'PROCESSING'" 
+                          [class.schedule-unpaid]="s.status === 'PENDING' || s.status === 'UNPAID'">
+                      {{ (s.status === 'PAID' || s.status === 'PROCESSING') ? 'Paid' : 'Unpaid' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
 
       <!-- APPLY LOAN MODAL -->
       <div *ngIf="showApplyModal()" class="modal-overlay fade-in">
@@ -291,73 +361,6 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
         </div>
       </div>
 
-      <!-- DETAIL & REPAYMENT MODAL -->
-      <div *ngIf="selectedLoan()" class="modal-overlay fade-in">
-        <div class="modal-card wide-modal">
-          <div class="modal-header">
-            <div>
-              <span class="loan-ref font-mono">{{ selectedLoan()?.loanRef }}</span>
-              <h2>Loan Details & Repayment Schedule</h2>
-            </div>
-            <button class="btn-close" (click)="selectedLoan.set(null)">✕</button>
-          </div>
-
-          <div class="modal-body" *ngIf="selectedLoan() as loan">
-            <div class="loan-summary-strip">
-              <div>
-                <small>Total outstanding balance</small>
-                <h3 class="text-emerald">{{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }}</h3>
-              </div>
-              <div>
-                <small>Term</small>
-                <h4>{{ loan.termMonths }} months</h4>
-              </div>
-              <div>
-                <small>Payment per period</small>
-                <h4>{{ loan.monthlyAmount | currency:'VND':'symbol':'1.0-0' }}</h4>
-              </div>
-            </div>
-
-            <!-- Repayment actions -->
-            <div class="repay-actions-box" *ngIf="loan.status === 'ACTIVE' && loan.remainingAmount > 0">
-              <button class="btn-repay-period" (click)="repayLoan(loan.id, 'NEXT_PERIOD')" [disabled]="repaying()">
-                💳 Pay next period
-              </button>
-              <button class="btn-repay-all" (click)="repayLoan(loan.id, 'FULL_SETTLEMENT')" [disabled]="repaying()">
-                ✨ Full settlement ({{ loan.remainingAmount | currency:'VND':'symbol':'1.0-0' }})
-              </button>
-            </div>
-
-            <!-- Schedule list -->
-            <h4 class="schedule-title">Detailed Repayment Schedule ({{ loan.schedules?.length || 0 }} periods)</h4>
-            <div class="schedule-table-wrap">
-              <table class="schedule-table">
-                <thead>
-                    <tr>
-                      <th>Period</th>
-                      <th>Due date</th>
-                      <th>Period total</th>
-                      <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let s of loan.schedules">
-                    <td class="font-mono">Period {{ s.periodNumber }}</td>
-                    <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
-                    <td>{{ s.amountDue | currency:'VND':'symbol':'1.0-0' }}</td>
-                    <td>
-                      <span class="schedule-badge" [class.schedule-paid]="s.status === 'PAID'" [class.schedule-unpaid]="s.status === 'UNPAID'">
-                        {{ s.status === 'PAID' ? 'Paid' : 'Unpaid' }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- OTP Security Modal for Digital Contract Signature -->
       <app-pin-modal
         [isOpen]="showPinModal()"
@@ -365,7 +368,6 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
         (confirmed)="onPinConfirmed($event)"
         (cancelled)="showPinModal.set(false)"
       ></app-pin-modal>
-    </div>
   `,
   styles: [`
     @keyframes fadeInUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
@@ -596,7 +598,7 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
     .card-actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
   `]
 })
-export class LoanDashboardComponent implements OnInit {
+export class LoanDashboardComponent implements OnInit, OnDestroy {
   private loanService = inject(LoanService);
   private authService = inject(AuthService);
   private notification = inject(NotificationService);
@@ -618,6 +620,9 @@ export class LoanDashboardComponent implements OnInit {
   applyTermMonths = 6;
   applyReason = '';
 
+  /** SWR: subscription handle for background revalidation polling */
+  private revalidationSub: any = null;
+
   isAdmin(): boolean {
     const role = this.authService.getRole();
     return role === 'ADMIN' || role === 'ROLE_ADMIN';
@@ -625,6 +630,10 @@ export class LoanDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadLoans();
+  }
+
+  ngOnDestroy(): void {
+    this.stopRevalidation();
   }
 
   loadLoans(): void {
@@ -760,17 +769,78 @@ export class LoanDashboardComponent implements OnInit {
     this.loanService.repayLoan(loanId, type).subscribe({
       next: (res) => {
         this.repaying.set(false);
-        this.notification.success('Payment loans vay thành công!');
+        this.notification.success('Thanh toán khoản vay thành công!');
         if (res.data) {
+          // Instant optimistic update of modal and background list
           this.selectedLoan.set(res.data);
+          this.myLoans.set(this.myLoans().map(l => l.id === res.data!.id ? { ...l, ...res.data! } : l));
         }
-        this.loadLoans();
+        // Single silent background revalidation after 1.5s to sync final async DB state
+        setTimeout(() => this.revalidateLoans(), 1500);
       },
       error: (err) => {
         this.repaying.set(false);
-        this.notification.error(err?.error?.message || 'Payment loans vay thất bại');
+        this.notification.error(err?.error?.message || 'Thanh toán thất bại');
       }
     });
+  }
+
+  trackByLoanId(index: number, loan: LoanResponse): number {
+    return loan.id;
+  }
+
+  trackByScheduleId(index: number, s: any): number {
+    return s.id || index;
+  }
+
+  /**
+   * SWR: Silently revalidate loan list + selected loan detail in the background.
+   * Unlike loadLoans(), this does NOT set loading=true so the UI remains interactive.
+   */
+  private revalidateLoans(): void {
+    this.loanService.getMyLoans().subscribe({
+      next: (res) => {
+        const allLoans = res.data?.content ?? [];
+        const nonBnplLoans = allLoans.filter(l => !l.reason || !l.reason.startsWith('BNPL'));
+        this.myLoans.set(nonBnplLoans);
+      }
+    });
+
+    // Also revalidate the selected loan detail if the modal is open
+    const current = this.selectedLoan();
+    if (current) {
+      this.loanService.getLoanById(current.id).subscribe({
+        next: (res) => {
+          if (res.data) {
+            this.selectedLoan.set(res.data);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * SWR: Start background polling after a mutation (payment).
+   * Polls every 3s for up to 30s to catch async status updates,
+   * then stops automatically to conserve resources.
+   */
+  private startRevalidation(): void {
+    this.stopRevalidation();
+    let elapsed = 0;
+    this.revalidationSub = setInterval(() => {
+      elapsed += 3000;
+      this.revalidateLoans();
+      if (elapsed >= 30000) {
+        this.stopRevalidation();
+      }
+    }, 3000);
+  }
+
+  private stopRevalidation(): void {
+    if (this.revalidationSub) {
+      clearInterval(this.revalidationSub);
+      this.revalidationSub = null;
+    }
   }
 
   approveLoan(loanId: number): void {

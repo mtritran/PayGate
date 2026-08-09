@@ -42,7 +42,8 @@ public class SignatureValidationFilter extends OncePerRequestFilter {
 
         // Đọc toàn bộ Body ngay lập tức và lưu vào mảng byte để xài nhiều lần
         CachedBodyHttpServletRequest cachedBodyHttpServletRequest = new CachedBodyHttpServletRequest(request);
-        String jsonBody = new String(cachedBodyHttpServletRequest.getCachedBody(), request.getCharacterEncoding() != null ? request.getCharacterEncoding() : "UTF-8");
+        String jsonBody = new String(cachedBodyHttpServletRequest.getCachedBody(),
+                request.getCharacterEncoding() != null ? request.getCharacterEncoding() : "UTF-8");
 
         try {
             String expectedSignature = HmacUtils.generateSignature(jsonBody, merchant.getApiKey());
@@ -54,7 +55,7 @@ public class SignatureValidationFilter extends OncePerRequestFilter {
             }
 
             request.setAttribute("validatedMerchantCode", merchantCode);
-            
+
             // Cho phép đi tiếp, nhớ truyền cái request đã được bọc vào nhé
             filterChain.doFilter(cachedBodyHttpServletRequest, response);
 

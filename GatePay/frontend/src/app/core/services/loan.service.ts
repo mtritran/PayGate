@@ -6,7 +6,7 @@ import { ApiResponse } from '../models/api-response.model';
 import { PageResponse } from '../models/page-response.model';
 
 export type LoanStatus = 'PENDING_APPROVAL' | 'OFFERED' | 'ACTIVE' | 'PAID_OFF' | 'REJECTED' | 'OVERDUE';
-export type LoanScheduleStatus = 'UNPAID' | 'PAID' | 'OVERDUE';
+export type LoanScheduleStatus = 'UNPAID' | 'PENDING' | 'PROCESSING' | 'PAID' | 'OVERDUE';
 export type RepayType = 'NEXT_PERIOD' | 'FULL_SETTLEMENT';
 
 export interface LoanScheduleResponse {
@@ -34,6 +34,9 @@ export interface LoanResponse {
   disbursedAt?: string;
   createdAt: string;
   schedules?: LoanScheduleResponse[];
+  userId?: number;
+  userFullName?: string;
+  userEmail?: string;
 }
 
 export interface LoanApplyRequest {

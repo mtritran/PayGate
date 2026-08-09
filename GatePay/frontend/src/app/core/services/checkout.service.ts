@@ -115,4 +115,8 @@ export class CheckoutService {
   confirmBnplProposal(proposalRef: string): Observable<ApiResponse<BnplProposalResult>> {
     return this.http.post<ApiResponse<BnplProposalResult>>(`${this.apiUrl}/bnpl-proposals/${proposalRef}/confirm`, {});
   }
+
+  cancelCheckout(token: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/cancel/${token}`, {});
+  }
 }

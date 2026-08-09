@@ -78,4 +78,11 @@ public class CheckoutController {
         }
         return request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown_ip";
     }
+
+    @PostMapping("/cancel/{token}")
+    @Operation(summary = "Cancel a pending checkout session and notify merchant via webhook")
+    public ApiResponse<Void> cancelCheckout(@PathVariable String token) {
+        checkoutService.cancelCheckout(token);
+        return ApiResponse.success("Checkout session cancelled", null);
+    }
 }
