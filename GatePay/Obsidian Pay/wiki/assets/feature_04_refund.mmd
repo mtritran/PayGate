@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant K as Khách
+    participant M as MarketPlace
+    participant G as GatePay
+
+    K->>M: Yêu cầu trả hàng / Hủy đơn ORD-001
+    M->>M: Kiểm tra: Đây có phải đơn BNPL không?
+    alt Đơn BNPL
+        M-->>K: ❌ Lỗi: "Đơn BNPL không thể hoàn tiền"
+    else Đơn thường
+        M->>G: POST /api/v1/refunds { transactionRef, orderId, amount, reason }
+        G->>G: Tìm giao dịch gốc, verify status=COMPLETED
+        G->>G: Kiểm tra idempotency: orderId đã tồn tại refund chưa?
+        G->>G: Validate amount ≤ tổng đã thanh toán
+        G->>G: Lock tài khoản Merchant + User (theo thứ tự id tăng dần)
+        G->>G: Merchant.balance -= amount (trừ ví merchant)
+        G->>G: User.balance += amount (cộng ví khách)
+        G->>G: INSERT transaction {type: REFUND, status: COMPLETED}
+        G->>G: INSERT ledger_entries x2 (DEBIT Merchant + CREDIT User)
+        G-->>M: { refundId, status: "COMPLETED", amountRefunded: amount }
+        M->>M: Order.status → REFUNDED
+        M->>M: inventoryFacade.release() (trả lại tồn kho)
+        M-->>K: Hoàn tiền thành công
+    end

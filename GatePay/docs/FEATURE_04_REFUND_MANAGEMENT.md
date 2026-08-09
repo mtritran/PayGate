@@ -12,6 +12,8 @@
 ## 📌 1. Mô tả Nghiệp vụ & Kịch bản
 Khi Khách hàng yêu cầu hủy đơn hoặc trả hàng trên MarketPlace, hệ thống tự động kích hoạt luồng **Hoàn tiền (Refund)** bảo mật:
 
+> **LƯU Ý CẬP NHẬT MỚI DÀNH CHO TRÍ v2 (MarketPlace):** Đơn hàng mua bằng hình thức trả góp (BNPL) tuyệt đối **KHÔNG** được phép gửi yêu cầu Trả hàng / Hoàn tiền. Trí v2 cần block ngay điều kiện này ở MarketPlace. Luồng hoàn tiền BNPL phức tạp phía dưới tạm thời bị vô hiệu hóa từ nguồn.
+
 1. **Đối với Đơn hàng Mua Thường:** Hoàn tiền ròng lại trực tiếp vào Số dư Ví GatePay của khách hàng.
 2. **Đối với Đơn hàng Mua Trả Góp BNPL (Hoàn Toàn Bộ):** Tự động **Hủy/Hoãn toàn bộ các kỳ trả góp `installments` chưa đến hạn**, và hoàn trả lại số tiền khách đã thanh toán ở các kỳ trước đó về Ví.
 3. **Hoàn tiền một phần (Partial Refund):** Khi khách chỉ trả 1 vài sản phẩm trong đơn.

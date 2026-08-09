@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant K as Khách (đã mua)
+    participant S as System (ReviewService)
+
+    K->>S: GET /api/v1/products/{id}/reviews
+    S-->>K: { averageRating: 4.2, reviewCount: 38, reviews: [...] }
+
+    K->>S: POST /api/v1/products/{id}/reviews { rating: 4, comment: "Chất lượng tốt" }
+    S->>S: Verify JWT → lấy userId
+    S->>S: Kiểm tra: User có đơn hàng DELIVERED chứa sản phẩm này không?
+    alt Chưa mua hoặc chưa DELIVERED
+        S-->>K: 403 "Bạn chưa mua sản phẩm này"
+    else Đã mua và đã DELIVERED
+        S->>S: Kiểm tra: User đã review sản phẩm này chưa?
+        alt Đã review rồi
+            S-->>K: 409 "Bạn đã đánh giá sản phẩm này rồi"
+        else Chưa review
+            S->>S: INSERT reviews { product_id, user_id, rating, comment, status: APPROVED }
+            S->>S: Cập nhật average_rating trong products
+            S-->>K: 201 { reviewId, rating, comment, status: "APPROVED" }
+        end
+    end

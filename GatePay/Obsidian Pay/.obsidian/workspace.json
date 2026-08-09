@@ -1,0 +1,221 @@
+{
+  "main": {
+    "id": "d91714350dfcd3d7",
+    "type": "split",
+    "children": [
+      {
+        "id": "6f672176cee232f4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4968c09428a33e29",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "wiki/Feature_01_BNPL.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Feature_01_BNPL"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "12d95fffdc07cf45",
+    "type": "split",
+    "children": [
+      {
+        "id": "a6fc8d0bc8c0aa1e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "008c14ce190d8a02",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Trình duyệt tệp"
+            }
+          },
+          {
+            "id": "c1bfac528914189d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Tìm kiếm"
+            }
+          },
+          {
+            "id": "59a81d6a0cefc969",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Đánh dấu"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "02b507fbc36f820d",
+    "type": "split",
+    "children": [
+      {
+        "id": "c480fd7a59e4298a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6a0b926277ec7f58",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "wiki/Feature_04_Refund_Settlement.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": true,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Liên kết đến"
+            }
+          },
+          {
+            "id": "2d9ab6871decb750",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "wiki/Feature_04_Refund_Settlement.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Liên kết đi ra"
+            }
+          },
+          {
+            "id": "8574c163419d9868",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Thẻ"
+            }
+          },
+          {
+            "id": "539a489203d4b9cd",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Tất cả thuộc tính"
+            }
+          },
+          {
+            "id": "cc31dca563835524",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "wiki/Feature_04_Refund_Settlement.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Đề cương"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 575.796875,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Mở bộ chuyển đổi nhanh": false,
+      "graph:Mở xem biểu đồ": false,
+      "canvas:Tạo bảng mới": false,
+      "daily-notes:Mở ghi chú hôm nay": false,
+      "templates:Chèn mẫu": false,
+      "command-palette:Mở khay lệnh": false,
+      "bases:Tạo cơ sở mới": false,
+      "mermaid-tools:Open Mermaid Toolbar": false
+    }
+  },
+  "active": "4968c09428a33e29",
+  "lastOpenFiles": [
+    "wiki/Security_Model.md",
+    "wiki/Feature_01_BNPL.md",
+    "wiki/assets/revert_mermaid.js",
+    "wiki/assets/convert_mermaid.js",
+    "wiki/assets/feature_03_review.mmd",
+    "wiki/assets/feature_02_delivery.mmd",
+    "wiki/assets/feature_04_payout.mmd",
+    "wiki/assets/feature_04_refund.mmd",
+    "wiki/assets/feature_01_bnpl.mmd",
+    "wiki/assets",
+    "wiki/Features_02_03_04_05.md",
+    "wiki/Feature_04_Refund_Settlement.md",
+    "wiki/Features_02_03_05.md",
+    "System Overview.md",
+    "index.md",
+    "wiki/Feature_00_Payment_Gateway.md",
+    "Feature 00 - Payment Gateway.md",
+    "wiki/Services_Overview.md",
+    "wiki/Database_Design.md",
+    "wiki/System_Overview.md",
+    "log.md",
+    "AGY.md",
+    "Chào mừng.md",
+    "wiki/Team_And_Roadmap.md",
+    "wiki",
+    "raw/assets"
+  ]
+}

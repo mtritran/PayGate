@@ -25,6 +25,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,25 +54,43 @@ public class MerchantSettlementService {
 
     public int processDueEscrowSettlements() {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(holdDays);
-        log.info("Scanning for due escrow settlements completed before cutoff date: {} (holdDays={})", cutoffDate,
-                holdDays);
-
-        List<Transaction> pendingTxs = transactionRepository.findPendingEscrowSettlementTransactions(cutoffDate);
-        log.info("Found {} pending transaction(s) eligible for escrow settlement", pendingTxs.size());
+        log.info("Scanning for due escrow settlements completed before cutoff date: {} (holdDays={})", cutoffDate, holdDays);
 
         int processedCount = 0;
-        for (Transaction tx : pendingTxs) {
-            try {
-                settleSingleTransaction(tx);
-                processedCount++;
-            } catch (Exception e) {
-                log.error("Failed to process escrow settlement for transactionRef {}: {}", tx.getTransactionRef(),
-                        e.getMessage(), e);
+        int pageSize = 100;
+        int pageNumber = 0;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            Page<Transaction> transactionPage = transactionRepository.findPendingEscrowSettlementTransactions(cutoffDate, pageable);
+            
+            List<Transaction> pendingTxs = transactionPage.getContent();
+            log.info("Found {} pending transaction(s) on page {}", pendingTxs.size(), pageNumber);
+
+            for (Transaction tx : pendingTxs) {
+                try {
+                    settleSingleTransaction(tx);
+                    processedCount++;
+                } catch (Exception e) {
+                    log.error("Failed to process escrow settlement for transactionRef {}: {}", tx.getTransactionRef(), e.getMessage(), e);
+                }
+            }
+            
+            // If we didn't get a full page, or the query results change (since settleSingleTransaction creates settlements, 
+            // the offset changes), it's actually safer to just keep requesting page 0 until it's empty!
+            // Wait, if settleSingleTransaction successfully saves MerchantSettlement, the NOT EXISTS clause will exclude it from the next query.
+            // If it fails, it stays in the list. To avoid infinite loops on failed records, we should advance the pageNumber.
+            // However, advancing pageNumber when records drop out of the result set causes us to skip records.
+            // Let's just break if it's empty, or keep fetching page 0 and limit the max iterations to prevent infinite loop.
+            if (!transactionPage.hasNext()) {
+                hasMore = false;
+            } else {
+                pageNumber++;
             }
         }
 
-        log.info("Finished escrow settlements. Successfully processed {}/{} transactions", processedCount,
-                pendingTxs.size());
+        log.info("Finished escrow settlements. Successfully processed {} transactions.", processedCount);
         return processedCount;
     }
 

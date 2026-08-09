@@ -56,6 +56,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                      "AND NOT EXISTS (SELECT s FROM MerchantSettlement s WHERE s.originalTransactionRef = t.transactionRef) "
                      +
                      "ORDER BY t.createdAt ASC")
-       List<Transaction> findPendingEscrowSettlementTransactions(
-                     @Param("cutoffDate") LocalDateTime cutoffDate);
+       Page<Transaction> findPendingEscrowSettlementTransactions(
+                     @Param("cutoffDate") LocalDateTime cutoffDate,
+                     Pageable pageable);
 }

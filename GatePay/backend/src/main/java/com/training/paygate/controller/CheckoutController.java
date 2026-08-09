@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.training.paygate.annotation.RateLimit;
+
 import java.security.Principal;
 
 @RestController
@@ -26,6 +28,7 @@ public class CheckoutController {
     private final CheckoutService checkoutService;
 
     @PostMapping("/create")
+    @RateLimit(limit = 60, windowSeconds = 60, key = "checkout_create")
     @Operation(summary = "Merchant initiates checkout session (Public API for merchants)")
     public ApiResponse<CheckoutCreateResponse> createCheckoutSession(@Valid @RequestBody CheckoutCreateRequest request) {
         CheckoutCreateResponse response = checkoutService.createCheckoutSession(request);
@@ -46,6 +49,7 @@ public class CheckoutController {
 
     @PostMapping("/process")
     @PreAuthorize("isAuthenticated()")
+    @RateLimit(limit = 5, windowSeconds = 60, key = "checkout_process")
     @Operation(summary = "Customer authenticates OTP and completes checkout payment")
     public ApiResponse<CheckoutProcessResponse> processCheckout(
             Principal principal,
