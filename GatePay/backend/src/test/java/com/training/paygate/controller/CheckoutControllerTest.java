@@ -64,7 +64,7 @@ class CheckoutControllerTest {
         @DisplayName("createCheckoutSession_Success - Valid API Key creates session")
         void createCheckoutSession_Success() throws Exception {
                 CheckoutCreateRequest request = new CheckoutCreateRequest(
-                                "gp_live_key_123", "ORD-1001", new BigDecimal("250000"), "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
+                                "gp_live_key_123", "ORD-1001", new BigDecimal("250000"), null, null, null, null, null, "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
 
                 CheckoutCreateResponse mockData = new CheckoutCreateResponse(
                                 "CHK_TOKEN123", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:4201/checkout?token=CHK_TOKEN123", null, null, null, null, null, null, LocalDateTime.now().plusMinutes(15));
@@ -84,7 +84,7 @@ class CheckoutControllerTest {
         @DisplayName("createCheckoutSession_InvalidApiKey - Throws BadRequestException when API key invalid")
         void createCheckoutSession_InvalidApiKey() throws Exception {
                 CheckoutCreateRequest request = new CheckoutCreateRequest(
-                                "invalid-key", "ORD-1001", new BigDecimal("250000"), "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
+                                "invalid-key", "ORD-1001", new BigDecimal("250000"), null, null, null, null, null, "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
 
                 when(checkoutService.createCheckoutSession(any(CheckoutCreateRequest.class)))
                                 .thenThrow(new com.training.paygate.exception.BadRequestException("Invalid Merchant API Key"));
@@ -100,7 +100,7 @@ class CheckoutControllerTest {
         @DisplayName("createCheckoutSession_InactiveMerchant - Throws BadRequestException when merchant inactive")
         void createCheckoutSession_InactiveMerchant() throws Exception {
                 CheckoutCreateRequest request = new CheckoutCreateRequest(
-                                "inactive-key", "ORD-1001", new BigDecimal("250000"), "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
+                                "inactive-key", "ORD-1001", new BigDecimal("250000"), null, null, null, null, null, "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
 
                 when(checkoutService.createCheckoutSession(any(CheckoutCreateRequest.class)))
                                 .thenThrow(new com.training.paygate.exception.BadRequestException("Merchant account is currently inactive or disabled"));
@@ -116,7 +116,7 @@ class CheckoutControllerTest {
         @DisplayName("createCheckoutSession_InvalidAmount_returns400 - Validation amount < 1000 returns 400")
         void createCheckoutSession_InvalidAmount_returns400() throws Exception {
                 CheckoutCreateRequest request = new CheckoutCreateRequest(
-                                "gp_live_key_123", "ORD-1001", new BigDecimal("500"), "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
+                                "gp_live_key_123", "ORD-1001", new BigDecimal("500"), null, null, null, null, null, "Desc", com.training.paygate.enums.PaymentMethod.PAYGATE, "http://localhost:3000/success", null);
 
                 mockMvc.perform(post("/api/v1/checkout/create")
                                 .with(csrf())

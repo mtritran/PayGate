@@ -117,7 +117,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-123";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L, null);
 
         User user = User.builder().username(username).build();
         user.setId(1L);
@@ -188,7 +188,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-123";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L, null);
 
         Transaction transaction = Transaction.builder()
                 .id(100L)
@@ -219,7 +219,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-123";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(10000), "Thanh toan", 5L);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(10000), "Thanh toan", 5L, null);
 
         User user = User.builder().username(username).build();
         user.setId(1L);
@@ -263,7 +263,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-123";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Thanh toan", 5L, null);
 
         User user = User.builder().username(username).build();
         user.setId(1L);
@@ -440,7 +440,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-999";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", null);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", null, null);
 
         User user = User.builder().username(username).build();
         user.setId(1L);
@@ -476,7 +476,7 @@ class TransactionServiceTest {
         // Given
         String username = "user1";
         String idKey = "idem-key-888";
-        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", 99L);
+        PaymentRequest request = new PaymentRequest(idKey, 2L, BigDecimal.valueOf(100), "Pay", 99L, null);
 
         User user = User.builder().username(username).build();
         user.setId(1L);

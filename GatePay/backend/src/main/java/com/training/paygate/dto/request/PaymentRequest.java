@@ -1,5 +1,6 @@
 package com.training.paygate.dto.request;
 
+import com.training.paygate.enums.TransactionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -18,5 +19,7 @@ public record PaymentRequest(
 
         String description,
 
-        Long merchantId
+        Long merchantId,
+
+        TransactionType transactionType
 ) {}

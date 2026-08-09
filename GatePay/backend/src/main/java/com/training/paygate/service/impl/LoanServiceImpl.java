@@ -221,6 +221,7 @@ public class LoanServiceImpl implements LoanService {
                 userAccount.getId(),
                 loan.getAmount(),
                 "Giải ngân khoản vay " + loan.getLoanRef(),
+                null,
                 null);
 
         User systemUser = userRepository.findById(systemAccount.getOwnerId())
@@ -342,7 +343,8 @@ public class LoanServiceImpl implements LoanService {
                 systemAccount.getId(),
                 amountToPay,
                 "Trả nợ khoản vay " + loan.getLoanRef(),
-                null);
+                null,
+                TransactionType.LOAN_REPAYMENT);
 
         User borrower = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
@@ -350,26 +352,6 @@ public class LoanServiceImpl implements LoanService {
         TransactionResponse txResponse = transactionService.processPayment(repayPaymentReq, borrower.getUsername(), "internal");
         log.info("[LOAN] Repayment transaction completed: ref {}", txResponse.transactionRef());
 
-        // Publish event để tích điểm cho LOAN_REPAYMENT
-        Account userAccount = accountRepository.findByOwnerIdAndOwnerType(userId, OwnerType.USER).orElse(null);
-        PaymentCompletedEvent loanRepayEvent = new PaymentCompletedEvent(
-                txResponse.transactionRef(),
-                null,
-                null,
-                amountToPay,
-                "COMPLETED",
-                borrower.getEmail(),
-                borrower.getUsername(),
-                userAccount != null ? userAccount.getAccountNumber() : null,
-                "Trả nợ khoản vay " + loan.getLoanRef(),
-                TransactionType.LOAN_REPAYMENT,
-                userId);
-        try {
-            amqpTemplate.convertAndSend("payment.exchange", "payment.completed", loanRepayEvent);
-            log.info("[LOAN REPAY] Published PaymentCompletedEvent for txRef {}", txResponse.transactionRef());
-        } catch (Exception e) {
-            log.warn("Could not publish PaymentCompletedEvent for loan repayment: {}", e.getMessage());
-        }
 
         // Update schedule status
         if (request.repayType() == RepayType.NEXT_PERIOD && scheduleToPay != null) {
@@ -387,28 +369,11 @@ public class LoanServiceImpl implements LoanService {
             }
             loanScheduleRepository.saveAll(pendingSchedules);
         }
-
         String notifMsg = String.format("Bạn đã thanh toán thành công %s VND cho khoản vay %s.", 
                 amountToPay, loan.getLoanRef());
         notificationService.createNotification(userId, "Thanh toán khoản vay", notifMsg, "LOAN_REPAYMENT");
 
-        // Update remaining amount
-        BigDecimal newRemaining = loan.getRemainingAmount().subtract(amountToPay);
-        if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
-            newRemaining = BigDecimal.ZERO;
-            loan.setStatus(LoanStatus.PAID_OFF);
-        }
-        loan.setRemainingAmount(newRemaining);
-        Loan saved = loanRepository.save(loan);
-
-        // Auto-increase approved limit by the repaid amount
-        bnplProfileRepository.findByUserId(userId).ifPresent(profile -> {
-            profile.setApprovedLimit(profile.getApprovedLimit().add(amountToPay));
-            bnplProfileRepository.save(profile);
-            log.info("[LOAN] Increased BNPL limit for user {} by {}", userId, amountToPay);
-        });
-
-        return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
+        return mapToLoanResponse(loan, getSchedulesForLoan(loan.getId()));
     }
 
     @Override
@@ -448,6 +413,13 @@ public class LoanServiceImpl implements LoanService {
             }
             loan.setRemainingAmount(newRemaining);
             loanRepository.save(loan);
+
+            // Auto-increase approved limit by the repaid amount
+            bnplProfileRepository.findByUserId(loan.getUserId()).ifPresent(profile -> {
+                profile.setApprovedLimit(profile.getApprovedLimit().add(event.amount()));
+                bnplProfileRepository.save(profile);
+                log.info("[LOAN] Increased BNPL limit for user {} by {}", loan.getUserId(), event.amount());
+            });
         } else if ("FAILED".equalsIgnoreCase(event.status())) {
             for (LoanSchedule s : schedules) {
                 if (s.getStatus() == LoanScheduleStatus.PROCESSING) {

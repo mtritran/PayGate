@@ -242,6 +242,7 @@ public class RecurringPaymentServiceImpl implements RecurringPaymentService {
                     targetDestId,
                     rp.getAmount(),
                     "[" + rp.getCategory() + "] " + (rp.getDescription() != null ? rp.getDescription() : "Auto payment"),
+                    null,
                     null
             );
 

@@ -44,7 +44,7 @@ class FraudDetectionServiceTest {
     private FraudDetectionService fraudDetectionService;
 
     private PaymentRequest smallPayment() {
-        return new PaymentRequest("idem-" + System.nanoTime(), 2L, BigDecimal.valueOf(100_000), "Test pay", null);
+        return new PaymentRequest("idem-" + System.nanoTime(), 2L, BigDecimal.valueOf(100_000), "Test pay", null, null);
     }
 
     @Test

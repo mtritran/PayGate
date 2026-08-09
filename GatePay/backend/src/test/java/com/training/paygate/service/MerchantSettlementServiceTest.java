@@ -130,8 +130,8 @@ class MerchantSettlementServiceTest {
         @Test
         @DisplayName("processDueEscrowSettlements successfully settles eligible transactions")
         void processDueEscrowSettlements_Success() {
-            when(transactionRepository.findPendingEscrowSettlementTransactions(any()))
-                    .thenReturn(List.of(completedTx));
+            when(transactionRepository.findPendingEscrowSettlementTransactions(any(), any()))
+                    .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(completedTx)));
             when(merchantSettlementRepository.existsByOriginalTransactionRef(TX_REF)).thenReturn(false);
             when(refundRepository.sumRefundedAmountByOriginalTransactionRef(TX_REF)).thenReturn(BigDecimal.ZERO);
             when(merchantRepository.findById(MERCHANT_ID)).thenReturn(Optional.of(merchant));

@@ -164,7 +164,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .destAccountId(destAccount.getId())
                 .amount(request.amount())
                 .currency("VND")
-                .type(TransactionType.PAYMENT)
+                .type(request.transactionType() != null ? request.transactionType() : TransactionType.PAYMENT)
                 .status(TransactionStatus.PENDING)
                 .merchantId(request.merchantId())
                 .description(request.description())

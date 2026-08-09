@@ -85,7 +85,7 @@ class TransactionControllerTest {
     @DisplayName("POST /pay - Thành công: Chuyển tiền 100,000 VND hợp lệ -> HTTP 201 Created")
     @WithMockUser(username = "user1", roles = {"USER"})
     void pay_success() throws Exception {
-        PaymentRequest request = new PaymentRequest("idem-key-123", 2L, BigDecimal.valueOf(100000), "Pay description", null);
+        PaymentRequest request = new PaymentRequest("idem-key-123", 2L, BigDecimal.valueOf(100000), "Pay description", null, null);
         TransactionResponse response = new TransactionResponse(
                 "TXN-PAY-123", "COMPLETED", BigDecimal.valueOf(100000), 1L, 2L, "PAYMENT", "Pay description", LocalDateTime.now()
         );
@@ -106,7 +106,7 @@ class TransactionControllerTest {
     @DisplayName("POST /pay - Thất bại: Số dư ví không đủ -> HTTP 422 Unprocessable Entity")
     @WithMockUser(username = "user1", roles = {"USER"})
     void pay_insufficientBalance_returnsUnprocessableEntity() throws Exception {
-        PaymentRequest request = new PaymentRequest("idem-key-999", 2L, BigDecimal.valueOf(100000000), "Big payment", null);
+        PaymentRequest request = new PaymentRequest("idem-key-999", 2L, BigDecimal.valueOf(100000000), "Big payment", null, null);
 
         when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"), anyString()))
                 .thenThrow(new InsufficientBalanceException("Account balance insufficient for payment"));
@@ -123,7 +123,7 @@ class TransactionControllerTest {
     @DisplayName("POST /pay - Thất bại: Số tiền gửi bị âm (-50,000 VND) -> HTTP 400 Bad Request Validation Error")
     @WithMockUser(username = "user1", roles = {"USER"})
     void pay_negativeAmount_returnsBadRequest() throws Exception {
-        PaymentRequest request = new PaymentRequest("idem-key-123", 2L, BigDecimal.valueOf(-50000), "Negative amount", null);
+        PaymentRequest request = new PaymentRequest("idem-key-123", 2L, BigDecimal.valueOf(-50000), "Negative amount", null, null);
 
         mockMvc.perform(post("/api/v1/transactions/pay")
                         .with(csrf())
@@ -136,7 +136,7 @@ class TransactionControllerTest {
     @DisplayName("POST /pay - Thất bại: Ví nguồn bị khóa (FROZEN/INACTIVE) -> HTTP 400 Bad Request")
     @WithMockUser(username = "user1", roles = {"USER"})
     void pay_inactiveSourceAccount_returnsBadRequest() throws Exception {
-        PaymentRequest request = new PaymentRequest("idem-key-frozen", 2L, BigDecimal.valueOf(100000), "Pay from frozen", null);
+        PaymentRequest request = new PaymentRequest("idem-key-frozen", 2L, BigDecimal.valueOf(100000), "Pay from frozen", null, null);
 
         when(transactionService.processPayment(any(PaymentRequest.class), eq("user1"), anyString()))
                 .thenThrow(new BadRequestException("Source account is inactive or frozen"));

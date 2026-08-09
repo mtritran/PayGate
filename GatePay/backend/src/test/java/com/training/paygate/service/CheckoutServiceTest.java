@@ -112,6 +112,11 @@ class CheckoutServiceTest {
                 "KEY_VALID_123",
                 "ORD-999",
                 new BigDecimal("250000.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
                 "Thanh toan ORD-999",
                 PaymentMethod.PAYGATE,
                 "http://merchant.com/callback",
@@ -136,6 +141,11 @@ class CheckoutServiceTest {
                 "KEY_VALID_123",
                 "ORD-999",
                 new BigDecimal("250000.00"),
+                null,
+                null,
+                null,
+                null,
+                null,
                 "Thanh toan ORD-999",
                 PaymentMethod.VIETQR,
                 "http://merchant.com/callback",
@@ -191,7 +201,7 @@ class CheckoutServiceTest {
         CheckoutProcessRequest request = new CheckoutProcessRequest("CHK_TOKEN_123", "123456");
 
         when(checkoutSessionRepository.findByToken("CHK_TOKEN_123")).thenReturn(Optional.of(pendingSession));
-        when(otpService.verifyOtp("user_buyer", "OTP verification for order payment", "123456")).thenReturn(true);
+        when(otpService.verifyOtp("user_buyer", "Order payment", "123456")).thenReturn(true);
         when(accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)).thenReturn(Optional.of(merchantAccount));
         when(transactionService.processPayment(any(), eq("user_buyer"), eq("127.0.0.1")))
                 .thenReturn(new TransactionResponse(
@@ -221,7 +231,7 @@ class CheckoutServiceTest {
         CheckoutProcessRequest request = new CheckoutProcessRequest("CHK_TOKEN_123", "999999");
 
         when(checkoutSessionRepository.findByToken("CHK_TOKEN_123")).thenReturn(Optional.of(pendingSession));
-        when(otpService.verifyOtp("user_buyer", "OTP verification for order payment", "999999")).thenReturn(false);
+        when(otpService.verifyOtp("user_buyer", "Order payment", "999999")).thenReturn(false);
 
         assertThatThrownBy(() -> checkoutService.processCheckout("user_buyer", request, "127.0.0.1"))
                 .isInstanceOf(BadRequestException.class)

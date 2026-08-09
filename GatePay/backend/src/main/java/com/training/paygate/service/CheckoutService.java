@@ -210,7 +210,7 @@ public class CheckoutService {
             throw new BadRequestException("Checkout session has expired");
         }
 
-        boolean otpValid = otpService.verifyOtp(username, "OTP verification for order payment", request.otpCode());
+        boolean otpValid = otpService.verifyOtp(username, "Order payment", request.otpCode());
         if (!otpValid) {
             throw new BadRequestException("Invalid or expired OTP code");
         }
@@ -224,7 +224,8 @@ public class CheckoutService {
                 systemAccount.getId(),
                 session.getAmount(),
                 "Payment for order #" + session.getOrderId() + " to " + session.getMerchantName(),
-                session.getMerchantId());
+                session.getMerchantId(),
+                null);
 
         TransactionResponse tx = transactionService.processPayment(paymentRequest, username, clientIp);
 
