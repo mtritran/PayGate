@@ -1,0 +1,12 @@
+ALTER TABLE checkout_sessions
+    ADD COLUMN IF NOT EXISTS customer_email VARCHAR(120),
+    ADD COLUMN IF NOT EXISTS customer_name VARCHAR(120),
+    ADD COLUMN IF NOT EXISTS occupation VARCHAR(120),
+    ADD COLUMN IF NOT EXISTS company_name VARCHAR(160),
+    ADD COLUMN IF NOT EXISTS monthly_income DECIMAL(15,2),
+    ADD COLUMN IF NOT EXISTS relative1_name VARCHAR(120),
+    ADD COLUMN IF NOT EXISTS relative1_phone VARCHAR(30),
+    ADD COLUMN IF NOT EXISTS relative1_relationship VARCHAR(60),
+    ADD COLUMN IF NOT EXISTS relative2_name VARCHAR(120),
+    ADD COLUMN IF NOT EXISTS relative2_phone VARCHAR(30),
+    ADD COLUMN IF NOT EXISTS relative2_relationship VARCHAR(60);

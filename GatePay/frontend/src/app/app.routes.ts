@@ -63,6 +63,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/loan/loan-dashboard/loan-dashboard.component').then(m => m.LoanDashboardComponent)
       },
       {
+        path: 'bnpl',
+        canActivate: [userOnlyGuard],
+        loadComponent: () => import('./features/bnpl/bnpl-dashboard/bnpl-dashboard.component').then(m => m.BnplDashboardComponent)
+      },
+      {
         path: 'transactions/pay',
         canActivate: [userOnlyGuard],
         loadComponent: () => import('./features/transaction/payment-form/payment-form.component').then(m => m.PaymentFormComponent)

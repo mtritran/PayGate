@@ -43,7 +43,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/v1/checkout/create", "/api/v1/checkout/info/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/checkout/create",
+                                "/api/v1/checkout/info/**",
+                                "/api/v1/checkout/*/customer",
+                                "/api/v1/checkout/*/borrower-profile",
+                                "/api/v1/checkout/*/credit-assessment",
+                                "/api/v1/checkout/*/bnpl-proposals",
+                                "/api/v1/checkout/bnpl-proposals/*/confirm"
+                        ).permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()

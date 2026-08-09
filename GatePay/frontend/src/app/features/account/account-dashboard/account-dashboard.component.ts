@@ -13,6 +13,7 @@ import { RewardService, PointsResponse } from '../../../core/services/reward.ser
 import { AuthService } from '../../../core/services/auth.service';
 import { AccountResponse } from '../../../core/models/account.model';
 import { TransactionResponse } from '../../../core/models/transaction.model';
+import { LoanService, LoanResponse, LoanScheduleResponse } from '../../../core/services/loan.service';
 
 interface DailyVolumePoint {
   day: string;
@@ -154,6 +155,41 @@ interface FeatureTile {
           </div>
         </section>
 
+        <!-- ===== DEBT REMINDER ===== -->
+        <section class="sec" *ngIf="upcomingSchedule" style="margin-top:-10px; margin-bottom: 24px;">
+          <div class="debt-reminder-card" [class.urgent]="daysToDue !== null && daysToDue <= 7">
+            <div class="dr-header">
+              <mat-icon class="dr-icon">calendar_today</mat-icon>
+              <h3>Upcoming Payment</h3>
+            </div>
+            
+            <div class="dr-body">
+              <div class="dr-info">
+                <span class="dr-label">Loan Ref:</span>
+                <span class="dr-val font-mono">{{ upcomingLoan?.loanRef }}</span>
+              </div>
+              <div class="dr-info">
+                <span class="dr-label">Amount Due:</span>
+                <span class="dr-val text-pink" style="font-size:1.1rem; font-weight:700;">{{ upcomingSchedule?.amountDue | currency:'VND':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="dr-info">
+                <span class="dr-label">Due Date:</span>
+                <span class="dr-val" [class.text-danger]="daysToDue !== null && daysToDue <= 3">
+                  {{ upcomingSchedule?.dueDate | date:'dd/MM/yyyy' }} 
+                  <span class="days-badge" *ngIf="daysToDue !== null && daysToDue >= 0">(In {{ daysToDue }} days)</span>
+                  <span class="days-badge overdue" *ngIf="daysToDue !== null && daysToDue < 0">(Overdue by {{ Math.abs(daysToDue) }} days)</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="dr-actions">
+              <button mat-button class="dr-btn" [class.blurred]="daysToDue !== null && daysToDue > 7" [routerLink]="['/bnpl']">
+                Thanh toán ngay
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- ===== CỤM ĐIỀU HƯỚNG TRUNG TÂM (CORE SYSTEM NAVIGATION HUB) ===== -->
         <section class="sec merchant-spotlight-sec">
           <a class="merchant-spotlight" routerLink="/merchant/register">
@@ -234,6 +270,18 @@ interface FeatureTile {
               <div class="ql-info">
                 <strong>Consumer Loans</strong>
                 <span>Instant disbursement to wallet</span>
+              </div>
+              <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </a>
+            <a class="ql-card" routerLink="/bnpl">
+              <div class="ql-ico" style="background:linear-gradient(135deg,#fff0f6,#fce4ec);color:#c20067">
+                <mat-icon>shopping_bag</mat-icon>
+              </div>
+              <div class="ql-info">
+                <strong>Buy Now Pay Later</strong>
+                <span>Manage BNPL installments</span>
               </div>
               <svg class="ql-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"/>
@@ -415,6 +463,39 @@ interface FeatureTile {
     .sk-col { display:flex; flex-direction:column; gap:6px; }
     .sk-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:16px; }
     .sk-features, .sk-stats { display:flex; flex-direction:column; gap:4px; }
+
+    /* DEBT REMINDER */
+    .debt-reminder-card {
+      background: white; border-radius: 20px; padding: 20px 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .debt-reminder-card.urgent {
+      border: 1px solid #fbcfe8; background: #fff5f9;
+    }
+    .debt-reminder-card.urgent::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #ec407a;
+    }
+    .dr-header { display: flex; align-items: center; gap: 10px; color: #334155; }
+    .dr-icon { color: #f43f5e; }
+    .dr-header h3 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    .dr-body { display: flex; flex-direction: column; gap: 8px; }
+    .dr-info { display: flex; justify-content: space-between; align-items: center; }
+    .dr-label { color: #64748b; font-size: 0.9rem; }
+    .dr-val { font-weight: 600; color: #1e293b; }
+    .text-pink { color: #ec407a; }
+    .text-danger { color: #ef4444; }
+    .days-badge { background: #f1f5f9; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; color: #475569; margin-left: 8px; }
+    .days-badge.overdue { background: #fee2e2; color: #ef4444; }
+    .dr-actions { margin-top: 8px; }
+    .dr-btn { width: 100%; background: linear-gradient(135deg, #c20067, #ec407a); color: white; border-radius: 12px; padding: 8px 0; font-weight: 600; transition: all 0.3s; }
+    .dr-btn:hover { background: linear-gradient(135deg, #a00055, #c20067); }
+    .dr-btn.blurred {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(100%);
+    }
 
     /* ===== HERO (thoáng, hồng dịu) ===== */
     .hero {
@@ -737,13 +818,18 @@ interface FeatureTile {
     }
   `]
 })
-export class AccountDashboardComponent implements OnInit {
+export class AccountDashboardComponent implements OnInit, OnDestroy {
+  Math = Math;
   account: AccountResponse | null = null;
   recentTransactions: TransactionResponse[] = [];
   totalVolume = 0;
   totalTransactionsCount = 0;
   failedTransactionsCount = 0;
   loading = true;
+
+  upcomingLoan: LoanResponse | null = null;
+  upcomingSchedule: LoanScheduleResponse | null = null;
+  daysToDue: number | null = null;
 
   dailyPoints: DailyVolumePoint[] = [];
   chartPath: string = 'M 70 150 C 120 120, 140 100, 170 100 C 210 100, 230 115, 270 115 C 310 115, 330 75, 370 70 C 410 65, 430 47, 470 47 C 510 47, 530 85, 570 85 C 610 85, 630 25, 670 20';
@@ -769,7 +855,8 @@ export class AccountDashboardComponent implements OnInit {
     private transactionService: TransactionService,
     private rewardService: RewardService,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loanService: LoanService
   ) { }
 
   private pollingSubscription: Subscription | null = null;
@@ -837,9 +924,43 @@ export class AccountDashboardComponent implements OnInit {
       next: (res) => {
         if (res.success) this.rewardPoints = res.data;
       },
-      error: () => {} // Silent catch for Admin users without points
+      error: () => {}
     });
 
+    this.loanService.getMyLoans(0, 100).subscribe({
+      next: (res) => {
+        if (res.success && res.data && res.data.content) {
+          const activeLoans = res.data.content.filter(l => l.status === 'ACTIVE');
+          let nearestSchedule: LoanScheduleResponse | null = null;
+          let nearestLoan: LoanResponse | null = null;
+          
+          for (const loan of activeLoans) {
+            if (loan.schedules) {
+              const pending = loan.schedules.filter(s => (s.status as any) === 'PENDING' || (s.status as any) === 'OVERDUE');
+              if (pending.length > 0) {
+                // sort by date
+                pending.sort((a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+                const first = pending[0];
+                if (!nearestSchedule || new Date(first.dueDate).getTime() < new Date(nearestSchedule.dueDate).getTime()) {
+                  nearestSchedule = first;
+                  nearestLoan = loan;
+                }
+              }
+            }
+          }
+
+          if (nearestSchedule && nearestLoan) {
+            this.upcomingSchedule = nearestSchedule;
+            this.upcomingLoan = nearestLoan;
+            
+            const due = new Date(nearestSchedule.dueDate);
+            const now = new Date();
+            const diffTime = due.getTime() - now.getTime();
+            this.daysToDue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          }
+        }
+      }
+    });
     this.accountService.getAccountMe().subscribe({
       next: (res) => {
         if (res.success && res.data) {

@@ -333,22 +333,18 @@ import { PinModalComponent } from '../../../shared/components/pin-modal/pin-moda
             <div class="schedule-table-wrap">
               <table class="schedule-table">
                 <thead>
-                  <tr>
-                    <th>Period</th>
-                    <th>Due date</th>
-                    <th>Principal</th>
-                    <th>Interest</th>
-                    <th>Period total</th>
-                    <th>Status</th>
-                  </tr>
+                    <tr>
+                      <th>Period</th>
+                      <th>Due date</th>
+                      <th>Period total</th>
+                      <th>Status</th>
+                    </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let s of loan.schedules">
                     <td class="font-mono">Period {{ s.periodNumber }}</td>
                     <td>{{ s.dueDate | date:'dd/MM/yyyy' }}</td>
-                    <td>{{ s.principalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
-                    <td>{{ s.interestAmount | currency:'VND':'symbol':'1.0-0' }}</td>
-                    <td class="font-bold">{{ s.totalAmount | currency:'VND':'symbol':'1.0-0' }}</td>
+                    <td>{{ s.amountDue | currency:'VND':'symbol':'1.0-0' }}</td>
                     <td>
                       <span class="schedule-badge" [class.schedule-paid]="s.status === 'PAID'" [class.schedule-unpaid]="s.status === 'UNPAID'">
                         {{ s.status === 'PAID' ? 'Paid' : 'Unpaid' }}
@@ -635,7 +631,9 @@ export class LoanDashboardComponent implements OnInit {
     this.loading.set(true);
     this.loanService.getMyLoans().subscribe({
       next: (res) => {
-        this.myLoans.set(res.data?.content ?? []);
+        const allLoans = res.data?.content ?? [];
+        const nonBnplLoans = allLoans.filter(l => !l.reason || !l.reason.startsWith('BNPL'));
+        this.myLoans.set(nonBnplLoans);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -643,7 +641,11 @@ export class LoanDashboardComponent implements OnInit {
 
     if (this.isAdmin()) {
       this.loanService.getAllLoansForAdmin().subscribe({
-        next: (res) => this.adminLoans.set(res.data?.content ?? [])
+        next: (res) => {
+          const allLoans = res.data?.content ?? [];
+          const nonBnplLoans = allLoans.filter(l => !l.reason || !l.reason.startsWith('BNPL'));
+          this.adminLoans.set(nonBnplLoans);
+        }
       });
     }
   }

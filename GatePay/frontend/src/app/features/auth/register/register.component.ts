@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { InputComponent } from '../../../shared/components';
@@ -30,7 +30,7 @@ import { InputComponent } from '../../../shared/components';
 
           <div class="form-body">
             <h1 class="main-title">Register</h1>
-            <p class="sub-text">Already have an account? <a routerLink="/login" class="highlight-link">Sign In PayGate ➔</a></p>
+            <p class="sub-text">Already have an account? <a routerLink="/login" [queryParams]="returnQueryParams()" class="highlight-link">Sign In PayGate ➔</a></p>
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-20">
               <div class="form-field">
@@ -277,6 +277,7 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loading = signal(false);
   submitError = signal<string | null>(null);
@@ -288,6 +289,17 @@ export class RegisterComponent {
     password: ['', [Validators.required, Validators.minLength(6)]],
     agreeTerms: [true, [Validators.requiredTrue]]
   });
+
+  constructor() {
+    const email = this.route.snapshot.queryParams['email'];
+    const name = this.route.snapshot.queryParams['name'];
+    if (email || name) {
+      this.form.patchValue({
+        email: email || '',
+        fullName: name || ''
+      }, { emitEvent: false });
+    }
+  }
 
   userIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   emailIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`;
@@ -328,6 +340,17 @@ export class RegisterComponent {
     return '';
   });
 
+  returnQueryParams(): Record<string, string> {
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+    const email = this.route.snapshot.queryParams['email'];
+    const name = this.route.snapshot.queryParams['name'];
+    return {
+      ...(returnUrl ? { returnUrl } : {}),
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {})
+    };
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -348,7 +371,7 @@ export class RegisterComponent {
         this.loading.set(false);
         if (res.success) {
           this.notificationService.success('Registration successful!');
-          this.router.navigate(['/accounts/dashboard']);
+          this.router.navigate(['/login'], { queryParams: this.returnQueryParams() });
         } else {
           this.submitError.set(res.message || 'Registration failed.');
         }

@@ -52,6 +52,8 @@ public class LoanServiceImpl implements LoanService {
     private final TransactionService transactionService;
     private final com.training.paygate.service.EmailService emailService;
     private final AmqpTemplate amqpTemplate;
+    private final com.training.paygate.service.NotificationService notificationService;
+    private final com.training.paygate.repository.BnplProfileRepository bnplProfileRepository;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
 
@@ -317,8 +319,8 @@ public class LoanServiceImpl implements LoanService {
             throw new BadRequestException("Loan is not active or overdue for repayment");
         }
 
-        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(1L, OwnerType.SYSTEM)
-                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 1L));
+        Account systemAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
+                .orElseThrow(() -> new ResourceNotFoundException("SYSTEM Account not found", 0L));
 
         BigDecimal amountToPay;
         LoanSchedule scheduleToPay = null;
@@ -387,6 +389,10 @@ public class LoanServiceImpl implements LoanService {
             loanScheduleRepository.saveAll(pendingSchedules);
         }
 
+        String notifMsg = String.format("Bạn đã thanh toán thành công %s VND cho khoản vay %s.", 
+                amountToPay, loan.getLoanRef());
+        notificationService.createNotification(userId, "Thanh toán khoản vay", notifMsg, "LOAN_REPAYMENT");
+
         // Update remaining amount
         BigDecimal newRemaining = loan.getRemainingAmount().subtract(amountToPay);
         if (newRemaining.compareTo(BigDecimal.ZERO) <= 0) {
@@ -396,6 +402,14 @@ public class LoanServiceImpl implements LoanService {
         loan.setRemainingAmount(newRemaining);
 
         Loan saved = loanRepository.save(loan);
+
+        // Auto-increase approved limit by the repaid amount
+        bnplProfileRepository.findByUserId(userId).ifPresent(profile -> {
+            profile.setApprovedLimit(profile.getApprovedLimit().add(amountToPay));
+            bnplProfileRepository.save(profile);
+            log.info("[LOAN] Increased BNPL limit for user {} by {}", userId, amountToPay);
+        });
+
         return mapToLoanResponse(saved, getSchedulesForLoan(saved.getId()));
     }
 
