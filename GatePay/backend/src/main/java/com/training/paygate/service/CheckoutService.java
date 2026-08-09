@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -55,8 +56,25 @@ public class CheckoutService {
 
     @Transactional
     public CheckoutCreateResponse createCheckoutSession(CheckoutCreateRequest request) {
-        Merchant merchant = merchantRepository.findByApiKey(request.apiKey())
-                .orElseThrow(() -> new BadRequestException("Invalid merchant API key"));
+        return createCheckoutSession(request, request.apiKey());
+    }
+
+    @Transactional
+    public CheckoutCreateResponse createCheckoutSession(CheckoutCreateRequest request, String merchantCode) {
+        if (merchantCode == null || merchantCode.isBlank()) {
+            // Fallback to apiKey if merchantCode is not provided by header
+            Merchant m = merchantRepository.findByApiKey(request.apiKey()).orElse(null);
+            if (m != null) merchantCode = m.getMerchantCode();
+        }
+
+        if (merchantCode == null || merchantCode.isBlank()) {
+            throw new BadRequestException("Merchant Code is missing (Not authenticated by Filter)");
+        }
+
+        validateCheckoutAmounts(request);
+
+        Merchant merchant = merchantRepository.findByMerchantCode(merchantCode)
+                .orElseThrow(() -> new BadRequestException("Invalid Merchant Code"));
 
         if (!merchant.isActive() || merchant.getStatus() != MerchantStatus.ACTIVE) {
             throw new BadRequestException("Merchant account is inactive or not approved");
@@ -66,6 +84,12 @@ public class CheckoutService {
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(sessionTtlMinutes);
 
         CheckoutSession session = checkoutMapper.toEntity(request, merchant, token, expiresAt);
+        session.setMethod(request.method());
+        session.setUpfrontAmount(request.upfrontAmount());
+        session.setFinanceAmount(request.financeAmount());
+        session.setMerchantCustomerRef(normalizeRef(request.merchantCustomerRef()));
+        session.setCustomerName(request.customerName());
+        
         checkoutSessionRepository.save(session);
 
         PaymentMethod paymentMethod = request.paymentMethod() != null ? request.paymentMethod() : PaymentMethod.PAYGATE;
@@ -114,6 +138,39 @@ public class CheckoutService {
                 paymentUrl,
                 null, null, null, null, null, null,
                 expiresAt);
+    }
+
+    private void validateCheckoutAmounts(CheckoutCreateRequest request) {
+        String method = request.method();
+        if (method == null || method.isBlank()) {
+            return;
+        }
+        if (!"BNPL".equalsIgnoreCase(method)) {
+            return;
+        }
+        if (request.merchantCustomerRef() == null || request.merchantCustomerRef().isBlank()) {
+            throw new BadRequestException("merchantCustomerRef is required for BNPL checkout");
+        }
+
+        BigDecimal upfrontAmount = request.upfrontAmount() != null ? request.upfrontAmount() : BigDecimal.ZERO;
+        BigDecimal financeAmount = request.financeAmount() != null ? request.financeAmount() : request.amount();
+        if (financeAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("financeAmount must be greater than 0 for BNPL");
+        }
+        if (financeAmount.compareTo(request.amount()) > 0) {
+            throw new BadRequestException("financeAmount cannot exceed amount");
+        }
+        if (upfrontAmount.add(financeAmount).compareTo(request.amount()) != 0) {
+            throw new BadRequestException("upfrontAmount + financeAmount must equal amount");
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        return email != null ? email.trim().toLowerCase() : null;
+    }
+
+    private String normalizeRef(String ref) {
+        return ref != null ? ref.trim() : null;
     }
 
     @Transactional

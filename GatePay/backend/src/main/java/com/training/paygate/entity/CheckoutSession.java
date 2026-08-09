@@ -39,6 +39,54 @@ public class CheckoutSession extends BaseEntity {
     @Column(name = "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "method", length = 30)
+    private String method;
+
+    @Column(name = "upfront_amount", precision = 15, scale = 2)
+    private BigDecimal upfrontAmount;
+
+    @Column(name = "finance_amount", precision = 15, scale = 2)
+    private BigDecimal financeAmount;
+
+    @Column(name = "customer_id")
+    private Long customerId;
+
+    @Column(name = "merchant_customer_ref", length = 100)
+    private String merchantCustomerRef;
+
+    @Column(name = "customer_email", length = 120)
+    private String customerEmail;
+
+    @Column(name = "customer_name", length = 120)
+    private String customerName;
+
+    @Column(name = "occupation", length = 120)
+    private String occupation;
+
+    @Column(name = "company_name", length = 160)
+    private String companyName;
+
+    @Column(name = "monthly_income", precision = 15, scale = 2)
+    private BigDecimal monthlyIncome;
+
+    @Column(name = "relative1_name", length = 120)
+    private String relative1Name;
+
+    @Column(name = "relative1_phone", length = 30)
+    private String relative1Phone;
+
+    @Column(name = "relative1_relationship", length = 60)
+    private String relative1Relationship;
+
+    @Column(name = "relative2_name", length = 120)
+    private String relative2Name;
+
+    @Column(name = "relative2_phone", length = 30)
+    private String relative2Phone;
+
+    @Column(name = "relative2_relationship", length = 60)
+    private String relative2Relationship;
+
     @Column(name = "description", length = 500)
     private String description;
 
@@ -54,6 +102,21 @@ public class CheckoutSession extends BaseEntity {
 
     @Column(name = "transaction_ref", length = 100)
     private String transactionRef;
+
+    @Column(name = "credit_score")
+    private Integer creditScore;
+
+    @Column(name = "risk_grade", length = 20)
+    private String riskGrade;
+
+    @Column(name = "approved_limit", precision = 15, scale = 2)
+    private BigDecimal approvedLimit;
+
+    @Column(name = "maximum_financed_amount", precision = 15, scale = 2)
+    private BigDecimal maximumFinancedAmount;
+
+    @Column(name = "assessment_reason", length = 80)
+    private String assessmentReason;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;

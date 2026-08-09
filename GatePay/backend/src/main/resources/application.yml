@@ -98,6 +98,8 @@ paygate:
     base-url: ${PROVIDER_API_BASE_URL:http://localhost:8090}
     connect-timeout-ms: 3000
     read-timeout-ms: 5000
+  cic:
+    base-url: ${CIC_BASE_URL:http://localhost:8084}
   vietqr:
     bank-bin: ${VIETQR_BANK_BIN:970422}
     bank-code: ${VIETQR_BANK_CODE:MB}

@@ -32,6 +32,7 @@ Khách mua hàng trên MarketPlace có thể chọn phương thức **"Mua trư�
 - **Available limit (hạn mức khả dụng):** `issued − tổng dư nợ chưa trả`. Trả nợ → tăng dần lại.
 - **Vay thẳng merchant:** tiền đi thẳng `PayGate→merchant`, **KHÔNG chạm ví user**. User chỉ 'mang nợ'.
 - **Ghi nợ = Loan + LoanSchedule:** không trừ ví user; user trả từng kỳ để hồi phục available.
+- **Merchant MarketPlace:** được tạo sẵn trong PayGate. MarketPlace chỉ gửi `apiKey`; PayGate tự resolve `Merchant` và ví merchant, payload không nhận `merchantId`.
 
 ---
 
@@ -148,6 +149,7 @@ sequenceDiagram
 
 ### 3.1. MarketPlace gọi GatePay (Duyệt BNPL)
 - **Endpoint:** `POST /api/v1/credit/checkout`
+- **Merchant resolution:** PayGate dùng `apiKey` để tìm merchant ACTIVE và ví merchant đã seed sẵn; request từ MarketPlace **không gửi `merchantId`**.
 - **Request Body:**
 ```json
 {
@@ -243,7 +245,7 @@ sequenceDiagram
 ---
 
 ## 🔒 6. Security (bắt buộc)
-- **API Key** merchant bắt buộc trong body `POST /credit/checkout` — verify `findByApiKey` + merchant `ACTIVE`.
+- **API Key** merchant bắt buộc trong body `POST /credit/checkout` — verify `findByApiKey` + merchant `ACTIVE`, sau đó resolve merchant account nội bộ.
 - **OTP** bắt buộc khi khách xác nhận trả sau (dùng `OtpService`, 1 lần/hết hạn).
 - **Rate limit** trên `/credit/checkout` (chống spam duyệt, vd 10 req/phút/user).
 - **Fraud check** trước khi duyệt BNPL (gọi `FraudDetectionService` — nếu CRITICAL → từ chối).

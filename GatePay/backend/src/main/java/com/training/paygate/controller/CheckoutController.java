@@ -13,7 +13,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.training.paygate.annotation.RateLimit;
 
@@ -29,10 +35,15 @@ public class CheckoutController {
 
     @PostMapping("/create")
     @RateLimit(limit = 60, windowSeconds = 60, key = "checkout_create")
-    @Operation(summary = "Merchant initiates checkout session (Public API for merchants)")
-    public ApiResponse<CheckoutCreateResponse> createCheckoutSession(@Valid @RequestBody CheckoutCreateRequest request) {
-        CheckoutCreateResponse response = checkoutService.createCheckoutSession(request);
-        return ApiResponse.success("Checkout session created successfully", response);
+    @Operation(summary = "Merchant initiates a checkout session (Public API for Merchants)")
+    public ApiResponse<CheckoutCreateResponse> createCheckoutSession(
+            jakarta.servlet.http.HttpServletRequest httpRequest,
+            @Valid @RequestBody CheckoutCreateRequest request
+    ) {
+        String merchantCode = (String) httpRequest.getAttribute("validatedMerchantCode");
+        
+        CheckoutCreateResponse data = checkoutService.createCheckoutSession(request, merchantCode);
+        return ApiResponse.success("Checkout session created successfully", data);
     }
 
     @GetMapping("/info/{token}")
@@ -56,12 +67,8 @@ public class CheckoutController {
             @Valid @RequestBody CheckoutProcessRequest request,
             HttpServletRequest httpRequest
     ) {
-        CheckoutProcessResponse response = checkoutService.processCheckout(
-                principal.getName(),
-                request,
-                clientIp(httpRequest)
-        );
-        return ApiResponse.success("Checkout payment is being processed", response);
+        CheckoutProcessResponse data = checkoutService.processCheckout(principal.getName(), request, clientIp(httpRequest));
+        return ApiResponse.success("Checkout payment is being processed", data);
     }
 
     private String clientIp(HttpServletRequest request) {

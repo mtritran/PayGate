@@ -275,4 +275,9 @@
   margin: 0 !important;
   padding: 20px !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
+.cdk-overlay-container { z-index: 999999 !important; }
+

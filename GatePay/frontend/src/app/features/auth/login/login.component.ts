@@ -30,7 +30,7 @@ import { InputComponent } from '../../../shared/components';
 
           <div class="form-body">
             <h1 class="main-title">Sign In</h1>
-            <p class="sub-text">Don't have an account yet? <a routerLink="/register" class="highlight-link">Create PayGate Account ➔</a></p>
+            <p class="sub-text">Don't have an account yet? <a routerLink="/register" [queryParams]="returnQueryParams()" class="highlight-link">Create PayGate Account ➔</a></p>
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="pure-form mt-16">
               <div class="form-field">
@@ -320,6 +320,17 @@ export class LoginComponent {
       password: 'Admin@123456!'
     });
     this.form.markAllAsTouched();
+  }
+
+  returnQueryParams(): Record<string, string> {
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+    const email = this.route.snapshot.queryParams['email'];
+    const name = this.route.snapshot.queryParams['name'];
+    return {
+      ...(returnUrl ? { returnUrl } : {}),
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {})
+    };
   }
 
   onSubmit(): void {

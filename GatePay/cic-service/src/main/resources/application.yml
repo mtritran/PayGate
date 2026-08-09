@@ -1,0 +1,27 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: cic-service
+  datasource:
+    url: ${CIC_DB_URL:jdbc:postgresql://localhost:5432/cic_db}
+    username: ${CIC_DB_USER:postgres}
+    password: ${CIC_DB_PASSWORD:11111111}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+tpbank:
+  base-url: ${TPBANK_BASE_URL:http://localhost:8083}

@@ -18,4 +18,7 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     Page<Loan> findByUserId(Long userId, Pageable pageable);
 
     Page<Loan> findByStatus(LoanStatus status, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(l.remainingAmount), 0) FROM Loan l WHERE l.userId = :userId AND l.status IN :statuses AND l.reason LIKE 'BNPL%'")
+    java.math.BigDecimal sumActiveBnplRemainingAmount(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("statuses") List<LoanStatus> statuses);
 }

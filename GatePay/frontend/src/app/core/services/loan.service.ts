@@ -13,11 +13,10 @@ export interface LoanScheduleResponse {
   id: number;
   periodNumber: number;
   dueDate: string;
-  principalAmount: number;
-  interestAmount: number;
-  totalAmount: number;
+  amountDue: number;
   status: LoanScheduleStatus;
   paidAt?: string;
+  transactionRef?: string;
 }
 
 export interface LoanResponse {
