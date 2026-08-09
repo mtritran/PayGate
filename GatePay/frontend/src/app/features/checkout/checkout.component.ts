@@ -136,7 +136,7 @@ import { BnplProfileService } from '../../core/services/bnpl-profile.service';
                   <span class="badge-check">✓</span>
                   <div>
                     <div class="badge-label">Pre-approved limit</div>
-                    <div class="badge-amount">{{ (assessment()?.maximumFinancedAmount || myProfile()?.approvedLimit) | currency:'VND':'symbol':'1.0-0' }}</div>
+                    <div class="badge-amount">{{ (assessment()?.approvedLimit || myProfile()?.approvedLimit) | currency:'VND':'symbol':'1.0-0' }}</div>
                   </div>
                 </div>
               </div>
@@ -1023,7 +1023,6 @@ export class CheckoutComponent implements OnInit {
   }
 
   submitProfile(data: BnplProfileFormData): void {
-    if (!this.info()?.merchantCustomerRef) return;
     this.working.set(true);
     this.checkoutService.submitBorrowerProfile(this.token(), {
       fullName: data.fullName || '',

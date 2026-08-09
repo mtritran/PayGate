@@ -158,24 +158,33 @@ public class BnplCheckoutService {
             throw new BadRequestException("CIC did not return assessment");
         }
 
-        BigDecimal maximumFinanced = requestedFinanceAmount(session).min(nullToZero(cic.maxLoanAmount()));
-        
-        session.setCreditScore(cic.score());
-        session.setRiskGrade(cic.tier());
-        session.setApprovedLimit(cic.approvedLimit());
-        session.setMaximumFinancedAmount(maximumFinanced);
-        session.setAssessmentReason(cic.reason());
-        session.setStatus(cic.approved() || maximumFinanced.compareTo(ZERO) > 0 ? "CREDIT_APPROVED" : "CREDIT_DECLINED");
-        checkoutSessionRepository.save(session);
+        BigDecimal finalApprovedLimit = nullToZero(cic.approvedLimit());
 
-        // Also update BnplProfile if it exists
-        bnplProfileRepository.findByUserId(session.getCustomerId()).ifPresent(profile -> {
+        // Apply the 70% income rule to get the true limit, matching BnplProfileService
+        java.util.Optional<com.training.paygate.entity.BnplProfile> profileOpt = bnplProfileRepository.findByUserId(session.getCustomerId());
+        if (profileOpt.isPresent()) {
+            com.training.paygate.entity.BnplProfile profile = profileOpt.get();
+            BigDecimal calculatedLimit = profile.getMonthlyIncome() != null ? 
+                    profile.getMonthlyIncome().multiply(new BigDecimal("0.70")) : BigDecimal.ZERO;
+            finalApprovedLimit = finalApprovedLimit.max(calculatedLimit);
+            if (profile.getApprovedLimit() != null) {
+                finalApprovedLimit = finalApprovedLimit.max(profile.getApprovedLimit());
+            }
+
             profile.setCreditScore(cic.score());
             profile.setRiskGrade(cic.tier());
-            profile.setApprovedLimit(cic.approvedLimit());
+            profile.setApprovedLimit(finalApprovedLimit);
             profile.setAssessmentReason(cic.reason());
             bnplProfileRepository.save(profile);
-        });
+        }
+
+        session.setCreditScore(cic.score());
+        session.setRiskGrade(cic.tier());
+        session.setApprovedLimit(finalApprovedLimit);
+        session.setMaximumFinancedAmount(requestedFinanceAmount(session).min(finalApprovedLimit));
+        session.setAssessmentReason(cic.reason());
+        session.setStatus(cic.approved() || requestedFinanceAmount(session).min(finalApprovedLimit).compareTo(ZERO) > 0 ? "CREDIT_APPROVED" : "CREDIT_DECLINED");
+        checkoutSessionRepository.save(session);
 
         if ("CREDIT_DECLINED".equals(session.getStatus())) {
             throw new BadRequestException("Credit declined: " + cic.reason());
