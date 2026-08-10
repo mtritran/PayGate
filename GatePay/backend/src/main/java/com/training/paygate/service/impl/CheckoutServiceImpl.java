@@ -228,8 +228,10 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseThrow(() -> new ResourceNotFoundException("System escrow wallet account not found"));
 
+        // Idempotency key phải deterministic — gắn với session token (stable, unique per checkout)
+        // Không được dùng UUID.randomUUID() vì mỗi lần gọi sẽ tạo key khác → double-charge
         PaymentRequest paymentRequest = new PaymentRequest(
-                "CHK_IDEM_" + UUID.randomUUID().toString(),
+                "CHK_IDEM_" + request.token(),
                 systemAccount.getId(),
                 session.getAmount(),
                 "Payment for order #" + session.getOrderId() + " to " + session.getMerchantName(),

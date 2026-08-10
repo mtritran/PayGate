@@ -120,6 +120,10 @@ public class RefundService {
         Long refundTargetUserId = userAccount.getOwnerId();
 
         // 7. Validate Cumulative Refund Amount (Prevent Concurrent / Partial Over-Refund)
+        if (transactionRepository.existsByDescription("Refund for: " + originalTx.getTransactionRef())) {
+            throw new BadRequestException("Transaction " + originalTx.getTransactionRef() + " has already been fully refunded by Admin");
+        }
+
         BigDecimal alreadyRefunded = refundRepository.sumRefundedAmountByOriginalTransactionRef(originalTx.getTransactionRef());
         BigDecimal totalRefundAttempt = alreadyRefunded.add(refundAmount);
         if (totalRefundAttempt.compareTo(originalTx.getAmount()) > 0) {

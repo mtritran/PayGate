@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,11 +27,14 @@ import java.util.Map;
 @Tag(name = "Bank Simulation (Provider Mock)", description = "APIs giả lập Ngân hàng đối tác thực hiện chuyển khoản thành công qua VietQR")
 public class BankSimulateController {
 
-    @org.springframework.beans.factory.annotation.Value("${paygate.api-url:http://localhost:8081}")
-    private String paygateApiUrl;
-    private String getPaygateBankWebhookUrl() {
-        return paygateApiUrl + "/api/v1/integration/bank-webhook";
-    }    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${paygate.backend.webhook-url:http://localhost:8081/api/v1/integration/bank-webhook}")
+    private String paygateBankWebhookUrl;
+
+    @Value("${paygate.vietqr.webhook-secret:vietqr-secret-default}")
+    private String webhookSecret;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public record BankSimulateRequest(String orderId, BigDecimal amount) {}
 
@@ -51,11 +56,15 @@ public class BankSimulateController {
         log.info("[BANK MOCK] Simulating transfer for orderId: {}, amount: {} VND to PayGate Backend", request.orderId(), amount);
 
         try {
+            String jsonPayload = objectMapper.writeValueAsString(bankWebhookPayload);
+            String signature = com.training.providermock.util.HmacUtils.generateSignature(jsonPayload, webhookSecret);
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bankWebhookPayload, headers);
+            headers.set("X-Bank-Signature", signature);
+            HttpEntity<String> entity = new HttpEntity<>(jsonPayload, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(getPaygateBankWebhookUrl(), entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(paygateBankWebhookUrl, entity, String.class);
             
             return ResponseEntity.ok(Map.of(
                     "status", "SUCCESS",

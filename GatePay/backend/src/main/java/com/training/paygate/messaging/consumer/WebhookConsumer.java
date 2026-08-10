@@ -149,16 +149,21 @@ public class WebhookConsumer {
 
         try {
             log.info("Dispatching webhook POST request to {} for {}", targetUrl, logRef);
+            
+            if (!com.training.paygate.util.SsrfValidator.isSafeUrl(targetUrl)) {
+                throw new SecurityException("SSRF blocked: URL resolves to internal or restricted network");
+            }
+            
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-
+            
             if (merchantId != null && merchantId > 0) {
                 Optional<Merchant> opt = merchantRepository.findById(merchantId);
                 if (opt.isPresent()) {
                     String apiKey = opt.get().getApiKey();
                     if (apiKey != null && !apiKey.isBlank()) {
-                        String signature = HmacUtils.generateSignature(payloadJson, apiKey);
-                        headers.set("X-Signature", signature);
+                        String signature = com.training.paygate.util.HmacUtils.generateSignature(payloadJson, apiKey);
+                        headers.set("X-PayGate-Signature", signature);
                     }
                 }
             }
@@ -175,6 +180,11 @@ public class WebhookConsumer {
             webhookStatus = WebhookStatus.RETRYING;
             nextRetryAt = LocalDateTime.now().plusMinutes(1);
             log.error("Webhook delivery failed with HTTP status {} to {} for {}. Scheduled retry at: {}", responseStatus, targetUrl, logRef, nextRetryAt);
+        } catch (SecurityException ex) {
+            responseStatus = 403;
+            responseBody = ex.getMessage();
+            webhookStatus = WebhookStatus.FAILED;
+            log.error("Webhook blocked (SSRF) to {} for {}", targetUrl, logRef);
         } catch (Exception ex) {
             responseStatus = 500;
             responseBody = ex.getMessage();

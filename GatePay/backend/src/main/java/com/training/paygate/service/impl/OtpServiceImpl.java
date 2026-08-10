@@ -3,6 +3,7 @@ package com.training.paygate.service.impl;
 import com.training.paygate.dto.response.OtpResponse;
 import com.training.paygate.entity.User;
 import com.training.paygate.exception.BadRequestException;
+import com.training.paygate.exception.RateLimitExceededException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.UserRepository;
 import com.training.paygate.service.EmailService;
@@ -15,6 +16,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -28,10 +30,12 @@ public class OtpServiceImpl implements OtpService {
     private static class OtpEntry {
         final String otpCode;
         final long expiresAt;
+        final AtomicInteger failedAttempts;
 
         OtpEntry(String otpCode, long expiresAt) {
             this.otpCode = otpCode;
             this.expiresAt = expiresAt;
+            this.failedAttempts = new AtomicInteger(0);
         }
     }
 
@@ -54,7 +58,8 @@ public class OtpServiceImpl implements OtpService {
         long ttlSeconds = 300; // 5 minutes
         long expiresAt = Instant.now().getEpochSecond() + ttlSeconds;
 
-        log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", otpCode, username,
+        String maskedOtp = "***" + otpCode.substring(3);
+        log.info("[OTP GENERATED] Created OTP code '{}' for user '{}' action '{}'. Expiration: {}s", maskedOtp, username,
                 action, ttlSeconds);
 
         // Dispatch OTP code to user's real email (Gmail)
@@ -92,7 +97,12 @@ public class OtpServiceImpl implements OtpService {
         }
 
         if (!java.security.MessageDigest.isEqual(entry.otpCode.getBytes(java.nio.charset.StandardCharsets.UTF_8), otpCode.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
-            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại email của bạn.");
+            int currentFailures = entry.failedAttempts.incrementAndGet();
+            if (currentFailures >= 5) {
+                otpCache.remove(cacheKey);
+                throw new RateLimitExceededException("Bạn đã nhập sai mã OTP quá 5 lần. Mã OTP đã bị khóa. Vui lòng yêu cầu mã mới.", 300);
+            }
+            throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại. Bạn còn " + (5 - currentFailures) + " lần thử.");
         }
 
         // Clean up OTP after successful verification
