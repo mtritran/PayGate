@@ -1,6 +1,6 @@
-# 🔄 FEATURE 04: Refund & Installment Cancellation + Merchant Payout (2-hũ)
+# 🔄 FEATURE 04: Refund & Installment Cancellation
 
-> **Tên tính năng:** Xử Lý Hoàn Tiền Giao Dịch & Hủy Kỳ Trả Góp BNPL + **Rút tiền Merchant (2 hũ)**
+> **Tên tính năng:** Xử Lý Hoàn Tiền Giao Dịch & Hủy Kỳ Trả Góp BNPL
 > **Mã quy chuẩn:** `FEATURE-04-REFUND`
 > **Thành viên phụ trách:**
 > - **GatePay:** **Trí** (3–5 ngày)
@@ -23,31 +23,6 @@ Khi Khách hàng yêu cầu hủy đơn hoặc trả hàng trên MarketPlace, h�
 
 ---
 
-## 🏦 1.1 Rút tiền Merchant theo cơ chế 2 HŨ (2 buckets)
-
-> **Mục đích:** Đảm bảo Merchant **không rút được tiền ngay** sau khi khách thanh toán — phải chờ **đủ 1 tháng** (mỗi giao dịch tròn 1 tháng mới được rút), chống rủi ro đơn bị hủy/hoàn sau khi đã rút tiền.
-
-### Cơ chế hoạt động
-```
-                 ┌─────────────────────────────┐
-   Giao dịch ──► │  HŨ A (chờ đủ 1 tháng)       │
-   khách trả tiền│  đếm từng giao dịch + ngày tạo │
-                 └─────────────┬───────────────┘
-                               │  Scheduler chạy định kỳ:
-                               │  giao dịch nào đủ 30 ngày (tròn 1 tháng)
-                               ▼
-                 ┌─────────────────────────────┐
-                 │  HŨ B (sẵn sàng rút)          │
-                 │  Merchant rút được từ đây      │
-                 └─────────────────────────────┘
-```
-
-- **Hũ A (`pending_settlement`):** mỗi giao dịch khách trả → tiền vào đây, kèm **`availableDate = createdAt + 30 ngày`**.
-- **Scheduler (batch chạy mỗi ngày):** quét hũ A, giao dịch nào **`availableDate ≤ now`** (tròn 1 tháng) → **chuyển sang Hũ B**.
-- **Hũ B (`available_settlement`):** số dư Merchant **rút được** (qua API payout/instant).
-- **Mỗi giao dịch phải tròn 1 tháng mới được rút** — không gộp chung, tính theo từng giao dịch.
-
----
 
 ## 🔄 2. Sơ đồ Luồng Giao Dịch (Sequence Diagram)
 
@@ -102,36 +77,7 @@ sequenceDiagram
 }
 ```
 
-### 3.2. Xem số dư rút được (2 hũ)
-- **Endpoint:** `GET /api/v1/merchants/me/pending-balance`
-- **Response (200 OK):**
-```json
-{
-  "code": 200,
-  "message": "Pending balance fetched",
-  "data": {
-    "bucketA_pending": 50000000,     // Hũ A: chờ đủ 1 tháng
-    "bucketB_available": 12000000,   // Hũ B: đã tròn 1 tháng, rút được
-    "feePct": 0.02
-  }
-}
-```
 
-### 3.3. Rút tiền (chỉ từ Hũ B)
-- **Endpoint:** `POST /api/v1/merchants/me/payout`
-- **Request Body:**
-```json
-{ "amount": 10000000 }
-```
-- **Response:**
-```json
-{
-  "payoutId": "PO-2026-0803-0012",
-  "netDisbursed": 9800000,
-  "fee": 200000,
-  "status": "COMPLETED"
-}
-```
 
 ---
 
@@ -140,15 +86,7 @@ sequenceDiagram
 ### Các bảng mới trên GatePay:
 1. `refunds`: Lưu vết toàn bộ thông tin các yêu cầu hoàn tiền.
 2. Tái sử dụng bảng `ledger_entries` với loại bút toán `EntryType.REFUND`.
-3. **`settlement_buckets`** (cơ chế 2 hũ):
-   - `bucket_type`: `A` (chờ đủ 1 tháng) / `B` (sẵn sàng rút)
-   - `transaction_ref`, `amount`, `available_date` (createdAt + 30 ngày), `created_at`
-4. **`payouts`**: lịch sử rút tiền của Merchant từ Hũ B.
-
-### Migration (GatePay, dải riêng):
-- `V31__create_refunds_table.sql`
-- `V31__create_settlement_buckets.sql`
-- `V31__create_payouts_table.sql`
+   - `V31__create_refunds_table.sql`
 
 ---
 
@@ -160,13 +98,7 @@ sequenceDiagram
 - [ ] Hạch toán Sổ cái kép Ledger `EntryType.REFUND` để thu hồi tiền từ ví Merchant.
 - [ ] Thêm Nút **"Hoàn tiền"** trên màn hình Chi tiết đơn hàng của MarketPlace và cập nhật trạng thái đơn.
 
-### 🟢 Rút tiền Merchant — cơ chế 2 hũ (Trí):
-- [ ] Entity `SettlementBucket` + `Payout` + migration.
-- [ ] Khi khách trả tiền (NORMAL/BNPL) → ghi vào **Hũ A** kèm `available_date = +30 ngày`.
-- [ ] **Scheduler** chạy mỗi ngày: chuyển giao dịch Hũ A đủ 1 tháng → **Hũ B**.
-- [ ] API `GET /merchants/me/pending-balance` → trả `availablePending` (Hũ A) + `available` (Hũ B).
-- [ ] API `POST /merchants/me/payout` → rút từ **Hũ B** (chỉ tiền tròn 1 tháng).
-- [ ] Chặn rút quá Hũ B + idempotent payout.
+
 
 ---
 
@@ -192,9 +124,5 @@ sequenceDiagram
 - [ ] Ledger `EntryType.REFUND` thu hồi từ ví Merchant đúng.
 - [ ] Chặn hoàn trùng / hoàn quá số đã trả.
 - [ ] MarketPlace nút "Hoàn tiền" + cập nhật order → `REFUNDED` + `InventoryFacade.release()`.
-- [ ] Giao dịch khách trả → vào **Hũ A** kèm `available_date = +30 ngày`.
-- [ ] **Scheduler** chuyển giao dịch đủ 1 tháng (tròn 30 ngày) từ Hũ A → **Hũ B**.
-- [ ] Merchant **chỉ rút được từ Hũ B** (tiền tròn 1 tháng), không rút được Hũ A.
-- [ ] `GET /pending-balance` phân biệt đúng Hũ A / Hũ B.
-- [ ] `POST /payout` rút thành công từ Hũ B → ledger PAYOUT đúng + idempotent.
+
 - [ ] `./mvnw -o test-compile` xanh + unit test.

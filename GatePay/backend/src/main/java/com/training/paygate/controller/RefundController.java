@@ -22,6 +22,7 @@ public class RefundController {
     private final RefundService refundService;
 
     @PostMapping
+    @com.training.paygate.annotation.RateLimit(limit = 10, windowSeconds = 60, key = "refund")
     @Operation(summary = "Process a transaction refund request (Public API for Merchants authenticated by API Key)")
     public ApiResponse<RefundResponse> processRefund(@Valid @RequestBody RefundCreateRequest request) {
         RefundResponse response = refundService.processRefund(request);
