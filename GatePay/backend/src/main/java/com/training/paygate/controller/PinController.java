@@ -42,6 +42,7 @@ public class PinController {
 
     @PostMapping("/verify")
     @PreAuthorize("isAuthenticated()")
+    @com.training.paygate.annotation.RateLimit(limit = 5, windowSeconds = 60, key = "pin_verify")
     @Operation(summary = "Xác thực Mã PIN giao dịch 6 số")
     public ApiResponse<Boolean> verifyPin(
             @AuthenticationPrincipal CustomUserDetails currentUser,

@@ -91,7 +91,7 @@ public class OtpServiceImpl implements OtpService {
             throw new BadRequestException("Mã OTP đã hết hạn (quá 5 phút). Vui lòng yêu cầu mã mới.");
         }
 
-        if (!entry.otpCode.equals(otpCode.trim())) {
+        if (!java.security.MessageDigest.isEqual(entry.otpCode.getBytes(java.nio.charset.StandardCharsets.UTF_8), otpCode.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
             throw new BadRequestException("Mã OTP không chính xác. Vui lòng kiểm tra lại email của bạn.");
         }
 

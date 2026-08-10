@@ -25,8 +25,11 @@ import java.util.Map;
 @Tag(name = "Bank Simulation (Provider Mock)", description = "APIs giả lập Ngân hàng đối tác thực hiện chuyển khoản thành công qua VietQR")
 public class BankSimulateController {
 
-    private static final String PAYGATE_BANK_WEBHOOK_URL = "http://localhost:8081/api/v1/integration/bank-webhook";
-    private final RestTemplate restTemplate = new RestTemplate();
+    @org.springframework.beans.factory.annotation.Value("${paygate.api-url:http://localhost:8081}")
+    private String paygateApiUrl;
+    private String getPaygateBankWebhookUrl() {
+        return paygateApiUrl + "/api/v1/integration/bank-webhook";
+    }    private final RestTemplate restTemplate = new RestTemplate();
 
     public record BankSimulateRequest(String orderId, BigDecimal amount) {}
 
@@ -52,7 +55,7 @@ public class BankSimulateController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bankWebhookPayload, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(PAYGATE_BANK_WEBHOOK_URL, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(getPaygateBankWebhookUrl(), entity, String.class);
             
             return ResponseEntity.ok(Map.of(
                     "status", "SUCCESS",
