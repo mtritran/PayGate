@@ -73,10 +73,6 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
 
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    com.training.paygate: DEBUG
 
 app:
   admin:

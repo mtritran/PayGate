@@ -32,6 +32,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
        boolean existsByDescription(String description);
 
+       List<Transaction> findByStatusAndCreatedAtBefore(TransactionStatus status, LocalDateTime createdAt);
        @Query("SELECT t FROM Transaction t WHERE " +
                      "(:ownerAccountId IS NULL OR t.sourceAccountId = :ownerAccountId OR t.destAccountId = :ownerAccountId) AND "
                      +

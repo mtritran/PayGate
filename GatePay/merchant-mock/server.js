@@ -104,6 +104,12 @@ app.post('/api/paygate-webhook', (req, res) => {
     if (event === 'PAYMENT_COMPLETED' || event === 'PAYMENT_FAILED') {
         const order = orders.find(o => o.orderId === orderId);
         if (order) {
+            // Idempotent check
+            if (order.status !== 'PENDING') {
+                console.warn(`[MERCHANT] Order ${orderId} already processed (Status: ${order.status}). Ignoring duplicate webhook.`);
+                return res.status(200).json({ message: 'Webhook already processed' });
+            }
+            
             order.transactionRef = transactionRef;
             order.status = (status === 'SUCCESS' || status === 'COMPLETED') ? 'PAID' : 'FAILED';
             console.log(`[MERCHANT] Updated Order ${orderId} status to: ${order.status}`);

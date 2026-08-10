@@ -68,12 +68,6 @@ public class AsyncSettlementService {
         transaction.setStatus(TransactionStatus.PROCESSING);
         transactionRepository.save(transaction);
 
-        try {
-            log.info("[ASYNC SETTLEMENT] Simulating processing delay of 3s for txRef {}", transaction.getTransactionRef());
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
 
         Account sourceAccount = accountRepository.findById(transaction.getSourceAccountId()).orElse(null);
         Account destAccount = accountRepository.findById(transaction.getDestAccountId()).orElse(null);
