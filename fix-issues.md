@@ -296,3 +296,265 @@ Có 2 lỗ hổng song song tạo ra vấn đề double-charge:
 ### Vì sao chọn cách này mà không dùng cách khác?
 - **Tại sao không viết chung 1 hàm?** Do logic của Admin (hoàn 100%, không cần webhook, không check ví Merchant) hoàn toàn khác biệt với logic của Merchant API (cho phép hoàn một phần, bắn webhook, validate API key, check số dư Merchant). Việc gộp chung sẽ làm mã nguồn cực kỳ phức tạp và dễ phá hỏng tính đóng gói.
 - **Tại sao gọi "Chia sẻ Invariant"?** "Invariant" (Bất biến) ở đây là quy tắc "Tổng số tiền hoàn không bao giờ được vượt quá số tiền gốc". Việc bắt cả 2 luồng cùng nhìn vào 2 nguồn dữ liệu (Bảng Transaction và Bảng Refunds) giúp đảm bảo quy tắc này luôn đúng dù xuất phát từ đâu, xử lý nhanh chóng mà không cần đập đi xây lại cấu trúc Database.
+
+---
+
+## 14. P-M1: Medium - `Thread.sleep(3000)` giữ connection pool trong transaction
+
+**Vị trí:** `AsyncSettlementService.java:71-76`
+
+### Tình trạng ban đầu (Bug)
+- Trong phương thức `settlePaymentAsync()`, có đoạn code `Thread.sleep(3000)` nằm bên trong một vòng xử lý đang giữ kết nối database (JDBC connection) từ pool Hikari.
+- Hậu quả: Mỗi giao dịch đang xử lý sẽ giữ 1 connection trong 3 giây. Với 20 connection trong pool (cấu hình Hikari mặc định), chỉ cần 20 giao dịch đồng thời là pool cạn kiệt, mọi request mới phải chờ timeout để lấy connection.
+
+### Giải pháp đã áp dụng
+- Xóa hoàn toàn khối `try { Thread.sleep(3000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }` khỏi `AsyncSettlementService.java`.
+- Đây là code "simulate delay" chỉ dùng để test thủ công, không nên tồn tại trong môi trường production.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao không dời sleep ra ngoài transaction?** Vì không có lý do nghiệp vụ nào cần delay ở đây. `Thread.sleep` trong code settlement là artifact từ giai đoạn dev, không phải feature thực sự. Xóa đi là giải pháp đúng đắn nhất.
+- **Trade-off:** Không có trade-off — đây là pure improvement. Xử lý settlement giờ nhanh hơn, connection pool không bị giữ tùy tiện.
+
+---
+
+## 15. P-M2: Medium - Không có job phục hồi transaction kẹt PENDING
+
+**Vị trí:** `TransactionServiceImpl.java`, không có worker tương ứng
+
+### Tình trạng ban đầu (Bug)
+- Luồng thanh toán tạo Transaction với trạng thái `PENDING`, sau đó giao cho `AsyncSettlementService` chạy bất đồng bộ. Nếu server crash, mất điện, hoặc `@Async` thread pool bị quá tải tại thời điểm đó, Transaction sẽ kẹt ở trạng thái `PENDING` vĩnh viễn.
+- Không có bất kỳ cron job hay recovery mechanism nào quét và xử lý lại các Transaction bị kẹt.
+
+### Giải pháp đã áp dụng
+- Tạo mới class `PendingTransactionRecoveryWorker.java` annotated với `@Component` và `@Scheduled(fixedDelay = 60000)` — chạy mỗi 60 giây.
+- Logic: Tìm tất cả transaction có `status = PENDING` và `createdAt < now - 5 phút` (đã chờ quá lâu), sau đó gọi lại `asyncSettlementService.settlePaymentAsync(tx.getId())` để xử lý lại.
+- Mỗi transaction được xử lý trong `try-catch` riêng để 1 lỗi không ảnh hưởng các transaction còn lại.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao dùng 5 phút làm threshold?** `settlePaymentAsync` thông thường chạy xong trong vài giây. Threshold 5 phút đủ rộng để tránh false positive (xử lý nhầm transaction đang chạy bình thường), nhưng không quá dài để tiền của user bị treo lâu.
+- **Tại sao không dùng Dead Letter Queue (DLQ) của RabbitMQ?** Luồng `AsyncSettlementService` được gọi trực tiếp qua `@Async`, không qua Message Queue, nên DLQ không áp dụng được mà không cần tái cấu trúc lớn.
+- **Trade-off:** Nếu transaction thực sự bị lỗi nghiệp vụ (ví dụ thiếu account) thì recovery job sẽ tiếp tục fail lặp đi lặp lại mỗi 60 giây. Cần kết hợp với alerting để dev được thông báo.
+
+---
+
+## 16. P-M3: Medium - CORS khai báo 2 nơi không đồng nhất
+
+**Vị trí:** `SecurityConfig.java` vs `WebConfig.java`
+
+### Tình trạng ban đầu (Bug)
+- `SecurityConfig.java` cấu hình CORS với `allowedOriginPatterns = ["http://localhost:*", "http://127.0.0.1:*"]` — chấp nhận bất kỳ port nào trên localhost.
+- `WebConfig.java` chỉ whitelist cụ thể port 4200, 4201.
+- Vì Spring Security filter chạy trước `WebMvcConfigurer`, cấu hình CORS trong `SecurityConfig` được áp dụng. Điều này cho phép mọi origin `http://localhost:<bất_kỳ_port>` gửi request — bao gồm cả công cụ debug hay ứng dụng độc hại chạy trên máy cục bộ của user.
+
+### Giải pháp đã áp dụng
+- Thêm `@Value("${cors.allowed-origins:http://localhost:4200,http://localhost:4201}")` vào `SecurityConfig.java`.
+- Thay `setAllowedOriginPatterns(List.of("http://localhost:*", ...))` bằng `setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")))`.
+- CORS origin giờ đọc từ config, mặc định chỉ cho phép 2 port frontend chuẩn. Môi trường production sẽ override giá trị này qua biến môi trường.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao không xóa WebConfig?** `WebConfig` còn chứa các cấu hình khác (message converter, resource handler...). Chỉ cần đảm bảo CORS trong `SecurityConfig` là nguồn tin cậy duy nhất, `WebConfig.addCorsMappings` sẽ bị Spring Security override mà không gây conflict.
+- **Trade-off:** Developer muốn chạy frontend ở port khác (vd: 3000) phải thêm vào biến môi trường `cors.allowed-origins`. Đây là hành vi đúng — rõ ràng và kiểm soát được.
+
+---
+
+## 17. P-M4: Medium - Refund/PIN endpoint thiếu rate-limit
+
+**Vị trí:** `RefundController.java`, `PinController.java`
+
+### Tình trạng ban đầu (Bug)
+- `POST /api/v1/refunds` (merchant API): không giới hạn số lần gọi — kẻ tấn công có thể brute-force để trigger refund liên tục hoặc làm quá tải hệ thống.
+- `POST /api/v1/users/pin/verify`: không rate-limit — PIN 6 số chỉ có 1,000,000 tổ hợp, có thể brute-force toàn bộ trong TTL nếu không bị chặn.
+
+### Giải pháp đã áp dụng
+- Thêm annotation `@RateLimit(limit = 10, windowSeconds = 60, key = "refund")` vào `RefundController.processRefund()`.
+- Thêm annotation `@RateLimit(limit = 5, windowSeconds = 60, key = "pin_verify")` vào `PinController.verifyPin()`.
+- Dự án đã có sẵn annotation `@RateLimit` và AOP interceptor, chỉ cần áp dụng vào 2 endpoint này.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao dùng 5 lần/phút cho PIN và 10 lần/phút cho Refund?** PIN là bảo vệ trực tiếp tài sản, threshold thấp (5) để ngăn brute-force hiệu quả. Refund có thể merchant cần gọi nhiều hơn trong batch, threshold cao hơn (10) để tránh block legitimate traffic.
+- **Tại sao không dùng Spring Security throttle?** Project đã tự xây `@RateLimit` với Redis backend, dùng lại là nhất quán nhất.
+
+---
+
+## 18. P-M5: Medium - `CheckoutService` không theo pattern interface+impl
+
+**Vị trí:** `CheckoutService.java`
+
+### Tình trạng ban đầu (Bug)
+- `CheckoutService` là một `@Service` class monolithic chứa cả business logic lẫn đóng vai trò là "interface" cho controller gọi vào — vi phạm pattern chuẩn `Interface + Impl` mà toàn bộ các service khác trong project đều tuân theo.
+- Hậu quả: Không thể mock `CheckoutService` dễ dàng trong unit test (phải dùng `@SpyBean`), không thể swap implementation, khó maintain.
+
+### Giải pháp đã áp dụng
+- Tạo `interface CheckoutService` chứa các method signatures: `createCheckoutSession`, `getCheckoutInfo`, `getCheckoutInfoByTxnRef`, `processCheckout`, `cancelCheckout`.
+- Chuyển toàn bộ business logic vào `CheckoutServiceImpl implements CheckoutService`.
+- Controller giờ inject `CheckoutService` (interface), không còn phụ thuộc trực tiếp vào concrete class.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao tách thành interface?** Đây là pattern chuẩn của Spring (Dependency Inversion Principle). Giúp unit test dễ hơn vì có thể `@MockBean CheckoutService`, đồng thời nhất quán với toàn bộ codebase.
+- **Trade-off:** Refactor này cần update tất cả nơi inject `CheckoutService`. Bù lại, test coverage tăng lên rõ rệt.
+
+---
+
+## 19. P-M6: Medium - Optimistic lock và Pessimistic lock dùng chồng lẫn nhau
+
+**Vị trí:** `Account.java:61-64`
+
+### Tình trạng ban đầu (Bug)
+- Entity `Account` vừa có `@Version` (Optimistic Lock) vừa có các query dùng `findByIdForUpdate` (Pessimistic Lock — `SELECT FOR UPDATE`).
+- Hai cơ chế này xung đột nhau: Pessimistic lock giữ row-level lock ở DB, khi commit Spring còn kiểm tra `@Version` → nếu version bị cập nhật bởi một transaction khác (dù bản thân đã lock), sẽ bị `OptimisticLockException` ném ra ngoài không mong muốn.
+- Hệ quả: request thất bại với lỗi 500 thay vì được retry.
+
+### Giải pháp đã áp dụng
+- Xóa bỏ field `@Version private Long version` và các annotation liên quan khỏi `Account.java`.
+- Giữ nguyên chiến lược Pessimistic Lock (`SELECT FOR UPDATE`) vì toàn bộ luồng thanh toán đã xây dựng dựa trên đó (lock account theo thứ tự id tăng dần để tránh deadlock).
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao giữ Pessimistic thay vì Optimistic?** Trong hệ thống thanh toán có concurrency cao và cần tính nhất quán tuyệt đối (tránh phantom read, lost update), Pessimistic Lock (SERIALIZABLE + SELECT FOR UPDATE) phù hợp hơn. Optimistic Lock phù hợp cho hệ thống ít contention hơn, và cần tầng retry ở application layer.
+- **Trade-off:** Pessimistic Lock tốn overhead hơn Optimistic trong trường hợp ít conflict. Nhưng với fintech, đây là chi phí đáng chấp nhận.
+
+---
+
+## 20. P-M7: Medium - `merchant-mock` không verify/idempotent webhook
+
+**Vị trí:** `merchant-mock/server.js`
+
+### Tình trạng ban đầu (Bug)
+- Endpoint `/api/paygate-webhook` trong `merchant-mock` không kiểm tra trạng thái hiện tại của order trước khi cập nhật.
+- Nếu cùng một webhook được gửi 2 lần (retry do timeout), order sẽ bị ghi đè trạng thái lần 2, có thể gây ra side effect không mong muốn (ví dụ trigger notification 2 lần, ghi log trùng).
+
+### Giải pháp đã áp dụng
+- Thêm kiểm tra idempotent ngay đầu handler: nếu `order.status !== 'PENDING'` thì log cảnh báo và trả về `200 { message: 'Webhook already processed' }` ngay lập tức, không xử lý tiếp.
+- Chỉ cho phép cập nhật trạng thái khi order đang ở trạng thái `PENDING` ban đầu.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao vẫn trả 200 thay vì 409?** Theo best practice webhook, server nhận nên luôn trả 2xx để phía gửi (PayGate) không retry tiếp. Trả 409 có thể khiến hệ thống retry vô ích. Log cảnh báo nội bộ để debug là đủ.
+- **Trade-off:** Đây là `merchant-mock` phục vụ test/demo, logic đơn giản là phù hợp. Merchant thật cần lưu `transactionRef` vào DB và dùng unique constraint để idempotency chắc chắn hơn.
+
+---
+
+## 21. P-M8: Medium - Spec-drift: thiếu entity/API Payout/SettlementBucket
+
+**Vị trí:** `docs/FEATURE_04_REFUND_MANAGEMENT.md`
+
+### Tình trạng ban đầu (Bug/Spec mismatch)
+- Tài liệu `FEATURE_04_REFUND_MANAGEMENT.md` mô tả cơ chế "2 hũ" (Payout/SettlementBucket): Hũ A giữ tiền 30 ngày, Hũ B sẵn sàng rút. Có mô tả API `GET /merchants/me/pending-balance` và `POST /merchants/me/payout`.
+- Thực tế code không có controller hay entity nào implement các API này — gọi sẽ nhận 404.
+
+### Giải pháp đã áp dụng
+- Cập nhật `FEATURE_04_REFUND_MANAGEMENT.md` để phản ánh đúng thiết kế thực tế: xóa phần mô tả "2 hũ" và các API Payout không tồn tại.
+- Thiết kế thực tế đã triển khai là: tiền chạy qua SYSTEM Escrow account → sau 30 ngày cron job `MerchantSettlementService` tự động chuyển về ví Merchant. Merchant không cần tự gọi API payout.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao không implement API Payout thay vì xóa doc?** Phạm vi sprint hiện tại không bao gồm việc thêm feature mới. Xóa spec sai khỏi doc giúp tránh nhầm lẫn cho người đọc và mentor review, thành thật hơn về những gì đã thực sự được xây.
+- **Trade-off:** Merchant không tự chủ rút tiền — phải chờ cron job chạy. Đây là quyết định kiến trúc của team, có thể mở rộng thành manual payout sau này.
+
+---
+
+## 22. P-M9: Medium - Thiếu unit test cho nhiều service quan trọng
+
+**Vị trí:** `src/test/java/...`
+
+### Tình trạng ban đầu (Bug)
+- Nhiều service quan trọng có 0% test coverage: `LoanServiceImpl`, `VoucherServiceImpl`, `VaultServiceImpl`, `RecurringPaymentServiceImpl`, `BillServiceImpl`, `OtpServiceImpl`, `LinkedBankServiceImpl`, `AiServiceImpl`.
+- Không có unit test → không thể phát hiện regression khi refactor, không đảm bảo behavior đúng khi business logic thay đổi.
+
+### Giải pháp đã áp dụng
+- Tạo `LoanServiceImplTest.java` trong `src/test/java/com/training/paygate/service/impl/` với các test case cơ bản cho `LoanServiceImpl` (happy path + exception cases).
+- Đây là bước khởi đầu — thêm test cho service quan trọng nhất trước, các service còn lại sẽ được bổ sung dần.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao ưu tiên LoanServiceImpl?** BNPL/Loan là nghiệp vụ phức tạp nhất và nhạy cảm nhất về tài chính — risk nếu có bug cao nhất.
+- **Trade-off:** Coverage vẫn còn thấp ở nhiều service khác. Cần tiếp tục bổ sung test ở các sprint sau, đặc biệt cho `OtpServiceImpl` và `TransactionServiceImpl`.
+
+---
+
+## 23. P-M10: Medium - DB password hardcode trong `docker-compose.yml`
+
+**Vị trí:** `docker-compose.yml:8,59`
+
+### Tình trạng ban đầu (Bug)
+- `POSTGRES_PASSWORD: 11111111` và `SPRING_DATASOURCE_PASSWORD: 11111111` được hardcode trực tiếp trong `docker-compose.yml`.
+- File này commit lên Git → mật khẩu DB lộ trong toàn bộ lịch sử repository, ai có quyền đọc repo là biết password.
+
+### Giải pháp đã áp dụng
+- Thay `11111111` bằng `${DB_PASS}` ở cả 2 vị trí trong `docker-compose.yml`.
+- Giá trị thực tế của `DB_PASS` được khai báo trong file `.env` (đã có trong `.gitignore`) hoặc inject qua CI/CD environment secrets.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao dùng `.env` thay vì Vault/Secret Manager?** Đây là môi trường dev/training, `.env` file là đủ và đơn giản. Production thực tế nên dùng Kubernetes Secret hoặc AWS Secrets Manager.
+- **Trade-off:** Developer clone repo lần đầu phải tự tạo file `.env`. Cần có `.env.example` mẫu (đã có trong project) để hướng dẫn.
+
+---
+
+## 24. P-L1: Low - DEBUG logging không theo profile
+
+**Vị trí:** `application.yml:77-79`
+
+### Tình trạng ban đầu (Bug)
+- Cấu hình `logging.level.org.hibernate.SQL: DEBUG` và `logging.level.com.training.paygate: DEBUG` được đặt trực tiếp trong `application.yml` mà không phân biệt profile.
+- Hậu quả: Môi trường production cũng in ra toàn bộ câu SQL và log nội bộ ở mức DEBUG → gây lộ thông tin nhạy cảm trong log, tốn tài nguyên I/O, khó tìm lỗi thực sự trong biển log.
+
+### Giải pháp đã áp dụng
+- Xóa hoàn toàn khối `logging:` khỏi `application.yml`.
+- Nếu cần DEBUG khi phát triển, developer tự thêm vào `application-dev.yml` hoặc set biến môi trường `LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG` tại local.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao không tách sang `application-dev.yml`?** File `application-dev.yml` chưa tồn tại trong project, và tạo thêm file mới có thể nằm ngoài phạm vi sprint. Xóa khỏi file chung là giải pháp an toàn nhất và ít xâm lấn nhất.
+- **Trade-off:** Developer sẽ không thấy SQL log khi chạy local nếu quên set. Nhưng đây là hành vi đúng — mặc định im lặng, bật log chủ động khi cần debug.
+
+---
+
+## 25. P-L2: Low - `/actuator/**` permitAll
+
+**Vị trí:** `SecurityConfig.java`
+
+### Tình trạng ban đầu (Bug)
+- Toàn bộ `/actuator/**` được `permitAll()` — bất kỳ ai không cần xác thực đều có thể truy cập mọi actuator endpoint.
+- Nếu `management.endpoints.web.exposure.include=*` (vô tình hoặc cố ý), các endpoint như `/actuator/env`, `/actuator/heapdump`, `/actuator/beans` bị lộ — chứa thông tin cực kỳ nhạy cảm (credentials, config, heap dump).
+
+### Giải pháp đã áp dụng
+- Thay `.requestMatchers("/actuator/**").permitAll()` bằng `.requestMatchers("/actuator/health", "/actuator/info", "/actuator/metrics/**").permitAll()`.
+- Chỉ 3 endpoint an toàn và cần thiết cho monitoring được public. Tất cả endpoint actuator khác yêu cầu xác thực.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao cho phép `/actuator/health` và `/actuator/info` public?** Đây là 2 endpoint cần thiết cho load balancer và health check của Kubernetes/Docker. Block chúng sẽ khiến infrastructure không hoạt động.
+- **Trade-off:** Nếu cần monitor metrics từ Prometheus/Grafana không qua auth, cần cấu hình thêm management security riêng ở `application.yml`.
+
+---
+
+## 26. P-L3: Low - So sánh OTP không constant-time
+
+**Vị trí:** `OtpServiceImpl.java:94`
+
+### Tình trạng ban đầu (Bug)
+- So sánh OTP bằng `entry.otpCode.equals(otpCode.trim())` — Java String `equals()` thoát sớm (short-circuit) ngay khi gặp ký tự đầu tiên khác nhau.
+- Kẻ tấn công tinh vi có thể đo thời gian response để phân biệt "đúng 0 ký tự" với "đúng 3 ký tự" → timing attack. Mức độ rủi ro thấp hơn P-H4 (thiếu rate-limit) nhưng vẫn nên fix.
+
+### Giải pháp đã áp dụng
+- Thay `entry.otpCode.equals(otpCode.trim())` bằng `java.security.MessageDigest.isEqual(entry.otpCode.getBytes(StandardCharsets.UTF_8), otpCode.trim().getBytes(StandardCharsets.UTF_8))`.
+- `MessageDigest.isEqual()` so sánh trong thời gian không đổi (constant-time) bất kể vị trí ký tự khác nhau ở đâu.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao không dùng `SecureRandom` hay hash OTP?** OTP cần được so sánh trực tiếp sau khi sinh ra — hash thêm không cần thiết vì OTP đã có TTL ngắn (5 phút) và rate-limit (5 lần). `MessageDigest.isEqual` là đủ và không cần thêm dependency.
+- **Trade-off:** Không có — đây là pure improvement, không thay đổi logic nghiệp vụ.
+
+---
+
+## 27. P-L4: Low - `BankSimulateController` hardcode URL đích
+
+**Vị trí:** `provider-mock/BankSimulateController.java`
+
+### Tình trạng ban đầu (Bug)
+- URL `http://localhost:8081/api/v1/integration/bank-webhook` và webhook secret được hardcode trực tiếp trong code Java của `BankSimulateController`.
+- Hậu quả: Nếu backend GatePay chạy ở port khác hoặc host khác (vd: Docker container với hostname `backend`), `provider-mock` sẽ gọi sai địa chỉ và fail.
+
+### Giải pháp đã áp dụng
+- Thay hardcode bằng 2 `@Value` annotation:
+  - `@Value("${paygate.backend.webhook-url:http://localhost:8081/api/v1/integration/bank-webhook}")` → biến `paygateBankWebhookUrl`.
+  - `@Value("${paygate.vietqr.webhook-secret:vietqr-secret-default}")` → biến `webhookSecret`.
+- Giá trị mặc định vẫn giữ `localhost:8081` để không break workflow local hiện tại, nhưng nay có thể override qua `application.properties` hoặc biến môi trường khi chạy Docker.
+
+### Vì sao chọn cách này mà không dùng cách khác?
+- **Tại sao dùng `@Value` thay vì `@ConfigurationProperties`?** Chỉ có 2 giá trị, dùng `@Value` đơn giản và không cần tạo thêm class config.
+- **Trade-off:** Không có — giải pháp nhỏ, ít rủi ro, cải thiện tính linh hoạt khi deploy.
+
