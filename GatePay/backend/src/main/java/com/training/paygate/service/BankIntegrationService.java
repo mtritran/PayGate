@@ -17,6 +17,7 @@ import com.training.paygate.enums.PaymentMethod;
 import com.training.paygate.enums.TransactionStatus;
 import com.training.paygate.enums.TransactionType;
 import com.training.paygate.enums.WebhookStatus;
+import com.training.paygate.exception.AmountMismatchException;
 import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.repository.AccountRepository;
@@ -111,6 +112,12 @@ public class BankIntegrationService {
         }
 
         BigDecimal amount = request.amount().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal expectedAmount = session.getAmount().setScale(2, RoundingMode.HALF_UP);
+
+        if (amount.compareTo(expectedAmount) != 0) {
+            log.error("Amount mismatch for orderId {}: expected {}, got {}", orderId, expectedAmount, amount);
+            throw new AmountMismatchException("Amount mismatch: expected " + expectedAmount + ", got " + amount);
+        }
 
         Account sysAccount = accountRepository.findByOwnerIdAndOwnerType(0L, OwnerType.SYSTEM)
                 .orElseGet(() -> {
@@ -128,6 +135,8 @@ public class BankIntegrationService {
         Account lockedSysAccount = accountRepository.findByIdForUpdate(sysAccount.getId())
                 .orElse(sysAccount);
 
+        // Inflow from bank: credit SYSTEM Escrow account.
+        // Merchant will receive net amount after 30-day hold via MerchantSettlementService cron job.
         lockedSysAccount.setBalance(lockedSysAccount.getBalance().add(amount).setScale(2, RoundingMode.HALF_UP));
         accountRepository.save(lockedSysAccount);
         balanceCacheService.evictBalance(lockedSysAccount.getId());
@@ -146,6 +155,8 @@ public class BankIntegrationService {
 
         tx = transactionRepository.save(tx);
 
+        // Single CREDIT entry for SYSTEM Escrow — the matching DEBIT entry will be
+        // created by MerchantSettlementService when the 30-day hold expires.
         LedgerEntry creditSys = LedgerEntry.builder()
                 .transactionId(tx.getId())
                 .accountId(lockedSysAccount.getId())

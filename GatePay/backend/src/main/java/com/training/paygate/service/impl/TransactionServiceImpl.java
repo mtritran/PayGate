@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.dao.ConcurrencyFailureException;
 
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +56,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final MerchantRepository merchantRepository;
     private final TransactionRepository transactionRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final com.training.paygate.repository.RefundRepository refundRepository;
     private final BalanceCacheService balanceCacheService;
     private final IdempotencyCacheService idempotencyCacheService;
     private final AmqpTemplate amqpTemplate;
@@ -63,12 +65,35 @@ public class TransactionServiceImpl implements TransactionService {
     private final com.training.paygate.service.FraudDetectionService fraudDetectionService;
     private final AsyncSettlementService asyncSettlementService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private TransactionService self;
+
     @Override
-    @Transactional
     public TransactionResponse processPayment(PaymentRequest request, Long userId, String clientIp) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-        return processPayment(request, user.getUsername(), clientIp);
+        
+        int maxAttempts = 3;
+        int attempt = 0;
+        while (true) {
+            attempt++;
+            try {
+                return self.processPayment(request, user.getUsername(), clientIp);
+            } catch (ConcurrencyFailureException ex) {
+                if (attempt >= maxAttempts) {
+                    log.error("Failed to process payment after {} attempts due to concurrency conflicts.", maxAttempts, ex);
+                    throw ex;
+                }
+                log.warn("Concurrency conflict (attempt {}/{}). Retrying payment in 100ms...", attempt, maxAttempts);
+                try {
+                    Thread.sleep(100 * attempt); // Backoff: 100ms, 200ms
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Payment retry interrupted", ie);
+                }
+            }
+        }
     }
 
     @Override
@@ -309,7 +334,12 @@ public class TransactionServiceImpl implements TransactionService {
         // Concurrency guard: Re-check if already refunded AFTER acquiring locks to
         // prevent race condition
         if (transactionRepository.existsByDescription("Refund for: " + originalRef)) {
-            throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded");
+            throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been refunded by Admin");
+        }
+        
+        java.math.BigDecimal alreadyRefundedAPI = refundRepository.sumRefundedAmountByOriginalTransactionRef(originalRef);
+        if (alreadyRefundedAPI.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            throw new InvalidTransactionStateException("Transaction " + originalRef + " has already been partially or fully refunded via Merchant API");
         }
 
         // Original source account gets money back (dest of refund)

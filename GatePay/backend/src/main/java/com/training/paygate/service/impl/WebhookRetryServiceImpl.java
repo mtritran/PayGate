@@ -28,8 +28,8 @@ import java.util.List;
 public class WebhookRetryServiceImpl implements WebhookRetryService {
 
     private final WebhookLogRepository webhookLogRepository;
-    private final RestTemplate restTemplate;
     private final MerchantRepository merchantRepository;
+    private final RestTemplate restTemplate;
 
     @Override
     @Scheduled(fixedDelay = 30000)
@@ -61,15 +61,17 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
         boolean isSuccess = false;
 
         try {
+            if (!com.training.paygate.util.SsrfValidator.isSafeUrl(webhookLog.getUrl())) {
+                throw new SecurityException("SSRF blocked: URL resolves to internal or restricted network");
+            }
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            
+            // Generate HMAC signature
             if (webhookLog.getMerchantId() != null && webhookLog.getMerchantId() > 0) {
-                Merchant merchant = merchantRepository.findById(webhookLog.getMerchantId()).orElse(null);
-                if (merchant != null && merchant.getApiKey() != null && !merchant.getApiKey().isBlank()) {
-                    String signature = HmacUtils.generateSignature(webhookLog.getPayload(), merchant.getApiKey());
-                    headers.set("X-Signature", signature);
-                }
+                merchantRepository.findById(webhookLog.getMerchantId()).ifPresent(merchant -> {
+                    String signature = com.training.paygate.util.HmacUtils.generateSignature(webhookLog.getPayload(), merchant.getApiKey());
+                    headers.set("X-PayGate-Signature", signature);
+                });
             }
 
             HttpEntity<String> entity = new HttpEntity<>(webhookLog.getPayload(), headers);
@@ -83,6 +85,11 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
             responseStatus = ex.getStatusCode().value();
             responseBody = ex.getResponseBodyAsString();
             log.error("Webhook ID {} retry failed with HTTP status {}: {}", webhookLog.getId(), responseStatus, ex.getMessage());
+        } catch (SecurityException ex) {
+            responseStatus = 403;
+            responseBody = ex.getMessage();
+            currentAttempt = 5; // Force fail, no retry for SSRF
+            log.error("Webhook ID {} retry blocked (SSRF): {}", webhookLog.getId(), ex.getMessage());
         } catch (Exception ex) {
             responseStatus = 500;
             responseBody = ex.getMessage();
