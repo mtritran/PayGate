@@ -16,6 +16,7 @@ import com.training.paygate.entity.CheckoutSession;
 import com.training.paygate.util.HmacUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
+@RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
 @RequiredArgsConstructor
 @Slf4j
 public class WebhookConsumer {
@@ -42,7 +44,7 @@ public class WebhookConsumer {
     private final CheckoutSessionRepository checkoutSessionRepository;
     private final ObjectMapper objectMapper;
 
-    @RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
+    @RabbitHandler
     public void consumePaymentCompleted(PaymentCompletedEvent event) {
         log.info("Received PaymentCompletedEvent for webhook dispatching: {}", event.transactionRef());
 
@@ -95,7 +97,7 @@ public class WebhookConsumer {
         sendWebhook(targetUrl, payloadJson, merchantId, transactionId, event.transactionRef());
     }
 
-    @RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
+    @RabbitHandler
     public void consumeCheckoutCancelled(CheckoutCancelledEvent event) {
         log.info("Received CheckoutCancelledEvent for webhook dispatching: token={}, orderId={}", event.token(), event.orderId());
 
