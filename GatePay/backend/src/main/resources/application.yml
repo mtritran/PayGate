@@ -87,6 +87,9 @@ app:
     enabled: true
     cron: ${PAYGATE_SETTLEMENT_CRON:0 0 1 * * ?}
     hold-days: ${PAYGATE_SETTLEMENT_HOLD_DAYS:30}
+  webhook:
+    # Local development uses a loopback Marketplace webhook. Keep this empty in production.
+    allowed-internal-hosts: ${WEBHOOK_ALLOWED_INTERNAL_HOSTS:localhost}
 
 paygate:
   frontend-url: http://localhost:4201
@@ -101,3 +104,4 @@ paygate:
     bank-code: ${VIETQR_BANK_CODE:MB}
     account-number: ${VIETQR_ACCOUNT_NUMBER:099988887777}
     account-name: ${VIETQR_ACCOUNT_NAME:PAYGATE PAYMENT GATEWAY}
+    webhook-secret: ${PAYGATE_BANK_WEBHOOK_SECRET:vietqr-secret-default}

@@ -7,6 +7,7 @@ import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.WebhookLogRepository;
 import com.training.paygate.service.WebhookRetryService;
 import com.training.paygate.util.HmacUtils;
+import com.training.paygate.util.SsrfValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -30,6 +31,7 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
     private final WebhookLogRepository webhookLogRepository;
     private final MerchantRepository merchantRepository;
     private final RestTemplate restTemplate;
+    private final SsrfValidator ssrfValidator;
 
     @Override
     @Scheduled(fixedDelay = 30000)
@@ -61,7 +63,7 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
         boolean isSuccess = false;
 
         try {
-            if (!com.training.paygate.util.SsrfValidator.isSafeUrl(webhookLog.getUrl())) {
+            if (!ssrfValidator.isSafeUrl(webhookLog.getUrl())) {
                 throw new SecurityException("SSRF blocked: URL resolves to internal or restricted network");
             }
             HttpHeaders headers = new HttpHeaders();
@@ -69,7 +71,7 @@ public class WebhookRetryServiceImpl implements WebhookRetryService {
             // Generate HMAC signature
             if (webhookLog.getMerchantId() != null && webhookLog.getMerchantId() > 0) {
                 merchantRepository.findById(webhookLog.getMerchantId()).ifPresent(merchant -> {
-                    String signature = com.training.paygate.util.HmacUtils.generateSignature(webhookLog.getPayload(), merchant.getApiKey());
+                    String signature = HmacUtils.generateSignature(webhookLog.getPayload(), merchant.getApiKey());
                     headers.set("X-PayGate-Signature", signature);
                 });
             }
