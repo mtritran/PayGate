@@ -54,7 +54,6 @@ public class LoanServiceImpl implements LoanService {
     private final com.training.paygate.service.EmailService emailService;
     private final AmqpTemplate amqpTemplate;
     private final com.training.paygate.service.NotificationService notificationService;
-    private final com.training.paygate.repository.BnplProfileRepository bnplProfileRepository;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
 
@@ -390,7 +389,7 @@ public class LoanServiceImpl implements LoanService {
             return;
         }
 
-        List<LoanSchedule> schedules = loanScheduleRepository.findByTransactionRef(event.transactionRef());
+        List<LoanSchedule> schedules = loanScheduleRepository.findByTransactionRefForUpdate(event.transactionRef());
         if (schedules.isEmpty()) {
             return;
         }
@@ -398,6 +397,13 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = schedules.get(0).getLoan();
 
         if ("COMPLETED".equalsIgnoreCase(event.status())) {
+            boolean hasProcessingSchedule = schedules.stream()
+                    .anyMatch(schedule -> schedule.getStatus() == LoanScheduleStatus.PROCESSING);
+            if (!hasProcessingSchedule) {
+                log.info("[LOAN] Ignored duplicate repayment event for transaction {}", event.transactionRef());
+                return;
+            }
+
             for (LoanSchedule s : schedules) {
                 if (s.getStatus() == LoanScheduleStatus.PROCESSING) {
                     s.setStatus(LoanScheduleStatus.PAID);
@@ -413,13 +419,6 @@ public class LoanServiceImpl implements LoanService {
             }
             loan.setRemainingAmount(newRemaining);
             loanRepository.save(loan);
-
-            // Auto-increase approved limit by the repaid amount
-            bnplProfileRepository.findByUserId(loan.getUserId()).ifPresent(profile -> {
-                profile.setApprovedLimit(profile.getApprovedLimit().add(event.amount()));
-                bnplProfileRepository.save(profile);
-                log.info("[LOAN] Increased BNPL limit for user {} by {}", loan.getUserId(), event.amount());
-            });
         } else if ("FAILED".equalsIgnoreCase(event.status())) {
             for (LoanSchedule s : schedules) {
                 if (s.getStatus() == LoanScheduleStatus.PROCESSING) {

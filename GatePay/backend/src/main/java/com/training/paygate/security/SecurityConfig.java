@@ -48,10 +48,7 @@ public class SecurityConfig {
                                 "/api/v1/checkout/create",
                                 "/api/v1/checkout/info/**",
                                 "/api/v1/checkout/*/customer",
-                                "/api/v1/checkout/*/borrower-profile",
                                 "/api/v1/checkout/*/credit-assessment",
-                                "/api/v1/checkout/*/bnpl-proposals",
-                                "/api/v1/checkout/bnpl-proposals/*/confirm",
                                 "/api/v1/refunds",
                                 "/api/v1/integration/bank-webhook"
                         ).permitAll()
