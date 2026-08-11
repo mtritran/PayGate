@@ -1,0 +1,181 @@
+{
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "forged amount returns exact HTTP 400 Amount mismatch": {
+                    "name": "forged amount returns exact HTTP 400 Amount mismatch",
+                    "path": "::forged amount returns exact HTTP 400 Amount mismatch",
+                    "id": "8a1bc479fa15951a40edcddd72a9c963",
+                    "passes": 24317,
+                    "fails": 0
+                },
+                "forged amount is never accepted": {
+                    "passes": 24317,
+                    "fails": 0,
+                    "name": "forged amount is never accepted",
+                    "path": "::forged amount is never accepted",
+                    "id": "aa31663eb10bbdfbed277bda6c02c15d"
+                },
+                "forged amount is not rejected by HMAC authentication": {
+                    "name": "forged amount is not rejected by HMAC authentication",
+                    "path": "::forged amount is not rejected by HMAC authentication",
+                    "id": "4ee3d38c5b8d1f97880f4de4c557851c",
+                    "passes": 24317,
+                    "fails": 0
+                },
+                "forged amount does not cause a server error": {
+                    "name": "forged amount does not cause a server error",
+                    "path": "::forged amount does not cause a server error",
+                    "id": "724cfba9c0e73fd7d43f7c55164e807c",
+                    "passes": 24317,
+                    "fails": 0
+                }
+            },
+        "name": ""
+    },
+    "metrics": {
+        "http_req_receiving": {
+            "min": 0,
+            "med": 0,
+            "max": 3.1646,
+            "p(90)": 0.5399,
+            "p(95)": 0.5853199999999983,
+            "avg": 0.17205822436055518
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 24318,
+            "value": 0
+        },
+        "gd4_forged_duration": {
+            "avg": 4.7393683760332435,
+            "min": 2.5834,
+            "med": 4.5249,
+            "max": 22.5688,
+            "p(90)": 5.79106,
+            "p(95)": 6.25722,
+            "thresholds": {
+                "p(95)<1000": false
+            }
+        },
+        "http_req_sending": {
+            "max": 1.7664,
+            "p(90)": 0,
+            "p(95)": 0.5249,
+            "avg": 0.03841032157249779,
+            "min": 0,
+            "med": 0
+        },
+        "data_received": {
+            "count": 12740729,
+            "rate": 847561.3264009533
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "med": 1.079,
+            "max": 15.7574,
+            "p(90)": 2.1175,
+            "p(95)": 2.423499999999991,
+            "avg": 1.189626317953766
+        },
+        "iteration_duration": {
+            "p(95)": 8.0152,
+            "avg": 6.157237340132343,
+            "min": 3.617,
+            "med": 5.9762,
+            "max": 24.1378,
+            "p(90)": 7.4992
+        },
+        "vus": {
+            "max": 10,
+            "value": 10,
+            "min": 10
+        },
+        "vus_max": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "http_req_duration": {
+            "avg": 4.739831104531638,
+            "min": 2.5834,
+            "med": 4.5249,
+            "max": 22.5688,
+            "p(90)": 5.7913,
+            "p(95)": 6.2577
+        },
+        "gd4_forged_exact_mismatch_rejected": {
+            "count": 24317,
+            "rate": 1617.6585165646318
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 4.739831104531638,
+            "min": 2.5834,
+            "med": 4.5249,
+            "max": 22.5688,
+            "p(90)": 5.7913,
+            "p(95)": 6.2577
+        },
+        "data_sent": {
+            "count": 11834205,
+            "rate": 787255.9322705
+        },
+        "http_reqs": {
+            "count": 24318,
+            "rate": 1617.7250403346923
+        },
+        "http_req_blocked": {
+            "max": 15.7574,
+            "p(90)": 2.1383,
+            "p(95)": 2.5541,
+            "avg": 1.2365956822106936,
+            "min": 0,
+            "med": 1.0906
+        },
+        "http_req_tls_handshaking": {
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0
+        },
+        "iterations": {
+            "count": 24317,
+            "rate": 1617.6585165646318
+        },
+        "checks": {
+            "passes": 97268,
+            "fails": 0,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "gd4_forged_exact_reject_rate": {
+            "passes": 24317,
+            "fails": 0,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "http_req_waiting": {
+            "p(90)": 5.44679,
+            "p(95)": 5.944804999999999,
+            "avg": 4.529362558598583,
+            "min": 2.0546,
+            "med": 4.3346,
+            "max": 20.0508
+        }
+    },
+    "setup_data": {
+        "fixture": {
+            "amount": 100000,
+            "orderId": "ORD-GD4-FORGED-gd4-forged-20260812-001305",
+            "transferContent": "PAYGATE ORD-GD4-FORGED-gd4-forged-20260812-001305"
+        }
+    }
+}

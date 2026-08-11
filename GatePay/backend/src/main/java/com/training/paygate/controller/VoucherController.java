@@ -1,0 +1,93 @@
+package com.training.paygate.controller;
+
+import com.training.paygate.common.ApiResponse;
+import com.training.paygate.common.PageResponse;
+import com.training.paygate.dto.request.VoucherApplyRequest;
+import com.training.paygate.dto.request.VoucherCreateRequest;
+import com.training.paygate.dto.request.VoucherRedeemRequest;
+import com.training.paygate.dto.response.UserVoucherResponse;
+import com.training.paygate.dto.response.VoucherApplyResponse;
+import com.training.paygate.dto.response.VoucherResponse;
+import com.training.paygate.security.CustomUserDetails;
+import com.training.paygate.service.VoucherService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
+@Tag(name = "Vouchers", description = "APIs quản lý kho voucher và đổi/áp dụng voucher")
+public class VoucherController {
+
+    private final VoucherService voucherService;
+
+    // --- USER ENDPOINTS ---
+
+    @GetMapping("/vouchers/shop")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "Xem danh sách Voucher có thể đổi")
+    public ApiResponse<PageResponse<VoucherResponse>> getShopVouchers(Pageable pageable) {
+        return ApiResponse.success(PageResponse.from(voucherService.getShopVouchers(pageable), v -> v));
+    }
+
+    @PostMapping("/vouchers/redeem")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "Đổi điểm thưởng lấy Voucher")
+    public ApiResponse<UserVoucherResponse> redeemVoucher(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @Valid @RequestBody VoucherRedeemRequest request
+    ) {
+        return ApiResponse.success("Voucher redeemed successfully", voucherService.redeemVoucher(currentUser.getId(), request));
+    }
+
+    @GetMapping("/vouchers/my-vouchers")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "Xem danh sách Voucher cá nhân")
+    public ApiResponse<List<UserVoucherResponse>> getMyVouchers(@AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ApiResponse.success(voucherService.getMyVouchers(currentUser.getId()));
+    }
+
+    @PostMapping("/vouchers/apply")
+    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "Kiểm tra và áp dụng Voucher trước khi thanh toán")
+    public ApiResponse<VoucherApplyResponse> applyVoucher(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @Valid @RequestBody VoucherApplyRequest request
+    ) {
+        return ApiResponse.success(voucherService.applyVoucher(currentUser.getId(), request));
+    }
+
+    // --- ADMIN ENDPOINTS ---
+
+    @PostMapping("/admin/vouchers")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin tạo Voucher mới vào hệ thống")
+    public ApiResponse<VoucherResponse> createVoucher(@Valid @RequestBody VoucherCreateRequest request) {
+        return ApiResponse.success("Voucher created successfully", voucherService.createVoucher(request));
+    }
+
+    @GetMapping("/admin/vouchers")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin xem tất cả Voucher trong hệ thống")
+    public ApiResponse<PageResponse<VoucherResponse>> getAllVouchersForAdmin(Pageable pageable) {
+        return ApiResponse.success(PageResponse.from(voucherService.getAllVouchersForAdmin(pageable), v -> v));
+    }
+
+    @PutMapping("/admin/vouchers/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin cập nhật thông tin Voucher")
+    public ApiResponse<VoucherResponse> updateVoucher(
+            @PathVariable Long id,
+            @Valid @RequestBody VoucherCreateRequest request
+    ) {
+        return ApiResponse.success(voucherService.updateVoucher(id, request));
+    }
+}

@@ -1,0 +1,40 @@
+# Java
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Node/Angular
+**/node_modules/
+**/.angular/
+**/dist/
+**/.npm/
+**/*.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Agent Customizations
+.agents/
+skills-lock.json
+
+# Environment / Secret Credentials
+.env
+*.env
+.env.local
+backend/src/main/resources/application.yml

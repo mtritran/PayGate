@@ -1,40 +1,26 @@
-# Java
+# =====================================================
+# Repo cha (root) — GatePay + erconomic phân tách biệt
+# -----------------------------------------------------
+# GatePay/ là project chính của team (sẽ push lên PayGate).
+# erconomic/ là repo MarketPlace RIÊNG (clone từ team kia) —
+# chỉ dùng để phân tích/theo dõi, KHÔNG push lên PayGate.
+# Dòng dưới đảm bảo erconomic KHÔNG bao giờ bị git add/push
+# vào repo cha này.
+erconomic/
+
+# Build artifacts
+target/
 **/target/
-**/*.class
-**/*.jar
-**/*.war
-**/*.ear
-
-# Maven
-.mvn/wrapper/maven-wrapper.jar
-
-# Node/Angular
+node_modules/
 **/node_modules/
-**/.angular/
-**/dist/
-**/.npm/
-**/*.log
 
-# IDEs
-.idea/
-*.iml
-.vscode/
-.settings/
-.project
-.classpath
-.factorypath
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Agent Customizations
-.agents/
-skills-lock.json
-
-# Environment / Secret Credentials
+# Log / môi trường cá nhân
+*.log
+# Console log load test đã được scrub là evidence chính thức và cần được version-control.
+!GatePay/loadtest/**/evidence/**/*.log
 .env
-*.env
-.env.local
-backend/src/main/resources/application.yml
+# IDE
+.idea/
+.vscode/
+.DS_Store
+MarketPlace/

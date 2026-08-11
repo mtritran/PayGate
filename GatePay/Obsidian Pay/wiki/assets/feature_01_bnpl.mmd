@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant K as Khách (User)
+    participant M as MarketPlace
+    participant G as GatePay
+    participant C as cic-service
+    participant T as tp-bank-service
+
+    K->>M: Chọn SP + PTTT "Thẻ tín dụng PayGate"
+    M->>G: POST /api/v1/checkout/create {apiKey, orderId, amount, plan: "GTHP_6M"}
+    G->>G: Verify apiKey, tạo CheckoutSession
+    G-->>M: {token, paymentUrl}
+    M->>K: Redirect sang paymentUrl
+
+    K->>G: Đăng nhập JWT
+    G->>G: Check: User có issued_limit chưa?
+
+    alt Chưa có hạn mức
+        G-->>K: Hiện form "Mở hạn mức"
+        K->>G: Submit hồ sơ {occupation, income, contacts}
+        G->>C: checkCredit(userProfile, income) — không gọi tp-bank lần đầu
+        C-->>G: {score: 72, verdict: APPROVED, limit: 7500000}
+        G->>G: Tạo CreditLine {issued: 7.5tr, available: 7.5tr}
+    end
+
+    G->>C: checkCredit (kiểm tra lại trước khi tạo khoản vay)
+    C->>T: getLoanHistory(userId, months: 6)
+    T-->>C: [{period: "2026-07", onTime: true}, ...]
+    C-->>G: {score: 68, verdict: APPROVED}
+
+    G->>G: amount=15tr vs available=7.5tr → OVER LIMIT
+
+    alt Đề xuất Down-payment
+        G-->>K: "Bạn cần đặt cọc 7.5tr (phần vượt hạn), vay 7.5tr còn lại"
+        K->>G: Xác nhận Down-payment
+        G->>G: Trừ 7.5tr từ ví User (down-payment)
+    end
+
+    G->>G: Tạo Loan {amount: 7.5tr, term: 6}
+    G->>G: Sinh 6 LoanSchedule
+    G->>G: CreditLine.available -= 7.5tr
+    G->>G: processPayment("DISBURSE-{loanRef}", PayGate→Merchant, 7.5tr)
+    G-->>M: Redirect: returnUrl?status=SUCCESS&orderId=...
+    M->>M: Order → PAID
+    K->>K: Nhận hàng
+
+    loop Mỗi kỳ trả nợ
+        K->>G: Trả kỳ từ ví
+        G->>G: processPayment("REPAY-{loanRef}-{n}", User→System)
+        G->>G: LoanSchedule[n] → PAID
+        G->>G: available += monthly_installment
+        G->>T: Ghi lịch sử trả nợ
+    end

@@ -1,0 +1,103 @@
+
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: loadtest/paygate/idempotency-poc.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 1m0s max duration (incl. graceful stop):
+              * gd3_same_key_concurrency: 1 iterations for each of 10 VUs (maxDuration: 30s, gracefulStop: 30s)
+
+k6.exe : time="2026-08-11T22:41:19+07:00" level=info msg="{\"event\":\"gd3_setup\",\"runId\":\"gd3-final-20260811-224105\",\"vus\":10,\"idempotencyKey\":\"GD3-IDEM-gd3-final-20260811-224105\",\"paymentAmount\
+":10000,\"barrierAt\":1786462882039,\"payerBalanceBefore\":50000}" source=console
+At line:1 char:1
++ & 'C:\Program Files\k6\k6.exe' run `
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (time="2026-08-1... source=console:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+running (0m01.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+gd3_same_key_concurrency   [   0% ] 10 VUs  00.8s/30s  00/10 iters, 1 per VU
+
+running (0m02.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+gd3_same_key_concurrency   [   0% ] 10 VUs  01.8s/30s  00/10 iters, 1 per VU
+
+running (0m03.0s), 10/10 VUs, 0 complete and 0 interrupted iterations
+gd3_same_key_concurrency   [   0% ] 10 VUs  02.8s/30s  00/10 iters, 1 per VU
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":7,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882042,\"durationMs\":200.7501}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":8,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882041,\"durationMs\":214.4744}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":2,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882041,\"durationMs\":225.7407}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":5,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":234.0633}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":3,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":338.6048}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":1,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":342.6739}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":10,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5
+CB9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":337.9256}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":6,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":342.4766}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":4,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882039,\"durationMs\":341.9511}" source=console
+time="2026-08-11T22:41:22+07:00" level=info msg="{\"event\":\"gd3_payment_response\",\"runId\":\"gd3-final-20260811-224105\",\"vu\":9,\"status\":201,\"outcome\":\"http_201\",\"transactionRef\":\"TXN-PAY-EAC5C
+B9E\",\"message\":null,\"sentAtEpochMs\":1786462882044,\"durationMs\":349.3568}" source=console
+
+running (0m04.0s), 00/10 VUs, 10 complete and 0 interrupted iterations
+gd3_same_key_concurrency Γ£ô [ 100% ] 10 VUs  03.4s/30s  10/10 iters, 1 per VU
+time="2026-08-11T22:41:23+07:00" level=info msg="{\"event\":\"gd3_teardown\",\"runId\":\"gd3-final-20260811-224105\",\"idempotencyKey\":\"GD3-IDEM-gd3-final-20260811-224105\",\"payerBalanceBefore\":50000,\"pa
+yerBalanceAfter\":40000,\"payerDelta\":10000,\"globalLedgerBalanced\":true,\"globalLedgerMessage\":\"Ledger is balanced. Total Debit: 1220000.00, Total Credit: 1220000.00\"}" source=console
+
+
+  Γûê THRESHOLDS 
+
+    checks
+    Γ£ô 'rate==1' rate=100.00%
+
+    gd3_pay_duration
+    Γ£ô 'p(95)<2000' p(95)=346.349495
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 20      4.335979/s
+    checks_succeeded...: 100.00% 20 out of 20
+    checks_failed......: 0.00%   0 out of 20
+
+    Γ£ô payment has a valid HTTP 201 response or semantic duplicate conflict
+    Γ£ô payment never returns 5xx
+
+    CUSTOM
+    gd3_http_201_responses.........: 10     2.167989/s
+    gd3_pay_duration...............: avg=292.80173 min=200.7501 med=338.2652 max=349.3568 p(90)=343.34219 p(95)=346.349495
+    gd3_pay_requests...............: 10     2.167989/s
+
+    HTTP
+    http_req_duration..............: avg=210.51ms  min=18.01ms  med=225.74ms max=349.35ms p(90)=342.59ms  p(95)=344.67ms  
+      { expected_response:true }...: avg=210.51ms  min=18.01ms  med=225.74ms max=349.35ms p(90)=342.59ms  p(95)=344.67ms  
+    http_req_failed................: 0.00%  0 out of 15
+    http_reqs......................: 15     3.251984/s
+
+    EXECUTION
+    iteration_duration.............: avg=3.29s     min=3.2s     med=3.34s    max=3.35s    p(90)=3.34s     p(95)=3.35s     
+    iterations.....................: 10     2.167989/s
+    vus............................: 0      min=0       max=10
+    vus_max........................: 10     min=10      max=10
+
+    NETWORK
+    data_received..................: 12 kB  2.6 kB/s
+    data_sent......................: 8.4 kB 1.8 kB/s
+
+
+
+
+running (0m04.6s), 00/10 VUs, 10 complete and 0 interrupted iterations
+gd3_same_key_concurrency Γ£ô [ 100% ] 10 VUs  03.4s/30s  10/10 iters, 1 per VU

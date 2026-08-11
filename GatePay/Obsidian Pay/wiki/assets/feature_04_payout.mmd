@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant SCHED as Scheduler (00:00 hàng ngày)
+    participant DB as PostgreSQL
+    participant M as Merchant
+
+    SCHED->>DB: SELECT * FROM settlement_buckets
+               WHERE bucket_type='A' AND available_date <= NOW()
+    DB-->>SCHED: [TXN-001: 5tr, TXN-005: 3tr]
+    SCHED->>DB: UPDATE bucket_type='B' (chuyển sang Hũ B)
+    SCHED->>DB: Cộng vào available_balance của Merchant
+
+    M->>DB: GET /merchants/me/pending-balance
+    DB-->>M: { bucketA: 11tr, bucketB: 5tr }
+
+    M->>DB: POST /merchants/me/payout { amount: 4tr }
+    DB->>DB: Kiểm tra: 4tr ≤ bucketB (5tr) → OK
+    DB->>DB: bucketB -= 4tr
+    DB->>DB: INSERT payouts record
+    DB->>DB: INSERT ledger_entry {type: PAYOUT}
+    DB-->>M: { payoutId, netDisbursed: 3_920_000, fee: 80_000 }

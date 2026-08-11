@@ -1,0 +1,107 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:training_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:11111111}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    out-of-order: true
+    repair-on-migrate: true
+    validate-on-migrate: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${MQ_HOST:localhost}
+    port: ${MQ_PORT:5672}
+    username: ${MQ_USER:guest}
+    password: ${MQ_PASS:guest}
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000
+
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:}
+  model: ${OPENROUTER_MODEL:nvidia/nemotron-3-ultra-550b-a55b:free}
+  api-url: ${OPENROUTER_API_URL:https://openrouter.ai/api/v1/chat/completions}
+
+server:
+  port: ${SERVER_PORT:8081}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+
+app:
+  admin:
+    username: ${PAYGATE_ADMIN_USERNAME:admin}
+    password: ${PAYGATE_ADMIN_PASSWORD}
+    email: ${PAYGATE_ADMIN_EMAIL:admin@paygate.dev}
+  frontend:
+    base-url: http://localhost:4201
+  checkout:
+    session-ttl-minutes: 15
+  settlement:
+    enabled: true
+    cron: ${PAYGATE_SETTLEMENT_CRON:0 0 1 * * ?}
+    hold-days: ${PAYGATE_SETTLEMENT_HOLD_DAYS:30}
+  webhook:
+    # Local development uses a loopback Marketplace webhook. Keep this empty in production.
+    allowed-internal-hosts: ${WEBHOOK_ALLOWED_INTERNAL_HOSTS:localhost}
+
+paygate:
+  frontend-url: http://localhost:4201
+  provider-api:
+    base-url: ${PROVIDER_API_BASE_URL:http://localhost:8090}
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000
+  cic:
+    base-url: ${CIC_BASE_URL:http://localhost:8084}
+  vietqr:
+    bank-bin: ${VIETQR_BANK_BIN:970422}
+    bank-code: ${VIETQR_BANK_CODE:MB}
+    account-number: ${VIETQR_ACCOUNT_NUMBER:099988887777}
+    account-name: ${VIETQR_ACCOUNT_NAME:PAYGATE PAYMENT GATEWAY}
+    webhook-secret: ${PAYGATE_BANK_WEBHOOK_SECRET:vietqr-secret-default}
