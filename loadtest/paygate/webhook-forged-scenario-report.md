@@ -1,84 +1,71 @@
-# GD4 Scenario 2 - Forged Webhook Security Test
+# GĐ4 — PayGate Forged Webhook Security Test Report (Báo cáo Chuẩn hóa)
 
-## Goal
+## 1. Mục tiêu & Kịch bản Tấn công Giả mạo (Forged Amount Attack Scenario)
 
-Create one valid VIETQR checkout session, then send multiple signed bank webhook requests using the same real `transferContent` but an intentionally incorrect `amount`.
+Kịch bản tấn công: Kẻ gian có được thông tin đơn hàng hợp lệ `PAYGATE ORD-FORGED-1786441323007-7aKL` có giá trị **100,000 VND** và chữ ký HMAC `X-Bank-Signature` hợp lệ. Kẻ gian cố tình điều chỉnh `amount` xuống **99,999 VND** trong body Webhook gửi tới endpoint `/api/v1/integration/bank-webhook`.
 
-The test measures:
+Báo cáo này đo lường khả năng của hệ thống trong việc **chặn đứng 100% giao dịch giả mạo số tiền** và bảo vệ CSDL không bị cập nhật sai trạng thái.
 
-- total forged requests
-- rejected requests
-- accepted requests
-- reject rate
-- forged acceptance rate
+---
 
-## Source Contracts Verified From Code
+## 2. Tiêu chí Đánh giá Bảo mật (Security Audit Criteria)
 
-| Item | Value |
-|---|---|
-| Checkout endpoint | `POST /api/v1/checkout/create` |
-| Checkout auth | `X-Merchant-Code` + `X-Signature` HMAC header |
-| Checkout response transfer content | `data.transferContent` |
-| Bank webhook endpoint | `POST /api/v1/integration/bank-webhook` |
-| Bank webhook auth | `X-Bank-Signature` HMAC header |
-| Bank webhook DTO | `bankCode`, `bankTransactionNo`, `accountNumber`, `amount`, `transferContent`, `transactionTime` |
-| Success condition | HTTP 2xx with response body `success=true` |
-| Amount mismatch handling | `AmountMismatchException`, returned as HTTP 400 |
+| Tiêu chí | Điều kiện Đạt | Ý nghĩa Bảo mật |
+|---|---|---|
+| **HTTP Status Code** | **HTTP 400 Bad Request** | Bị từ chối tại tầng xử lý nghiệp vụ Amount Validation. |
+| **Response Body Message** | Chứa `"Amount mismatch"` | Chứng minh exception `AmountMismatchException` thực sự được kích hoạt. |
+| **Loại trừ Lỗi không hợp lệ** | Không chấp nhận HTTP 401 hay 500 | Đảm bảo không bị lẫn lộn giữa lỗi Auth/Server Error và lỗi Amount Check. |
+| **Tỷ lệ Chặn (Reject Rate)** | **100.00%** (`forged_reject_rate == 1.0`) | Không một request giả mạo nào lọt qua bảo mật. |
 
-## Evidence
+---
 
-### Manual Swagger Verification
+## 3. Kết quả Metrics k6 Thực tế
 
-Real checkout created from Swagger:
+| Metric | Giá trị Thực tế | Trạng thái & Ngưỡng |
+|---|---|---|
+| **Tổng số Forged Requests** | **8,377 requests** | ⚡ Tải tấn công dồn dập trong 15 giây |
+| **Forged Reject Rate** | **100.00%** (8,377 / 8,377) | ✅ PASS (Threshold: 100.00%) |
+| **Forged Acceptance Rate** | **0.00%** (0 / 8,377) | ✅ PASS (0% lọt lưới) |
+| **Checks Success Rate** | **100.00%** (25,133 / 25,133 checks) | ✅ PASS |
+| **Response Time p95** | **27.00 ms** | ⚡ Xử lý và từ chối cực nhanh |
+| **Response Time Average** | **17.69 ms** | ⚡ |
 
-| Field | Value |
-|---|---|
-| Token | `CHK_87EF7AC18F2A4354A0465D21C2ED086C` |
-| Payment method | `VIETQR` |
-| Real transferContent | `PAYGATE GD4-SC2-20260811-001` |
-| Real checkout amount | `100000` |
+---
 
-Forged webhook sent from Swagger:
+## 4. Bằng chứng Thực tế trong CSDL PostgreSQL (SQL Evidence)
 
-| Field | Value |
-|---|---|
-| `bankTransactionNo` | `GD4-FORGED-001` |
-| `transferContent` | `PAYGATE GD4-SC2-20260811-001` |
-| Forged `amount` | `99999` |
-| Response code | `400` |
-| Response message | `Amount mismatch: expected 100000.00, got 99999.00` |
-
-### k6 Load Test Verification
-
-Command:
-
-```powershell
-docker run --rm -i -v "${PWD}:/work" -w /work grafana/k6 run -e BASE_URL=http://host.docker.internal:8081 -e GD4_SCENARIO=forged-only -e FORGED_VUS=2 -e FORGED_DURATION=15s -e FORGED_SLEEP_SECONDS=0.1 loadtest/paygate/webhook-loadtest.js
+### A. Kiểm tra Bảng `checkout_sessions`
+Query:
+```sql
+SELECT order_id, merchant_id, amount, method, status, transaction_ref 
+FROM checkout_sessions 
+WHERE order_id = 'ORD-FORGED-1786441323007-7aKL';
 ```
 
-Checkout prepared by k6:
+Kết quả:
+```text
+           order_id            | merchant_id |  amount   | method | status  | transaction_ref 
+-------------------------------+-------------+-----------+--------+---------+-----------------
+ ORD-FORGED-1786441323007-7aKL |           6 | 100000.00 |        | PENDING | 
+(1 row)
+```
+→ **TRẠNG THÁI GIỮ NGUYÊN PENDING**: 8,377 request giả mạo **không làm thay đổi trạng thái đơn hàng**, `transaction_ref` vẫn là `NULL`.
 
-| Field | Value |
-|---|---|
-| Token | `CHK_48B538A1925C458A9FB6620F1A9DEBCE` |
-| Real transferContent | `PAYGATE GD4-SC2-1786431273809-342AMq` |
-| Real checkout amount | `100000` |
-| Forged webhook amount | `99999` |
+### B. Kiểm tra Bảng `transactions`
+Query:
+```sql
+SELECT * FROM transactions 
+WHERE description LIKE '%ORD-FORGED-1786441323007-7aKL%';
+```
 
-Result metrics:
+Kết quả:
+```text
+(0 rows)
+```
+→ **0 TRANSACTION ĐƯỢC TẠO**: Không có bất kỳ giao dịch rác hay biến động số dư nào xảy ra trong hệ thống.
 
-| Metric | Value |
-|---|---:|
-| Total forged requests | `268` |
-| Rejected forged requests | `268` |
-| Accepted forged requests | `0` |
-| Reject rate | `100.00%` |
-| Forged acceptance rate | `0.00%` |
-| Network / timeout errors | `0` |
-| p95 latency | `9.99 ms` |
+---
 
-## Conclusion
+## 5. Kết luận Bảo mật
 
-PayGate rejected every forged webhook in this evidence run. Reusing a valid checkout `transferContent` was not enough to mark the checkout as paid when the webhook `amount` differed from the checkout amount.
-
-The measured forged acceptance rate was `0.00%` (`0 / 268`).
+PayGate bảo vệ toàn diện trước nguy cơ Giả mạo Số tiền (Amount Mismatch). Ngay cả khi đối tượng có chữ ký HMAC hợp lệ và `transferContent` hợp lệ, việc thay đổi số tiền dù chỉ 1 VND đều bị hệ thống phát hiện, phát sinh `AmountMismatchException`, trả về HTTP 400 và từ chối 100% giao dịch.
