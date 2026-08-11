@@ -1,47 +1,56 @@
 /**
- * GĐ3 — PayGate Idempotency POC (k6 Load Test)
+ * GĐ3 — PayGate Idempotency Load Test (k6)
  *
- * Mục tiêu: Chứng minh bug P-C4 — cùng 1 idempotencyKey gửi đồng thời
- * có thể tạo ra nhiều transaction (double-charge).
+ * Mục tiêu: Kiểm thử khả năng xử lý đồng thời (Race Condition) của Idempotency Key.
+ * Tất cả 10 VU gửi CÙNG 1 idempotencyKey mới tại CÙNG một thời điểm (Synchronized Barrier).
  *
- * Cách chạy:
+ * Chạy script:
  *   & 'C:\Program Files\k6\k6.exe' run loadtest/paygate/idempotency-poc.js
  *
- * Sau khi chạy xong, script tự query DB để đếm số transaction thực tế.
+ * Hoặc truyền ENV:
+ *   & 'C:\Program Files\k6\k6.exe' run -e BASE_URL=http://localhost:8081 -e USERNAME=loadtest_user -e PASSWORD=LoadTest@123 loadtest/paygate/idempotency-poc.js
  */
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { SharedArray } from 'k6/data';
+import { Trend, Counter } from 'k6/metrics';
 
-// ─── CẤU HÌNH ───────────────────────────────────────────────────────
-const BASE_URL = 'http://localhost:8081';
-const USERNAME = 'loadtest_user';
-const PASSWORD = 'LoadTest@123';
+// Dedicated trend metric to isolate /pay latency from login/setup overhead
+const payReqDuration = new Trend('pay_endpoint_duration');
+const paySuccessCount = new Counter('pay_success_count');
+const pay201CreatedCount = new Counter('pay_201_created_count');
 
-// Idempotency key CỐ ĐỊNH — tất cả VU gửi CÙNG key này
-const FIXED_IDEMPOTENCY_KEY = 'LOADTEST-IDEM-POC-a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+// ─── CẤU HÌNH ENV ──────────────────────────────────────────────────
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8081';
+const USERNAME = __ENV.PAYGATE_USERNAME || 'loadtest_user';
+const PASSWORD = __ENV.PAYGATE_PASSWORD || 'admin123';
+const DEST_ACCOUNT_ID = Number(__ENV.DEST_ACCOUNT_ID || 4);
+const PAYMENT_AMOUNT = Number(__ENV.PAYMENT_AMOUNT || 10000);
 
-// Destination account (mock merchant account)
-const DEST_ACCOUNT_ID = 4;
-const PAYMENT_AMOUNT = 10000;
+function randomString(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < len; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
-// ─── K6 OPTIONS ──────────────────────────────────────────────────────
 export const options = {
   scenarios: {
-    idempotency_blast: {
-      executor: 'shared-iterations',
+    idempotency_barrier_blast: {
+      executor: 'per-vu-iterations',
       vus: 10,
-      iterations: 10,
+      iterations: 1,
       maxDuration: '30s',
     },
   },
   thresholds: {
-    http_req_duration: ['p(95)<5000'],
+    pay_endpoint_duration: ['p(95)<2000'],
   },
 };
 
-// ─── SETUP: Login 1 lần, lấy JWT token ──────────────────────────────
+// ─── SETUP: Login & Chuẩn bị Key mới cho lần chạy ────────────────────
 export function setup() {
   const loginRes = http.post(
     `${BASE_URL}/api/v1/auth/login`,
@@ -49,63 +58,86 @@ export function setup() {
     { headers: { 'Content-Type': 'application/json' } }
   );
 
-  check(loginRes, {
-    'login status is 200': (r) => r.status === 200,
+  const loginOk = check(loginRes, {
+    'setup login status is 200': (r) => r.status === 200,
   });
+
+  if (!loginOk) {
+    console.error(`❌ Setup login failed with status ${loginRes.status}: ${loginRes.body}`);
+    console.error(`Attempted username=${USERNAME}, password=${PASSWORD}`);
+    return { token: null };
+  }
 
   const body = JSON.parse(loginRes.body);
   const token = body.data ? body.data.accessToken : null;
 
   if (!token) {
-    console.error('❌ Login failed! Response:', loginRes.body);
+    console.error('❌ Setup login response did not contain accessToken');
     return { token: null };
   }
 
-  console.log(`✅ Login OK — Token: ${token.substring(0, 30)}...`);
+  console.log('✅ Setup login OK — Token: [PROTECTED]');
 
   // Lấy thông tin balance trước khi test
+  let initialBalance = 'unknown';
   const accountRes = http.get(`${BASE_URL}/api/v1/accounts/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (accountRes.status === 200) {
     const accBody = JSON.parse(accountRes.body);
-    const balance = accBody.data ? accBody.data.balance : 'unknown';
-    console.log(`💰 Balance TRƯỚC test: ${balance} VND`);
+    initialBalance = accBody.data ? accBody.data.balance : 'unknown';
+    console.log(`💰 Source Account Balance TRƯỚC test: ${initialBalance} VND`);
   }
 
-  return { token };
+  // Tạo Idempotency Key MỚI NGUYÊN cho đợt test này (tránh cache cũ từ DB/Redis)
+  const runKey = __ENV.IDEMPOTENCY_KEY || `IDEM-${Date.now().toString(36)}-${randomString(6)}`;
+  console.log(`🔑 Generated Idempotency Key for this run: ${runKey}`);
+
+  // Thiết lập barrier timestamp 3 giây sau để 10 VUs bấm nút đồng thời
+  const syncStartTime = Date.now() + 3000;
+
+  return { token, runKey, initialBalance, syncStartTime };
 }
 
-// ─── MAIN: Mỗi VU gửi 1 request /pay với CÙNG idempotencyKey ────────
+// ─── MAIN FUNCTION (BẬT BARRIER ĐỒNG THỜI) ─────────────────────────
 export default function (data) {
   if (!data.token) {
-    console.error('No token available, skipping');
+    console.error('No token available, skipping VU execution');
     return;
   }
 
+  // Synchronized Barrier: Đợi đến đúng mốc syncStartTime
+  const now = Date.now();
+  if (now < data.syncStartTime) {
+    sleep((data.syncStartTime - now) / 1000);
+  }
+
   const payload = JSON.stringify({
-    idempotencyKey: FIXED_IDEMPOTENCY_KEY,
+    idempotencyKey: data.runKey,
     destAccountId: DEST_ACCOUNT_ID,
     amount: PAYMENT_AMOUNT,
-    description: 'loadtest idempotency poc',
+    description: 'Idempotency POC test',
     merchantId: null,
   });
 
+  const startTime = Date.now();
   const res = http.post(`${BASE_URL}/api/v1/transactions/pay`, payload, {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${data.token}`,
     },
   });
+  const duration = Date.now() - startTime;
+  payReqDuration.add(duration);
 
-  const vuId = __VU;
-  const iterNum = __ITER;
-
+  const isSuccessStatus = res.status === 200 || res.status === 201 || res.status === 409;
   check(res, {
-    'status is 200 or 201': (r) => r.status === 200 || r.status === 201,
+    'pay status is 200/201 (success/cached) or 409 (concurrent blocked)': (r) => isSuccessStatus,
   });
 
-  // Log kết quả mỗi VU
+  if (isSuccessStatus) paySuccessCount.add(1);
+  if (res.status === 201) pay201CreatedCount.add(1);
+
   let txRef = 'N/A';
   let status = 'N/A';
   try {
@@ -117,52 +149,44 @@ export default function (data) {
   } catch (e) {
     // ignore
   }
-  console.log(`VU${vuId} iter${iterNum}: HTTP ${res.status} — txRef=${txRef} status=${status}`);
+
+  console.log(`VU${__VU} iter${__ITER}: HTTP ${res.status} (${duration}ms) — txRef=${txRef} status=${status}`);
 }
 
-// ─── TEARDOWN: Kiểm tra kết quả sau test ─────────────────────────────
+// ─── TEARDOWN: POLLING VÀ XÁC NHẬN KẾT QUẢ SỐ DƯ & DATABASE ────────
 export function teardown(data) {
   if (!data.token) return;
 
-  console.log('\n' + '═'.repeat(60));
-  console.log('📊 KẾT QUẢ PHÂN TÍCH SAU LOAD TEST');
-  console.log('═'.repeat(60));
+  console.log('\n' + '═'.repeat(65));
+  console.log('📊 KẾT QUẢ POLLING VÀ XÁC MINH IDEMPOTENCY SAU TEST');
+  console.log('═'.repeat(65));
+  console.log(`🔑 Idempotency Key tested: ${data.runKey}`);
 
-  // 1. Check balance SAU test
-  const accountRes = http.get(`${BASE_URL}/api/v1/accounts/me`, {
-    headers: { Authorization: `Bearer ${data.token}` },
-  });
-  if (accountRes.status === 200) {
-    const accBody = JSON.parse(accountRes.body);
-    const balance = accBody.data ? accBody.data.balance : 'unknown';
-    console.log(`💰 Balance SAU test: ${balance} VND`);
-  }
-
-  // 2. Check transactions list
-  const txRes = http.get(`${BASE_URL}/api/v1/transactions?size=50`, {
-    headers: { Authorization: `Bearer ${data.token}` },
-  });
-  if (txRes.status === 200) {
-    const txBody = JSON.parse(txRes.body);
-    const items = txBody.data ? txBody.data.items || txBody.data.content || [] : [];
-    // Count transactions with our idempotency key description
-    const matchingTxs = items.filter(
-      (tx) => tx.description === 'loadtest idempotency poc'
-    );
-    console.log(`\n🔍 Transaction tìm thấy với description "loadtest idempotency poc": ${matchingTxs.length}`);
-    matchingTxs.forEach((tx, i) => {
-      console.log(`   [${i + 1}] ref=${tx.transactionRef} amount=${tx.amount} status=${tx.status}`);
+  // Polling chờ async settlement hoàn tất (tối đa 10s)
+  let finalBalance = 'unknown';
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    sleep(1);
+    const accountRes = http.get(`${BASE_URL}/api/v1/accounts/me`, {
+      headers: { Authorization: `Bearer ${data.token}` },
     });
-
-    if (matchingTxs.length === 1) {
-      console.log('\n✅ IDEMPOTENCY ĐÚNG — Chỉ 1 transaction được tạo dù 10 VU đồng thời.');
-    } else if (matchingTxs.length > 1) {
-      console.log(`\n🔴 BUG P-C4 TÁI HIỆN — ${matchingTxs.length} transaction từ 1 idempotencyKey!`);
-      console.log('   → Double-charge đã xảy ra, user bị trừ tiền nhiều lần.');
-    } else {
-      console.log('\n⚠️ Không tìm thấy transaction nào — kiểm tra lại payload.');
+    if (accountRes.status === 200) {
+      const accBody = JSON.parse(accountRes.body);
+      finalBalance = accBody.data ? accBody.data.balance : 'unknown';
+      if (attempt === 5 || finalBalance !== data.initialBalance) {
+        break;
+      }
     }
   }
 
-  console.log('═'.repeat(60));
+  console.log(`💰 Source Account Balance TRƯỚC test: ${data.initialBalance} VND`);
+  console.log(`💰 Source Account Balance SAU test:   ${finalBalance} VND`);
+
+  const initialNum = Number(data.initialBalance);
+  const finalNum = Number(finalBalance);
+  if (!isNaN(initialNum) && !isNaN(finalNum)) {
+    const delta = initialNum - finalNum;
+    console.log(`📉 Total Deducted Amount:             ${delta} VND (Expected: ${PAYMENT_AMOUNT} VND)`);
+  }
+
+  console.log('═'.repeat(65));
 }
