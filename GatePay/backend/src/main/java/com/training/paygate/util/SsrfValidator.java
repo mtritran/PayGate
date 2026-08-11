@@ -1,13 +1,40 @@
 package com.training.paygate.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
+import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
+@Component
 public class SsrfValidator {
+
+    private final Set<String> allowedInternalHosts;
+
+    public SsrfValidator(
+            @Value("${app.webhook.allowed-internal-hosts:localhost}") String allowedInternalHosts,
+            Environment environment) {
+        this.allowedInternalHosts = Arrays.stream(allowedInternalHosts.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toUnmodifiableSet());
+
+        if (environment.acceptsProfiles(Profiles.of("prod")) && !this.allowedInternalHosts.isEmpty()) {
+            throw new IllegalStateException(
+                    "Internal webhook hosts must not be allowed under the prod profile; "
+                            + "set WEBHOOK_ALLOWED_INTERNAL_HOSTS to an empty value");
+        }
+    }
 
     /**
      * Validates if a given URL is safe to call (not pointing to internal network).
@@ -15,18 +42,27 @@ public class SsrfValidator {
      * @param urlString The webhook URL to validate
      * @return true if safe, false if it resolves to a restricted internal IP or is malformed
      */
-    public static boolean isSafeUrl(String urlString) {
+    public boolean isSafeUrl(String urlString) {
         if (urlString == null || urlString.isBlank()) {
             return false;
         }
         
         try {
             URI uri = new URI(urlString);
+            String scheme = uri.getScheme();
+            if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+                log.warn("SSRF Validator: Unsupported webhook URL scheme: {}", urlString);
+                return false;
+            }
+
             String host = uri.getHost();
             if (host == null) {
                 log.warn("SSRF Validator: Invalid URL format, no host found: {}", urlString);
                 return false;
             }
+
+            String normalizedHost = host.toLowerCase(Locale.ROOT);
+            boolean explicitlyAllowedInternalHost = allowedInternalHosts.contains(normalizedHost);
 
             InetAddress[] addresses = InetAddress.getAllByName(host);
             for (InetAddress address : addresses) {
@@ -34,6 +70,9 @@ public class SsrfValidator {
                     address.isSiteLocalAddress() || 
                     address.isLinkLocalAddress() || 
                     address.isAnyLocalAddress()) {
+                    if (explicitlyAllowedInternalHost) {
+                        continue;
+                    }
                     log.warn("SSRF Validator: Blocked attempt to access internal IP {} from URL {}", address.getHostAddress(), urlString);
                     return false;
                 }

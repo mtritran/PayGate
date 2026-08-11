@@ -1,10 +1,20 @@
-# GĐ4 — PayGate Forged Webhook Security Test Report (Báo cáo Chuẩn hóa)
+# GĐ4 — PayGate Forged Webhook Security Test Report (Sign-Off DoD)
 
 ## 1. Mục tiêu & Kịch bản Tấn công Giả mạo (Forged Amount Attack Scenario)
 
 Kịch bản tấn công: Kẻ gian có được thông tin đơn hàng hợp lệ `PAYGATE ORD-FORGED-1786441323007-7aKL` có giá trị **100,000 VND** và chữ ký HMAC `X-Bank-Signature` hợp lệ. Kẻ gian cố tình điều chỉnh `amount` xuống **99,999 VND** trong body Webhook gửi tới endpoint `/api/v1/integration/bank-webhook`.
 
 Báo cáo này đo lường khả năng của hệ thống trong việc **chặn đứng 100% giao dịch giả mạo số tiền** và bảo vệ CSDL không bị cập nhật sai trạng thái.
+
+| Thông số | Cấu hình ENV | Giá trị Thực tế Lần chạy |
+|---|---|---|
+| Endpoint | N/A | `POST /api/v1/integration/bank-webhook` |
+| Auth Mechanism | `WEBHOOK_SECRET` | HMAC-SHA256 Base64 Header `X-Bank-Signature` (Redacted `[PROTECTED]`) |
+| Merchant Credentials | `MERCHANT_CODE`, `MERCHANT_API_KEY` | `MARKETPLACE_MP` / `[PROTECTED]` |
+| VU Profile | Constant VUs | **10 VUs** trong **15 giây** |
+| Target Session OrderId | Created in `setup()` | `ORD-FORGED-1786441323007-7aKL` (Amount: 100,000 VND) |
+| Script File | N/A | [`webhook-forged-test.js`](./webhook-forged-test.js) |
+| Raw k6 Summary Log | N/A | [`webhook-forged-k6.log`](./webhook-forged-k6.log) |
 
 ---
 
@@ -54,18 +64,39 @@ Kết quả:
 ### B. Kiểm tra Bảng `transactions`
 Query:
 ```sql
-SELECT * FROM transactions 
+SELECT count(*) FROM transactions 
 WHERE description LIKE '%ORD-FORGED-1786441323007-7aKL%';
 ```
 
 Kết quả:
 ```text
-(0 rows)
+ count 
+-------
+     0
+(1 row)
 ```
-→ **0 TRANSACTION ĐƯỢC TẠO**: Không có bất kỳ giao dịch rác hay biến động số dư nào xảy ra trong hệ thống.
+→ **0 TRANSACTION ĐƯỢC TẠO**: Không có giao dịch rác nào sinh ra.
+
+### C. Kiểm tra Bảng `ledger_entries`
+Query:
+```sql
+SELECT count(*) FROM ledger_entries 
+WHERE transaction_id IN (
+    SELECT id FROM transactions WHERE description LIKE '%ORD-FORGED-1786441323007-7aKL%'
+);
+```
+
+Kết quả:
+```text
+ count 
+-------
+     0
+(1 row)
+```
+→ **0 LEDGER ENTRIES**: Sổ cái hoàn toàn sạch sẽ, không có bất kỳ ghi chép nợ/có giả mạo nào.
 
 ---
 
-## 5. Kết luận Bảo mật
+## 5. Kết luận Sign-Off
 
 PayGate bảo vệ toàn diện trước nguy cơ Giả mạo Số tiền (Amount Mismatch). Ngay cả khi đối tượng có chữ ký HMAC hợp lệ và `transferContent` hợp lệ, việc thay đổi số tiền dù chỉ 1 VND đều bị hệ thống phát hiện, phát sinh `AmountMismatchException`, trả về HTTP 400 và từ chối 100% giao dịch.

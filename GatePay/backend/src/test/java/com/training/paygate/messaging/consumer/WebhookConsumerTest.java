@@ -9,6 +9,8 @@ import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.repository.TransactionRepository;
 import com.training.paygate.repository.WebhookLogRepository;
+import com.training.paygate.util.HmacUtils;
+import com.training.paygate.util.SsrfValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +57,9 @@ class WebhookConsumerTest {
     @Mock
     private CheckoutSessionRepository checkoutSessionRepository;
 
+    @Mock
+    private SsrfValidator ssrfValidator;
+
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -64,6 +70,7 @@ class WebhookConsumerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(ssrfValidator.isSafeUrl(any(String.class))).thenReturn(true);
         testEvent = new PaymentCompletedEvent(
                 "TXN-12345",
                 1L,
@@ -77,8 +84,11 @@ class WebhookConsumerTest {
     void consumePaymentCompleted_successResponse_savesSuccessLog() {
         Transaction tx = Transaction.builder().id(10L).transactionRef("TXN-12345").build();
         CheckoutSession session = CheckoutSession.builder().orderId("ORD-99").token("CHK_TOK_1").build();
+        Merchant merchant = Merchant.builder().apiKey("merchant-webhook-secret").build();
+        merchant.setId(1L);
         when(transactionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(tx));
         when(checkoutSessionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(session));
+        when(merchantRepository.findById(1L)).thenReturn(Optional.of(merchant));
         when(restTemplate.postForEntity(eq("https://merchant.com/webhook"), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("{\"status\":\"ok\"}", HttpStatus.OK));
 
@@ -101,12 +111,21 @@ class WebhookConsumerTest {
         assertThat(savedLog.getPayload()).contains("status");
         assertThat(savedLog.getPayload()).contains("orderId");
         assertThat(savedLog.getPayload()).contains("token");
+
+        ArgumentCaptor<HttpEntity<String>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForEntity(
+                eq("https://merchant.com/webhook"), requestCaptor.capture(), eq(String.class));
+        HttpEntity<String> webhookRequest = requestCaptor.getValue();
+        assertThat(webhookRequest.getHeaders().getFirst("X-PayGate-Signature"))
+                .isEqualTo(HmacUtils.generateSignature(webhookRequest.getBody(), "merchant-webhook-secret"));
     }
 
     @Test
     void consumePaymentCompleted_httpError_savesFailedLog() {
         Transaction tx = Transaction.builder().id(10L).transactionRef("TXN-12345").build();
+        CheckoutSession session = CheckoutSession.builder().orderId("ORD-99").token("CHK_TOK_1").build();
         when(transactionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(tx));
+        when(checkoutSessionRepository.findByTransactionRef("TXN-12345")).thenReturn(Optional.of(session));
         when(restTemplate.postForEntity(eq("https://merchant.com/webhook"), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request"));
 
