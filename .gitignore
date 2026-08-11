@@ -16,6 +16,8 @@ node_modules/
 
 # Log / môi trường cá nhân
 *.log
+# Console log load test đã được scrub là evidence chính thức và cần được version-control.
+!GatePay/loadtest/**/evidence/**/*.log
 .env
 # IDE
 .idea/

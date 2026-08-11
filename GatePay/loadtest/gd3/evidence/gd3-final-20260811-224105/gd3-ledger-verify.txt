@@ -1,0 +1,2 @@
+﻿HTTP 200
+{"success":true,"message":"Ledger verification executed successfully","data":{"balanced":true,"totalDebit":1220000.00,"totalCredit":1220000.00,"message":"Ledger is balanced. Total Debit: 1220000.00, Total Credit: 1220000.00"},"timestamp":"2026-08-11T22:54:07.0867586"}

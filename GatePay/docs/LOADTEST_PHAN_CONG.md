@@ -65,23 +65,23 @@ tags:
 
 | Task | Người | Output |
 |---|---|---|
-| Viết script `shared-iterations` 10 VU cùng 1 idempotencyKey | **Hoàng** | `loadtest/paygate/gd3-idempotency.js` |
+| Viết script 10 VU cùng 1 idempotencyKey | **Hoàng** | `loadtest/gd3/gd3-idempotency-test.js` |
 | Setup user test + token (login 1 lần, cache) | **Giảng** | phần setup + seed user |
 | Sau khi chạy: query DB đếm transaction + verify số dư | **Trí v2** | bằng chứng số transaction/số lần trừ |
-| Tái hiện bug → tách `idempotency-poc.js` + đính kèm output | **Khoa** | file poc + nhật ký |
+| Chuẩn hóa script + tổng hợp evidence | **Khoa** | `loadtest/gd3/report-gd3.md` + evidence |
 | Chạy lại sau khi fix P-C4 (nếu có) | **Khoa** | xác nhận còn đúng 1 transaction |
 
 - DoD: bằng chứng cụ thể (số transaction, số lần trừ tiền) + có/không tái hiện bug P-C4.
 
 ### 🔵 GĐ4 — PG: webhook (MarketPlace team test PG)
-**Endpoint:** POST `/api/v1/integration/bank-webhook` (public, không auth)
+**Endpoint:** POST `/api/v1/integration/bank-webhook` (không dùng JWT, bắt buộc HMAC qua `X-Bank-Signature`)
 
 | Task | Người | Output |
 |---|---|---|
-| Script kịch bản 1 — load thường 20-50 VU random transferContent | **Hoàng** | `loadtest/paygate/gd4-webhook-load.js` + throughput |
-| Script kịch bản 2 — spam giả mạo (cùng transferContent, amount sai) | **Giảng** | `loadtest/paygate/gd4-webhook-spam.js` + % lọt |
+| Script kịch bản 1 — load thường 20-50 VU random transferContent | **Hoàng** | `loadtest/gd4/gd4-validation-test.js` + throughput |
+| Script kịch bản 2 — spam giả mạo (cùng transferContent, amount sai) | **Giảng** | `loadtest/gd4/gd4-forged-amount-test.js` + % lọt |
 | Tạo checkout session hợp lệ trước khi spam | **Trí v2** | setup script + session test |
-| Tổng hợp: webhook không auth có nhanh hơn auth không + kết luận bảo mật | **Khoa** | phần so sánh GĐ4 |
+| Tổng hợp: phân tích HMAC filter so với business/DB path + kết luận bảo mật | **Khoa** | phần so sánh GĐ4 |
 
 - DoD: throughput/p95 kịch bản 1 + % request giả mạo (amount sai) bị chấp nhận — input ưu tiên fix bảo mật.
 
@@ -112,6 +112,6 @@ tags:
 ---
 
 ## 🛠️ Cách dùng
-- Mỗi script để trong `loadtest/<bên>/` theo file ghi trên.
+- Mỗi script để trong `loadtest/gd<giai-đoạn>/` theo file ghi trên; report và evidence nằm cùng phase.
 - Làm xong GĐ nào đánh dấu `[x]` trong tài liệu gốc.
 - Kết quả ghi vào phần **Nhật ký** mỗi GĐ để làm báo cáo.
