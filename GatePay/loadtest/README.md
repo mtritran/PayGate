@@ -71,3 +71,20 @@ Chạy từ application root `GatePay/` — cùng cấp với `backend/`, `front
 - Mỗi run chính thức giữ manifest, k6 summary, console log đã quét secret, SQL preflight và SQL post-check trong phase tương ứng.
 - Không stage run thất bại/smoke cũ. Chỉ bốn evidence directory được liệt kê trong bảng trạng thái là artifact bàn giao chính thức.
 - GĐ3 release sign-off phụ thuộc việc merge backend fixes `96d4ecd` và `9703482` hoặc thay đổi tương đương.
+
+## Quick runner cho local smoke test
+
+`run.ps1` nạp cấu hình máy cá nhân từ `.env.local`, tự sinh run ID và idempotency key, kiểm tra backend rồi gọi đúng script k6 của scenario được chọn. Các secret để trống trong `.env.local` sẽ được hỏi ẩn khi chạy.
+
+```powershell
+# Chạy từ GatePay/
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario validation -Smoke
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario gd3 -Smoke
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario settlement -Smoke
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario forged -Smoke
+
+# Chạy cả bốn scenario và lưu console log local
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario all -Smoke -SaveQuickLog
+```
+
+Smoke mode chỉ dùng để kiểm tra nhanh, không thay thế evidence chính thức hoặc SQL hậu kiểm. GĐ3, settlement và forged vẫn có side effect nên chỉ chạy trên database disposable. `.env.local` và `.quick-runs/` không được commit.
