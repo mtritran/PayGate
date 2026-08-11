@@ -14,6 +14,7 @@ import com.training.paygate.repository.WebhookLogRepository;
 import com.training.paygate.repository.CheckoutSessionRepository;
 import com.training.paygate.entity.CheckoutSession;
 import com.training.paygate.util.HmacUtils;
+import com.training.paygate.util.SsrfValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -43,6 +44,7 @@ public class WebhookConsumer {
     private final MerchantRepository merchantRepository;
     private final CheckoutSessionRepository checkoutSessionRepository;
     private final ObjectMapper objectMapper;
+    private final SsrfValidator ssrfValidator;
 
     @RabbitHandler
     public void consumePaymentCompleted(PaymentCompletedEvent event) {
@@ -150,7 +152,7 @@ public class WebhookConsumer {
         try {
             log.info("Dispatching webhook POST request to {} for {}", targetUrl, logRef);
             
-            if (!com.training.paygate.util.SsrfValidator.isSafeUrl(targetUrl)) {
+            if (!ssrfValidator.isSafeUrl(targetUrl)) {
                 throw new SecurityException("SSRF blocked: URL resolves to internal or restricted network");
             }
             
@@ -162,7 +164,7 @@ public class WebhookConsumer {
                 if (opt.isPresent()) {
                     String apiKey = opt.get().getApiKey();
                     if (apiKey != null && !apiKey.isBlank()) {
-                        String signature = com.training.paygate.util.HmacUtils.generateSignature(payloadJson, apiKey);
+                    String signature = HmacUtils.generateSignature(payloadJson, apiKey);
                         headers.set("X-PayGate-Signature", signature);
                     }
                 }
