@@ -24,7 +24,7 @@ status: remediated
 |---|---|---|
 | `BNPL-C1` | Đúng; phạm vi thực tế rộng hơn báo cáo gốc vì confirm từng là public | Đã fix |
 | `BNPL-H1` | Thiếu lock là bug thật; hậu quả “nhiều loan cùng commit” bị phóng đại do unique idempotency key | Đã harden |
-| `BNPL-H2` | Đúng; event replay còn khuếch đại lỗi approved-limit | Đã fix |
+| `BNPL-H2` | Tăng approved limit là nghiệp vụ có chủ ý; bug thật là replay cộng nhiều lần cho cùng repayment | Đã fix replay, giữ limit growth |
 | `BNPL-H3` | Đúng; create proposal không trừ active/pending exposure | Đã fix |
 | `BNPL-H4` | Đúng; checkout terminal có thể bị tái sử dụng | Đã fix |
 
@@ -93,17 +93,20 @@ sequenceDiagram
 
 ---
 
-### BNPL-H2 — Tự tăng approved limit khi repayment
+### BNPL-H2 — Repayment replay cộng approved limit nhiều lần
 
-> [!danger] Vấn đề trước khi sửa
-> Handler vừa giảm active debt vừa cộng repayment vào `approvedLimit`, làm available credit tăng hai lần. Replay cùng event còn có thể trừ tiếp remaining amount.
+> [!info] Chính sách nghiệp vụ đã xác nhận
+> Mỗi repayment thành công phải cộng toàn bộ `event.amount()` — gồm cả gốc và lãi — vào `approvedLimit`, không áp dụng trần tối đa. Vì vậy bản thân việc tăng approved limit không phải bug.
+
+**Vấn đề thật trước khi sửa:** handler không yêu cầu schedule phải thực sự chuyển trạng thái trước khi cập nhật loan/profile. Khi RabbitMQ giao lại cùng event, code có thể trừ tiếp `remainingAmount` và cộng lại `approvedLimit` cho cùng một repayment.
 
 **Khắc phục:**
 
-- Xóa hoàn toàn mutation tăng `approvedLimit` khỏi repayment handler.
 - Lock schedules theo transaction reference.
 - Chỉ cập nhật loan khi có schedule thật sự chuyển từ `PROCESSING` sang `PAID`.
 - Replay khi không còn schedule processing được bỏ qua idempotently.
+- Lock BNPL profile và cộng toàn bộ số tiền repayment vào `approvedLimit` đúng một lần.
+- Không áp dụng cap, đúng chính sách tăng hạn mức tối đa không giới hạn đã xác nhận.
 
 **File chính:**
 
@@ -160,7 +163,8 @@ availableCredit = approvedLimit
 - active và pending exposure được trừ khỏi hạn mức;
 - hạn mức được recheck khi confirm;
 - terminal checkout không thể tạo proposal;
-- repayment event replay không thay đổi loan/schedule lần hai.
+- repayment event hợp lệ tăng approved limit bằng toàn bộ gốc và lãi;
+- replay cùng event không thay đổi loan/schedule/approved limit lần hai.
 
 ```powershell
 cd GatePay\backend
@@ -175,4 +179,4 @@ Kết quả: **12/12 PASS**; `git diff --check`: **PASS**.
 ## 5. Kết luận
 
 > [!summary]
-> PayGate đã đóng authorization gap, chuyển state transition sang lock-based/idempotent handling, enforce credit exposure ở cả create và confirm, chặn terminal-session reuse và sửa repayment limit inflation/replay.
+> PayGate đã đóng authorization gap, chuyển state transition sang lock-based/idempotent handling, enforce credit exposure ở cả create và confirm, chặn terminal-session reuse và ngăn repayment replay trong khi vẫn giữ chính sách tăng approved limit bằng toàn bộ gốc và lãi, không giới hạn.
