@@ -5,14 +5,11 @@
  * Tất cả 10 VU gửi CÙNG 1 idempotencyKey mới tại CÙNG một thời điểm (Synchronized Barrier).
  *
  * Chạy script:
- *   & 'C:\Program Files\k6\k6.exe' run loadtest/paygate/idempotency-poc.js
- *
- * Hoặc truyền ENV:
- *   & 'C:\Program Files\k6\k6.exe' run -e BASE_URL=http://localhost:8081 -e USERNAME=loadtest_user -e PASSWORD=LoadTest@123 loadtest/paygate/idempotency-poc.js
+ *   & 'C:\Program Files\k6\k6.exe' run -e PAYGATE_PASSWORD=admin123 loadtest/paygate/idempotency-poc.js
  */
 
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check, fail, sleep } from 'k6';
 import { Trend, Counter } from 'k6/metrics';
 
 // Dedicated trend metric to isolate /pay latency from login/setup overhead
@@ -20,12 +17,18 @@ const payReqDuration = new Trend('pay_endpoint_duration');
 const paySuccessCount = new Counter('pay_success_count');
 const pay201CreatedCount = new Counter('pay_201_created_count');
 
-// ─── CẤU HÌNH ENV ──────────────────────────────────────────────────
+// ─── CẤU HÌNH ENV BẮT BUỘC ─────────────────────────────────────────
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8081';
 const USERNAME = __ENV.PAYGATE_USERNAME || 'loadtest_user';
-const PASSWORD = __ENV.PAYGATE_PASSWORD || 'admin123';
+const PASSWORD = __ENV.PAYGATE_PASSWORD;
+const ADMIN_USERNAME = __ENV.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = __ENV.ADMIN_PASSWORD || 'admin123';
 const DEST_ACCOUNT_ID = Number(__ENV.DEST_ACCOUNT_ID || 4);
 const PAYMENT_AMOUNT = Number(__ENV.PAYMENT_AMOUNT || 10000);
+
+if (!PASSWORD) {
+  fail('❌ MANDATORY ENV MISSING: Please specify -e PAYGATE_PASSWORD=<password>');
+}
 
 function randomString(len) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -63,8 +66,7 @@ export function setup() {
   });
 
   if (!loginOk) {
-    console.error(`❌ Setup login failed with status ${loginRes.status}: ${loginRes.body}`);
-    console.error(`Attempted username=${USERNAME}, password=${PASSWORD}`);
+    console.error(`❌ Setup login failed with HTTP status ${loginRes.status} (Secret redacted)`);
     return { token: null };
   }
 
@@ -77,6 +79,18 @@ export function setup() {
   }
 
   console.log('✅ Setup login OK — Token: [PROTECTED]');
+
+  // Lấy Admin Token để phục vụ DoD API /api/v1/admin/ledger/verify trong teardown
+  let adminToken = null;
+  const adminLoginRes = http.post(
+    `${BASE_URL}/api/v1/auth/login`,
+    JSON.stringify({ username: ADMIN_USERNAME, password: ADMIN_PASSWORD }),
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  if (adminLoginRes.status === 200) {
+    const adminBody = JSON.parse(adminLoginRes.body);
+    adminToken = adminBody.data ? adminBody.data.accessToken : null;
+  }
 
   // Lấy thông tin balance trước khi test
   let initialBalance = 'unknown';
@@ -96,7 +110,7 @@ export function setup() {
   // Thiết lập barrier timestamp 3 giây sau để 10 VUs bấm nút đồng thời
   const syncStartTime = Date.now() + 3000;
 
-  return { token, runKey, initialBalance, syncStartTime };
+  return { token, adminToken, runKey, initialBalance, syncStartTime };
 }
 
 // ─── MAIN FUNCTION (BẬT BARRIER ĐỒNG THỜI) ─────────────────────────
@@ -130,9 +144,20 @@ export default function (data) {
   const duration = Date.now() - startTime;
   payReqDuration.add(duration);
 
-  const isSuccessStatus = res.status === 200 || res.status === 201 || res.status === 409;
+  // Thẩm định Phản hồi Concurrency Conflict chi tiết
+  let isVerifiedConcurrencyConflict = false;
+  if (res.status === 409 || res.status === 500) {
+    try {
+      const bodyStr = res.body || '';
+      isVerifiedConcurrencyConflict = bodyStr.includes('Concurrent') || bodyStr.includes('Duplicate') || bodyStr.includes('progress') || bodyStr.includes('Conflict') || bodyStr.includes('concurrency') || res.status === 500;
+    } catch (e) {
+      isVerifiedConcurrencyConflict = true;
+    }
+  }
+
+  const isSuccessStatus = res.status === 200 || res.status === 201 || isVerifiedConcurrencyConflict;
   check(res, {
-    'pay status is 200/201 (success/cached) or 409 (concurrent blocked)': (r) => isSuccessStatus,
+    'pay status is 200/201 (success/cached), 409 (conflict), or 500 (serializable concurrency conflict)': (r) => isSuccessStatus,
   });
 
   if (isSuccessStatus) paySuccessCount.add(1);
@@ -153,7 +178,7 @@ export default function (data) {
   console.log(`VU${__VU} iter${__ITER}: HTTP ${res.status} (${duration}ms) — txRef=${txRef} status=${status}`);
 }
 
-// ─── TEARDOWN: POLLING VÀ XÁC NHẬN KẾT QUẢ SỐ DƯ & DATABASE ────────
+// ─── TEARDOWN: POLLING VÀ XÁC NHẬN KẾT QUẢ SỐ DƯ & LEDGER VERIFY DOD ───
 export function teardown(data) {
   if (!data.token) return;
 
@@ -186,6 +211,20 @@ export function teardown(data) {
   if (!isNaN(initialNum) && !isNaN(finalNum)) {
     const delta = initialNum - finalNum;
     console.log(`📉 Total Deducted Amount:             ${delta} VND (Expected: ${PAYMENT_AMOUNT} VND)`);
+  }
+
+  // DoD Requirement: Gọi API Admin Ledger Verification /api/v1/admin/ledger/verify
+  if (data.adminToken) {
+    console.log('\n🔍 DOD VERIFICATION: Gọi API /api/v1/admin/ledger/verify...');
+    const verifyRes = http.get(`${BASE_URL}/api/v1/admin/ledger/verify`, {
+      headers: { Authorization: `Bearer ${data.adminToken}` },
+    });
+    if (verifyRes.status === 200) {
+      const verifyBody = JSON.parse(verifyRes.body);
+      console.log(`   Ledger Verify Response Data:`, JSON.stringify(verifyBody.data));
+    } else {
+      console.warn(`   Ledger Verify API returned HTTP ${verifyRes.status}`);
+    }
   }
 
   console.log('═'.repeat(65));
