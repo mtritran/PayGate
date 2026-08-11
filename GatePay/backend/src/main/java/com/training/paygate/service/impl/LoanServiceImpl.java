@@ -20,6 +20,7 @@ import com.training.paygate.exception.BadRequestException;
 import com.training.paygate.exception.ResourceNotFoundException;
 import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.AccountRepository;
+import com.training.paygate.repository.BnplProfileRepository;
 import com.training.paygate.repository.LoanRepository;
 import com.training.paygate.repository.LoanScheduleRepository;
 import com.training.paygate.service.LoanService;
@@ -54,7 +55,7 @@ public class LoanServiceImpl implements LoanService {
     private final com.training.paygate.service.EmailService emailService;
     private final AmqpTemplate amqpTemplate;
     private final com.training.paygate.service.NotificationService notificationService;
-    private final com.training.paygate.repository.BnplProfileRepository bnplProfileRepository;
+    private final BnplProfileRepository bnplProfileRepository;
 
     private static final BigDecimal FIXED_MONTHLY_INTEREST_RATE = new BigDecimal("0.015"); // 1.5% per month
 
@@ -390,7 +391,7 @@ public class LoanServiceImpl implements LoanService {
             return;
         }
 
-        List<LoanSchedule> schedules = loanScheduleRepository.findByTransactionRef(event.transactionRef());
+        List<LoanSchedule> schedules = loanScheduleRepository.findByTransactionRefForUpdate(event.transactionRef());
         if (schedules.isEmpty()) {
             return;
         }
@@ -398,6 +399,13 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = schedules.get(0).getLoan();
 
         if ("COMPLETED".equalsIgnoreCase(event.status())) {
+            boolean hasProcessingSchedule = schedules.stream()
+                    .anyMatch(schedule -> schedule.getStatus() == LoanScheduleStatus.PROCESSING);
+            if (!hasProcessingSchedule) {
+                log.info("[LOAN] Ignored duplicate repayment event for transaction {}", event.transactionRef());
+                return;
+            }
+
             for (LoanSchedule s : schedules) {
                 if (s.getStatus() == LoanScheduleStatus.PROCESSING) {
                     s.setStatus(LoanScheduleStatus.PAID);
@@ -414,12 +422,22 @@ public class LoanServiceImpl implements LoanService {
             loan.setRemainingAmount(newRemaining);
             loanRepository.save(loan);
 
-            // Auto-increase approved limit by the repaid amount
-            bnplProfileRepository.findByUserId(loan.getUserId()).ifPresent(profile -> {
-                profile.setApprovedLimit(profile.getApprovedLimit().add(event.amount()));
+            if (loan.getReason() != null && loan.getReason().startsWith("BNPL")) {
+                // Product policy: every successful BNPL repayment permanently increases
+                // the approved ceiling by the full paid amount (principal + interest),
+                // without a cap. The PROCESSING -> PAID transition above is the
+                // idempotency guard, so a redelivered event cannot increase it twice.
+                var profile = bnplProfileRepository.findByUserIdForUpdate(loan.getUserId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "BNPL profile for user", loan.getUserId()));
+                BigDecimal currentLimit = profile.getApprovedLimit() != null
+                        ? profile.getApprovedLimit()
+                        : BigDecimal.ZERO;
+                profile.setApprovedLimit(currentLimit.add(event.amount()));
                 bnplProfileRepository.save(profile);
-                log.info("[LOAN] Increased BNPL limit for user {} by {}", loan.getUserId(), event.amount());
-            });
+                log.info("[LOAN] Increased BNPL approved limit for user {} by {}",
+                        loan.getUserId(), event.amount());
+            }
         } else if ("FAILED".equalsIgnoreCase(event.status())) {
             for (LoanSchedule s : schedules) {
                 if (s.getStatus() == LoanScheduleStatus.PROCESSING) {

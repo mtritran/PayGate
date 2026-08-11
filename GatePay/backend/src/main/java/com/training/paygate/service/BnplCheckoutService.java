@@ -34,6 +34,7 @@ import com.training.paygate.messaging.event.PaymentCompletedEvent;
 import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.entity.Merchant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -45,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import com.training.paygate.entity.BnplProfile;
 import com.training.paygate.repository.BnplProfileRepository;
@@ -56,6 +58,12 @@ import com.training.paygate.service.NotificationService;
 public class BnplCheckoutService {
 
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
+    private static final String STATUS_CREDIT_APPROVED = "CREDIT_APPROVED";
+    private static final String STATUS_PENDING_CONFIRMATION = "PENDING_CONFIRMATION";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_SUCCESS = "SUCCESS";
+    private static final Set<String> TERMINAL_CHECKOUT_STATUSES = Set.of(
+            STATUS_SUCCESS, "CANCELLED", "EXPIRED", "FAILED");
 
     private final CheckoutSessionRepository checkoutSessionRepository;
     private final BnplProposalRepository proposalRepository;
@@ -203,37 +211,31 @@ public class BnplCheckoutService {
     @Transactional
     public BnplProposalResponse createProposal(String token, BnplProposalCreateRequest request, String username) {
         CheckoutSession session = checkout(token);
+        User user = authenticatedUser(username);
+        bindSessionToAuthenticatedUser(session, user);
+        ensureCustomerAccount(user.getId());
 
-        // Fast-track: if session is not yet credit-approved but the logged-in user already
-        // has a pre-approved BnplProfile limit, auto-approve this session using their existing limit.
-        if (!"CREDIT_APPROVED".equals(session.getStatus())) {
-            if (username == null || username.isBlank()) {
-                throw new BadRequestException("Checkout is not credit approved");
-            }
-            // Resolve user from token — link them to this session if not already linked
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new BadRequestException("Authenticated user not found"));
-            if (session.getCustomerId() == null) {
-                ensureCustomerAccount(user.getId());
-                session.setCustomerId(user.getId());
-            }
-            BnplProfile profile = bnplProfileRepository.findByUserId(session.getCustomerId())
-                    .orElseThrow(() -> new BadRequestException("No pre-approved credit profile found. Please complete the borrower profile first."));
-            if (profile.getApprovedLimit() == null || profile.getApprovedLimit().compareTo(ZERO) <= 0) {
-                throw new BadRequestException("No pre-approved credit limit found. Please complete credit assessment first.");
-            }
-            // Auto-approve the session using the user's existing profile limit
-            BigDecimal maxFinanced = profile.getApprovedLimit().min(session.getAmount());
-            session.setStatus("CREDIT_APPROVED");
-            session.setApprovedLimit(profile.getApprovedLimit());
-            session.setMaximumFinancedAmount(maxFinanced);
-            session.setRiskGrade(profile.getRiskGrade());
-            session.setCreditScore(profile.getCreditScore());
-            session.setAssessmentReason("Pre-approved — existing credit profile");
-            checkoutSessionRepository.save(session);
+        BnplProfile profile = bnplProfileRepository.findByUserIdForUpdate(user.getId())
+                .orElseThrow(() -> new BadRequestException(
+                        "No pre-approved credit profile found. Please complete the borrower profile first."));
+        if (profile.getApprovedLimit() == null || profile.getApprovedLimit().compareTo(ZERO) <= 0) {
+            throw new BadRequestException("No pre-approved credit limit found. Please complete credit assessment first.");
+        }
+        if (proposalRepository.existsByCheckoutToken(session.getToken())) {
+            throw new BadRequestException("A BNPL proposal already exists for this checkout session");
         }
 
-        if (request.financedAmount().compareTo(session.getMaximumFinancedAmount()) > 0) {
+        BigDecimal availableCredit = availableCredit(user.getId(), profile.getApprovedLimit());
+        BigDecimal maxFinanced = availableCredit.min(session.getAmount());
+        session.setStatus(STATUS_CREDIT_APPROVED);
+        session.setApprovedLimit(profile.getApprovedLimit());
+        session.setMaximumFinancedAmount(maxFinanced);
+        session.setRiskGrade(profile.getRiskGrade());
+        session.setCreditScore(profile.getCreditScore());
+        session.setAssessmentReason("Pre-approved — available credit checked");
+        checkoutSessionRepository.save(session);
+
+        if (request.financedAmount().compareTo(maxFinanced) > 0) {
             throw new BadRequestException("Financed amount exceeds maximum financed amount");
         }
         if (request.financedAmount().compareTo(session.getAmount()) > 0) {
@@ -257,22 +259,40 @@ public class BnplCheckoutService {
                 .upfrontAmount(upfrontAmount)
                 .tenorMonths(request.tenorMonths())
                 .monthlyInstallment(monthlyInstallment)
-                .status("PENDING_CONFIRMATION")
+                .status(STATUS_PENDING_CONFIRMATION)
                 .build();
 
         return proposalResponse(proposalRepository.save(proposal), null);
     }
 
     @Transactional
-    public BnplProposalResponse confirmProposal(String proposalRef) {
-        BnplProposal proposal = proposalRepository.findByProposalRef(proposalRef)
+    public BnplProposalResponse confirmProposal(String proposalRef, String username) {
+        BnplProposal proposal = proposalRepository.findByProposalRefForUpdate(proposalRef)
                 .orElseThrow(() -> new ResourceNotFoundException("BNPL proposal not found"));
-        if (!"PENDING_CONFIRMATION".equals(proposal.getStatus())) {
+        User user = authenticatedUser(username);
+        if (!proposal.getUserId().equals(user.getId())) {
+            throw new AccessDeniedException("You do not own this BNPL proposal");
+        }
+        if (STATUS_APPROVED.equals(proposal.getStatus())) {
+            Loan existingLoan = loanRepository.findById(proposal.getLoanId())
+                    .orElseThrow(() -> new ResourceNotFoundException("BNPL loan not found"));
+            return proposalResponse(proposal, existingLoan.getLoanRef());
+        }
+        if (!STATUS_PENDING_CONFIRMATION.equals(proposal.getStatus())) {
             throw new BadRequestException("Proposal is not pending confirmation");
         }
 
         CheckoutSession session = checkout(proposal.getCheckoutToken());
-        if (proposal.getFinancedAmount().compareTo(session.getMaximumFinancedAmount()) > 0) {
+        if (!proposal.getUserId().equals(session.getCustomerId())) {
+            throw new AccessDeniedException("Checkout session does not belong to the proposal borrower");
+        }
+
+        BnplProfile profile = bnplProfileRepository.findByUserIdForUpdate(user.getId())
+                .orElseThrow(() -> new BadRequestException("BNPL credit profile not found"));
+        BigDecimal approvedLimit = nullToZero(profile.getApprovedLimit());
+        BigDecimal activeExposure = activeBnplExposure(user.getId());
+        BigDecimal pendingExposure = pendingProposalExposure(user.getId());
+        if (activeExposure.add(pendingExposure).compareTo(approvedLimit) > 0) {
             throw new BadRequestException("LIMIT_CHANGED");
         }
 
@@ -305,12 +325,12 @@ public class BnplCheckoutService {
         createSchedules(loan);
         Transaction transaction = disburseToMerchant(proposal, session, systemAccount, merchantAccount);
 
-        proposal.setStatus("APPROVED");
+        proposal.setStatus(STATUS_APPROVED);
         proposal.setLoanId(loan.getId());
         proposal.setTransactionRef(transaction.getTransactionRef());
         proposalRepository.save(proposal);
 
-        session.setStatus("SUCCESS");
+        session.setStatus(STATUS_SUCCESS);
         session.setTransactionRef(transaction.getTransactionRef());
         checkoutSessionRepository.save(session);
 
@@ -322,7 +342,7 @@ public class BnplCheckoutService {
             }
         }
 
-        User user = userRepository.findById(proposal.getUserId()).orElse(null);
+        User eventUser = userRepository.findById(proposal.getUserId()).orElse(null);
 
         // Publish the webhook event AFTER the DB transaction commits. Publishing inside the
         // @Transactional method would let the RabbitMQ consumer receive the message before the
@@ -334,12 +354,12 @@ public class BnplCheckoutService {
                 merchantWebhookUrl,
                 transaction.getAmount(),
                 "COMPLETED",
-                user != null ? user.getEmail() : null,
-                user != null ? user.getUsername() : null,
+                eventUser != null ? eventUser.getEmail() : null,
+                eventUser != null ? eventUser.getUsername() : null,
                 merchantAccount.getAccountNumber(),
                 transaction.getDescription(),
                 transaction.getType(),
-                user != null ? user.getId() : null);
+                eventUser != null ? eventUser.getId() : null);
 
         final String notifMsg = String.format("Khoản vay BNPL %s đã được tạo thành công cho đơn hàng %s. Số tiền: %s VND.",
                 loan.getLoanRef(), session.getOrderId(), loan.getAmount());
@@ -357,8 +377,11 @@ public class BnplCheckoutService {
     }
 
     private CheckoutSession checkout(String token) {
-        CheckoutSession session = checkoutSessionRepository.findByToken(token)
+        CheckoutSession session = checkoutSessionRepository.findByTokenForUpdate(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Checkout session not found"));
+        if (TERMINAL_CHECKOUT_STATUSES.contains(session.getStatus())) {
+            throw new BadRequestException("Checkout session is already " + session.getStatus());
+        }
         if (LocalDateTime.now().isAfter(session.getExpiresAt())) {
             session.setStatus("EXPIRED");
             checkoutSessionRepository.save(session);
@@ -466,6 +489,44 @@ public class BnplCheckoutService {
 
     private BigDecimal nullToZero(BigDecimal amount) {
         return amount != null ? amount : ZERO;
+    }
+
+    private User authenticatedUser(String username) {
+        if (username == null || username.isBlank()) {
+            throw new AccessDeniedException("PayGate login is required for BNPL checkout");
+        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AccessDeniedException("Authenticated PayGate user not found"));
+        if (!user.isActive()) {
+            throw new AccessDeniedException("PayGate user account is inactive");
+        }
+        return user;
+    }
+
+    private void bindSessionToAuthenticatedUser(CheckoutSession session, User user) {
+        if (session.getCustomerId() == null) {
+            session.setCustomerId(user.getId());
+            return;
+        }
+        if (!session.getCustomerId().equals(user.getId())) {
+            throw new AccessDeniedException("Checkout session belongs to another PayGate user");
+        }
+    }
+
+    private BigDecimal availableCredit(Long userId, BigDecimal approvedLimit) {
+        return approvedLimit
+                .subtract(activeBnplExposure(userId))
+                .subtract(pendingProposalExposure(userId))
+                .max(ZERO);
+    }
+
+    private BigDecimal activeBnplExposure(Long userId) {
+        return nullToZero(loanRepository.sumActiveBnplRemainingAmount(
+                userId, List.of(LoanStatus.ACTIVE, LoanStatus.OVERDUE)));
+    }
+
+    private BigDecimal pendingProposalExposure(Long userId) {
+        return nullToZero(proposalRepository.sumPendingFinancedAmountByUserId(userId));
     }
 
     private BigDecimal requestedFinanceAmount(CheckoutSession session) {

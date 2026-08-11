@@ -65,7 +65,11 @@ public class BnplCheckoutController {
 
     @PostMapping("/bnpl-proposals/{proposalRef}/confirm")
     @Operation(summary = "Confirm proposal and disburse to merchant")
-    public ApiResponse<BnplProposalResponse> confirmBnplProposal(@PathVariable String proposalRef) {
-        return ApiResponse.success(bnplCheckoutService.confirmProposal(proposalRef));
+    public ApiResponse<BnplProposalResponse> confirmBnplProposal(
+            @PathVariable String proposalRef,
+            Authentication authentication
+    ) {
+        String username = authentication != null ? authentication.getName() : null;
+        return ApiResponse.success(bnplCheckoutService.confirmProposal(proposalRef, username));
     }
 }
