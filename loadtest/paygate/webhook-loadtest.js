@@ -10,9 +10,11 @@
 import http from 'k6/http';
 import { check } from 'k6';
 import { Counter } from 'k6/metrics';
+import crypto from 'k6/crypto';
 
 // ─── CẤU HÌNH ───────────────────────────────────────────────────────
 const BASE_URL = 'http://localhost:8081';
+const WEBHOOK_SECRET = 'vietqr-secret-default';
 
 // ─── CUSTOM METRICS ──────────────────────────────────────────────────
 const webhookAccepted = new Counter('webhook_accepted');
@@ -57,8 +59,13 @@ export default function () {
     transactionTime: new Date().toISOString(),
   });
 
+  const signature = crypto.hmac('sha256', WEBHOOK_SECRET, payload, 'base64');
+
   const res = http.post(`${BASE_URL}/api/v1/integration/bank-webhook`, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Bank-Signature': signature,
+    },
   });
 
   const is2xx = res.status >= 200 && res.status < 300;

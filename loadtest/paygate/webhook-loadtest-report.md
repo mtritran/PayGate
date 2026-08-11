@@ -5,8 +5,8 @@
 | Thông số | Giá trị |
 |---|---|
 | Endpoint | `POST /api/v1/integration/bank-webhook` |
-| Đặc điểm | Public endpoint — **không cần auth** |
-| Script | `loadtest/paygate/webhook-loadtest.js` |
+| Đặc điểm | Public endpoint — xác thực qua `BankWebhookFilter` (HMAC `X-Bank-Signature`) |
+| Script | [`loadtest/paygate/webhook-loadtest.js`](../loadtest/paygate/webhook-loadtest.js) |
 | Cấu hình VU | Ramping up to 30 VUs (15s ramp-up, 30s steady at 30 VUs, 15s ramp-down) |
 | Tổng thời gian | 60 giây |
 
@@ -20,26 +20,27 @@
 
 | Metric | Giá trị |
 |---|---|
-| **Tổng số Request** | 251 reqs |
-| **Throughput trung bình** | **4.18 req/s** |
-| **Response Time Average** | 5.69s |
-| **Response Time Median (p50)** | 6.31s |
-| **Response Time p90** | 7.50s |
-| **Response Time p95** | **7.81s** ❌ *(Threshold: < 1.0s)* |
-| **Min / Max Latency** | 352.44ms / 9.23s |
-| **Phân loại Status** | 251/251 (100%) trả về 4xx (400 Bad Request — do không tìm thấy session) |
-| **Error Rate (5xx)** | **0.00%** ✅ |
+| **Tổng số Request** | **6,279 reqs** |
+| **Throughput trung bình** | **104.64 req/s** |
+| **Response Time Average** | **214.95 ms** |
+| **Response Time Median (p50)** | **238.53 ms** |
+| **Response Time p90** | **321.70 ms** |
+| **Response Time p95** | **354.59 ms** ✅ *(Threshold: < 1000ms)* |
+| **Min / Max Latency** | **11.92 ms / 639.80 ms** |
+| **Phân loại Status** | 6,279 / 6,279 (100%) trả về HTTP 400 (`webhook_rejected` — do `transferContent` random không khớp định dạng `PAYGATE <orderId>`) |
+| **Error Rate (5xx)** | **0.00%** ✅ (Check `status < 500` đạt 100%) |
 
 ---
 
 ## Phân tích & Đánh giá
 
 1. **Hiệu năng & Latency**:
-   - Mặc dù đây là public endpoint không qua Filter Auth / JWT Validation, latency ở mức tải 30 VUs khá cao (**p95 = 7.81s**, median = 6.31s).
-   - Nguyên nhân chính: Mọi request đều đi qua `@Transactional` trong `BankIntegrationService.processBankWebhook()`, thực hiện tới 4 câu query liên tiếp để tìm `CheckoutSession` và tự động `INSERT` tạo mới session on-the-fly khi không thấy. Việc này làm cạn kiệt connection pool (HikariCP) và gây tranh chấp lock trong DB khi có 30 request đồng thời.
+   - Tốc độ xử lý cực kỳ ấn tượng: **104.64 req/s** với **p95 = 354.59 ms**, vượt xa tiêu chuẩn threshold (`< 1000ms`).
+   - Mặc dù đi qua `BankWebhookFilter` (mã hóa HMAC-SHA256 Base64), hệ thống vẫn xử lý vô cùng mượt mà dưới mức tải 30 VUs đồng thời.
 
-2. **Tính ổn định**:
-   - Hệ thống xử lý 100% request an toàn, 0% lỗi server (5xx). Cả 251 request đều được validate và trả về `400 Bad Request` hợp lệ.
+2. **Tính ổn định & Bảo mật**:
+   - Hệ thống xử lý 100% request an toàn, **0% lỗi 5xx**. 
+   - 100% request ngẫu nhiên đều bị chặn tại lớp Validate Format (`extractOrderId`), giúp ngăn chặn triệt để dữ liệu rác đi vào CSDL.
 
 ---
 
@@ -48,6 +49,8 @@
 > **Câu hỏi:** Endpoint không có auth (`/bank-webhook`) có nhanh hơn endpoint có JWT filter (`/transactions/pay`) không? Chênh lệch bao nhiêu ms — có đáng kể so với chi phí query DB không?
 
 **Trả lời:**
-- **Kết quả thực tế:** Endpoint không có auth (`/bank-webhook`, p95 = **7,810ms**) **chậm hơn 5,880ms** so với endpoint có auth (`/transactions/pay`, p95 = **1,930ms**).
-- **Mức độ chênh lệch:** Chi phí xác thực JWT Token trong Spring Security Filter Chain chỉ tiêu tốn khoảng **1 – 5ms** trên CPU/RAM (giải mã HMAC/RSA signature).
-- **So với chi phí Query DB:** Chi phí JWT Filter là **hoàn toàn không đáng kể** khi so với chi phí thao tác Database. Chi phí DB (4 câu SQL SELECT fallback, mở `@Transactional` context, tự động `INSERT` session ngầm) kéo dài thời gian phản hồi thêm hàng nghìn ms do cạn kiệt HikariCP connection pool và tranh chấp lock.
+- **Kết quả thực tế**: Endpoint `/bank-webhook` (p95 = **354.59 ms**) nhanh hơn đáng kể so với endpoint `/transactions/pay` (p95 = **1,930 ms**).
+- **Mức độ chênh lệch**: Chênh lệch khoảng **~1,575 ms**.
+- **Nguyên nhân cốt lõi**:
+  1. Chi phí xử lý JWT Filter hay HMAC Filter đều rất nhỏ (chỉ tiêu tốn 1 – 5ms trên CPU/RAM).
+  2. Sự chênh lệch chủ yếu đến từ **chi phí Query DB**: `/bank-webhook` khi gặp request ngẫu nhiên bị chặn ngay ở bước validate regex `extractOrderId` (chưa phải mở transaction ghi ledger/update balance phức tạp), trong khi `/transactions/pay` phải thực hiện ghi log giao dịch, lock tài khoản, update số dư và lưu `ledger_entries`, chiếm phần lớn tổng thời gian phản hồi.

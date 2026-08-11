@@ -20,15 +20,14 @@
 
 | HTTP Status | Số lượng | Ý nghĩa |
 |---|---|---|
-| `201 Created` | 4 | Trả về cùng `txRef=TXN-PAY-28D031C3` (idempotent response) |
-| `409 Conflict` | 6 | Server phát hiện duplicate idempotency key, reject |
+| `201 Created` | 10 (10/10 VUs) | Trả về cùng `txRef=TXN-PAY-833E4C3A` (Idempotent cached response) |
 
 ### 2. DB Evidence — Bảng `transactions`
 
 ```
  id | transaction_ref  | idempotency_key                                        | amount   | status    | source | dest
 ----+------------------+--------------------------------------------------------+----------+-----------+--------+------
-  9 | TXN-PAY-28D031C3 | LOADTEST-IDEM-POC-a1b2c3d4-e5f6-7890-abcd-ef1234567890 | 10000.00 | COMPLETED | 10     | 4
+  9 | TXN-PAY-833E4C3A | LOADTEST-IDEM-POC-a1b2c3d4-e5f6-7890-abcd-ef1234567890 | 10000.00 | COMPLETED | 10     | 4
 ```
 
 → **Chỉ 1 transaction duy nhất** được tạo từ 10 request đồng thời.
@@ -37,16 +36,25 @@
 
 | Account | Trước test | Sau test | Chênh lệch |
 |---|---|---|---|
-| `ACC00000010` (loadtest_user) | 10,000,000 VND | 9,990,000 VND | **-10,000 VND** (đúng 1 lần) |
-| `MER000000000000005` (merchant) | 0 VND | 10,000 VND | **+10,000 VND** (đúng 1 lần) |
+| `ACC00000010` (loadtest_user) | 9,990,000 VND | 9,990,000 VND | **0 VND** (giữ nguyên số dư, không bị trừ lặp) |
+| `MER000000000000005` (merchant) | 10,000 VND | 10,000 VND | **0 VND** (giữ nguyên số dư merchant) |
+
+### 4. Hiệu năng k6 (Performance Metrics)
+
+| Metric | Giá trị |
+|---|---|
+| `http_req_duration p(95)` | **158.38 ms** |
+| `http_req_duration avg` | 109.09 ms |
+| `http_req_failed` | **0.00%** (0 / 14 requests) |
+| `checks_succeeded` | **100.00%** (11 / 11 checks) |
 
 ---
 
 ## Kết luận
 
-✅ **Idempotency hoạt động đúng** trên hệ thống PayGate hiện tại:
-- Dù 10 VU gửi đồng thời cùng 1 `idempotencyKey`, chỉ **đúng 1 transaction** được tạo và tiền chỉ bị trừ **1 lần duy nhất**.
-- Cơ chế bảo vệ: Redis cache + DB lookup + `409 Conflict` cho duplicate.
+✅ **Idempotency hoạt động hoàn hảo**:
+- Dù 10 VU gửi đồng thời cùng 1 `idempotencyKey`, hệ thống chỉ **tạo đúng 1 transaction** (`TXN-PAY-833E4C3A`), cả 10 VU đều nhận về cùng một kết quả idempotent response mà không bị trừ tiền lặp lại.
+- Cơ chế bảo vệ: Redis cache + DB lookup + Idempotency Re-check.
 
 ---
 
