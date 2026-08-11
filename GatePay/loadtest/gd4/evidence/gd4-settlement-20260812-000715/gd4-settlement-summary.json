@@ -1,0 +1,314 @@
+{
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "unique settlement returns HTTP 200": {
+                    "name": "unique settlement returns HTTP 200",
+                    "path": "::unique settlement returns HTTP 200",
+                    "id": "7257ef836d42e4db374094752dcc27d1",
+                    "passes": 30,
+                    "fails": 0
+                },
+                "unique settlement response success is true": {
+                    "name": "unique settlement response success is true",
+                    "path": "::unique settlement response success is true",
+                    "id": "200a198153b82577bf92601691e72f9f",
+                    "passes": 30,
+                    "fails": 0
+                },
+                "unique settlement has no server error": {
+                    "passes": 30,
+                    "fails": 0,
+                    "name": "unique settlement has no server error",
+                    "path": "::unique settlement has no server error",
+                    "id": "82c9613a5b0b8b94ab8f6176e557e9f1"
+                }
+            },
+        "name": ""
+    },
+    "metrics": {
+        "http_req_blocked": {
+            "med": 0.255,
+            "max": 13.2266,
+            "p(90)": 7.704720000000001,
+            "p(95)": 9.214559999999997,
+            "avg": 1.8554500000000012,
+            "min": 0
+        },
+        "gd4_settlement_duration": {
+            "min": 83.5711,
+            "med": 282.086,
+            "max": 456.267,
+            "p(90)": 424.71139,
+            "p(95)": 440.576515,
+            "avg": 278.2581433333334,
+            "thresholds": {
+                "p(95)<1000": false
+            }
+        },
+        "http_reqs": {
+            "count": 60,
+            "rate": 13.59421323343641
+        },
+        "vus": {
+            "value": 30,
+            "min": 30,
+            "max": 30
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "data_received": {
+            "count": 60641,
+            "rate": 13739.444744813622
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 60,
+            "value": 0
+        },
+        "data_sent": {
+            "count": 30054,
+            "rate": 6809.341408628297
+        },
+        "iteration_duration": {
+            "avg": 3290.5413966666665,
+            "min": 3093.4068,
+            "med": 3295.67695,
+            "max": 3471.8386,
+            "p(90)": 3439.31319,
+            "p(95)": 3455.7586850000002
+        },
+        "iterations": {
+            "count": 30,
+            "rate": 6.797106616718205
+        },
+        "checks": {
+            "fails": 0,
+            "passes": 90,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 154.481755,
+            "min": 11.5704,
+            "med": 99.4401,
+            "max": 456.267,
+            "p(90)": 403.65715,
+            "p(95)": 435.452095
+        },
+        "vus_max": {
+            "min": 30,
+            "max": 30,
+            "value": 30
+        },
+        "http_req_connecting": {
+            "max": 10.1714,
+            "p(90)": 6.20723,
+            "p(95)": 8.214769999999996,
+            "avg": 1.557158333333334,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_sending": {
+            "avg": 0.121105,
+            "min": 0,
+            "med": 0,
+            "max": 3.6909,
+            "p(90)": 0.05045000000000071,
+            "p(95)": 0.5714149999999987
+        },
+        "gd4_settlement_successes": {
+            "count": 30,
+            "rate": 6.797106616718205
+        },
+        "http_req_duration": {
+            "p(95)": 435.452095,
+            "avg": 154.481755,
+            "min": 11.5704,
+            "med": 99.4401,
+            "max": 456.267,
+            "p(90)": 403.65715
+        },
+        "http_req_waiting": {
+            "max": 455.7516,
+            "p(90)": 403.65715,
+            "p(95)": 435.42289,
+            "avg": 154.26344166666667,
+            "min": 11.2479,
+            "med": 99.4401
+        },
+        "http_req_receiving": {
+            "avg": 0.09720833333333333,
+            "min": 0,
+            "med": 0,
+            "max": 0.5841,
+            "p(90)": 0.5109,
+            "p(95)": 0.5391849999999999
+        }
+    },
+    "setup_data": {
+        "barrierAt": 1786468077304,
+        "fixtures": [
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-3",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-3"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-4",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-4"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-5",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-5"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-6",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-6"
+            },
+            {
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-7",
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-7"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-8",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-8"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-9",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-9"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-10",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-10"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-11",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-11"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-12",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-12"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-13",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-13"
+            },
+            {
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-14",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-14",
+                "amount": 100000
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-15",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-15"
+            },
+            {
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-16",
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-16"
+            },
+            {
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-17",
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-17"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-18",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-18"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-19",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-19"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-20",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-20"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-21",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-21"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-22",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-22"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-23",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-23"
+            },
+            {
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-24",
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-24"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-25",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-25"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-26",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-26"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-27",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-27"
+            },
+            {
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-28",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-28",
+                "amount": 100000
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-29",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-29"
+            },
+            {
+                "amount": 100000,
+                "orderId": "ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-30",
+                "transferContent": "PAYGATE ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-30"
+            }
+        ]
+    }
+}

@@ -1,0 +1,140 @@
+
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: loadtest/paygate/webhook-normal-load.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 1m15s max duration (incl. graceful stop):
+              * gd4_valid_settlement_burst: 1 iterations for each of 30 VUs (maxDuration: 45s, gracefulStop: 30s)
+
+k6.exe : time="2026-08-12T00:07:54+07:00" level=info msg="{\"event\":\"gd4_settlement_setup\",\"runId\":\"gd4-settlement-20260812-000715\",\"fixtureCount\":30,\"barrierAt\":1786468077304}" source=console
+At line:1 char:1
++ & 'C:\Program Files\k6\k6.exe' run --no-color --summary-export "$sett ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (time="2026-08-1... source=console:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+running (0m01.0s), 30/30 VUs, 0 complete and 0 interrupted iterations
+gd4_valid_settlement_burst   [   0% ] 30 VUs  00.1s/45s  00/30 iters, 1 per VU
+
+running (0m02.0s), 30/30 VUs, 0 complete and 0 interrupted iterations
+gd4_valid_settlement_burst   [   0% ] 30 VUs  01.1s/45s  00/30 iters, 1 per VU
+
+running (0m03.0s), 30/30 VUs, 0 complete and 0 interrupted iterations
+gd4_valid_settlement_burst   [   0% ] 30 VUs  02.1s/45s  00/30 iters, 1 per VU
+
+running (0m04.0s), 30/30 VUs, 0 complete and 0 interrupted iterations
+gd4_valid_settlement_burst   [   0% ] 30 VUs  03.1s/45s  00/30 iters, 1 per VU
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":5,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-5\
+",\"status\":200,\"sentAtEpochMs\":1786468077308,\"durationMs\":83.5711}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":9,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-9\
+",\"status\":200,\"sentAtEpochMs\":1786468077304,\"durationMs\":90.487}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":18,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+8\",\"status\":200,\"sentAtEpochMs\":1786468077307,\"durationMs\":110.5573}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":1,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1\
+",\"status\":200,\"sentAtEpochMs\":1786468077305,\"durationMs\":119.2389}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":10,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+0\",\"status\":200,\"sentAtEpochMs\":1786468077305,\"durationMs\":138.9404}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":13,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+3\",\"status\":200,\"sentAtEpochMs\":1786468077305,\"durationMs\":156.7626}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":28,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+8\",\"status\":200,\"sentAtEpochMs\":1786468077306,\"durationMs\":177.9999}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":27,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+7\",\"status\":200,\"sentAtEpochMs\":1786468077307,\"durationMs\":183.1991}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":21,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+1\",\"status\":200,\"sentAtEpochMs\":1786468077316,\"durationMs\":196.298}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":25,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+5\",\"status\":200,\"sentAtEpochMs\":1786468077308,\"durationMs\":214.9167}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":7,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-7\
+",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":226.5712}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":12,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+2\",\"status\":200,\"sentAtEpochMs\":1786468077306,\"durationMs\":242.4797}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":16,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+6\",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":250.841}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":26,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+6\",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":264.2851}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":15,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+5\",\"status\":200,\"sentAtEpochMs\":1786468077317,\"durationMs\":275.9597}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":19,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+9\",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":288.2123}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":29,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+9\",\"status\":200,\"sentAtEpochMs\":1786468077319,\"durationMs\":300.5721}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":6,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-6\
+",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":314.1706}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":8,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-8\
+",\"status\":200,\"sentAtEpochMs\":1786468077315,\"durationMs\":325.8291}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":3,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-3\
+",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":336.2014}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":23,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+3\",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":348.0119}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":14,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+4\",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":363.0656}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":30,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-3
+0\",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":376.2228}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":24,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+4\",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":387.6129}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":11,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+1\",\"status\":200,\"sentAtEpochMs\":1786468077319,\"durationMs\":402.6017}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":4,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-4\
+",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":413.1562}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":2,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2\
+",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":423.5593}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":20,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+0\",\"status\":200,\"sentAtEpochMs\":1786468077318,\"durationMs\":435.0802}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":22,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-2
+2\",\"status\":200,\"sentAtEpochMs\":1786468077319,\"durationMs\":445.0735}" source=console
+time="2026-08-12T00:07:57+07:00" level=info msg="{\"event\":\"gd4_settlement_response\",\"runId\":\"gd4-settlement-20260812-000715\",\"vu\":17,\"orderId\":\"ORD-GD4-SETTLEMENT-gd4-settlement-20260812-000715-1
+7\",\"status\":200,\"sentAtEpochMs\":1786468077319,\"durationMs\":456.267}" source=console
+
+
+  Γûê THRESHOLDS 
+
+    checks
+    Γ£ô 'rate==1' rate=100.00%
+
+    gd4_settlement_duration
+    Γ£ô 'p(95)<1000' p(95)=440.576515
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 90      20.39132/s
+    checks_succeeded...: 100.00% 90 out of 90
+    checks_failed......: 0.00%   0 out of 90
+
+    Γ£ô unique settlement returns HTTP 200
+    Γ£ô unique settlement response success is true
+    Γ£ô unique settlement has no server error
+
+    CUSTOM
+    gd4_settlement_duration........: avg=278.258143 min=83.5711 med=282.086 max=456.267  p(90)=424.71139 p(95)=440.576515
+    gd4_settlement_successes.......: 30    6.797107/s
+
+    HTTP
+    http_req_duration..............: avg=154.48ms   min=11.57ms med=99.44ms max=456.26ms p(90)=403.65ms  p(95)=435.45ms  
+      { expected_response:true }...: avg=154.48ms   min=11.57ms med=99.44ms max=456.26ms p(90)=403.65ms  p(95)=435.45ms  
+    http_req_failed................: 0.00% 0 out of 60
+    http_reqs......................: 60    13.594213/s
+
+    EXECUTION
+    iteration_duration.............: avg=3.29s      min=3.09s   med=3.29s   max=3.47s    p(90)=3.43s     p(95)=3.45s     
+    iterations.....................: 30    6.797107/s
+    vus............................: 30    min=30      max=30
+    vus_max........................: 30    min=30      max=30
+
+    NETWORK
+    data_received..................: 61 kB 14 kB/s
+    data_sent......................: 30 kB 6.8 kB/s
+
+
+
+
+running (0m04.4s), 00/30 VUs, 30 complete and 0 interrupted iterations
+gd4_valid_settlement_burst Γ£ô [ 100% ] 30 VUs  03.5s/45s  30/30 iters, 1 per VU
