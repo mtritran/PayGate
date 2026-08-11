@@ -72,27 +72,10 @@ public class BankIntegrationService {
         String altOrderId = orderId.startsWith("ORD-") ? orderId.substring(4) : "ORD-" + orderId;
         CheckoutSession session = checkoutSessionRepository
                 .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(orderId, "PENDING")
-                .or(() -> checkoutSessionRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderId))
                 .or(() -> checkoutSessionRepository.findFirstByOrderIdAndStatusOrderByCreatedAtDesc(altOrderId, "PENDING"))
+                .or(() -> checkoutSessionRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderId))
                 .or(() -> checkoutSessionRepository.findFirstByOrderIdOrderByCreatedAtDesc(altOrderId))
-                .orElseGet(() -> {
-                    log.info("No pre-existing checkout session found for orderId {}. Creating on-the-fly session for VietQR settlement.", orderId);
-                    Merchant merchant = merchantRepository.findByMerchantCode("MARKETPLACE_MP")
-                            .orElseGet(() -> merchantRepository.findAll().stream().findFirst().orElse(null));
-                    if (merchant == null) {
-                        throw new ResourceNotFoundException("No merchant found to process settlement");
-                    }
-                    CheckoutSession newSession = CheckoutSession.builder()
-                            .orderId(orderId)
-                            .merchantId(merchant.getId())
-                            .merchantCode(merchant.getMerchantCode())
-                            .merchantName(merchant.getMerchantName())
-                            .amount(request.amount() != null ? request.amount() : BigDecimal.ZERO)
-                            .method("VIETQR")
-                            .status("PENDING")
-                            .build();
-                    return checkoutSessionRepository.save(newSession);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("No checkout session found matching orderId: " + orderId));
 
         if ("COMPLETED".equalsIgnoreCase(session.getStatus())) {
             log.info("Bank Webhook duplicate: CheckoutSession for orderId {} is already COMPLETED", orderId);

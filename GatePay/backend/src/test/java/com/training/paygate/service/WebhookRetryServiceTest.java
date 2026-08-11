@@ -3,7 +3,9 @@ package com.training.paygate.service;
 import com.training.paygate.entity.WebhookLog;
 import com.training.paygate.enums.WebhookStatus;
 import com.training.paygate.repository.WebhookLogRepository;
+import com.training.paygate.repository.MerchantRepository;
 import com.training.paygate.service.impl.WebhookRetryServiceImpl;
+import com.training.paygate.util.SsrfValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +37,12 @@ class WebhookRetryServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private MerchantRepository merchantRepository;
+
+    @Mock
+    private SsrfValidator ssrfValidator;
+
     @InjectMocks
     private WebhookRetryServiceImpl webhookRetryService;
 
@@ -42,6 +50,7 @@ class WebhookRetryServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(ssrfValidator.isSafeUrl(any(String.class))).thenReturn(true);
         sampleLog = WebhookLog.builder()
                 .id(100L)
                 .transactionId(1L)
