@@ -136,7 +136,7 @@
 |---|---|---|---|---|---|---|
 | 1 | /recommendations chậm (p95 1.8s do full-catalog scan) | GĐ1 | UX tệ khi tải cao | ✅ Đã fix (Precompute, PR #78) | Trí + Review | Cao |
 | 2 | createOrder giữ DB lock quá lâu (HTTP call trong transaction) | GĐ2 | Hết HikariCP ở 30 VU | ✅ Đã fix (TransactionTemplate, fe551b9) | Trí | Cao |
-| 3 | **Bug: "Transaction synchronization is not active" → createOrder luôn 500** | GĐ2 RE-TEST | **Chặn toàn bộ đặt hàng** | 🟡 Đã fix local, **cần commit + merge + re-test** | [cần phân công] | **Cực cao** |
+| 3 | **Bug: "Transaction synchronization is not active" → createOrder luôn 500** | GĐ2 RE-TEST | **Chặn toàn bộ đặt hàng** | ✅ **Đã fix + commit + push lên dev (8ca6700, 11/08)** — giữ hướng GĐ2: publish trực tiếp khi không có tx (consumer idempotent) | Trí | **Cực cao** |
 | 4 | Rate limit bypass bị vô hiệu (header comment out) | GĐ2 RE-TEST | 429 khi test tải cao; test bị nhiễu | 🟠 Chưa xử lý — đề xuất config env | [cần phân công] | Trung bình |
 | 5 | Stress 30 VU vẫn cạn HikariCP | GĐ2 | Lỗi timeout connection ~10% | 🟠 Cải thiện rồi nhưng chưa hết — cần tăng pool hoặc tối ưu thêm | [cần phân công] | Trung bình |
 | 6 | Webhook nhận tải cao p95 7.81s | GĐ4 | Latency vượt ngưỡng | 🟠 Chưa re-test sau fix signature | [cần phân công] | Trung bình |
@@ -144,7 +144,7 @@
 | 8 | Log SQL DEBUG làm chậm test | Setup | Sai số liệu latency | ✅ Đã nhận biết (tắt khi test thật) | Team | — |
 
 **Việc cần làm ngay (trước báo cáo):**
-1. Commit + merge fix bug #3 (`OrderEventPublisher`) lên `dev` — **chặn đặt hàng là ưu tiên #1**.
+1. ✅ Đã xử lý: fix bug #3 (`OrderEventPublisher` + khôi phục TransactionTemplate trong `createOrder`) đã commit + push lên `dev` (8ca6700) — **chặn đặt hàng đã được gỡ**.
 2. Phân công người re-test #6 (webhook) và #5 (stress) để có số liệu đóng/đóng ngoại lệ.
 
 ---
