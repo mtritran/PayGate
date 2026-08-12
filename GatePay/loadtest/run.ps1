@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Position = 0)]
-  [ValidateSet('gd3', 'validation', 'settlement', 'forged', 'all')]
+  [ValidateSet('gd3', 'gd3-scale', 'validation', 'settlement', 'forged', 'all')]
   [string]$Scenario = 'all',
 
   [switch]$Smoke,
@@ -36,6 +36,9 @@ $allowedEnvNames = @(
   'GD3_VUS',
   'GD3_BARRIER_SECONDS',
   'GD3_SETTLEMENT_WAIT_SECONDS',
+  'GD3_SCALE_USERNAMES',
+  'GD3_SCALE_PASSWORD',
+  'GD3_SCALE_REQUESTS_PER_USER',
   'GD4_TEST_ENV',
   'GD4_ALLOW_MUTATION',
   'GD4_CALLBACK_SAFE',
@@ -263,6 +266,21 @@ function Prepare-Scenario([string]$Name) {
         Set-ScopedEnv 'GD3_BARRIER_SECONDS' '1'
       }
     }
+    'gd3-scale' {
+      Ensure-RequiredValues @(
+        'GD3_SCALE_USERNAMES',
+        'ADMIN_USERNAME',
+        'DEST_ACCOUNT_ID',
+        'PAYMENT_AMOUNT'
+      ) 'GD3 scale'
+      Ensure-Secret 'GD3_SCALE_PASSWORD' 'Nhap password dung chung cua payer scale'
+      Ensure-Secret 'ADMIN_PASSWORD' 'Nhap password admin'
+
+      if ($Smoke) {
+        Set-ScopedEnv 'GD3_SCALE_REQUESTS_PER_USER' '2'
+        Set-ScopedEnv 'GD3_BARRIER_SECONDS' '1'
+      }
+    }
     'validation' {
       Assert-Gd4Safety
       Ensure-Secret 'WEBHOOK_SECRET' 'Nhap bank webhook HMAC secret'
@@ -332,6 +350,10 @@ function Invoke-K6Scenario([string]$Name, [string]$K6Path, [int]$TargetCount) {
       Set-ScopedEnv 'GD3_RUN_ID' $currentRunId
       Set-ScopedEnv 'IDEMPOTENCY_KEY' "GD3-IDEM-$currentRunId"
       $scriptPath = Join-Path $loadtestRoot 'gd3\gd3-idempotency-test.js'
+    }
+    'gd3-scale' {
+      Set-ScopedEnv 'GD3_RUN_ID' $currentRunId
+      $scriptPath = Join-Path $loadtestRoot 'gd3\gd3-idempotency-scale-test.js'
     }
     'validation' {
       Set-ScopedEnv 'GD4_RUN_ID' $currentRunId

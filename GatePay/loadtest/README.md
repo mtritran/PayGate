@@ -15,6 +15,7 @@ loadtest/
 │   └── webhook.js
 ├── gd3/
 │   ├── gd3-idempotency-test.js
+│   ├── gd3-idempotency-scale-test.js
 │   ├── report-gd3.md
 │   └── evidence/gd3-final-20260811-224105/
 └── gd4/
@@ -35,14 +36,14 @@ loadtest/
 
 | Phase | Script | Kết quả | Evidence |
 |---|---|---|---|
-| GĐ3 | [`gd3-idempotency-test.js`](./gd3/gd3-idempotency-test.js) | PASS trên backend đã vá; 1 transaction, không double-charge | [`gd3-final-20260811-224105`](./gd3/evidence/gd3-final-20260811-224105/) |
-| GĐ4-A | [`gd4-validation-test.js`](./gd4/gd4-validation-test.js) | PASS; 116.499/116.499 HTTP 404; p95 20,79 ms | [`gd4-validation-20260811-235710`](./gd4/evidence/gd4-validation-20260811-235710/) |
-| GĐ4-B | [`gd4-settlement-test.js`](./gd4/gd4-settlement-test.js) | PASS; 30/30 settlement; p95 440,58 ms | [`gd4-settlement-20260812-000715`](./gd4/evidence/gd4-settlement-20260812-000715/) |
-| GĐ4-C | [`gd4-forged-amount-test.js`](./gd4/gd4-forged-amount-test.js) | PASS; 24.317/24.317 amount sai bị chặn; accepted 0% | [`gd4-forged-20260812-001305`](./gd4/evidence/gd4-forged-20260812-001305/) |
+| GĐ3 | [`gd3-idempotency-test.js`](./gd3/gd3-idempotency-test.js), [`gd3-idempotency-scale-test.js`](./gd3/gd3-idempotency-scale-test.js) | Dữ liệu PASS; scale API FAIL với 6/50 và 11/100 response 5xx | [`report-gd3.md`](./gd3/report-gd3.md) — evidence text đã nhúng |
+| GĐ4-A | [`gd4-validation-test.js`](./gd4/gd4-validation-test.js) | 50/100 VUs PASS; 200 VUs FAIL với 240 lỗi kết nối | [`report-gd4.md`](./gd4/report-gd4.md) — evidence text đã nhúng |
+| GĐ4-B | [`gd4-settlement-test.js`](./gd4/gd4-settlement-test.js) | 30/50 settlement PASS; p95 706,15/941,35 ms | [`report-gd4.md`](./gd4/report-gd4.md) — evidence text đã nhúng |
+| GĐ4-C | [`gd4-forged-amount-test.js`](./gd4/gd4-forged-amount-test.js) | 50/100 VUs PASS; 28.725/28.725 amount sai bị chặn | [`report-gd4.md`](./gd4/report-gd4.md) — evidence text đã nhúng |
 
 - [Báo cáo GĐ3](./gd3/report-gd3.md)
 - [Báo cáo GĐ4](./gd4/report-gd4.md)
-- [Báo cáo forged amount](./gd4/report-gd4-forged.md)
+- [Báo cáo forged amount lịch sử](./gd4/report-gd4-forged.md)
 - [Báo cáo tổng kết GĐ3-GĐ4](./BAO_CAO_TONG_KET_GD3_GD4.md)
 
 ## Cách chạy
@@ -52,6 +53,9 @@ Chạy từ application root `GatePay/` — cùng cấp với `backend/`, `front
 ```powershell
 # GĐ3
 & 'C:\Program Files\k6\k6.exe' run loadtest/gd3/gd3-idempotency-test.js
+
+# GĐ3 scale: nhiều nhóm độc lập, mỗi user tối đa 10 request trùng key
+& 'C:\Program Files\k6\k6.exe' run loadtest/gd3/gd3-idempotency-scale-test.js
 
 # GĐ4-A: random/non-matching validation
 & 'C:\Program Files\k6\k6.exe' run loadtest/gd4/gd4-validation-test.js
@@ -68,9 +72,12 @@ Chạy từ application root `GatePay/` — cùng cấp với `backend/`, `front
 - Không hardcode hoặc commit JWT, password, merchant API key, bank HMAC secret và raw auth header.
 - GĐ4 bắt buộc `GD4_TEST_ENV=isolated`, `GD4_ALLOW_MUTATION=true`, `GD4_CALLBACK_SAFE=true`.
 - Mutation test chỉ chạy trên database disposable và merchant callback phải `NULL` hoặc local stub đã kiểm chứng.
-- Mỗi run chính thức giữ manifest, k6 summary, console log đã quét secret, SQL preflight và SQL post-check trong phase tương ứng.
-- Không stage run thất bại/smoke cũ. Chỉ bốn evidence directory được liệt kê trong bảng trạng thái là artifact bàn giao chính thức.
-- GĐ3 release sign-off phụ thuộc việc merge backend fixes `96d4ecd` và `9703482` hoặc thay đổi tương đương.
+- Raw log, JSON summary, SQL output và screenshot mới được giữ cục bộ trong `loadtest/results/` để hậu kiểm và không commit.
+- Báo cáo bàn giao phải chép trực tiếp các chỉ số k6/SQL cần thiết để có thể gửi độc lập; các thư mục `gd3/gd4/evidence/` là snapshot lịch sử đã tồn tại.
+- GĐ3 chưa được sign-off trên `develop`: dữ liệu không double-charge nhưng scale test còn trả 5xx do serialization conflict không đi qua retry boundary.
+- GĐ3 chuẩn vẫn dùng 1 user và 8-10 VUs theo requirements. Script `gd3-idempotency-scale-test.js`
+  là bài mở rộng capacity: mỗi user là một logical payment riêng, dùng một key riêng và tối đa 10
+  request trùng key. Không tăng thẳng một user quá 10 request vì khi đó kết quả chỉ phản ánh HTTP 429.
 
 ## Quick runner cho local smoke test
 
@@ -80,6 +87,7 @@ Chạy từ application root `GatePay/` — cùng cấp với `backend/`, `front
 # Chạy từ GatePay/
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario validation -Smoke
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario gd3 -Smoke
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario gd3-scale -SaveQuickLog
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario settlement -Smoke
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\loadtest\run.ps1 -Scenario forged -Smoke
 

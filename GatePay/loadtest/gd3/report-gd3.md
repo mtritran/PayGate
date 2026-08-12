@@ -1,91 +1,137 @@
-# GD3 - Idempotency POC Report
+# 📊 BÁO CÁO LOAD TEST GĐ3 — CONCURRENCY & IDEMPOTENCY
 
-**Status:** PASS on the patched PayGate backend described below.
+**Ngày:** 12/08/2026<br>
+**Backend:** PayGate `develop/cab84ca`<br>
+**Môi trường:** Local Windows, PostgreSQL 16 + Redis 7 + RabbitMQ 3 disposable<br>
+**Công cụ:** k6 v2.1.0
 
-## 1. Objective and acceptance criteria
+## 1. Mục tiêu và kịch bản
 
-Test `POST /api/v1/transactions/pay` with 10 near-simultaneous requests from one payer. Every request represents the same logical payment and uses the exact same `idempotencyKey`.
+Kiểm tra `POST /api/v1/transactions/pay` có tạo nhiều giao dịch hoặc trừ tiền nhiều lần khi nhận các request đồng thời cho cùng một logical payment hay không.
 
-The run passes only when all of the following are true:
+```http
+POST /api/v1/transactions/pay
+{
+  "idempotencyKey": "<CỐ ĐỊNH>",
+  "destAccountId": 7,
+  "amount": 10000,
+  "description": "loadtest",
+  "merchantId": null
+}
+```
 
-- Every response is a valid `201`, or a documented semantic duplicate `409`; no `5xx`, `429`, malformed response, or unrelated `4xx` is accepted.
-- All successful responses refer to the same transaction.
-- PostgreSQL contains exactly one transaction for the tested key.
-- That transaction has exactly one debit and one credit ledger entry.
-- The payer and destination balances change by the payment amount exactly once.
-- `GET /api/v1/admin/ledger/verify` is executed and its response is retained.
+Kịch bản chuẩn tuân thủ requirements: **1 user, 1 key, 10 VUs, mỗi VU một iteration, barrier 3 giây, không ramp-up**.
 
-## 2. System under test
+## 2. Kết quả kịch bản chuẩn — 10 requests
 
-| Item | Value |
-|---|---|
-| Run ID | `gd3-final-20260811-224105` |
-| Run time | 2026-08-11 22:41:19 +07:00 |
-| Load-test branch HEAD | `d6fe8efa8b24f8f3ba223ac2e2b1bd56aa5a2398` |
-| Executed script SHA-256 | `79C25387B6B76DA4B010E7A14119FFE1423C4BA8696C9CA4B02D30A38DD912B6` |
-| Relocated script SHA-256 | `43557375C27A80523564D9C6AB2BED863F2955C6B4C77CDB8F18B3F769BFA47D` |
-| Backend test branch | `test/paygate-gd3-idempotency-combined` |
-| Backend target SHA | `970348247a503ca0cb0d30e95fba9fa61c624f13` |
-| Backend fixes under test | `96d4ecd` serializable-conflict retry; `9703482` replay lookup before fraud evaluation |
-| Database | Disposable local database `paygate_lt_gd3_20260811_01` |
-| k6 | `v2.1.0`, Windows amd64 |
-| Load profile | 10 VUs, one iteration per VU, 3-second synchronization barrier |
-| Payment | Account 12 -> account 10, VND 10,000 |
-| Idempotency key | `GD3-IDEM-gd3-final-20260811-224105` |
-
-The backend target is a local validation branch combining two independent fix commits. The result is reproducible only after the corresponding backend fix PRs are merged into the target integration branch. The relocated script changes only its import path and file location; scenario behavior is unchanged.
-
-## 3. Result
-
-| Metric or evidence | Observed result |
-|---|---|
+| Chỉ số | Kết quả |
+|---|---:|
 | Payment requests | 10 |
-| Response distribution | 10 x `201`; 0 x unexpected `4xx`; 0 x `5xx` |
-| Unique transaction references in responses | 1: `TXN-PAY-EAC5CB9E` |
-| k6 checks | 20/20 passed, 100% |
-| `gd3_pay_duration` | avg 292.80 ms; p90 343.34 ms; **p95 346.35 ms**; max 349.36 ms |
-| Request send-time spread | 5 ms |
-| Payment burst completion window | 354.36 ms |
-| Derived payment-burst throughput | approximately **28.22 requests/s** for the 10-request burst |
-| PostgreSQL transaction rows for the exact key | 1 |
-| Transaction status and amount | `COMPLETED`, VND 10,000 |
-| Transaction ledger entries | 1 `DEBIT` and 1 `CREDIT`, VND 10,000 each |
-| Payer balance | VND 50,000 -> VND 40,000; delta -10,000 |
-| Destination balance | VND 50,000 -> VND 60,000; delta +10,000 |
-| Global ledger verification | HTTP 200; `balanced=true`; debit=credit=VND 1,220,000 |
-| Decision | **PASS - no duplicate transaction and no double-charge** |
+| Checks | **20/20 — 100%** |
+| HTTP response | 1 × 201; 9 × 409; 0 × 429/5xx |
+| Avg / p95 / max | 310,01 / **337,57** / 359,29 ms |
+| Transaction theo exact key | **1** |
+| Ledger | **1 DEBIT + 1 CREDIT** |
+| Số dư payer | Giảm đúng **10.000 VND một lần** |
+| Global ledger | `balanced=true` |
 
-The `gd3_pay_requests` summary rate of 2.168 requests/s includes setup, the synchronization barrier, and teardown. It is not used as endpoint throughput. The reported 28.22 requests/s is derived from the first send timestamp through the final response completion within the payment burst.
+`20/20` là `10 requests × 2 assertions/request`, không phải 20 giao dịch.
 
-## 4. Evidence
+**Kết luận:** PASS chống double-charge; nhưng 9 caller nhận 409 nên replay semantics chưa lý tưởng.
 
-- [Run manifest](./evidence/gd3-final-20260811-224105/manifest.md)
-- [k6 console output](./evidence/gd3-final-20260811-224105/gd3-console.log)
-- [Redacted k6 summary](./evidence/gd3-final-20260811-224105/gd3-summary.json)
-- [Preflight result](./evidence/gd3-final-20260811-224105/gd3-preflight.txt)
-- [Post-check SQL](./evidence/gd3-final-20260811-224105/gd3-postcheck.sql)
-- [Post-check result](./evidence/gd3-final-20260811-224105/gd3-postcheck.txt)
-- [Ledger verification response](./evidence/gd3-final-20260811-224105/gd3-ledger-verify.txt)
+<details>
+<summary><strong>Evidence text GĐ3 chuẩn — k6 10 VUs</strong></summary>
 
-The summary was scrubbed after the run because k6 `--summary-export` included the `setup_data` object. A secret-pattern scan confirmed that the retained final-run evidence contains no JWT.
+```text
+THRESHOLDS
+checks                         rate=100.00%                 PASS
+gd3_pay_duration               p(95)=337.56637 ms           PASS
 
-## 5. Idempotency lifecycle and architecture analysis
+checks_succeeded               20/20 (100%)
+checks_failed                  0/20
+gd3_pay_requests               10
+gd3_http_201_responses         1
+gd3_duplicate_conflicts        9
+payment 5xx                    0
 
-The caller derives one stable key for one logical payment and reuses it for every retry. PayGate does not generate a replacement key for `/transactions/pay`; it receives the caller's key and persists it in `transactions.idempotency_key`.
+payerBalanceBefore             10,000,000
+payerBalanceAfter               9,990,000
+payerDelta                         10,000
+globalLedgerBalanced           true
+ledger                         DEBIT 10,000 = CREDIT 10,000
+```
 
-The patched request path performs the following controls:
+</details>
 
-1. Check the Redis idempotency cache.
-2. Fall back to a database lookup by idempotency key.
-3. Only for a genuinely new payment, load the user and perform fraud evaluation.
-4. Re-check the database before insertion.
-5. Persist under `SERIALIZABLE` isolation with a database unique constraint.
-6. Retry transient serialization conflicts through a fresh proxied transaction, then return the existing transaction when the competing request has committed.
+## 3. Kết quả mở rộng
 
-Redis improves the replay path, while the database lookup, unique constraint, transaction isolation, and transaction retry provide the durable concurrency controls. HTTP status alone is not proof of idempotency because a replay may also return `201`; the transaction-scoped SQL, ledger rows, and balance deltas are the authoritative evidence.
+Để tăng tải mà không vượt rate-limit 10 payment/user/60 giây, mỗi nhóm dùng một user và key riêng; mỗi nhóm vẫn phát 10 duplicate requests.
 
-## 6. Conclusion and release condition
+| Tổng tải | Cấu hình | Checks | 201 | 409 | 5xx | p95 | DB hậu kiểm |
+|---:|---|---:|---:|---:|---:|---:|---|
+| 50 requests | 5 user × 10 | 138/150 | 37 | 7 | **6** | 1.049,996 ms | 5 key → 5 transaction |
+| 100 requests | 10 user × 10 | 278/300 | 76 | 13 | **11** | 729,519 ms | 10 key → 10 transaction |
 
-The tested build safely handled 10 near-simultaneous requests for one logical payment: all clients received the same transaction reference, PostgreSQL stored one transaction, and money moved once.
+Toàn bộ 15 payer chỉ bị trừ một lần; tổng cộng đúng 15 DEBIT và 15 CREDIT. Tuy nhiên, tỷ lệ 5xx của payment request là **12% ở 50 requests** và **11% ở 100 requests**.
 
-GD3 is functionally complete. Release sign-off remains conditional on merging the two independent backend fixes represented by commits `96d4ecd` and `9703482`, then confirming that the integration branch contains their equivalent changes.
+<details>
+<summary><strong>Evidence text GĐ3 scale — k6 và SQL</strong></summary>
+
+```text
+K6 — 50 REQUESTS / 5 KEYS
+checks_succeeded               138/150 (92.00%)
+checks_failed                  12/150
+gd3_scale_pay_duration p95     1,049.99582 ms
+HTTP 201 / 409 / 5xx           37 / 7 / 6
+
+K6 — 100 REQUESTS / 10 KEYS
+checks_succeeded               278/300 (92.66%)
+checks_failed                  22/300
+gd3_scale_pay_duration p95     729.519195 ms
+HTTP 201 / 409 / 5xx           76 / 13 / 11
+
+SQL HẬU KIỂM CHUNG
+transaction_count = 15; logical_keys = 15; total_amount = 150000
+DEBIT  = 15 entries / 150000
+CREDIT = 15 entries / 150000
+correct_payer_balances = 15/15; total_debited = 150000
+```
+
+</details>
+
+## 4. Kiểm tra DoD
+
+- [x] Một user và một key cố định trong bài chuẩn.
+- [x] 10 request gần như đồng thời, không dùng stages.
+- [x] Query DB theo exact idempotency key.
+- [x] Gọi ledger verify và so sánh balance trước/sau.
+- [x] Có số liệu cụ thể: 1 key → 1 transaction → trừ tiền một lần.
+- [ ] API chưa đạt 0 lỗi khi tăng concurrency: còn 409 và SQL serialization 5xx.
+
+## 5. Phân tích và trả lời câu hỏi
+
+### Idempotency key hoạt động đúng nghĩa là gì?
+
+Idempotency key phải được **caller sinh một lần từ logical payment** — ví dụ payment intent/order ID hoặc UUID của lần bấm thanh toán đầu tiên — rồi tái sử dụng nguyên key đó cho mọi retry. Không được sinh key mới ở mỗi request.
+
+PayGate cần lưu quan hệ `idempotencyKey → transaction` trong database bằng unique constraint; Redis chỉ là cache tăng tốc. Flow đúng là:
+
+1. Sau khi xác thực caller, kiểm tra key trước mọi debit/ledger mutation.
+2. Nếu key đã tồn tại, trả lại transaction cũ.
+3. Nếu chưa tồn tại, insert key và thực hiện chuyển tiền trong cùng transaction nguyên tử.
+4. Khi hai request race, chỉ một request commit; request còn lại đọc transaction vừa commit và trả cùng kết quả.
+
+### Có tái hiện bug P-C4 không?
+
+Không tái hiện double-charge: mọi key chỉ tạo một transaction. Tuy nhiên, scale test tái hiện một lỗi concurrency liên quan: PostgreSQL SQLSTATE `40001` bị trả thành 5xx.
+
+Nguyên nhân là controller gọi trực tiếp overload `SERIALIZABLE`, trong khi retry loop nằm ở overload khác nên HTTP call path bỏ qua retry boundary. Unique constraint vẫn giữ dữ liệu đúng nhưng không đảm bảo response ổn định.
+
+## 6. Kết luận
+
+- **Data integrity:** PASS.
+- **Không double-charge:** PASS.
+- **Idempotent response/retry ở tải cao:** FAIL.
+- Cần đưa retry vào transaction boundary được controller gọi và re-query transaction theo key sau serialization/unique conflict.
+
+Các khối evidence phía trên đã chép trực tiếp output k6 và SQL cần thiết; file này có thể được gửi độc lập.

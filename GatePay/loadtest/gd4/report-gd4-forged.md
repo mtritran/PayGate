@@ -1,5 +1,7 @@
 # GD4 - Forged Amount Security Report
 
+> **Lưu ý:** Đây là evidence lịch sử của run `gd4-forged-20260812-001305`. Báo cáo GĐ4 mới nhất trên `develop/cab84ca`, gồm re-test 50 và 100 VUs, nằm tại [`report-gd4.md`](./report-gd4.md).
+
 **Status:** PASS on the isolated PayGate environment described below.
 
 ## 1. Objective and acceptance criteria

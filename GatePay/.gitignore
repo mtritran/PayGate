@@ -38,3 +38,7 @@ skills-lock.json
 *.env
 .env.local
 backend/src/main/resources/application.yml
+
+# Local load-test runtime artifacts may contain short-lived credentials/tokens.
+loadtest/.quick-runs/
+loadtest/results/

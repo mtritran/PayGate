@@ -1,174 +1,159 @@
-# GD4 - Webhook Load and Security Report
+# 📊 BÁO CÁO LOAD TEST GĐ4 — BANK WEBHOOK
 
-**Status:** PASS on the isolated PayGate environment described below.
+**Ngày:** 12/08/2026<br>
+**Backend:** PayGate `develop/cab84ca`<br>
+**Môi trường:** Local Windows, PostgreSQL 16 + Redis 7 + RabbitMQ 3 disposable<br>
+**Công cụ:** k6 v2.1.0
 
-## 1. Scope
+## 1. Mục tiêu và kịch bản
 
-GD4 contains three complementary measurements:
+Kiểm tra hiệu năng và khả năng chặn amount giả mạo của:
 
-1. HMAC-authenticated random transfer content, measuring the lookup-and-reject path.
-2. A synchronized burst of 30 independent valid settlements, measuring the real write path.
-3. Signed wrong-amount spam against one real pending checkout, measuring the amount-integrity guard.
-
-The bank webhook does not require JWT, but it is authenticated by `X-Bank-Signature` using HMAC-SHA256. It must not be described as an unauthenticated endpoint.
-
-## 2. System under test
-
-| Item | Value |
-|---|---|
-| Backend / load-test SHA | `d6fe8efa8b24f8f3ba223ac2e2b1bd56aa5a2398` |
-| Official feature baseline | `4a6cee5` with `develop` reconciliation `04cfa1e` |
-| Database | Disposable local database `paygate_lt_gd4_20260811_01` |
-| PostgreSQL | Docker `lt-postgres`, PostgreSQL 16, host port 5434 |
-| RabbitMQ | Docker `lt-rabbit`, host port 5673 |
-| Redis | Local port 6379 |
-| PayGate | `http://localhost:8081` |
-| k6 | `v2.1.0` (`83a87a41e2`, Windows amd64) |
-| Merchant | `MARKETPLACE_MP`, active |
-| Merchant callback | Disabled in the disposable database (`webhook_url = NULL`) |
-| Secret handling | Bank HMAC secret and merchant API key supplied through process ENV only |
-
-All three scripts required these explicit isolation gates:
-
-```text
-GD4_TEST_ENV=isolated
-GD4_ALLOW_MUTATION=true
-GD4_CALLBACK_SAFE=true
+```http
+POST /api/v1/integration/bank-webhook
 ```
 
-## 3. Scenario contracts
+Endpoint không dùng JWT nhưng mọi request phải có `X-Bank-Signature` HMAC-SHA256 hợp lệ qua `BankWebhookFilter`.
 
-### A. Random non-matching transfer content
+| Kịch bản | Input | Kết quả mong đợi |
+|---|---|---|
+| Validation | HMAC đúng, transfer content không tồn tại | HTTP 404, không mutation |
+| Settlement | Checkout thật, HMAC và amount đúng | HTTP 200, session `COMPLETED` |
+| Forged | Checkout thật, HMAC đúng, amount sai | Exact HTTP 400, không mutation |
 
-| Item | Configuration |
-|---|---|
-| Run ID | `gd4-validation-20260811-235710` |
-| Script | [`gd4-validation-test.js`](./gd4-validation-test.js) |
-| Executed / relocated script SHA-256 | `C6A9B930AE2E86362C5BD16A0A185AD00EE99D202BA3B0B3F8E6B3267B526460` / `7C34A56A46FF58FBFB2EB105CAF490C95E925345A94EF7311D8593D01A6EA4B4` |
-| Profile | 30 constant VUs for 60 seconds |
-| Input | Unique signed transfer content and bank transaction number per request |
-| Expected response | HTTP `404` because no checkout matches the generated order ID |
-| Database post-condition | No checkout session, transaction, or ledger entry |
+## 2. Kết quả validation/load thường
 
-The current backend rejects unknown order IDs with `ResourceNotFoundException`. The earlier report claim that a regex rejects them with `400` is obsolete.
+| Tải | Requests | HTTP 404 | Lỗi kết nối | p95 | Throughput | Kết luận |
+|---:|---:|---:|---:|---:|---:|---|
+| 50 VUs / 30s | 26.129 | 26.129 | 0 | **101,74 ms** | 869,99 req/s | PASS |
+| 100 VUs / 30s | 28.497 | 28.497 | 0 | **184,48 ms** | 946,45 req/s | PASS |
+| 200 VUs / 30s | 29.194 | 28.954 | **240** | **374,56 ms** | 968,07 req/s | FAIL |
 
-### B. Thirty unique valid settlements
+Từ 100 lên 200 VUs, throughput chỉ tăng 2,28% nhưng p95 tăng 103% và bắt đầu connection refused. Mốc ổn định quan sát được trên máy local là 100 VUs.
 
-| Item | Configuration |
-|---|---|
-| Run ID | `gd4-settlement-20260812-000715` |
-| Script | [`gd4-settlement-test.js`](./gd4-settlement-test.js) |
-| Executed / relocated script SHA-256 | `B9523DC32002618F604B404D3CBE6001D9377EBFDC46EA32F2A2652080001AA6` / `DD4BDFFCA84FB4381E2083D6B723934EA6245A83A0CE3BD8BDAED8D18CF231F8` |
-| Profile | 30 VUs x one iteration, synchronized barrier |
-| Fixtures | 30 unique `PENDING` VIETQR checkouts created in `setup()` |
-| Input | One valid-HMAC, exact-amount webhook per unique fixture |
-| Expected response | HTTP `200` and `success=true` |
-| Database post-condition | 30 completed sessions, 30 transactions, 30 settlement ledger entries |
+<details>
+<summary><strong>Evidence text validation — 50, 100 và 200 VUs</strong></summary>
 
-This is a burst of 30 independent settlements. It does not reuse completed fixtures and therefore does not confuse replay throughput with settlement throughput.
+```text
+50 VUs / 30s
+checks_succeeded               78,387/78,387 (100%)
+requests / HTTP 404            26,129 / 26,129
+http_req_failed                0
+p95 / throughput              101.74442 ms / 869.991786 req/s
 
-### C. Signed forged amount
+100 VUs / 30s
+checks_succeeded               85,491/85,491 (100%)
+requests / HTTP 404            28,497 / 28,497
+http_req_failed                0
+p95 / throughput              184.4846 ms / 946.448033 req/s
 
-| Item | Configuration |
-|---|---|
-| Run ID | `gd4-forged-20260812-001305` |
-| Script | [`gd4-forged-amount-test.js`](./gd4-forged-amount-test.js) |
-| Profile | 10 constant VUs for 15 seconds |
-| Fixture | One real `PENDING` checkout for VND 100,000 |
-| Input | Valid HMAC and transfer content, but amount VND 50,000 |
-| Expected response | Exact HTTP `400 Amount mismatch` |
-| Database post-condition | Fixture remains pending; no transaction, ledger entry, or balance mutation |
+200 VUs / 30s
+checks_succeeded               87,102/87,582 (99.45%)
+requests / HTTP 404            29,194 / 28,954
+http_req_failed                240/29,194 (0.82%)
+p95 / throughput              374.559015 ms / 968.074171 req/s
+```
 
-Detailed security analysis is retained in [`report-gd4-forged.md`](./report-gd4-forged.md).
+</details>
 
-The relocated hashes differ only because imports and file names were updated to the phase-folder architecture. Scenario logic and retained run data are unchanged.
+## 3. Kết quả amount giả mạo
 
-## 4. Results
+| Tải | Requests | Exact HTTP 400 | Accepted | 401/5xx | p95 | Throughput |
+|---:|---:|---:|---:|---:|---:|---:|
+| 50 VUs / 15s | 14.338 | 14.338 | **0** | 0 / 0 | **75,90 ms** | 950,50 req/s |
+| 100 VUs / 15s | 14.387 | 14.387 | **0** | 0 / 0 | **158,19 ms** | 951,29 req/s |
 
-| Scenario | Requests | p95 | Throughput | Status split | SQL post-condition | Decision |
-|---|---:|---:|---:|---|---|---|
-| A: random/non-matching, 30 VUs / 60s | 116,499 | **20.79 ms** | **1,941.27 req/s** | 116,499 x 404; 0 x 2xx/401/5xx | 0 sessions, 0 transactions, 0 ledger entries | **PASS** |
-| B: 30-way unique settlement | 30 settlements | **440.58 ms** | **63.66 settlements/s** burst | 30 x 200; 0 x 4xx/5xx | 30 completed sessions, 30 transactions, 30 CREDIT entries | **PASS** |
-| C: signed forged amount, 10 VUs / 15s | 24,317 forged requests | **6.26 ms** | **1,617.66 req/s** | 24,317 exact 400; 0 x 2xx/401/5xx | 1 pending session, 0 transactions, 0 ledger entries | **PASS** |
+**Forged acceptance rate = 0%.** Hai checkout fixture vẫn `PENDING`, không tạo transaction hoặc ledger.
 
-### Scenario A details
+<details>
+<summary><strong>Evidence text forged amount — 50 và 100 VUs</strong></summary>
 
-- Checks: 349,497 / 349,497 passed.
-- `gd4_validation_duration`: avg 15.15 ms; p90 18.82 ms; p95 20.79 ms; max 92.92 ms.
-- Every request had a valid HMAC and returned the expected 404.
-- SQL before and after confirmed no persistent row for the generated prefix.
+```text
+50 VUs / 15s
+checks_succeeded               57,352/57,352 (100%)
+exact HTTP 400 Amount mismatch 14,338/14,338 (100%)
+accepted / 401 / 5xx           0 / 0 / 0
+p95 / throughput              75.903075 ms / 950.502518 req/s
 
-### Scenario B details
+100 VUs / 15s
+checks_succeeded               57,548/57,548 (100%)
+exact HTTP 400 Amount mismatch 14,387/14,387 (100%)
+accepted / 401 / 5xx           0 / 0 / 0
+p95 / throughput              158.1886 ms / 951.288759 req/s
+```
 
-- Checks: 90 / 90 passed.
-- `gd4_settlement_duration`: avg 278.26 ms; p90 424.71 ms; p95 440.58 ms; max 456.27 ms.
-- All 30 requests were sent within 15 ms.
-- The completion window from the earliest send through the final response was 471.27 ms.
-- Derived burst throughput: `30 / 0.47127 = 63.66 settlements/s`.
-- The global `http_reqs` count is 60 because setup created 30 fixtures before the 30 webhooks. Its whole-run rate is not settlement throughput.
-- SYSTEM balance increased from VND 99,000,000,000 to VND 99,003,000,000, exactly 30 x VND 100,000.
-- Each bank inflow currently creates one SYSTEM `CREDIT`; the matching `DEBIT` is deferred to merchant settlement, so global ledger balance is not an acceptance condition for this scenario.
+</details>
 
-### Scenario C details
+## 4. Kết quả settlement hợp lệ
 
-- Checks: 97,268 / 97,268 passed.
-- Exact amount-mismatch reject rate: 24,317 / 24,317, 100%.
-- Unexpected accepted rate: 0%.
-- SYSTEM balance stayed at VND 99,003,000,000.
+| Burst | Thành công | p95 | SQL hậu kiểm |
+|---:|---:|---:|---|
+| 30 VUs | 30/30 | **706,15 ms** | 30 session + 30 transaction + 30 CREDIT |
+| 50 VUs | 50/50 | **941,35 ms** | 50 session + 50 transaction + 50 CREDIT |
 
-## 5. Evidence
+Settlement chậm hơn vì mỗi request phải lock SYSTEM account dùng chung, cộng balance, insert transaction/ledger và update checkout session.
 
-### Scenario A
+<details>
+<summary><strong>Evidence text settlement và SQL hậu kiểm</strong></summary>
 
-- [Manifest](./evidence/gd4-validation-20260811-235710/manifest.md)
-- [k6 summary](./evidence/gd4-validation-20260811-235710/gd4-validation-summary.json)
-- [k6 console](./evidence/gd4-validation-20260811-235710/gd4-validation-console.log)
-- [Preflight result](./evidence/gd4-validation-20260811-235710/gd4-validation-preflight.txt)
-- [Post-check result](./evidence/gd4-validation-20260811-235710/gd4-validation-postcheck.txt)
+```text
+K6 — SETTLEMENT 30 VUs
+checks_succeeded               90/90 (100%)
+settlement_successes           30/30
+p95                            706.15401 ms
 
-### Scenario B
+K6 — SETTLEMENT 50 VUs
+checks_succeeded               150/150 (100%)
+settlement_successes           50/50
+p95                            941.35254 ms
 
-- [Manifest](./evidence/gd4-settlement-20260812-000715/manifest.md)
-- [k6 summary](./evidence/gd4-settlement-20260812-000715/gd4-settlement-summary.json)
-- [k6 console](./evidence/gd4-settlement-20260812-000715/gd4-settlement-console.log)
-- [Preflight result](./evidence/gd4-settlement-20260812-000715/gd4-settlement-preflight.txt)
-- [Post-check result](./evidence/gd4-settlement-20260812-000715/gd4-settlement-postcheck.txt)
-- [Captured exit code](./evidence/gd4-settlement-20260812-000715/gd4-settlement-exit-code.txt)
+SQL HẬU KIỂM — 50 VUs VÀ FORGED FIXTURES
+sessions = 50; completed = 50; distinct refs = 50; total = 5000000
+transactions = 50; total = 5000000
+CREDIT ledger entries = 50; total = 5000000
+forged sessions = 2; pending = 2; with_transaction = 0
+```
 
-### Scenario C
+</details>
 
-- [Detailed report](./report-gd4-forged.md)
-- [Manifest](./evidence/gd4-forged-20260812-001305/manifest.md)
-- [k6 summary](./evidence/gd4-forged-20260812-001305/gd4-forged-summary.json)
-- [k6 console](./evidence/gd4-forged-20260812-001305/gd4-forged-console.log)
-- [Post-check result](./evidence/gd4-forged-20260812-001305/gd4-forged-postcheck.txt)
-- [Captured exit code](./evidence/gd4-forged-20260812-001305/gd4-forged-exit-code.txt)
+## 5. Kiểm tra DoD
 
-## 6. Authentication and database-overhead analysis
+- [x] Kịch bản load thường nằm trong dải yêu cầu 20-50 VUs.
+- [x] Có throughput và p95 riêng: 869,99 req/s và 101,74 ms tại 50 VUs.
+- [x] Kịch bản forged dùng checkout thật, HMAC đúng và amount sai.
+- [x] 28.725/28.725 forged requests bị chặn; accepted 0%.
+- [x] SQL xác nhận không có mutation ở validation/forged path.
+- [x] Settlement thật giữ đúng session/transaction/ledger count.
 
-All three GD4 scenarios traverse the same bank HMAC filter, so their differences are downstream of a common authentication mechanism. The observed end-to-end p95 values were:
+## 6. Phân tích và trả lời câu hỏi
 
-| Path | p95 |
-|---|---:|
-| HMAC + unknown-order lookup + 404 | 20.79 ms |
-| HMAC + pending-session lookup + amount rejection | 6.26 ms |
-| HMAC + pending-session lookup + account lock + transaction/ledger/session writes | 440.58 ms |
+### Endpoint không dùng JWT có nhanh hơn endpoint có JWT không?
 
-The valid settlement path was 419.79 ms slower at p95 than the unknown-order validation path. This difference demonstrates the cost of the full business and write path under a 30-way burst; it must not be labeled as pure database-query overhead.
+Số liệu end-to-end quan sát được:
 
-The HMAC filter itself was not isolated by this test. Likewise, subtracting GD4 latency from the JWT-protected `/transactions/pay` latency does not produce JWT-filter overhead because the endpoints, traffic profiles, and business work differ. A numeric JWT-versus-HMAC comparison requires matched routes or timing instrumentation around each filter.
+- GĐ3 `/transactions/pay` có JWT, 10 VUs: p95 **337,57 ms**.
+- GĐ4 validation có HMAC, 50 VUs: p95 **101,74 ms**.
+- Chênh lệch quan sát: GĐ4 thấp hơn **235,83 ms**, khoảng 70%.
 
-## 7. Optimization conclusion
+Tuy nhiên, **không được kết luận 235,83 ms là chi phí JWT**, vì hai endpoint có traffic profile và business logic khác nhau. `/transactions/pay` chạy fraud check, transaction `SERIALIZABLE`, idempotency và financial mutation; validation webhook chỉ lookup order rồi trả 404.
 
-If one PayGate path must be optimized based on the retained GD3/GD4 measurements, choose the valid bank-settlement write path. Its p95 of 440.58 ms is the highest measured endpoint latency, and response completion spreads across the burst while each request locks and updates the shared SYSTEM account, inserts a transaction and ledger row, and completes a checkout session.
+So sánh trong cùng HMAC endpoint cho thấy chi phí business/DB đáng kể hơn auth:
 
-The first investigation targets should be the shared SYSTEM-account lock and the transaction/ledger/session write sequence. Authentication is not the first optimization target because the common HMAC-authenticated rejection paths remained at 20.79 ms p95 or below.
+- Validation 50 VUs: p95 101,74 ms.
+- Settlement 50 VUs: p95 941,35 ms.
+- Chênh lệch full write path: khoảng **839,61 ms**.
 
-## 8. Limitations
+Vì vậy HMAC/JWT filter không phải bottleneck chính trong số liệu hiện tại; database write, shared SYSTEM-account lock và transaction scope ảnh hưởng lớn hơn.
 
-- Results are from one local machine and one disposable database, not a production-capacity benchmark.
-- Merchant callbacks were disabled so the settlement metric measures PayGate internal processing rather than downstream HTTP retry time.
-- Scenario A measures an authenticated lookup-and-reject path, not a successful settlement.
-- Scenario B is a 30-request synchronized burst, not a sustained 60-second stream of unique settlements.
-- Scenario C proves the amount guard for a validly signed pending-checkout request; it does not represent an outsider without the bank secret.
-- GD1 and GD2 belong to the Marketplace load-test team and are not included in this report.
+### Vì sao 200 VUs bắt đầu lỗi?
+
+Throughput đã plateau trong khi số request đồng thời tăng gấp đôi. Server và k6 chạy cùng máy, đồng thời backend ghi INFO/ERROR cho từng webhook, nên CPU, Tomcat queue, DB pool và logging đều có thể góp phần gây connection refused. Chưa có Hikari/CPU time-series để quy lỗi cho một nguyên nhân duy nhất.
+
+## 7. Kết luận
+
+- Validation: PASS đến 100 VUs; FAIL ở 200 VUs.
+- Forged amount: PASS 100%, accepted 0%.
+- Settlement: PASS đến burst 50, nhưng p95 941,35 ms đã gần threshold 1 giây.
+- Ưu tiên theo dõi shared SYSTEM lock và giảm per-request log storm.
+
+Các khối evidence phía trên đã chép trực tiếp output k6 và SQL cần thiết; file này có thể được gửi độc lập.
